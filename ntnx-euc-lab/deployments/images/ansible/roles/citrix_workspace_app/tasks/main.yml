@@ -1,0 +1,17 @@
+---
+# Install Citrix Workspace App
+- name: Install Citrix Workspace App
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Citrix\\Client\\Workspace_app\\2107\\CitrixWorkspaceApp.exe"
+    arguments: /silent ADDLOCAL="ReceiverInside,ICA_Client,DesktopViewer,WebHelper,BrowserEngine" /AutoUpdateCheck=disabled EnableCEIP=False 
+    state: present
+    expected_return_code: [0, 3, 3010]
+    product_id: '{A7037058-DF08-445E-97CA-29AD015A06C4}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  register: citrix_workspace_app_install
+
+- name: Reboot after VDA
+  ansible.windows.win_reboot:
+  when: citrix_workspace_app_install.changed

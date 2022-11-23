@@ -1,0 +1,22 @@
+---
+# Install Office 2016
+- name: Create Log Folder
+  win_file:
+    path: C:\Logs
+    state: directory
+
+- name: Install Office 2016
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Microsoft\\Office\\2016 - x86\\Setup.exe"
+    state: present
+    expected_return_code: [0, 3010]
+    creates_path: C:\Program Files (x86)\Microsoft Office
+    product_id: '{90160000-0011-0000-0000-0000000FF1CE}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  register: office2016_install
+
+- name: Reboot to complete Office 2016 install
+  ansible.windows.win_reboot:
+  when: office2016_install.changed

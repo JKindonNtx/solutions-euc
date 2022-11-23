@@ -1,0 +1,9 @@
+---
+# Disable scheduled tasks
+- name: Include scheduled tasks var file
+  include_vars: vars/scheduled_tasks.yml
+
+- name: Check and disable scheduled tasks
+  include_role: 
+    name: disable_scheduled_tasks
+  loop: "{{ scheduled_tasks|dict2items }}"

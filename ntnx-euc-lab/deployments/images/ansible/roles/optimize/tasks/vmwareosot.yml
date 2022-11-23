@@ -1,0 +1,35 @@
+---
+- name: Reboot before Optimizations
+  ansible.windows.win_reboot:
+
+- name: Create OSOT Folder
+  win_file:
+    path: C:\\OSOT
+    state: directory
+
+- name: copy file from UNC path
+  win_copy:
+    src: "{{ sourcefiles_path }}\\Scripts\\Optimizations\\VMware-OSOT\\VMwareOSOptimizationTool.exe"
+    dest: 'C:\OSOT\VMwareOSOptimizationTool.exe'
+    remote_src: true
+    force: yes
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=netcredentials_only
+
+- name: Optimize with VMware OSOT
+  win_shell: >
+    Start-Process -FilePath "C:\\OSOT\\VMwareOSOptimizationTool.exe"
+    -ArgumentList "-o -v -SyncHkcuToHku enable 
+    -visualeffect performance -notification disable 
+    -windowsupdate disable -officeupdate disable 
+    -windowssearch enablecortana searchboxasicon 
+    -storeapp remove-all --exclude alarms calculator 
+    -background #034EA2 -firewall enable -antivirus disable" -Wait
+  
+- name: Pause for 2 minutes
+  ansible.builtin.pause:
+    minutes: 2
+
+- name: Reboot after Optimizations
+  ansible.windows.win_reboot:

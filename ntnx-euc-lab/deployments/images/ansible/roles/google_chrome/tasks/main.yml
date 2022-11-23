@@ -1,0 +1,32 @@
+---
+# Install Google Chrome
+- name: Install Google Chrome
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Google\\googlechromestandaloneenterprise64.msi"
+    state: present
+    product_id: '{7AA186B0-C2B3-37B7-8E07-22DA44C46DAD}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+
+- name: Disable Google update task machine
+  win_scheduled_task:
+    name: "GoogleUpdateTaskMachineUA"
+    enabled: no
+
+- name: Disable Google Update task core
+  win_scheduled_task:
+    name: "GoogleUpdateTaskMachineCore"
+    enabled: no
+
+- name: Set Google Update service startup mode to disabled and ensure it is stopped
+  ansible.windows.win_service:
+    name: gupdate
+    start_mode: disabled
+    state: stopped
+
+- name: Set Google Update service m startup mode to disabled and ensure it is stopped
+  ansible.windows.win_service:
+    name: gupdatem
+    start_mode: disabled
+    state: stopped
