@@ -1,6 +1,8 @@
 # EUC Solutions
 [[github_repo_description]]
 
+Adding some text to see if I can modify this file
+
 # Welcome to your new service
 We've created an empty service structure to show you the setup and workflow with Canaveral.
 
