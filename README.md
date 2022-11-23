@@ -1,4 +1,4 @@
-# [[github_repo_name]]
+# EUC Solutions
 [[github_repo_description]]
 
 # Welcome to your new service
