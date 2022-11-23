@@ -359,7 +359,7 @@ Function Update-Slack {
 # Setting variables
 $VMconfig = Get-Content -Path "$PSScriptRoot\CreateVM.json" -Raw | ConvertFrom-Json
 $ESXihost = "$($VMconfig.Cluster.host)"
-$Testhost = "$($VMconfig.Cluster.host)"
+$Testhost = "$($VMconfig.Cluster.host)" #@ntnxsven why are these two variables configured with the same value?
 $mgmtIP = "$($VMconfig.Cluster.ip)"   
 $mgmtUser = "$($VMconfig.Cluster.username)"
 $mgmtPassword = "$($VMconfig.Cluster.password)"
