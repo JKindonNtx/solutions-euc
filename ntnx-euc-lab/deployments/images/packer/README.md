@@ -1,0 +1,1 @@
+# This wil host the Packer scripts. Until then, use MDT to deploy a clean image

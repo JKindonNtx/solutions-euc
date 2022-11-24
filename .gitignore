@@ -1,4 +1,3 @@
-Publish/
 
 # Terraform 
 **/.terraform/*
@@ -36,7 +35,3 @@ inventory
 # Built Visual Studio Code Extensions
 *.vsix
 *.json
-ntnx-euc-lab/deployments/images/ansible/.DS_Store
-ntnx-euc-lab/deployments/images/.DS_Store
-ntnx-euc-lab/deployments/.DS_Store
-ntnx-euc-lab/.DS_Store
