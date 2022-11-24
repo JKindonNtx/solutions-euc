@@ -1,0 +1,43 @@
+# Assume running from $TOP, so the DLL will be in build dir.
+Import-Module ./build/NtnxPoshSDK.dll -force
+$ClusterIp = '10.68.68.30'
+$Password = ConvertTo-SecureString 'Nutanix/4u' -AsPlainText -Force
+New-NTNX -Server $ClusterIp -UserName admin -Password $Password -AcceptInvalidSslCerts
+
+
+  # kees@nutanix.com
+# @kbaggerman on Twitter
+# http://blog.myvirtualvision.com
+# Created on December 24th, 2015
+ 
+
+# Connecting to the cluster
+connect-ntnxcluster 10.68.68.30 -AcceptInvalidSSLCerts -UserName Admin -ForcedConnection
+
+## VM Creation
+# Setting Variables
+
+$VMs = Get-NTNXVM | ft -Name
+
+Foreach ($VM in $VMs) {
+  
+# Get the VmID of the VM
+# $vminfo = Get-NTNXVM | where {$_.vmName -eq $Name}
+$VMInfo = $vm.Name
+$VMId = ($VMInfo.vmid.split(":"))[2]
+ 
+# Setting the SCSI disk of 50GB on Containner ID 1025 (get-ntnxcontainer -> ContainerId)
+$diskCreateSpec = New-NTNXObject -Name VmDiskSpecCreateDTO
+$diskcreatespec.containerid = 1025
+$diskcreatespec.sizeMb = 51200
+ 
+# Creating the Disk
+$vmDisk =  New-NTNXObject –Name VMDiskDTO
+$vmDisk.vmDiskCreate = $diskCreateSpec
+ 
+# Adding the Disk to the VM
+Add-NTNXVMDisk -Vmid $VMId -Disks $vmDisk
+}
+
+
+# ACLI vm.update_disk -size 50GB -DiskID 3

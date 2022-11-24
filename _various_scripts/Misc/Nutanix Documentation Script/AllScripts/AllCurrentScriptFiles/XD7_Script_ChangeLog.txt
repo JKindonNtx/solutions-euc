@@ -1,0 +1,69 @@
+#webster@carlwebster.com
+#@carlwebster on Twitter
+#http://www.CarlWebster.com
+# Created on October 20, 2013
+
+#Version 1.13 released 28-Dec-2015
+#	Tested with version 7.7 and 7.6 FP3
+#	Fixed several typos
+#	Added "Hosting Server Name" to machine/desktop details
+#	Added support for VDA version 7.7
+#	Added policy setting ICA\Desktop launches [overlooked from initial script creation]
+#	Added policy setting ICA\Adobe Flash Delivery\Flash Redirection\Flash video fallback prevention [new with 7.6 FP3]
+#	Added policy setting ICA\Adobe Flash Delivery\Flash Redirection\Flash video fallback prevention error *.swf [new with 7.6 FP3]
+#	Added policy setting ICA\File Redirection\Allow file transfer between desktop and client [new with 7.6 FP3]
+#	Added policy setting ICA\File Redirection\Download file from desktop [new with 7.6 FP3]
+#	Added policy setting ICA\File Redirection\Upload file to desktop [new with 7.6 FP3]
+#	Added policy setting ICA\Graphics\Use video codec for compression [new with 7.6 FP3]
+#	Added policy setting ICA\Graphics\Framehawk\Framehawk display channel [new with 7.6 FP3]
+#	Added policy setting ICA\Graphics\Framehawk\Framehawk display channel port range [new with 7.6 FP3]
+#	Added policy setting ICA\Multimedia\Windows media fallback prevention [new with 7.6 FP3] 
+#	Added policy setting ICA\USB devices\Client USB device optimization rules [new with 7.6 FP3]
+#	Added policy setting ICA\Visual Display\Preferred color depth for simple graphics [new with 7.6 FP3]
+#	Renamed policy setting ICA\Multimedia\Optimization for Windows Media multimedia redirection to ICA\Multimedia\Optimization for Windows Media multimedia redirection over WAN
+#	Renamed policy setting ICA\Multimedia\Use GPU for optimizing Windows Media multimedia redirection to ICA\Multimedia\Use GPU for optimizing Windows Media multimedia redirection over WAN
+#	Added Zone section
+#	Added Zones to Machine Catalog details
+#	Added Zones to Hosting Connection details
+#	Fixed the way Scopes are reported for Machine Catalogs
+# Version 1.12 released 5-Oct-2015
+#	Add support for Word 2016
+# Version 1.11 released 8-Jul-2015
+#	Add in updated hardware inventory code
+#	Updated help text
+# Version 1.1 released June 29, 2015
+#	For Policies, change Filter(s) to "Assigned to" to match what is shown in Studio.
+#	For Policies, change the text "HDX Policy" to Policies to match what is shown in Studio,
+#	In Machine Catalog HTML output, removed two unneeded lines
+#	Add Machine Catalog summary table to beginning of section
+#	Add Delivery Group summary table to beginning of section
+#	In Delivery Group Word/PDF output, add in missing Machine type
+#	Begin Delivery Group data on new page for Word/PDF output
+#	In Delivery Group details, add:
+#		AutomaticPowerOnForAssigned
+#		AutomaticPowerOnForAssingedDuringPeak
+#		Extended Power Management Settings:
+#			During peak extended hours, when disconnected
+#			During off-peak extended hours, when disconnected
+#	Note: The previous four settings can only be set via PowerShell and are not shown in Studio
+#	In Delivery Group, add Desktops:
+#		Available
+#		In Use
+#		Never Registered
+#		Preparing
+#	In Delivery Group Details:
+#		Fix display of State (Enabled, Disabled or Maintenance mode)
+#		Add Description
+#		Add Display Name
+#		Add Color Depth
+#		Add Shutdown Desktops After Use
+#		Add Turn On Added Machine
+#	For Hosting details, add Sessions
+#	For Hosting details, begin Desktop OS, Server OS and Sessions data on new pages for Word/PDF output
+#	Added new parameter, Administrators (Admins), to get full administrator details.
+#	Added for Administrator Scopes, Objects and Administrators
+#	Added for Administrator Roles, Role definition and Administrators.
+#	Fix numerous typos
+#	Removed all 449 references to the unused variable $CurrentServiceIndex
+
+# Version 1.0 released to the community on June 12, 2015
