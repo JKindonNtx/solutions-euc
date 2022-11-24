@@ -288,6 +288,11 @@ Try {
     }
     Until ($VMtaskstatus -eq 100)
 
+    # Add virtual TPM to VM if needed
+    if ($($VMconfig.VM.vTPM) -eq 'true' or $($OSversion) -eq '11') {
+        Set-VMvTPMacli -ClusterIP $($ClusterIP) -CVMsshpassword $($CVMsshpassword) -VMname $($Name)
+    }
+
     # Get the Virtual Machine Information into a variable
     Write-Host (Get-Date)":Gather Virtual Machine Details."
     $VMinfo = Get-NTNXV2 -ClusterIP $mgmtIP -nxPassword $mgmtPassword -nxusrname $mgmtUser -APIpath "vms" -debug $debug
