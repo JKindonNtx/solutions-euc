@@ -1,6 +1,0 @@
----
-- name: Install Windows 10 Gold
-  hosts: all
-  roles:
- # - nvidia_grid
-   - nvidia_nvector_client
