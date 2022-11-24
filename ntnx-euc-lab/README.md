@@ -6,6 +6,6 @@ This repo is for your Nutanix End User Computing Lab Build Modules. It helps you
 
 * Windows Server 2022 and Windows 10 golden images
 
-* Create and auto-register a highly available Citrix Cloud Connectors
+* Create and auto-register highly available Citrix Cloud Connectors
 
-* Scale out/in the number of Citrix Cloud Connectors machines based on your user demand
+* Scale out/up or down the number of Citrix Cloud Connectors machines based on your user demand
