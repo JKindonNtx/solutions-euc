@@ -1,0 +1,10 @@
+---
+# Install NVIDIA nVector target
+- name: Install NVIDIA nVector Target
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\NVIDIA\\nVector\\2.1\\CirrusDesktop\\Installer\\CirrusDesktopInstall.exe"
+    state: present
+    creates_path: 'C:\Users\Public\Downloads\Specviewperf.exe'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only

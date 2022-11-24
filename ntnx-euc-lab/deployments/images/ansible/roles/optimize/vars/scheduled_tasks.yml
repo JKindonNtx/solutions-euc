@@ -1,0 +1,66 @@
+---
+scheduled_tasks:
+  Office_Automatic_Updates_2.0:
+    name: Office Automatic Updates 2.0
+    path: \Microsoft\Office
+    description: Disable Office 2019 Update Feature
+  OfficeTelemetryAgentFallBack2016:
+    name: OfficeTelemetryAgentFallBack2016
+    path: \Microsoft\Office
+    description: Disable Office Telemetry Agent FallBack 2016
+  OfficeTelemetryAgentLogOn2016:
+    name: OfficeTelemetryAgentLogOn2016
+    path: \Microsoft\Office
+    description: Disable Office Telemetry Agent LogOn 2016
+  SmartScreenSpecific:
+    name: SmartScreenSpecific
+    path: \Microsoft\Windows\AppID
+    description: Disable AppID - SmartScreenSpecific
+  Microsoft_Compatibility_Appraiser:
+    name: Microsoft Compatibility Appraiser
+    path: \Microsoft\Windows\Application Experience
+    description: Disable Microsoft Compatibility Telemetry
+  QueueReporting:
+    name: QueueReporting
+    path: \Microsoft\Windows\Windows Error Reporting
+    description: Disable QueueReporting
+  DmClient:
+    name: DmClient
+    path: \Microsoft\Windows\Feedback\Siuf
+    description: Disable DmClient
+  ScanForUpdatesAsUser:
+    name: ScanForUpdatesAsUser
+    path: \Microsoft\Windows\InstallService
+    description: Disable scanning for updates as user
+  ScanForUpdates:
+    name: ScanForUpdates
+    path: \Microsoft\Windows\InstallService
+    description: Disable scan For Updates
+  SmartRetry:
+    name: SmartRetry
+    path: \Microsoft\Windows\InstallService
+    description: Disable Install Service Smart Retry
+  Automatic_App_Update:
+    name: Automatic App Update
+    path: \Microsoft\Windows\WindowsUpdate
+    description: Disable Automatic App Update
+  PerformRemediation:
+    name: PerformRemediation
+    path: \Microsoft\Windows\WaaSMedic
+    description: Disable Performance Remediation
+  #Schedule_Scan:
+  #  name: Schedule Scan
+  #  path: \Microsoft\Windows\UpdateOrchestrator
+  #  description: Disable UpdateOrchestrator Schedule Scan
+  Schedule_Retry_Scan:
+    name: Schedule Retry Scan
+    path: \Microsoft\Windows\UpdateOrchestrator
+    description: Disable UpdateOrchestrator Schedule Retry Scan
+  #MusUx_LogonUpdateResults:
+  #  name: MusUx_LogonUpdateResults
+  #  path: \Microsoft\Windows\UpdateOrchestrator
+  #  description: Disable UpdateOrchestrator MusUx_LogonUpdateResults
+  USO_UxBroker:
+    name: USO_UxBroker
+    path: \Microsoft\Windows\UpdateOrchestrator
+    description: Disable UpdateOrchestrator USO_UxBroker

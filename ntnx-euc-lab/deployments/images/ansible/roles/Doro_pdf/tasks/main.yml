@@ -1,0 +1,27 @@
+---
+# Install DoroPDF
+- name: Install DoroPDF
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Other\\DoroPDF\\DoroSetup.exe"
+    arguments: /silent
+    state: present
+    expected_return_code: [0, 3010]
+    creates_path: 'C:\Program Files (x86)\DoroPDFWriter'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  register: DoroPDF_install
+
+- name: Wait for file C:\Program Files (x86)\DoroPDFWriter\Doro.ini to exist before continuing
+  ansible.windows.win_wait_for:
+    path: C:\Program Files (x86)\DoroPDFWriter\Doro.ini 
+
+- name: copy file from UNC path
+  win_copy:
+    src: "{{ sourcefiles_path }}\\Apps\\Other\\DoroPDF\\Doro.ini"
+    dest: 'C:\Program Files (x86)\DoroPDFWriter\Doro.ini'
+    remote_src: true
+    force: yes
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=netcredentials_only

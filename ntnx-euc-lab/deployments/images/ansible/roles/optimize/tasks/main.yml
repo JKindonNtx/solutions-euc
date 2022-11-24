@@ -1,0 +1,9 @@
+---
+- name: Include list of optimization tasks
+  block:
+    #- include_tasks: scheduled_tasks.yml
+    #- include_tasks: run_ngen.yml
+    - include_tasks: vmwareosot.yml
+    - include_tasks: vmwareosot_finalize.yml
+  become: yes
+  become_method: runas

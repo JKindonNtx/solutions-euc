@@ -1,0 +1,93 @@
+---
+# Install Adobe Reader DC
+- name: Create Log Folder
+  win_file:
+    path: C:\\Logs
+    state: directory
+
+- name: Install Adobe Reader DC
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Adobe\\Adobe Reader DC\\AcroRdrDC1801120055_en_US.exe"
+    arguments: '/msi EULA_ACCEPT=YES /qn'
+    state: present
+    expected_return_code: [0, 3010]
+    product_id: '{AC76BA86-7AD7-1033-7B44-AC0F074E4100}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+
+- name: Create Adobe regkey
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\WOW6432Node\Adobe\Acrobat Reader\DC\AdobeViewer
+
+- name: Create Adobe regkey
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\WOW6432Node\Adobe\Acrobat Reader\DC\AdobeViewer
+    name: EULA
+    data: 1
+    type: dword
+
+- name: Create Adobe regkey
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\WOW6432Node\Adobe\Acrobat Reader\DC\AdobeViewer
+    name: EULAAcceptedForBrowser
+    data: 1
+    type: dword
+
+- name: Create Adobe regkey
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\WOW6432Node\Adobe\Acrobat Reader\DC\AVGeneral
+
+- name: Create Adobe regkey
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\WOW6432Node\Adobe\Acrobat Reader\DC\AVGeneral
+    name: bHideUnreadMsgAtLaunch
+    data: 1
+    type: dword
+
+- name: Create Adobe regkey
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown\cWelcomeScreen
+
+- name: Create Adobe regkey
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown
+    name: bUsageMeasurement
+    data: 0
+    type: dword
+
+- name: Create Adobe regkey
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown
+    name: bUpdater
+    data: 0
+    type: dword
+
+- name: Create Adobe regkey
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown\cWelcomeScreen
+    name: bShowWelcomeScreen
+    data: 0
+    type: dword
+
+- name: Create Adobe regkey
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown\cWelcomeScreen
+
+- name: Create Adobe regkey
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Adobe\Acrobat Reader\DC\FeatureLockDown\cServices
+    name: bUpdater
+    data: 0
+    type: dword
+
+- name: Disable Acrobat update task
+  win_scheduled_task:
+    name: "Adobe Acrobat Update Task"
+    enabled: no
+
+- name: Set Adobe service startup mode to disabled and ensure it is stopped
+  ansible.windows.win_service:
+    name: AdobeARMservice
+    start_mode: disabled
+    state: stopped

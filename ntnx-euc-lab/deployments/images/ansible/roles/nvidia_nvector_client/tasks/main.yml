@@ -1,0 +1,24 @@
+---
+# Install NVIDIA nVector client
+- name: Install NVIDIA nVector Client
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\NVIDIA\\nVector\\2.1\\CirrusClient\\Installer\\CirrusClientInstall.exe"
+    state: present
+    creates_path: 'C:\Users\Public\Downloads\CirrusAgent.exe'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+
+- name: Disable num lock
+  ansible.windows.win_regedit:
+    path: HKU:\.Default\Control Panel\Keyboard
+    name: InitialKeyboardIndicators
+    data: 0
+
+- name: Unzip Citrix QuickLaunch
+  win_unzip:
+    src: "{{ sourcefiles_path }}\\Apps\\Citrix\\Client\\QuickLaunch\\CitrixQuickLaunch4.2.zip"
+    dest: C:\CitrixQuickLaunch4.2
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=netcredentials_only

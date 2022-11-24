@@ -1,0 +1,35 @@
+---
+# Install Citrix WEM Agent
+#- name: Create Log Folder
+#  win_file:
+#    path: C:\Logs
+#    state: directory
+- name: Enable WebView Runtime Installer
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate
+    name: InstallDefault
+    data: 1
+
+- name: Install WEM Agent On-Premises
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Citrix\\WEM\\2209\\Citrix Workspace Environment Management Agent.exe"
+    arguments: /quiet Cloud=0
+    state: present
+    expected_return_code: [0, 3, 3010]
+    product_id: '{84E93BDA-E4A7-405A-8D4D-0AB492FABC60}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  register: citrix_wem_agent_onprem
+
+- name: Change Infrastructure Agent Settings
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\WOW6432Node\Policies\Norskale\Agent Host
+    name: BrokerSvcName
+    data: "{{ wem_infra_server }}"
+
+- name: Disable WebView Runtime Installer
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate
+    name: InstallDefault
+    data: 0

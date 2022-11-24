@@ -1,0 +1,25 @@
+---
+# Install Java
+- name: Create Log Folder
+  win_file:
+    path: C:\\Logs
+    state: directory
+
+- name: Install Java
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Other\\Java\\jre-8u181-windows-x64.exe"
+    arguments: /s
+    state: present
+    expected_return_code: [0, 3010]
+    product_id: '{26A24AE4-039D-4CA4-87B4-2F64180181F0}'
+    log_path: C:\\Logs\\java.log
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+
+- name: Disable Java update
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\WOW6432Node\JavaSoft\Java Update\Policy
+    name: EnableJavaUpdate
+    data: 0
+    type: dword

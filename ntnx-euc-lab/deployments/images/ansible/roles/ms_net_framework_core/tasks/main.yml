@@ -1,0 +1,13 @@
+---
+- name: Install .Net 3.5 on server
+  ansible.windows.win_feature:
+    name: NET-Framework-Core
+    state: present
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  register: win_feature
+
+- name: Reboot if required
+  ansible.windows.win_reboot:
+  when: win_feature.reboot_required

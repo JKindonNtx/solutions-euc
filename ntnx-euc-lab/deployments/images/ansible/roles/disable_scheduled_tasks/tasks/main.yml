@@ -1,0 +1,13 @@
+---
+- name: "Is Scheduled Task {{ item.value.name }} present"
+  win_scheduled_task_stat:
+    name: '{{ item.value.name }}'
+    path: '{{ item.value.path }}'
+  register: task_stat
+
+- name: "Disable Scheduled Tasks {{ item.value.name }}"
+  win_scheduled_task:
+    name: '{{ item.value.name }}'
+    path: '{{ item.value.path }}'
+    enabled: no 
+  when: task_stat.task_exists

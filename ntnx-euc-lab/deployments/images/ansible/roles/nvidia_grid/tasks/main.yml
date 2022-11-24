@@ -1,0 +1,40 @@
+---
+# Install the NVIDIA GRID driver
+- name: Install NVIDIA GRID driver
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\NVIDIA\\GRID\\12.2\\Windows\\462.31_grid_win10_server2016_server2019_64bit_international.exe"
+    arguments: /s
+    state: present
+    product_id: '{B2FE1952-0186-46C3-BAEC-A80AA35AC5B8}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  register: nvidia_grid_install
+
+- name: Reboot after GRID driver install
+  ansible.windows.win_reboot:
+  when: nvidia_grid_install.changed
+
+- name: NVIDIA GRID Licensing server address
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\NVIDIA Corporation\Global\GridLicensing
+    name: ServerAddress
+    data: "{{ grid_license_server }}"
+
+- name: NVIDIA GRID Licensing server address
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\NVIDIA Corporation\Global\GridLicensing
+    name: ServerPort
+    data: 7070
+
+- name: NVIDIA GRID Licensing server address
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\NVIDIA Corporation\Global\GridLicensing
+    name: FeatureType
+    data: 1
+    type: dword
+  register: nvidia_license_install
+
+- name: Reboot after NVIDIA license registry
+  ansible.windows.win_reboot:
+  when: nvidia_license_install.changed

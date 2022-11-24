@@ -1,0 +1,11 @@
+---
+# Set Default File Type Associations
+- name: copy file from UNC path
+  win_copy:
+    src: "{{ sourcefiles_path }}\\Scripts\\Optimizations\\FTA\\DefaultApps.xml"
+    dest: '%windir%\\System32\\OEMDefaultAssociations.xml'
+    remote_src: true
+    force: yes
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=netcredentials_only
