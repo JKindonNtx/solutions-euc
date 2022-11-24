@@ -1,0 +1,44 @@
+// Details for the Docker Container that will be built
+{
+	"name": "ntnx-euc-lab",
+	"build": {
+		"dockerfile": "Dockerfile",
+		// Update 'VARIANT' to pick a Python version: 3, 3.10, 3.9, 3.8, 3.7, 3.6
+		// Append -bullseye or -buster to pin to an OS version.
+		// Use -bullseye variants on local on arm64/Apple Silicon.
+		"args": {
+			"VARIANT": "3.10-bullseye",
+			"PACKER_VERSION": "1.8.3",
+			"ANSIBLE_VERSION": "6.2.0",
+			"PYWINRM_VERSION": "0.4.3"
+		}
+	},
+	"runArgs": [
+		"--init",
+		"--cap-add=SYS_ADMIN",
+		"--cap-add=DAC_READ_SEARCH"
+	],
+
+	"mounts": [
+		"source=vscode-devcontainer-nutanixdev-nvd-bashhistory,target=/home/vscode/.nutanixdev,type=volume"
+	],
+	
+	// Configure tool-specific properties.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [
+				"4ops.packer",
+				"richie5um2.vscode-statusbar-json-path",
+				"redhat.ansible",
+				"mutantdino.resourcemonitor"
+			]
+		}
+	},
+	
+	"remoteUser": "vscode",
+	"features": {
+		"terraform": "1.3"
+	}
+}

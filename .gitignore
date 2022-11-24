@@ -20,6 +20,7 @@ inventory
 
 # MacOS
 *.DS_Store
+!.devcontainer/devcontainer.json
 
 # Visual Studio Code
 .vscode/*
@@ -34,4 +35,3 @@ inventory
 
 # Built Visual Studio Code Extensions
 *.vsix
-*.json
