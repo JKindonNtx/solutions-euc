@@ -1,5 +1,4 @@
 ---
----
 - name: Install Windows 10/11 Gold with Office 2019 x64 - LoginVSI - CTX
   hosts: all
   roles:
