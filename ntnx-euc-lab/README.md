@@ -109,6 +109,7 @@ Before you start, make sure to:
             "ip": "10.10.10.10",
             "username": "admin",
             "password": "password"
+            "CVMsshpassword": "password"
         },
         "VM": {
             "UEFI": true,
