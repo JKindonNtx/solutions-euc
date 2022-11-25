@@ -26,5 +26,10 @@
 	},
 	"Slackconfig": {
 		"Slack" : "https://hooks.slack.com/services/slackhookservice"
+	},
+	
+	"ProductKeys": {
+		"2019": "WMDGN-G9PQG-XVVXX-R3X43-63DFG",
+		"2022": "WX4NM-KYWYW-QJJR4-XV3QB-6VM33"
 	}
 }
