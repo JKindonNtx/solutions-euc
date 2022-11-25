@@ -314,16 +314,16 @@ Try {
             Start-Sleep -Seconds 5
         }
         Else {
-            Write-Host (Get-Date)":Task is completed."
+            Write-Host (Get-Date)":Task is completed"
         }
     }
     Until ($VMtaskstatus -eq 100)
 
     # Add virtual TPM to VM if needed
     if ($($VMconfig.VM.vTPM) -eq 'true' -or $($OSversion) -eq '11') {
-        Write-Host (Get-Date)": Add vTPM to VM $VMname."
+        Write-Host (Get-Date)":Add vTPM to VM $VMname"
         Set-VMvTPMacli -ClusterIP $mgmtIP -CVMsshpassword $CVMpassword -VMname $Name
-        Write-Host (Get-Date)": vTPM added to VM $VMname."
+        Write-Host (Get-Date)":vTPM added to VM $VMname"
     }
 
     # Get the Virtual Machine Information into a variable
@@ -350,7 +350,7 @@ Try {
     Add-Content -Path "/mnt/mdt/control/CustomSettings.ini" -value "SkipWizard=YES`r"
     
     # Power on the VM
-    Write-Host (Get-Date)":Power on VM."
+    Write-Host (Get-Date)":Power on VM"
     Set-VMpowerV2 -ClusterIP $mgmtIP -nxPassword $mgmtPassword -nxusrname $mgmtUser -APIpath "vms/$($VMUUID)/set_power_state" -Action "ON" -debug $debug
 
     # Preparing MDT phase, monitoring the VM to ensure the Task Sequence has finished
@@ -358,7 +358,7 @@ Try {
     Start-Sleep 180 
     
     # Wait for task sequence to finish and VM Shutdown to be completed
-    Write-Host (Get-Date)":Wait for VM to power off." 
+    Write-Host (Get-Date)":Wait for VM to power off" 
     Do {
         $VMinfo = Get-NTNXV2 -ClusterIP $mgmtIP -nxPassword $mgmtPassword -nxusrname $mgmtUser -APIpath "vms/$($VMUUID)" -debug $debug
         $VMpower = $VMinfo.power_state
@@ -366,13 +366,13 @@ Try {
             Start-Sleep -Seconds 5
         }
         Else {
-            Write-Host (Get-Date)":VM is $VMpower."
+            Write-Host (Get-Date)":VM is $VMpower"
         }
     }
     Until ($VMpower -eq "OFF")
 
     # Remove MDT Build CD-Rom
-    Write-Host (Get-Date)":Eject CD-ROM from VM."
+    Write-Host (Get-Date)":Eject CD-ROM from VM"
     Remove-CDROMV2 -ClusterIP $mgmtIP -nxPassword $mgmtPassword -nxusrname $mgmtUser -VMUUID "$($VMUUID)" -debug $debug
     Start-Sleep 5
 
@@ -381,11 +381,11 @@ Try {
     Set-Content -Path "/mnt/mdt/control/CustomSettings.ini" -Value $OriginalCustomSettings
 
     # Start the VM Back Up
-    Write-Host (Get-Date)":Power on VM."
+    Write-Host (Get-Date)":Power on VM"
     Set-VMpowerV2 -ClusterIP $mgmtIP -nxPassword $mgmtPassword -nxusrname $mgmtUser -APIpath "vms/$($VMUUID)/set_power_state" -Action "ON" -debug $debug
 
     # Wait for the VM to get an IP Address
-    Write-Host (Get-Date)":Wait for IP-address."
+    Write-Host (Get-Date)":Wait for IP-address"
     Start-Sleep 10
     Do {
         $VMNIC = Get-NTNXV2 -ClusterIP $mgmtIP -nxPassword $mgmtPassword -nxusrname $mgmtUser -APIpath "vms/$($VMUUID)/nics" -debug $debug
@@ -394,7 +394,7 @@ Try {
             Start-Sleep -Seconds 5
         }
         Else {
-            Write-Host (Get-Date)":IP address is $VMip."
+            Write-Host (Get-Date)":IP address is $VMip"
         }
     }
     Until (![string]::IsNullOrEmpty($VMip) -And $VMip -notlike "169.254*")
@@ -404,20 +404,20 @@ Try {
 
     # Start ansible playbooks if previously selected
     if ($Ansible -eq "y") {
-        Write-Host (Get-Date)":Start Ansible playbook."
+        Write-Host (Get-Date)":Start Ansible playbook"
         $Playbook = $ansiblepath + $PlaybookToRun
         $command = "ansible-playbook"
         $arguments = " -i " + $VMip + ", " + $playbook + " --extra-vars winos_path=" + $WinVerBuild
         start-process -filepath $command -argumentlist $arguments -passthru -wait 
-        Write-Host (Get-Date)":Ansible playbook is finished."
+        Write-Host (Get-Date)":Ansible playbook is finished"
     } else {
-        Write-Host (Get-Date)":Skipping Ansible playbook."
+        Write-Host (Get-Date)":Skipping Ansible playbook"
     }
 
     # Power off the VM
-    Write-Host (Get-Date)":Power off VM."                
+    Write-Host (Get-Date)":Power off VM"                
     Set-VMpowerV2 -ClusterIP $mgmtIP -nxPassword $mgmtPassword -nxusrname $mgmtUser -APIpath "vms/$($VMUUID)/set_power_state" -Action "ACPI_SHUTDOWN" -debug $debug
-    Write-Host (Get-Date)":Wait for VM to power off." 
+    Write-Host (Get-Date)":Wait for VM to power off" 
     Do {
         $VMinfo = Get-NTNXV2 -ClusterIP $mgmtIP -nxPassword $mgmtPassword -nxusrname $mgmtUser -APIpath "vms/$($VMUUID)" -debug $debug
         $VMpower = $VMinfo.power_state
@@ -425,19 +425,19 @@ Try {
             Start-Sleep -Seconds 5
         }
         Else {
-            Write-Host (Get-Date)":VM is $VMpower."
+            Write-Host (Get-Date)":VM is $VMpower"
         }
     }
     Until ($VMpower -eq "OFF")
 
     # Finished Build
     Start-Sleep 5
-    Write-Host (Get-Date)":Finished installation." 
+    Write-Host (Get-Date)":Finished installation" 
 
     # Create VM Snapshot
-    Write-Host (Get-Date)":Create snapshot."
+    Write-Host (Get-Date)":Create snapshot"
     New-VMSnapV2 -ClusterIP $mgmtIP -nxPassword $mgmtPassword -nxusrname $mgmtUser -VMUUID "$($VMUUID)" -Snapname "$($Name)_Snap_Optimized" -debug $debug
-    Write-Host (Get-Date)":Snapshot created."
+    Write-Host (Get-Date)":Snapshot created"
 
     # Update Slack Channel
     if ($Ansible -eq "y") {
@@ -445,7 +445,7 @@ Try {
     } else {
         $Message = "$Name has been shutdown and snapshotted - No post OS Ansible Playbooks have been run"
     }    
-    Write-Host (Get-Date)":Updating Slack Channel." 
+    Write-Host (Get-Date)":Updating Slack Channel" 
     Update-Slack -Message $Message -Slack $Slack
 }
 Catch {
