@@ -11,6 +11,7 @@
     sudo mkdir /mnt/mdt
     sudo chmod 777 /mnt/mdt
     sudo mount -t cifs -o rw,file_mode=0117,dir_mode=0177,username=%%DOMAIN_USER_NAME%%,password='%%DOMAIN_PASSWORD%%',domain=wsperf //%%MDT_SERVER_IP%%/%%MDT_SHARE_NAME%% /mnt/mdt"
+    sudo mount -t cifs -o rw,file_mode=0117,dir_mode=0177,username=administrator,password='nutanix/4u',domain=wsperf //10.57.64.39/Devops /mnt/mdt"
 #>
 
 # Region Functions and Variables
@@ -19,17 +20,19 @@
 # ====================================================================================================================================================
 
 # Import all the functions required
-$functions = get-childitem -Path "/workspaces/ntnx-euc-lab/deployments/images/mdt/functions/*.ps1"
+$functions = get-childitem -Path "/workspaces/solutions-euc/ntnx-euc-lab/deployments/images/mdt/functions/*.ps1"
 foreach($function in $functions){ Write-Host (Get-Date)":Importing - $function." ; import-module $function }
 
+install-module -name Posh-SSH -Force
+
 # Set the variables for the rest of the script
-if(Test-Path -Path "/workspaces/ntnx-euc-lab/deployments/images/mdt/CreateVM.json") {
+if(Test-Path -Path "/workspaces/solutions-euc/ntnx-euc-lab/deployments/images/mdt/CreateVM.json") {
     # JSON file found
     Write-Host (Get-Date)":JSON configuration file found." 
 
     # Read JSON File
     Write-Host (Get-Date)":Reading JSON File." 
-    $VMconfig = Get-Content -Path "/workspaces/ntnx-euc-lab/deployments/images/mdt/CreateVM.json" -Raw | ConvertFrom-Json
+    $VMconfig = Get-Content -Path "/workspaces/solutions-euc/ntnx-euc-lab/deployments/images/mdt/CreateVM.json" -Raw | ConvertFrom-Json
 
     # AHV Cluster Details
     Write-Host (Get-Date)":Reading AHV Details." 
@@ -37,6 +40,7 @@ if(Test-Path -Path "/workspaces/ntnx-euc-lab/deployments/images/mdt/CreateVM.jso
     $mgmtUser = "$($VMconfig.Cluster.username)"
     $mgmtPassword = "$($VMconfig.Cluster.password)"
     $mgmtPasswordSec = ConvertTo-SecureString $mgmtPassword -AsPlainText -Force
+    $CVMpassword = "$($VMconfig.Cluster.CVMsshpassword)"
 
     # Hypervisor Details
     Write-Host (Get-Date)":Reading Hypervisor Details." 
@@ -146,7 +150,7 @@ Do { $Ansible = Read-Host "Would you like to run an Ansible Playbook post OS Bui
 
 if($Ansible -eq "y"){
     # Get available Ansible Playbooks
-    $PlaybooksAvailable = get-childitem -Path "/workspaces/ntnx-euc-lab/deployments/images/ansible/*.yml"
+    $PlaybooksAvailable = get-childitem -Path "/workspaces/solutions-euc/ntnx-euc-lab/deployments/images/ansible/*.yml"
 
     # Loop through the Playbooks and display only those relevant to the operating system selected
     $i = 1 
@@ -271,6 +275,8 @@ Write-Host (Get-Date) ":Updated Task Sequence - $TaskSequenceID with new OS GUID
 # Build the Virtual Machine
 Try {
 
+
+
     # Create the VM
     Write-Host (Get-Date)":Create the VM with name $Name."
     $VMtask = Create-VMV2 -VMconfig $VMconfig -Name $Name -VMTimezone $VMtimezone -StorageUUID $StorageUUID -ISOUUID $ISOUUID -VLANUUID $VLANUUID -debug $debug
@@ -290,7 +296,9 @@ Try {
 
     # Add virtual TPM to VM if needed
     if ($($VMconfig.VM.vTPM) -eq 'true' -or $($OSversion) -eq '11') {
-        Set-VMvTPMacli -ClusterIP $($ClusterIP) -CVMsshpassword $($CVMsshpassword) -VMname $($Name)
+        Write-Host (Get-Date)": Add vTPM to VM $VMname."
+        Set-VMvTPMacli -ClusterIP $mgmtIP -CVMsshpassword $CVMpassword -VMname $Name
+        Write-Host (Get-Date)": vTPM added to VM $VMname."
     }
 
     # Get the Virtual Machine Information into a variable
