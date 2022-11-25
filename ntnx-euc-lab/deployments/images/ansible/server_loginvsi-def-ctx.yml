@@ -1,0 +1,13 @@
+---
+- name: Install Windows Server Gold - LoginVSI - CTX
+  hosts: all
+  roles:
+  - ms_net_framework_core
+  - ms_visual_c
+  - citrix_VDA_server
+  - adobe_reader_dc
+  - Doro_pdf
+  - java
+  - office2019-x64
+  - ms_file_types
+  - optimize
