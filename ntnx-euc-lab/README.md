@@ -59,7 +59,7 @@ Before you start, make sure to:
 
 1. Make sure you are connected to the Nutanix VPN - this is important because you will be connecting to on-premises clusters and building servers directly from the Docker Container
 
-2. Update the DockerFile and comment out the powershell command that is irrelevant to the Operating System you are running the Container on
+2. Update the DockerFile (found in the .devcontainer folder at the root of the repo) and comment out the powershell command that is irrelevant to the Operating System you are running the Container on
     ```
     # Use this line if you are using x64
     RUN curl -L -o /tmp/powershell.tar.gz https://github.com/PowerShell/PowerShell/releases/download/v7.3.0/powershell-7.3.0-linux-x64.tar.gz
