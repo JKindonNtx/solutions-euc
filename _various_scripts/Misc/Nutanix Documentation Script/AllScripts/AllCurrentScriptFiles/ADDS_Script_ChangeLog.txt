@@ -1,0 +1,38 @@
+#Original Script created April, 2014 by Carl Webster with a lot of help from Michael B. Smith Exchange MVP
+#webster@carlwebster.com
+#@carlwebster on Twitter
+#http://www.CarlWebster.com
+
+#Version 1.12 5-Oct-2015
+#	Add support for Word 2016
+#Version 1.11 8-Jul-2015
+#	Add in updated hardware inventory code
+#	Updated help text
+#Version 1.1 8-Aug-2014
+#	Cleanup the script's parameters section
+#	Code cleanup and standardization with the master template script
+#	Requires PowerShell V3 or later
+#	Removed support for Word 2007
+#	Word 2007 references in help text removed
+#	Cover page parameter now states only Word 2010 and 2013 are supported
+#	Most Word 2007 references in script removed:
+#		Function ValidateCoverPage
+#		Function SetupWord
+#		Function SaveandCloseDocumentandShutdownWord
+#	Function CheckWord2007SaveAsPDFInstalled removed
+#	If Word 2007 is detected, an error message is now given and the script is aborted
+#	Cleanup Word table code for the first row and background color
+#	Cleanup retrieving services and service startup type with Iain Brighton's optimization
+#	Add Iain Brighton's Word table functions
+#	Move Services table to new table functions
+#	Add numeric values for ForestMode and DomainMode
+#	Removed most of the [gc]::collect() as they are not needed
+#	Removed the CheckLoadedModule function
+#	Added a Requires activedirectory module statement#Version 1.02 5-Jun-2014
+#	Fixed the Enterprise Admins and Schema Admins privileged groups tables
+
+#Version 1.01 4-Jun-2014
+#	Added an AddDateTime parameter
+
+#Version 1.x script
+#originally released to the community on May 31, 2014

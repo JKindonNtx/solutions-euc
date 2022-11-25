@@ -63,6 +63,10 @@ if(Test-Path -Path "/workspaces/solutions-euc/ntnx-euc-lab/deployments/images/md
     Write-Host (Get-Date)":Reading Debug Details." 
     $debug = 2
 
+    # Product Keys
+    $2022 = "$($VMconfig.ProductKeys.2022)"
+    $2019 = "$($VMconfig.ProductKeys.2019)"
+
     # AHV Cluster Specifics
     Write-Host (Get-Date)":Reading Nutanix Specific Build Details." 
     $Clusterinfo = Get-Cluster -ClusterPC_IP $mgmtIP -nxPassword $mgmtPassword -clusername $mgmtUser -debug $debug
@@ -254,6 +258,7 @@ foreach($OperatingSystem in $OperatingSystems.oss.os){
 }
 
 # Read the Task Sequence Details into a variable and update the OS Guid with the build version selected
+# Validate the product setup key in the UnAttended.xml File and change if required
 Write-Host (Get-Date) ":Reading Task Sequence - $TaskSequenceID"
 $TSPath = "/mnt/mdt/control/$($TaskSequenceID)/ts.xml"
 $TSXML = [xml](Get-Content $TSPath)
@@ -261,6 +266,26 @@ $TSXML.sequence.globalVarList.variable | Where-Object {$_.name -eq "OSGUID"} | F
 $TSXML.sequence.group | Where-Object {$_.Name -eq "Install"} | ForEach-Object {$_.step} | Where-Object {$_.Name -eq "Install Operating System"} | ForEach-Object {$_.defaultVarList.variable} | Where-Object {$_.name -eq "OSGUID"} | ForEach-Object {$_."#text" = $RefImgOSguid}
 $TSXML.Save($TSPath)
 Write-Host (Get-Date) ":Updated Task Sequence - $TaskSequenceID with new OS GUID $RefImgOSGuid"
+
+# Read the OS Product key and update if required
+Write-Host (Get-Date) ":Reading Unattended Setup File"
+if($SearchString -eq "SRV"){
+    if($WinVerBuild -like "SRV-2019*"){
+        $PK = $2019
+    } else {
+        $PK = $2022
+    }
+    $USPath = "/mnt/mdt/control/$($TaskSequenceID)/Unattend.xml"
+    $USXML = [xml](Get-Content $USPath)
+    $PassSettings = $USXML.unattend.settings.component | Where-Object {$_.name -eq "Microsoft-Windows-Shell-Setup"}
+    foreach($Pass in $PassSettings){
+        if($null -ne $Pass.ProductKey){ $pass.ProductKey = $PK } 
+    }
+    $USXML.Save($USPath)
+    Write-Host (Get-Date) ":Updated Product Key to $PK"
+} else {
+    Write-Host (Get-Date) ":Skipping Unattended Setup File - Desktop OS"
+}
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------
 #endregion
@@ -426,4 +451,3 @@ Try {
 Catch {
     Write-Host (Get-Date)":Can't create the VM"
 }
-

@@ -1,0 +1,278 @@
+﻿function New-UnattendXml {
+<#
+    .SYNOPSIS
+       Creates a Windows unattended installation file.
+    .DESCRIPTION
+       Creates an unattended Windows 8/2012 installation file that will configure
+       an operating system deployed from a WIM file, deploy the operating system
+       and ensure that Powershell's desired state configuration (DSC) is configured
+       to pull its configuration from the specified pull server.
+#>
+    [CmdletBinding(DefaultParameterSetName="Dynamic",PositionalBinding=$false, HelpUri = 'http://virutalengine.co.uk/blog/new-unattendxml')]
+    [OutputType([System.String])]
+    Param (
+        # Computer name
+        [Parameter(ValueFromPipelineByPropertyName=$true)] [ValidateNotNullOrEmpty()] [ValidateLength(1,15)]
+        [string] $ComputerName,
+        # Local Administrator Password
+        [Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$true)] [ValidateNotNullOrEmpty()] [ValidateLength(6,30)]
+        [string] $Password,
+        # Static IP Address
+        [Parameter(ParameterSetName="Static")]
+        [switch] $Static,
+        # IP Address in CIDR notation e.g. 192.168.0.1/24
+        [Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$true, ParameterSetName="Static")]
+        [ValidatePattern("^((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)/(3[0-2]|[1-2]?[0-9])$")]
+        [string] $IPAddress,
+        # Default Gateway
+        [Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$true, ParameterSetName="Static")] [ValidateNotNullOrEmpty()]
+        [string] $DefaultGateway,
+        # DNS Server(s)
+        [Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$true, ParameterSetName="Static")] [ValidateNotNullOrEmpty()]
+        [string] $DNSServer,
+        # Input Locale
+        [Parameter(ValueFromPipelineByPropertyName=$true)]
+        [ValidateLength(5,5)] [string] $InputLocale = "en-US",
+        # System Locale
+        [Parameter(ValueFromPipelineByPropertyName=$true)]
+        [ValidateLength(5,5)] [string] $SystemLocale = "en-US",
+        # User Locale
+        [Parameter(ValueFromPipelineByPropertyName=$true)]
+        [ValidateLength(5,5)] [string] $UserLocale = "en-US",
+        # UI Language
+        [Parameter(ValueFromPipelineByPropertyName=$true)]
+        [ValidateLength(5,5)] [string] $UILanguage = "en-US",
+        # Timezone
+        [Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
+        [ValidateScript( { Test-TimeZone $_; })] [string] $Timezone,
+        # Registered Owner
+        [Parameter(ValueFromPipelineByPropertyName=$true)]
+        [ValidateNotNull()] [string] $RegisteredOwner = "Virtual Engine",
+        # Registered Organization
+        [Parameter(ValueFromPipelineByPropertyName=$true)]
+        [ValidateNotNull()] [string] $RegisteredOrganization = "Virtual Engine",
+        ## Array of hashtables with Description and Path keys
+        [Parameter(ValueFromPipelineByPropertyName=$true)] [hashtable[]] $ExecuteCommand
+    )
+
+    begin {
+
+        $templateUnattendXml = [xml] @'
+<?xml version="1.0" encoding="utf-8"?>
+<unattend xmlns="urn:schemas-microsoft-com:unattend">
+    <settings pass="specialize">
+        <component name="Microsoft-Windows-TCPIP" processorArchitecture="wow64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <Interfaces>
+                <Interface wcm:action="add">
+                    <Identifier>Ethernet</Identifier>
+                    <Ipv4Settings>
+                        <DhcpEnabled>false</DhcpEnabled>
+                        <Metric>10</Metric>
+                        <RouterDiscoveryEnabled>false</RouterDiscoveryEnabled>
+                    </Ipv4Settings>
+                    <UnicastIpAddresses>
+                        <IpAddress wcm:action="add" wcm:keyValue="1">%IpAddress%</IpAddress>
+                    </UnicastIpAddresses>
+                    <Routes>
+                        <Route wcm:action="add">
+                            <Prefix>0.0.0.0/0</Prefix>
+                            <Identifier>1</Identifier>
+                            <Metric>10</Metric>
+                            <NextHopAddress>%DefaultGateway%</NextHopAddress>
+                        </Route>
+                    </Routes>
+                </Interface>
+            </Interfaces>
+        </component>
+        <component name="Microsoft-Windows-DNS-Client" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <Interfaces>
+                <Interface wcm:action="add">
+                    <DNSServerSearchOrder>
+                        <IpAddress wcm:action="add" wcm:keyValue="1">%DnsServer%</IpAddress>
+                    </DNSServerSearchOrder>
+                    <Identifier>Ethernet</Identifier>
+                </Interface>
+            </Interfaces>
+        </component>
+        <component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <!-- $templateRunCommandXml will be inserted here -->
+        </component>
+    </settings>
+    <settings pass="oobeSystem">
+		<component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <InputLocale>en-GB</InputLocale>
+            <SystemLocale>en-GB</SystemLocale>
+            <UILanguage>en-US</UILanguage>
+            <UserLocale>en-GB</UserLocale>
+        </component>
+        <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <ComputerName>Unattended</ComputerName>
+            <OOBE>
+                <HideEULAPage>true</HideEULAPage>
+                <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
+                <NetworkLocation>Work</NetworkLocation>
+                <ProtectYourPC>3</ProtectYourPC>
+            </OOBE>
+            <TimeZone>GMT Standard Time</TimeZone>
+            <UserAccounts>
+                <AdministratorPassword>
+                    <Value>P@ssw0rd</Value>
+                    <PlainText>true</PlainText>
+                </AdministratorPassword>
+            </UserAccounts>
+            <RegisteredOrganization>Virtual Engine</RegisteredOrganization>
+            <RegisteredOwner>Virtual Engine</RegisteredOwner>
+        </component>
+    </settings>
+    <cpi:offlineImage cpi:source="wim:d:/systemimagemanager/server2012r2/sources/install.wim#Windows Server 2012 R2 SERVERSTANDARDCORE" xmlns:cpi="urn:schemas-microsoft-com:cpi" />
+</unattend>
+'@
+        [xml] $unattendXml = $templateUnattendXml;
+
+        $templateRunCommandXml = @'
+<RunSynchronousCommand wcm:action="add">
+    <Description>Description</Description>
+    <Order>1</Order>
+    <Path></Path>
+</RunSynchronousCommand>
+'@
+    }
+
+    process {
+
+        foreach ($setting in $unattendXml.Unattend.Settings) {
+            Write-Debug ('Setting: {0}' -f $setting.'Pass');
+            
+            foreach($component in $setting.Component) {
+                Write-Debug ('Component: {0}' -f $component.'Name');
+
+                if ($setting.'Pass' -eq 'specialize' -and $component.'Name' -eq 'Microsoft-Windows-TCPIP') {
+                    if ($Static) {
+                        $component.Interfaces.Interface.UnicastIpAddresses.IPAddress.'#text' = $IPAddress;
+                        Write-Verbose ('Set static IP address: {0}' -f $component.Interfaces.Interface.UnicastIpAddresses.IPAddress.'#text');
+                        $component.Interfaces.Interface.Routes.Route.NextHopAddress = $DefaultGateway;
+                        Write-Verbose ('Set default gateway: {0}' -f $component.Interfaces.Interface.Routes.Route.NextHopAddress);
+                    } else {
+                        [ref] $null = $setting.RemoveChild($component);
+                        Write-Verbose ('Set dynamic IP address.');
+                    }
+                }
+
+                if ($setting.'Pass' -eq 'specialize' -and $component.'Name' -eq 'Microsoft-Windows-DNS-Client') {
+                    if ($Static) {
+                        $component.Interfaces.Interface.DNSServerSearchOrder.IpAddress.'#text' = $DNSServer;
+                        Write-Verbose ('Set DNS server address: {0}' -f $component.Interfaces.Interface.DNSServerSearchOrder.IpAddress.'#text');
+                    }
+                    else {
+                        [ref] $null = $setting.RemoveChild($component);
+                    }
+                }
+
+                if ($setting.'Pass' -eq 'specialize' -and $component.'Name' -eq 'Microsoft-Windows-Deployment') {
+                    if ($ExecuteCommand -eq $null -or $ExecuteCommand.Length -eq 0) {
+                        ## Remove all references
+                        [ref] $null = $setting.RemoveChild($component);
+                        Write-Verbose ('Removed all synchronous commands.');
+                    }
+                    else {
+                        $commandOrder = 1;
+                        foreach ($synchronousCommand in $ExecuteCommand) {
+                            Write-Verbose ('Adding synchronous command {0}: ''{1}''.' -f $commandOrder, $synchronousCommand['Path']);
+                            $runSynchronousElement = $component.AppendChild($unattendXml.CreateElement('RunSynchronous','urn:schemas-microsoft-com:unattend'));
+
+                            $syncCommandElement = $runSynchronousElement.AppendChild($unattendXml.CreateElement('RunSynchronousCommand','urn:schemas-microsoft-com:unattend'));
+                            $syncCommandElement.SetAttribute('action','http://schemas.microsoft.com/WMIConfig/2002/State','add');
+                            
+                            $syncCommandDescriptionElement = $syncCommandElement.AppendChild($unattendXml.CreateElement('Description','urn:schemas-microsoft-com:unattend'));
+                            $syncCommandDescriptionTextNode = $syncCommandDescriptionElement.AppendChild($unattendXml.CreateTextNode($synchronousCommand['Description']));
+
+                            $syncCommandOrderElement = $syncCommandElement.AppendChild($unattendXml.CreateElement('Order','urn:schemas-microsoft-com:unattend'));
+                            $syncCommandOrderTextNode = $syncCommandOrderElement.AppendChild($unattendXml.CreateTextNode($commandOrder));
+
+                            $syncCommandPathElement = $syncCommandElement.AppendChild($unattendXml.CreateElement('Path','urn:schemas-microsoft-com:unattend'));
+                            $syncCommandPathTextNode = $syncCommandPathElement.AppendChild($unattendXml.CreateTextNode($synchronousCommand['Path']));
+
+                            $commandOrder++;
+                        }
+                    }
+                }
+
+                if ($setting.'Pass' -eq 'oobeSystem' -and $component.'Name' -eq 'Microsoft-Windows-International-Core') {
+                    $component.InputLocale = $InputLocale;
+                    Write-Verbose ('Set input locale {0}.' -f $component.InputLocale);
+                    $component.SystemLocale = $SystemLocale;
+                    Write-Verbose ('Set system locale: {0}.' -f $component.SystemLocale);
+                    $component.UILanguage = $UILanguage;
+                    Write-Verbose ('Set UI language: {0}.' -f $component.UILanguage);
+                    $component.UserLocale = $UserLocale;
+                    Write-Verbose ('Set user locale: {0}.' -f $component.UserLocale);
+                }
+
+                if ($setting.'Pass' -eq 'oobeSystem' -and $component.'Name' -eq 'Microsoft-Windows-Shell-Setup') {
+
+                    if ([string]::IsNullOrEmpty($ComputerName)) {
+                        $computerNameNode = $component.ChildNodes | Where Name -eq 'ComputerName';
+                        [ref] $null = $component.RemoveChild($computerNameNode);
+                        Write-Verbose ('Set dynamic computer name.');
+                    } else {
+                        $component.ComputerName = $ComputerName;
+                        Write-Verbose ('Set computer name: {0}.' -f $component.ComputerName);
+                    }
+                    
+                    $component.TimeZone = $Timezone;
+                    Write-Verbose ('Set timezone: {0}.' -f $component.Timezone);
+                    $component.UserAccounts.AdministratorPassword.Value = $Password;
+                    Write-Verbose ('Set Administrator password: {0}.' -f $component.UserAccounts.AdministratorPassword.Value);
+                    $component.RegisteredOrganization = $RegisteredOrganization;
+                    Write-Verbose ('Set registered organization: {0}.' -f $component.RegisteredOrganization);
+                    $component.RegisteredOwner = $RegisteredOwner;
+                    Write-Verbose ('Set registered owner: {0}.' -f $component.RegisteredOwner);
+                } 
+            }
+        }
+
+        Write-Output($unattendXml);
+    }
+
+    end { }
+}
+<# Example Usage #>
+
+$executeCommands = @(
+    @{
+        ## Don't need order as the array is ordered!
+        Path = 'Powershell.exe -ExecutionPolicy Bypass -File "C:\Bootstrap\Bootstrap.ps1" "%ConfigurationId% "%BootstrapServer%"';
+        Description = 'Run Test Lab Bootstrap';
+    }
+    @{
+        Path = 'Powershell.exe -ExecutionPolicy Bypass -File "C:\Bootstrap\Bootstrap2.ps1" "%ConfigurationId2% "%BootstrapServer2%"';
+        Description = 'Test secondary entry';
+    }
+);
+
+$StaticUnattendParams = @{
+    #ComputerName = 'DC1';
+    Password = 'P@ssw0rd';
+    TimeZone = 'GMT Standard Time';
+    UserLocale = 'en-GB';
+    SystemLocale = 'en-GB';
+    InputLocale = 'en-GB';
+    IpAddress = '192.168.219.100/24';
+    DefaultGateway = '192.168.219.2';
+    DnsServer = '192.168.219.2';
+    ExecuteCommand = $executeCommands;
+}
+
+New-UnattendXml -Static @StaticUnattendParams -Verbose;
+(New-UnattendXml -Static @StaticUnattendParams -Verbose).OuterXml;
+
+$DynamicUnattendParams = @{
+    #ComputerName = 'DC1';
+    Password = 'P@ssw0rd';
+    TimeZone = 'GMT Standard Time';
+    UserLocale = 'en-GB';
+    SystemLocale = 'en-GB';
+    InputLocale = 'en-GB';
+}
+
+#(New-UnattendXml @DynamicUnattendParams -Verbose).OuterXml;
