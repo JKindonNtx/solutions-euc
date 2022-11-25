@@ -33,7 +33,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends xorriso udftools growisofs genisoimage
 
 # Install Powershell
-RUN curl -L -o /tmp/powershell.tar.gz https://github.com/PowerShell/PowerShell/releases/download/v7.3.0/powershell-7.3.0-linux-arm64.tar.gz
+RUN curl -L -o /tmp/powershell.tar.gz https://github.com/PowerShell/PowerShell/releases/download/v7.3.0/powershell-7.3.0-linux-x64.tar.gz
 RUN sudo mkdir -p /opt/microsoft/powershell/7
 RUN sudo tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7
 RUN sudo chmod +x /opt/microsoft/powershell/7/pwsh
