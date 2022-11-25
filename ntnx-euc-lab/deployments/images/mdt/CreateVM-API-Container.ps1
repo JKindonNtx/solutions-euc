@@ -76,7 +76,7 @@ if(Test-Path -Path "/workspaces/ntnx-euc-lab/deployments/images/mdt/CreateVM.jso
 } else {
     # JSON file not found
     # Future State: Add the ability to generate a variable set at runtime
-    Write-Host (Fet-Date)":JSON configuration file NOT found - quitting." 
+    Write-Host (Get-Date)":JSON configuration file NOT found - quitting." 
     Break
 }
 
