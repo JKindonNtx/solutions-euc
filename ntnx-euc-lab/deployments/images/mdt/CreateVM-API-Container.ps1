@@ -76,7 +76,7 @@ if(Test-Path -Path "/workspaces/ntnx-euc-lab/deployments/images/mdt/CreateVM.jso
 } else {
     # JSON file not found
     # Future State: Add the ability to generate a variable set at runtime
-    Write-Host (Fet-Date)":JSON configuration file NOT found - quitting." 
+    Write-Host (Get-Date)":JSON configuration file NOT found - quitting." 
     Break
 }
 
@@ -289,7 +289,7 @@ Try {
     Until ($VMtaskstatus -eq 100)
 
     # Add virtual TPM to VM if needed
-    if ($($VMconfig.VM.vTPM) -eq 'true' or $($OSversion) -eq '11') {
+    if ($($VMconfig.VM.vTPM) -eq 'true' -or $($OSversion) -eq '11') {
         Set-VMvTPMacli -ClusterIP $($ClusterIP) -CVMsshpassword $($CVMsshpassword) -VMname $($Name)
     }
 
