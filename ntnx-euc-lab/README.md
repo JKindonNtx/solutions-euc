@@ -8,8 +8,9 @@ This repo is for your Nutanix End User Computing Lab Build Modules. It helps you
 * Windows Server 2022 and Windows 10/11 golden images
 
 ## Reguirements
-The Powershell script to ceeate the golden images: /deployments/images/mdt/CreateVM-API-Container.ps1
-This can be used using Visual Studio Code and Docker Desktop.
+The Powershell script to create the golden images: /deployments/images/mdt/CreateVM-API-Container.ps1
+
+This can be run using Visual Studio Code and Docker Desktop.
 
 Currently the script is using:
 
@@ -56,9 +57,9 @@ Before you start, make sure to:
     git clone https://github.com/nutanix-enterprise/solutions-euc.git
     ```
 
-1. Make sure you are connected to the Nutanix VPN - this is important because you will be connecting to on-premises clusters and build servers directly from the Docker Container
+1. Make sure you are connected to the Nutanix VPN - this is important because you will be connecting to on-premises clusters and building servers directly from the Docker Container
 
-2. Update the DockerFile and comment out the powershell commands that are irrelevant to the Operating System you are running the Container on.
+2. Update the DockerFile and comment out the powershell command that is irrelevant to the Operating System you are running the Container on
     ```
     # Use this line if you are using x64
     RUN curl -L -o /tmp/powershell.tar.gz https://github.com/PowerShell/PowerShell/releases/download/v7.3.0/powershell-7.3.0-linux-x64.tar.gz
@@ -90,15 +91,15 @@ Before you start, make sure to:
 
     ![](/ntnx-euc-lab/images/posh_terminal.png)
 
-3. Move to the Build Directory by entering the following command
+3. Move to the build directory by entering the following command
 
     ```
     cd ./ntnx-euc-lab/deployments/images/mdt/
     ```
 
-4. Rename the CreateVM.json.template file to CreateVM.json and update file with your values (NOTE: At present there is no ability to create new VLANS so please ensure the details you enter are relevant for the target cluster you are planning on deploying to)
+4. Rename the CreateVM.json.template file to CreateVM.json and update file with your values (Note: At present there is no ability to create new VLANS so please ensure the details you enter are relevant for the target cluster you are planning on deploying to)
 
-    For reference, the Ansible path should be "/workspaces/solutions-euc/ntnx-euc-lab/deployments/images/ansible/" including the trailing /
+    For reference, the Ansible path should be "/workspaces/solutions-euc/ntnx-euc-lab/deployments/images/ansible/" including the last /
 
     Once the file is update, close and save it
 
@@ -146,6 +147,6 @@ Before you start, make sure to:
     cd ./ntnx-euc-lab/deployments/images/mdt/
     ```
 
-1. As the build progresses you will receive 2 notifications in the #vsi-monitor Slack channel. The first one is to tell you that the MDT portion of the build sequence is complete and the second is to tell you that the Ansible process has completed.  Please note you will receive 2 notifications even if you select No for the Ansible run as the second notification takes this into account but will only happen after the VM is shot down and a snapshot has been taken.
+1. As the build progresses you will receive 2 notifications in the #vsi-monitor Slack channel. The first one is to tell you that the MDT portion of the build sequence is complete and the second is to tell you that the Ansible process has completed.  Please note you will receive 2 notifications even if you select No for the Ansible run as the second notification takes this into account but will only happen after the VM is shot down and a snapshot has been taken
 
     ![](/ntnx-euc-lab/images/vsi_result.png)
