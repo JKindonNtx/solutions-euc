@@ -1,19 +1,14 @@
 ---
-- name: Install Windows Server Gold
+- name: Install Windows Server Gold with Office 2019 x64 - LoginVSI - VMW
   hosts: all
   roles:
   - ms_net_framework_core
-  #- windows_updates
   - ms_visual_c
   - citrix_VDA_server
-  #- vmware_horizon_agent
+  - vmware_horizon_agent
   - adobe_reader_dc
   - Doro_pdf
   - java
-  #- office2016
   - office2019-x64
   - ms_file_types
-  #- nvidia_nvector_target
-  #- google_chrome
-  #- nvidia_grid
   - optimize

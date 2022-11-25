@@ -1,5 +1,5 @@
 ---
-- name: Install Windows Server Gold - LoginVSI - CTX
+- name: Install Windows Server Gold with Office 2019 x64 - LoginVSI - CTX
   hosts: all
   roles:
   - ms_net_framework_core
