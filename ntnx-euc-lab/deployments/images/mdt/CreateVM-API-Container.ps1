@@ -28,14 +28,14 @@ install-module -name Posh-SSH -Force
 # Set the variables for the rest of the script
 if(Test-Path -Path "/workspaces/solutions-euc/ntnx-euc-lab/deployments/images/mdt/CreateVM.json") {
     # JSON file found
-    Write-Host (Get-Date)":JSON configuration file found." 
+    Write-Host (Get-Date)":JSON configuration file found" 
 
     # Read JSON File
-    Write-Host (Get-Date)":Reading JSON File." 
+    Write-Host (Get-Date)":Reading JSON File" 
     $VMconfig = Get-Content -Path "/workspaces/solutions-euc/ntnx-euc-lab/deployments/images/mdt/CreateVM.json" -Raw | ConvertFrom-Json
 
     # AHV Cluster Details
-    Write-Host (Get-Date)":Reading AHV Details." 
+    Write-Host (Get-Date)":Reading AHV Details" 
     $mgmtIP = "$($VMconfig.Cluster.ip)"   
     $mgmtUser = "$($VMconfig.Cluster.username)"
     $mgmtPassword = "$($VMconfig.Cluster.password)"
@@ -43,24 +43,24 @@ if(Test-Path -Path "/workspaces/solutions-euc/ntnx-euc-lab/deployments/images/md
     $CVMpassword = "$($VMconfig.Cluster.CVMsshpassword)"
 
     # Hypervisor Details
-    Write-Host (Get-Date)":Reading Hypervisor Details." 
+    Write-Host (Get-Date)":Reading Hypervisor Details" 
     $hypervisor = "$($VMconfig.VM.Hypervisor)"
 
     # MDT Details
-    Write-Host (Get-Date)":Reading MDT Details." 
+    Write-Host (Get-Date)":Reading MDT Details" 
     $MDTServerIP = "$($VMConfig.MDTconfig.serverIP)"
     $MDTShare = "$($VMConfig.MDTconfig.share)"
 
     # Ansible Details
-    Write-Host (Get-Date)":Reading Ansible Details." 
+    Write-Host (Get-Date)":Reading Ansible Details" 
     $ansiblepath = "$($VMconfig.Ansibleconfig.ansiblepath)"
 
     # Slack Details
-    Write-Host (Get-Date)":Reading Slack Details." 
+    Write-Host (Get-Date)":Reading Slack Details" 
     $Slack = "$($VMConfig.Slackconfig.slack)"
 
     # Debug Status
-    Write-Host (Get-Date)":Reading Debug Details." 
+    Write-Host (Get-Date)":Reading Debug Details" 
     $debug = 2
 
     # Product Keys
@@ -68,7 +68,7 @@ if(Test-Path -Path "/workspaces/solutions-euc/ntnx-euc-lab/deployments/images/md
     $2019 = "$($VMconfig.ProductKeys.2019)"
 
     # AHV Cluster Specifics
-    Write-Host (Get-Date)":Reading Nutanix Specific Build Details." 
+    Write-Host (Get-Date)":Reading Nutanix Specific Build Details" 
     $Clusterinfo = Get-Cluster -ClusterPC_IP $mgmtIP -nxPassword $mgmtPassword -clusername $mgmtUser -debug $debug
     $VMTimezone = ($Clusterinfo.entities |Where-Object {$_.status.resources.network.external_ip -eq $($mgmtIP)}).status.resources.config.timezone
     $Containerinfo = Get-NTNXV2 -ClusterIP $mgmtIP -nxPassword $mgmtPassword -nxusrname $mgmtUser -APIpath "storage_containers" -debug $debug
@@ -80,11 +80,11 @@ if(Test-Path -Path "/workspaces/solutions-euc/ntnx-euc-lab/deployments/images/md
     $ISOinfo = Get-NTNXV2 -ClusterIP $mgmtIP -nxPassword $mgmtPassword -nxusrname $mgmtUser -APIpath "images" -debug $debug
     $ISOUUID = ($ISOinfo.entities |Where-Object {$_.name -eq $($VMconfig.VM.ISO)}).vm_disk_id
 
-    Write-Host (Get-Date)":Variable Read Finished." 
+    Write-Host (Get-Date)":Variable Read Finished" 
 } else {
     # JSON file not found
     # Future State: Add the ability to generate a variable set at runtime
-    Write-Host (Get-Date)":JSON configuration file NOT found - quitting." 
+    Write-Host (Get-Date)":JSON configuration file NOT found - quitting" 
     Break
 }
 
@@ -97,9 +97,9 @@ if(Test-Path -Path "/workspaces/solutions-euc/ntnx-euc-lab/deployments/images/md
 # ====================================================================================================================================================
 
 if(Test-Path -Path "/mnt/mdt/Control"){
-    Write-Host (Get-Date) ":Connection to MDT Server is good, continuing."
+    Write-Host (Get-Date) ":Connection to MDT Server is good, continuing"
 } else {
-    Write-Host (Get-Date) ":No Connection to MDT Server, quitting."
+    Write-Host (Get-Date) ":No Connection to MDT Server, quitting"
     Break
 }
 
@@ -230,7 +230,7 @@ if ($confirmationStart -eq 'n') { exit }
 # ====================================================================================================================================================
 
 # Get OS XML for Operating system GUID
-Write-Host (Get-Date) ":Getting available operating systems."
+Write-Host (Get-Date) ":Getting available operating systems..."
 [xml]$OperatingSystems = Get-Content -path "/mnt/mdt/control/operatingsystems.xml"
 
 # Search XML file for matching Operating System
@@ -303,10 +303,10 @@ Try {
 
 
     # Create the VM
-    Write-Host (Get-Date)":Create the VM with name $Name."
+    Write-Host (Get-Date)":Create the VM with name $Name"
     $VMtask = Create-VMV2 -VMconfig $VMconfig -Name $Name -VMTimezone $VMtimezone -StorageUUID $StorageUUID -ISOUUID $ISOUUID -VLANUUID $VLANUUID -debug $debug
     $VMtaskID = $VMtask.task_uuid
-    Write-Host (Get-Date)":Wait for VM create task ($VMtaskID) to finish." 
+    Write-Host (Get-Date)":Wait for VM create task ($VMtaskID) to finish" 
     Do {
         $VMtaskinfo = Get-NTNXV2 -ClusterIP $mgmtIP -nxPassword $mgmtPassword -nxusrname $mgmtUser -APIpath "tasks/$($VMtaskID)" -debug $debug
         $VMtaskstatus = $VMtaskinfo.percentage_complete
@@ -327,7 +327,7 @@ Try {
     }
 
     # Get the Virtual Machine Information into a variable
-    Write-Host (Get-Date)":Gather Virtual Machine Details."
+    Write-Host (Get-Date)":Gather Virtual Machine Details"
     $VMinfo = Get-NTNXV2 -ClusterIP $mgmtIP -nxPassword $mgmtPassword -nxusrname $mgmtUser -APIpath "vms" -debug $debug
     $VMUUID = ($VMinfo.entities |Where-Object {$_.name -eq $($Name)}).uuid
     Write-Host (Get-Date)":ID is $VMUUID"
