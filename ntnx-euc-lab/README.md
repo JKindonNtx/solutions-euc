@@ -7,7 +7,7 @@ This repo is for your Nutanix End User Computing Lab Build Modules. It helps you
 
 * Windows Server 2022 and Windows 10/11 golden images
 
-## Reguirements
+## Requirements
 The Powershell script to create the golden images: /deployments/images/mdt/CreateVM-API-Container.ps1
 
 This can be run using Visual Studio Code and Docker Desktop.
