@@ -144,7 +144,7 @@ Before you start, make sure to:
 1. Run the following command to start a build then follow the on screen prompts to configure the build variables
 
     ```
-    cd ./ntnx-euc-lab/deployments/images/mdt/
+    ./CreateVM-API-Container.ps1
     ```
 
 1. As the build progresses you will receive 2 notifications in the #vsi-monitor Slack channel. The first one is to tell you that the MDT portion of the build sequence is complete and the second is to tell you that the Ansible process has completed.  Please note you will receive 2 notifications even if you select No for the Ansible run as the second notification takes this into account but will only happen after the VM is shot down and a snapshot has been taken
