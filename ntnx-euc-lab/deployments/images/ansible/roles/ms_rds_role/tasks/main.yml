@@ -1,4 +1,3 @@
----
 - name: Install Remote-Desktop-Services
   win_feature:
     name: Remote-Desktop-Services
