@@ -1,4 +1,4 @@
-Function Create-VMV2 {
+Function New-VMV2 {
     <#
     .Synopsis
         This function will create a snapshot of the VM using the V2 API.

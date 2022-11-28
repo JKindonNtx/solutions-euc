@@ -20,7 +20,7 @@
 # ====================================================================================================================================================
 
 # Import all the functions required
-$functions = get-childitem -Path "/workspaces/solutions-euc/ntnx-euc-lab/deployments/images/mdt/functions/*.ps1"
+$functions = get-childitem -Path "/workspaces/solutions-euc/ntnx-euc-lab/deployments/images/mdt/functions/*.psm1"
 foreach($function in $functions){ Write-Host (Get-Date)":Importing - $function." ; import-module $function }
 
 install-module -name Posh-SSH -Force
@@ -78,7 +78,21 @@ if(Test-Path -Path "/workspaces/solutions-euc/ntnx-euc-lab/deployments/images/md
     $Networkinfo = Get-NTNXV2 -ClusterIP $mgmtIP -nxPassword $mgmtPassword -nxusrname $mgmtUser -APIpath "networks" -debug $debug
     $VLANUUID = ($Networkinfo.entities |Where-Object {$_.name -eq $($VMconfig.VM.VLAN)}).uuid
     $ISOinfo = Get-NTNXV2 -ClusterIP $mgmtIP -nxPassword $mgmtPassword -nxusrname $mgmtUser -APIpath "images" -debug $debug
-    $ISOUUID = ($ISOinfo.entities |Where-Object {$_.name -eq $($VMconfig.VM.ISO)}).vm_disk_id
+
+    if ($ISOinfo.entities | Where-Object {$_.name -eq "$($VMconfig.VM.ISO)"}){
+        Write-Host (Get-Date)":ISO File Available" 
+        $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($VMconfig.VM.ISO)}).vm_disk_id
+    } else {
+        Write-Host (Get-Date)":ISO File Not Found" 
+        $ISOUri = "http://" + $MDTServerIP + "/mdt/" + $VMconfig.VM.ISO
+        $ISOname = $VMconfig.VM.ISO
+        $ISOtask = New-NTNXISOV2 -ClusterIP $mgmtIP -nxPassword $mgmtPassword -nxusrname $mgmtUser -StorageUUID "$($StorageUUID)" -ISOurl "$($ISOUri)" -ISOname "$($ISOname)" -debug $debug
+        Write-Host (Get-Date)":ISO uploading..."
+        Do { $UploadTask = Get-NTNXTasks -ClusterIP $mgmtIP -nxPassword $mgmtPassword -nxusrname $mgmtUser -ISOtask "$($ISOtask.task_uuid)" -debug $debug } Until ($UploadTask.completed_tasks_info.progress_status -eq "Succeeded")
+        Write-Host (Get-Date)":ISO upload complete"
+        $ISOinfo = Get-NTNXV2 -ClusterIP $mgmtIP -nxPassword $mgmtPassword -nxusrname $mgmtUser -APIpath "images" -debug $debug
+        $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($VMconfig.VM.ISO)}).vm_disk_id
+    }
 
     Write-Host (Get-Date)":Variable Read Finished" 
 } else {
@@ -304,7 +318,7 @@ Try {
 
     # Create the VM
     Write-Host (Get-Date)":Create the VM with name $Name"
-    $VMtask = Create-VMV2 -VMconfig $VMconfig -Name $Name -VMTimezone $VMtimezone -StorageUUID $StorageUUID -ISOUUID $ISOUUID -VLANUUID $VLANUUID -debug $debug
+    $VMtask = New-VMV2 -VMconfig $VMconfig -Name $Name -VMTimezone $VMtimezone -StorageUUID $StorageUUID -ISOUUID $ISOUUID -VLANUUID $VLANUUID -debug $debug
     $VMtaskID = $VMtask.task_uuid
     Write-Host (Get-Date)":Wait for VM create task ($VMtaskID) to finish" 
     Do {
