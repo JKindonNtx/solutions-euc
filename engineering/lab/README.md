@@ -114,7 +114,7 @@ Before you start, make sure to have the following:
             "Directory" : "mdt"
         },
         "Ansibleconfig": {
-            "ansiblepath": "/workspaces/solutions-euc/engineering/lab/ansible/*.yml"
+            "ansiblepath": "/workspaces/solutions-euc/engineering/lab/ansible/"
         },
         "Slackconfig": {
             "Slack" : "https://hooks.slack.com/services/slackhook"
