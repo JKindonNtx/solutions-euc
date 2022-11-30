@@ -4,7 +4,7 @@
   roles:
   - ms_net_framework_core
   - ms_visual_c
-  - citrix_VDA_server
+  - MS_RDS_Role
   - vmware_horizon_agent
   - adobe_reader_dc
   - Doro_pdf
