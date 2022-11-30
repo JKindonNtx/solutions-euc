@@ -52,9 +52,9 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
     $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($json.VM.ISO)}).vm_disk_id
 
     # Validate ISO, Storage Container and VLAN are available for the build
-    if (!($ISOinfo.entities | Where-Object {$_.name -eq "$($json.VM.ISO)"})){ Write-Host (Get-Date)":ISO File Not Found"; Write-Host (Get-Date)":Please run New-ClusterConfigAHV.ps1"; break } else { Write-Host (Get-Date)":ISO file found" }
-    if (!($Networkinfo.entities | Where-Object {$_.name -eq "$($json.VM.VLAN)"})){ Write-Host (Get-Date)":VLAN File Not Found"; Write-Host (Get-Date)":Please run New-ClusterConfigAHV.ps1"; break }  else { Write-Host (Get-Date)":VLAN found" }
-    if (!($Containerinfo.entities | Where-Object {$_.name -eq "$($json.VM.Container)"})){ Write-Host (Get-Date)":Storage Container Not Found"; Write-Host (Get-Date)":Please run New-ClusterConfigAHV.ps1"; break }  else { Write-Host (Get-Date)":Storage Container found" }
+    if (!($ISOinfo.entities | Where-Object {$_.name -eq "$($json.VM.ISO)"})){ Write-Host (Get-Date)":ISO File Not Found"; Write-Host (Get-Date)":Please run New-ClusterConfigAHV.ps1"; exit } else { Write-Host (Get-Date)":ISO file found" }
+    if (!($Networkinfo.entities | Where-Object {$_.name -eq "$($json.VM.VLAN)"})){ Write-Host (Get-Date)":VLAN File Not Found"; Write-Host (Get-Date)":Please run New-ClusterConfigAHV.ps1"; exit }  else { Write-Host (Get-Date)":VLAN found" }
+    if (!($Containerinfo.entities | Where-Object {$_.name -eq "$($json.VM.Container)"})){ Write-Host (Get-Date)":Storage Container Not Found"; Write-Host (Get-Date)":Please run New-ClusterConfigAHV.ps1"; exit }  else { Write-Host (Get-Date)":Storage Container found" }
 }
 
 # Validate connectivity to MDT Server and mount drive if required
