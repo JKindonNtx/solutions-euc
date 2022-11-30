@@ -16,17 +16,22 @@
 	   "ISO": "LiteTouchPE_x64-NP.iso", 
 	   "VLAN": "VLAN164",
        "Container": "VDI",
-       "Hypervisor": "AHV"
+       "Hypervisor": "AHV",
+	   "Method": "MDT"
 	},
 	"MDTconfig": {
 	   "serverIP" : "10.10.10.10",
-	   "share" : "MDTShare$"
+	   "share" : "MDT$",
+	   "UserName" : "administrator",
+	   "Password" : "password",
+	   "Domain" : "domain",
+	   "Directory" : "mdt"
 	},
 	"Ansibleconfig": {
-		"ansiblepath": "/path/to/ansible/playbooks/including/trailing/slash/"
+		"ansiblepath": "/workspaces/solutions-euc/engineering/lab/ansible/"
 	},
 	"Slackconfig": {
-		"Slack" : "https://hooks.slack.com/services/slackhookservice"
+		"Slack" : "https://hooks.slack.com/services/slackhook"
 	},
 	
 	"ProductKeys": {
