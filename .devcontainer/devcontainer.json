@@ -1,6 +1,6 @@
 // Details for the Docker Container that will be built
 {
-	"name": "ntnx-euc-lab",
+	"name": "solutions-euc",
 	"build": {
 		"dockerfile": "Dockerfile",
 		// Update 'VARIANT' to pick a Python version: 3, 3.10, 3.9, 3.8, 3.7, 3.6
