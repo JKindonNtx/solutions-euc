@@ -271,7 +271,7 @@ if ($Ansible -eq "y") {
     Write-Host (Get-Date)":Start Ansible playbook"
     $Playbook = "$($JSON.Ansibleconfig.ansiblepath)" + $PlaybookToRun
     $command = "ansible-playbook"
-    $arguments = " -i " + $VMip + ", " + $playbook + " --extra-vars winos_path=" + $WinVerBuild
+    $arguments = " -i " + $VMip + ", " + $playbook + " --extra-vars winos_path=" + $($OSDetails.WinVerBuild)
     start-process -filepath $command -argumentlist $arguments -passthru -wait 
     Write-Host (Get-Date)":Ansible playbook is finished"
 } else {
