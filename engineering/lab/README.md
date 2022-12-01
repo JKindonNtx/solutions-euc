@@ -48,7 +48,7 @@ Before you start, make sure to have the following:
 
     * MDT Task Sequence configured for the relevant build
 
-## Steps
+## Steps to build a Virtual Machine
 
 1. Clone this repository
 
@@ -79,7 +79,7 @@ Before you start, make sure to have the following:
     cd ./engineering/lab/build/
     ```
 
-5. Rename the CreateVM.json.template file to CreateVM.json and update file with your values (Note: At present there is no ability to create new VLANS, so please ensure the details you enter are relevant for the target cluster you are planning on deploying to)
+5. Rename the CreateVM.json.template file to CreateVM.json and update file with your values (Note: to add VLANS, ISO Images or Containers please use the New-ClusterConfigAHV script detailed further down)
 
     Once the file is update, close and save it
 
@@ -140,3 +140,69 @@ Before you start, make sure to have the following:
   Please note you will receive 2 notifications even if you select No for the Ansible run as the second notification takes this into account but will only happen after the VM is shut down and a snapshot has been taken
 
     ![](/engineering/lab/images/vsi_result.png)
+
+
+## Steps to pre-configure a Nutanix Cluster
+
+1. Clone this repository
+
+    ```
+    git clone https://github.com/nutanix-enterprise/solutions-euc.git
+    ```
+
+1. Make sure you are connected to the Nutanix VPN - this is important because you will be connecting to on-premises clusters and building servers directly from the Docker Container
+
+
+2. Make sure you have the docker desktop application running on your laptop. Click on Remote Explorer on the left of Visual Studio Code, then open Folder in Container. Make sure to open the Solutions-EUC folder and Visual Studio will build a container for you, install all the relevant tools and open the repository within that container. The first time you open up the folder in the container it may take some time as it has to download and install all the components
+
+    Open In Folder
+
+    ![](/engineering/lab/images/open_in_folder.png)
+
+    You will know you are connected to the container when you see the following in the bottom right of your VS Code window
+
+    ![](/engineering/lab/images/docker_connected.png)
+
+3. Open a PowerShell terminal inside the container using the Terminal Dropdown in Visual Studio Code, this can be found on the right hand side of the terminal
+
+    ![](/engineering/lab/images/posh_terminal.png)
+
+4. Move to the build directory by entering the following command
+
+    ```
+    cd ./engineering/lab/build/
+    ```
+
+5. Rename the ConfigureClusterAHV.json.template file to ConfigureClusterAHV.json and update file with your values
+
+    Once the file is update, close and save it
+
+    ```
+    {
+        "Cluster": {
+            "ip": "10.10.10.10",
+            "username": "admin",
+            "password": "password"
+        },
+        "Defaults": {
+            "ISO": "BOOT.iso", 
+            "ISOUrl": "http://URL/BOOT.iso",
+            "VLANName": "VLAN164",
+            "VLAN": "164",
+            "Container": "VDI"
+        }
+        "Slackconfig": {
+            "Slack" : "https://hooks.slack.com/services/slackhook"
+        },
+    }
+    ```
+
+6. Run the following command to start a build then follow the on-screen prompts to configure the build variables
+
+    ```
+    ./New-ClusterConfigAHV.ps1
+    ```
+
+7. Once the configuration has completed you will receive a notification in the #vsi-monitor slack channel
+
+    ![](/engineering/lab/images/ahv_reconfigure.png)

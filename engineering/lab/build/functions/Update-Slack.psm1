@@ -37,9 +37,9 @@ function Update-Slack
             username = "LoginVSI Automation Factory"
             attachments = @(
                 @{
-                    fallback = "Finished installing VM template from Docker."
+                    fallback = "Finished Running Script From Docker."
                     color = "#36a64f"
-                    pretext = "*Finished installing VM template from Docker*"
+                    pretext = "*Finished Running Script From Docker*"
                     title = "Automation Complete"
                     text = $Message  
                 }
