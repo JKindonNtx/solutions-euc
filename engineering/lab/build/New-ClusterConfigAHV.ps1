@@ -75,6 +75,8 @@ if ($confirmationStart -eq 'n') {
     $SendToSlack = "n"
     $SlackMessage = ""
 
+    # Add new local user to the cluster and disable admin account
+    New-NutanixLocalUser -ClusterIP $($JSON.Cluster.IP) -CVMsshpassword $($JSON.Cluster.CVMsshpassword) -username $($JSON.Cluster.username) -userpassword $($JSON.Cluster.password)
     # Check and Update the Network
     $VLANinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "networks"
     $VLANUUID = ($VLANinfo.entities | Where-Object {$_.name -eq $($JSON.Defaults.VLANName)}).uuid

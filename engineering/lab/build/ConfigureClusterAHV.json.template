@@ -2,7 +2,8 @@
     "Cluster": {
 		"ip": "10.10.10.10",
 		"username": "admin",
-		"password": "password"
+		"password": "password",
+		"CVMsshpassword": "nutanix/4u"
 	},
 	"Defaults": {
 		"ISO": "BOOT.iso", 
