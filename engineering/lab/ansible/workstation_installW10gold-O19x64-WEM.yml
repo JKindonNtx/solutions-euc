@@ -2,18 +2,18 @@
 - name: Install Windows 10 Gold with Office 2019 x64
   hosts: all
   roles:
-  - ms_net_framework
-  #- windows_updates
-  - ms_visual_c
-  - citrix_VDA_client
-  #- vmware_horizon_agent
-  - adobe_reader_dc
-  - Doro_pdf
-  - java
-  #- office2016
-  - office2019-x64
-  - ms_file_types
-  #- google_chrome
-  #- nvidia_grid
-  - citrix_wem_agent_onprem
-  - optimize
+  - install_ms_net_framework_3.5
+  #- run_ms_windows_update
+  - install_ms_visual_c_2013u5
+  - install_citrix_vda_client_2203_1
+  #- install_vmware_horizon_agent_84_2111
+  - install_adobe_reader_dc
+  - install_doro_pdf_reader_220
+  - install_oracle_java_8u181-windows-x64
+  #- install_ms_office_2016
+  - install_ms_office_2019_x64
+  - run_ms_file_types
+  #- install_google_chrome
+  #- install_nvdia_grid_122
+  - install_citrix_wem_agent_onprem_2209
+  - run_optimize
