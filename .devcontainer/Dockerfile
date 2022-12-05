@@ -7,7 +7,6 @@ ARG USERNAME="vscode"
 ARG PACKER_VERSION="none"
 ARG ANSIBLE_VERSION="none"
 ARG PYWINRM_VERSION="none"
-ARG PS_RUNTIME_ENV="none"
 
 COPY library-scripts/*.sh /tmp/library-scripts/
 
@@ -34,15 +33,4 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends xorriso udftools growisofs genisoimage
 
 # Install Powershell
-RUN if [ "${PS_RUNTIME_ENV}" = "ARM" ]; then \
-        curl -L -o /tmp/powershell.tar.gz https://github.com/PowerShell/PowerShell/releases/download/v7.3.0/powershell-7.3.0-linux-arm64.tar.gz; \
-    fi
-
-RUN if [ "${PS_RUNTIME_ENV}" = "X64" ]; then \
-        curl -L -o /tmp/powershell.tar.gz https://github.com/PowerShell/PowerShell/releases/download/v7.3.0/powershell-7.3.0-linux-x64.tar.gz; \
-    fi
-
-RUN sudo mkdir -p /opt/microsoft/powershell/7
-RUN sudo tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7
-RUN sudo chmod +x /opt/microsoft/powershell/7/pwsh
-RUN sudo ln -s /opt/microsoft/powershell/7/pwsh /usr/bin/pwsh
+RUN bash /tmp/library-scripts/powershell.sh ;
