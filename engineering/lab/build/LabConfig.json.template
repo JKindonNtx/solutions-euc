@@ -6,20 +6,19 @@
 	  	"CVMsshpassword": "password"
 	},
 	"VM": {
-	   	"UEFI": true,
-	   	"Secureboot": true,
-	   	"vTPM": false,
-       	"CPUsockets": "1",
-	   	"CPUcores": "2",
-       	"vRAM": "4096",
-	   	"Disksize": "64",
-	   	"ISO": "LiteTouchPE_x64-NP.iso",
-       	"ISOUrl": "http://webserver/mdt/",
-	   	"VLAN": "VLAN164",
-       	"VLANID": "164",
-       	"Container": "VDI",
-       	"Hypervisor": "AHV",
-	   	"Method": "MDT"
+	    "UEFI": true,
+	    "Secureboot": true,
+	    "vTPM": false,
+        "CPUsockets": "1",
+	    "CPUcores": "2",
+    	"vRAM": "4096",
+	    "Disksize": "64",
+	    "ISO": "LiteTouchPE_x64-NP.iso", 
+        "ISOUrl": "http://webserver/mdt/",
+	    "VLAN": "164",
+        "Container": "VDI",
+        "Hypervisor": "AHV",
+	    "Method": "MDT"
 	},
 	"MDTconfig": {
 	   	"serverIP" : "10.10.10.10",

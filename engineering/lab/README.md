@@ -101,8 +101,7 @@ Before you start, make sure to have the following:
             "Disksize": "64",
             "ISO": "LiteTouchPE_x64-NP.iso", 
             "ISOUrl": "http://webserver/mdt/",
-            "VLAN": "VLAN164",
-            "VLANID": "164",
+            "VLAN": "164",
             "Container": "VDI",
             "Hypervisor": "AHV",
             "Method": "MDT"
@@ -197,8 +196,7 @@ Before you start, make sure to have the following:
             "Disksize": "64",
             "ISO": "LiteTouchPE_x64-NP.iso", 
             "ISOUrl": "http://webserver/mdt/",
-            "VLAN": "VLAN164",
-            "VLANID": "164",
+            "VLAN": "164",
             "Container": "VDI",
             "Hypervisor": "AHV",
             "Method": "MDT"
