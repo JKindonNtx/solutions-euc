@@ -14,7 +14,9 @@
        "vRAM": "4096",
 	   "Disksize": "64",
 	   "ISO": "LiteTouchPE_x64-NP.iso", 
+       "ISOUrl": "http://webserver/mdt/",
 	   "VLAN": "VLAN164",
+       "VLANID": "164",
        "Container": "VDI",
        "Hypervisor": "AHV",
 	   "Method": "MDT"
@@ -22,7 +24,7 @@
 	"MDTconfig": {
 	   "serverIP" : "10.10.10.10",
 	   "share" : "MDT$",
-	   "UserName" : "administrator",
+	   "UserName" : "Administrator",
 	   "Password" : "password",
 	   "Domain" : "domain",
 	   "Directory" : "mdt"
@@ -31,8 +33,9 @@
 		"ansiblepath": "/workspaces/solutions-euc/engineering/lab/ansible/"
 	},
 	"Slackconfig": {
-		"Slack" : "https://hooks.slack.com/services/slackhook"
+		"Slack" : "https://hooks.slack.com/services/slackservice"
 	},
+	
 	"ProductKeys": {
 		"2019": "WMDGN-G9PQG-XVVXX-R3X43-63DFG",
 		"2022": "WX4NM-KYWYW-QJJR4-XV3QB-6VM33"

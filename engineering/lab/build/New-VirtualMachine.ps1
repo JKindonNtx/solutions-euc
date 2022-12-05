@@ -26,7 +26,7 @@
 
 # Define the Variables for the script
 $functions = get-childitem -Path "/workspaces/solutions-euc/engineering/lab/build/functions/*.psm1"
-$JSONFile = "/workspaces/solutions-euc/engineering/lab/build/CreateVM.json"
+$JSONFile = "/workspaces/solutions-euc/engineering/lab/build/LabConfig.json"
 
 # Import all the functions required
 foreach($function in $functions){ Write-Host (Get-Date)":Importing - $function." ; import-module $function }

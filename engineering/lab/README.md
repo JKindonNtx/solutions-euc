@@ -79,7 +79,7 @@ Before you start, make sure to have the following:
     cd ./engineering/lab/build/
     ```
 
-5. Rename the CreateVM.json.template file to CreateVM.json and update file with your values (Note: to add VLANS, ISO Images or Containers please use the New-ClusterConfigAHV script detailed further down)
+5. Rename the LabConfig.json.template file to LabConfig.json and update file with your values (Note: to add VLANS, ISO Images or Containers please use the New-ClusterConfigAHV script detailed further down)
 
     Once the file is update, close and save it
 
@@ -100,7 +100,9 @@ Before you start, make sure to have the following:
             "vRAM": "4096",
             "Disksize": "64",
             "ISO": "LiteTouchPE_x64-NP.iso", 
+            "ISOUrl": "http://webserver/mdt/",
             "VLAN": "VLAN164",
+            "VLANID": "164",
             "Container": "VDI",
             "Hypervisor": "AHV",
             "Method": "MDT"
@@ -108,7 +110,7 @@ Before you start, make sure to have the following:
             "MDTconfig": {
             "serverIP" : "10.10.10.10",
             "share" : "MDT$",
-            "UserName" : "administrator",
+            "UserName" : "Administrator",
             "Password" : "password",
             "Domain" : "domain",
             "Directory" : "mdt"
@@ -117,7 +119,7 @@ Before you start, make sure to have the following:
             "ansiblepath": "/workspaces/solutions-euc/engineering/lab/ansible/"
         },
         "Slackconfig": {
-            "Slack" : "https://hooks.slack.com/services/slackhook"
+            "Slack" : "https://hooks.slack.com/services/slackservice"
         },
         
         "ProductKeys": {
@@ -173,7 +175,7 @@ Before you start, make sure to have the following:
     cd ./engineering/lab/build/
     ```
 
-5. Rename the ConfigureClusterAHV.json.template file to ConfigureClusterAHV.json and update file with your values
+5. Rename the LabConfig.json.template file to LabConfig.json and update file with your values
 
     Once the file is update, close and save it
 
@@ -182,18 +184,44 @@ Before you start, make sure to have the following:
         "Cluster": {
             "ip": "10.10.10.10",
             "username": "admin",
-            "password": "password"
+            "password": "password",
+            "CVMsshpassword": "password"
         },
-        "Defaults": {
-            "ISO": "BOOT.iso", 
-            "ISOUrl": "http://URL/BOOT.iso",
-            "VLANName": "VLAN164",
-            "VLAN": "164",
-            "Container": "VDI"
-        }
+            "VM": {
+            "UEFI": true,
+            "Secureboot": true,
+            "vTPM": false,
+            "CPUsockets": "1",
+            "CPUcores": "2",
+            "vRAM": "4096",
+            "Disksize": "64",
+            "ISO": "LiteTouchPE_x64-NP.iso", 
+            "ISOUrl": "http://webserver/mdt/",
+            "VLAN": "VLAN164",
+            "VLANID": "164",
+            "Container": "VDI",
+            "Hypervisor": "AHV",
+            "Method": "MDT"
+        },
+            "MDTconfig": {
+            "serverIP" : "10.10.10.10",
+            "share" : "MDT$",
+            "UserName" : "Administrator",
+            "Password" : "password",
+            "Domain" : "domain",
+            "Directory" : "mdt"
+        },
+        "Ansibleconfig": {
+            "ansiblepath": "/workspaces/solutions-euc/engineering/lab/ansible/"
+        },
         "Slackconfig": {
-            "Slack" : "https://hooks.slack.com/services/slackhook"
+            "Slack" : "https://hooks.slack.com/services/slackservice"
         },
+        
+        "ProductKeys": {
+            "2019": "WMDGN-G9PQG-XVVXX-R3X43-63DFG",
+            "2022": "WX4NM-KYWYW-QJJR4-XV3QB-6VM33"
+        }
     }
     ```
 
