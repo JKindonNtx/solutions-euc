@@ -19,7 +19,7 @@
 
 # Define the Variables for the script
 $functions = get-childitem -Path "/workspaces/solutions-euc/engineering/lab/build/functions/*.psm1"
-$JSONFile = "/workspaces/solutions-euc/engineering/lab/build/ConfigureClusterAHV.json"
+$JSONFile = "/workspaces/solutions-euc/engineering/lab/build/LabConfig.json"
 
 # Import all the functions required
 foreach($function in $functions){ Write-Host (Get-Date)":Importing - $function." ; import-module $function }
@@ -31,6 +31,9 @@ if($null -eq ($JSON = (Read-JSON -JSONFile $JSONFile))){
 } else {
     Write-Host (Get-Date) ":JSON configuration file loaded"
 }
+
+# Build VLAN Name 
+$VLANName = "VLAN" + $($JSON.VM.VLAN)
 
 # Write out a "SNAZZY" header
 Write-Host "
@@ -47,11 +50,11 @@ Write-Host "
 --------------------------------------------------------------------------------------------------------"
 Write-Host "Cluster IP:             $($JSON.Cluster.IP)"
 Write-Host "Cluster user:           $($JSON.Cluster.UserName)"
-Write-Host "VLAN:                   $($JSON.Defaults.VLAN)"
-Write-Host "VLAN Name:              $($JSON.Defaults.VLANName)"
-Write-Host "Container Name:         $($JSON.Defaults.Container)"
-Write-Host "ISO Image:              $($JSON.Defaults.ISO)"
-Write-Host "ISO Url:                $($JSON.Defaults.ISOUrl)"
+Write-Host "VLAN:                   $($JSON.VM.VLAN)"
+Write-Host "VLAN Name:              $VLANName"
+Write-Host "Container Name:         $($JSON.VM.Container)"
+Write-Host "ISO Image:              $($JSON.VM.ISO)"
+Write-Host "ISO Url:                $($JSON.VM.ISOUrl)"
 Write-Host "
 --------------------------------------------------------------------------------------------------------"
 
@@ -86,16 +89,16 @@ if ($confirmationStart -eq 'n') {
     New-NutanixLocalUser -ClusterIP $($JSON.Cluster.IP) -CVMsshpassword $($JSON.Cluster.CVMsshpassword) -username $($JSON.Cluster.username) -userpassword $($JSON.Cluster.password)
     # Check and Update the Network
     $VLANinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "networks"
-    $VLANUUID = ($VLANinfo.entities | Where-Object {$_.name -eq $($JSON.Defaults.VLANName)}).uuid
+    $VLANUUID = ($VLANinfo.entities | Where-Object {$_.name -eq $VLANName}).uuid
     if($null -eq $VLANUUID){
         # VLAN not available
         Write-Host (Get-Date) ":VLAN not found, creating"
-        New-NutanixVlanV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -VLAN "$($JSON.Defaults.VLAN)" -VLANName "$($JSON.Defaults.VLANName)"
+        $VLAN = New-NutanixVlanV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -VLAN "$($JSON.VM.VLAN)" -VLANName "$VLANName"
         Start-Sleep 5
         $VLANinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "networks"
-        $VLANUUID = ($VLANinfo.entities | Where-Object {$_.name -eq $($JSON.Defaults.VLANName)}).uuid
+        $VLANUUID = ($VLANinfo.entities | Where-Object {$_.name -eq $VLANName}).uuid
         if(!($null -eq $VLANUUID)) { Write-Host (Get-Date) ":VLAN Created" } else { Write-Host (Get-Date) ":Error Creating VLAN"; Exit}
-        $SlackMessage = "VLAN Added: $($JSON.Defaults.VLANName)`n"
+        $SlackMessage = "VLAN Added: $VLANName`n"
         $SendToSlack = "y"
     } else {
         # VLAN is present on the cluster
@@ -104,16 +107,16 @@ if ($confirmationStart -eq 'n') {
 
     # Check and Update the Storage Containers
     $Storageinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "storage_containers"
-    $StorageUUID = ($Storageinfo.entities | Where-Object {$_.name -eq $($JSON.Defaults.Container)}).storage_container_uuid
+    $StorageUUID = ($Storageinfo.entities | Where-Object {$_.name -eq $($JSON.VM.Container)}).storage_container_uuid
     if($null -eq $StorageUUID){
         # Storage Container not available
         Write-Host (Get-Date) ":Storage Container not found, creating"
-        New-NutanixStorageV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -Container "$($JSON.Defaults.Container)"
+        $Storage = New-NutanixStorageV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -Container "$($JSON.VM.Container)"
         Start-Sleep 5
         $Storageinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "storage_containers"
-        $StorageUUID = ($Storageinfo.entities | Where-Object {$_.name -eq $($JSON.Defaults.Container)}).storage_container_uuid
+        $StorageUUID = ($Storageinfo.entities | Where-Object {$_.name -eq $($JSON.VM.Container)}).storage_container_uuid
         if(!($null -eq $StorageUUID)) { Write-Host (Get-Date) ":Storage Container Created" } else { Write-Host (Get-Date) ":Error Creating Storage Container"; Exit}
-        $SlackMessage = $SlackMessage + "Storage Container Added: $($JSON.Defaults.Container)`n"
+        $SlackMessage = $SlackMessage + "Storage Container Added: $($JSON.VM.Container)`n"
         $SendToSlack = "y"
     } else {
         # Storage Container is present on the cluster
@@ -122,11 +125,12 @@ if ($confirmationStart -eq 'n') {
 
     #Check and Update the ISO Image
     $ISOinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "images"
-    $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($JSON.Defaults.ISO)}).vm_disk_id
+    $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($JSON.VM.ISO)}).vm_disk_id
     if($null -eq $ISOUUID){
         # ISO file not available
         Write-Host (Get-Date) ":ISO file not found, uploading"
-        $ISOTask = New-NutanixIsoV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -StorageUUID $StorageUUID -ISOurl "$($JSON.Defaults.ISOUrl)" -ISOname "$($JSON.Defaults.ISO)"
+        $ISOURL = "$($JSON.VM.ISOUrl)" + "$($JSON.VM.ISO)"
+        $ISOTask = New-NutanixIsoV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -StorageUUID $StorageUUID -ISOurl "$ISOURL" -ISOname "$($JSON.VM.ISO)"
 
         # Wait for upload task to complete
         $ISOTaskUUID = $ISOTask.task_uuid
@@ -145,9 +149,9 @@ if ($confirmationStart -eq 'n') {
 
         # Confirm that ISO is availavle
         $ISOinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "images"
-        $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($JSON.Defaults.ISO)}).vm_disk_id
+        $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($JSON.VM.ISO)}).vm_disk_id
         if(!($null -eq $ISOUUID)) { Write-Host (Get-Date) ":ISO Uploaded" } else { Write-Host (Get-Date) ":Error Uploading ISO"; Exit}
-        $SlackMessage = $SlackMessage + "ISO Uploaded: $($JSON.Defaults.ISO)`n"
+        $SlackMessage = $SlackMessage + "ISO Uploaded: $($JSON.VM.ISO)`n"
         $SendToSlack = "y"
     } else {
         # ISO file is present on the cluster

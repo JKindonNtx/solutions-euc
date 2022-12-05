@@ -26,7 +26,7 @@
 
 # Define the Variables for the script
 $functions = get-childitem -Path "/workspaces/solutions-euc/engineering/lab/build/functions/*.psm1"
-$JSONFile = "/workspaces/solutions-euc/engineering/lab/build/CreateVM.json"
+$JSONFile = "/workspaces/solutions-euc/engineering/lab/build/LabConfig.json"
 
 # Import all the functions required
 foreach($function in $functions){ Write-Host (Get-Date)":Importing - $function." ; import-module $function }
@@ -39,6 +39,9 @@ if($null -eq ($JSON = (Read-JSON -JSONFile $JSONFile))){
     Write-Host (Get-Date) ":JSON configuration file loaded"
 }
 
+# Build VLAN Name 
+$VLANName = "VLAN" + $($JSON.VM.VLAN)
+
 # Check on build type and if AHV then gather cluster specific information
 if ($JSON.vm.Hypervisor -eq "AHV"){
     Write-Host (Get-Date) ":AHV build selected, getting cluster specific information"
@@ -47,13 +50,13 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
     $Containerinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "storage_containers"
     $StorageUUID = ($Containerinfo.entities | Where-Object {$_.name -eq $($JSON.VM.Container)}).storage_container_uuid
     $Networkinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "networks"
-    $VLANUUID = ($Networkinfo.entities | Where-Object {$_.name -eq $($json.VM.VLAN)}).uuid
+    $VLANUUID = ($Networkinfo.entities | Where-Object {$_.name -eq $VLANName}).uuid
     $ISOinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "images"
     $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($json.VM.ISO)}).vm_disk_id
 
     # Validate ISO, Storage Container and VLAN are available for the build
     if (!($ISOinfo.entities | Where-Object {$_.name -eq "$($json.VM.ISO)"})){ Write-Host (Get-Date)":ISO File Not Found"; Write-Host (Get-Date)":Please run New-ClusterConfigAHV.ps1"; exit } else { Write-Host (Get-Date)":ISO file found" }
-    if (!($Networkinfo.entities | Where-Object {$_.name -eq "$($json.VM.VLAN)"})){ Write-Host (Get-Date)":VLAN File Not Found"; Write-Host (Get-Date)":Please run New-ClusterConfigAHV.ps1"; exit }  else { Write-Host (Get-Date)":VLAN found" }
+    if (!($Networkinfo.entities | Where-Object {$_.name -eq "$VLANName"})){ Write-Host (Get-Date)":VLAN File Not Found"; Write-Host (Get-Date)":Please run New-ClusterConfigAHV.ps1"; exit }  else { Write-Host (Get-Date)":VLAN found" }
     if (!($Containerinfo.entities | Where-Object {$_.name -eq "$($json.VM.Container)"})){ Write-Host (Get-Date)":Storage Container Not Found"; Write-Host (Get-Date)":Please run New-ClusterConfigAHV.ps1"; exit }  else { Write-Host (Get-Date)":Storage Container found" }
 }
 
@@ -120,7 +123,7 @@ Write-Host "
 Write-Host "Cluster IP:             $($JSON.Cluster.IP)"
 Write-Host "Hypervisor:             $($JSON.vm.Hypervisor)"
 Write-Host "Container name:         $($JSON.VM.Container)"
-Write-Host "Configured VLAN:        $($JSON.VM.VLAN)"
+Write-Host "Configured VLAN:        $VLANName"
 Write-Host "Windows version:        $OSversion"
 Write-Host "Windows Build:          $($OSDetails.WinVerBuild)"
 Write-Host "VM Name:                $($OSDetails.Name)"

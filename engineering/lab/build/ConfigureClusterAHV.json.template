@@ -1,7 +1,7 @@
 {
     "Cluster": {
 		"ip": "10.10.10.10",
-		"username": "admin",
+		"username": "euclab",
 		"password": "password",
 		"CVMsshpassword": "nutanix/4u"
 	},

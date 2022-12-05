@@ -1,0 +1,41 @@
+{
+    "Cluster": {
+		"ip": "10.10.10.10",
+    	"username": "euclab",
+      	"password": "password",
+	  	"CVMsshpassword": "password"
+	},
+	"VM": {
+	    "UEFI": true,
+	    "Secureboot": true,
+	    "vTPM": false,
+        "CPUsockets": "1",
+	    "CPUcores": "2",
+    	"vRAM": "4096",
+	    "Disksize": "64",
+	    "ISO": "LiteTouchPE_x64-NP.iso", 
+        "ISOUrl": "http://webserver/mdt/",
+	    "VLAN": "164",
+        "Container": "VDI",
+        "Hypervisor": "AHV",
+	    "Method": "MDT"
+	},
+	"MDTconfig": {
+	   	"serverIP" : "10.10.10.10",
+	   	"share" : "MDT$",
+	   	"UserName" : "Administrator",
+		"Password" : "password",
+	   	"Domain" : "domain",
+	   	"Directory" : "mdt"
+	},
+	"Ansibleconfig": {
+		"ansiblepath": "/workspaces/solutions-euc/engineering/lab/ansible/"
+	},
+	"Slackconfig": {
+		"Slack" : "https://hooks.slack.com/services/slackservice"
+	},
+	"ProductKeys": {
+		"2019": "WMDGN-G9PQG-XVVXX-R3X43-63DFG",
+		"2022": "WX4NM-KYWYW-QJJR4-XV3QB-6VM33"
+	}
+}
