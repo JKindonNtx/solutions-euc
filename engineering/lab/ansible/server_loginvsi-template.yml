@@ -1,0 +1,27 @@
+---
+- name: Install Windows Server default playbook
+  hosts: all
+  roles:
+#  - install_adobe_reader_dc
+#  - install_citrix_vda_client_2203_1
+#  - install_citrix_vda_server_2203_1
+#  - install_citrix_wem_agent_onprem_2209
+#  - install_citrix_workspace_app_2107
+#  - install_doro_pdf_reader_220
+#  - install_google_chrome
+#  - install_ms_net_framework_3.5
+#  - install_ms_net_framework_core_3.5
+#  - install_ms_office_2016
+#  - install_ms_office_2019
+#  - install_ms_office_2019_x64
+#  - install_ms_rds_role
+#  - install_ms_visual_c_2013u5
+#  - install_nvdia_grid_122
+#  - install_nvdia_nvector_client_21
+#  - install_nvidia_nvector_target_21
+#  - install_oracle_java_8u181-windows-x64
+#  - install_vmware_horizon_agent_84_2111
+#  - run_disable_scheduled_tasks
+#  - run_ms_file_types
+#  - run_ms_windows_update
+#  - run_optimize
