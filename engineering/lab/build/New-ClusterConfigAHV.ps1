@@ -46,6 +46,7 @@ _   _ _   _ _____  _    _   _ _____  __
 Write-Host "
 --------------------------------------------------------------------------------------------------------"
 Write-Host "Cluster IP:             $($JSON.Cluster.IP)"
+Write-Host "Cluster user:           $($JSON.Cluster.UserName)"
 Write-Host "VLAN:                   $($JSON.Defaults.VLAN)"
 Write-Host "VLAN Name:              $($JSON.Defaults.VLANName)"
 Write-Host "Container Name:         $($JSON.Defaults.Container)"
@@ -63,6 +64,12 @@ Write-Host "
 # ====================================================================================================================================================
 # Configure the Nutanix Cluster ready for use
 # ====================================================================================================================================================
+# Check if admin is used as user.
+if ($($JSON.Cluster.UserName).ToLower() -eq 'admin') { 
+    Write-Host (Get-Date) ":Don't use the admin account, enter different user in the config file, user will be created."
+    Write-Host (Get-Date) ":Quitting"
+    exit 
+}
 
 # Ask for confirmation to start the build - if no the quit
 Do { $confirmationStart = Read-Host "Ready to configure the cluster? [y/n]" } Until (($confirmationStart -eq "y") -or ($confirmationStart -eq "n"))
@@ -75,6 +82,8 @@ if ($confirmationStart -eq 'n') {
     $SendToSlack = "n"
     $SlackMessage = ""
 
+    # Add new local user to the cluster and disable admin account
+    New-NutanixLocalUser -ClusterIP $($JSON.Cluster.IP) -CVMsshpassword $($JSON.Cluster.CVMsshpassword) -username $($JSON.Cluster.username) -userpassword $($JSON.Cluster.password)
     # Check and Update the Network
     $VLANinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "networks"
     $VLANUUID = ($VLANinfo.entities | Where-Object {$_.name -eq $($JSON.Defaults.VLANName)}).uuid
