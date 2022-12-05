@@ -87,6 +87,9 @@ if ($confirmationStart -eq 'n') {
 
     # Add new local user to the cluster and disable admin account
     New-NutanixLocalUser -ClusterIP $($JSON.Cluster.IP) -CVMsshpassword $($JSON.Cluster.CVMsshpassword) -username $($JSON.Cluster.username) -userpassword $($JSON.Cluster.password)
+    $SlackMessage = $SlackMessage + "User added as Cluster Admin: $($JSON.Cluster.UserName)`n"
+    $SendToSlack = "y"
+    
     # Check and Update the Network
     $VLANinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "networks"
     $VLANUUID = ($VLANinfo.entities | Where-Object {$_.name -eq $VLANName}).uuid
@@ -160,7 +163,7 @@ if ($confirmationStart -eq 'n') {
 
     # Update Slack Channel
     if ($SendToSlack -eq "y") {
-        $SlackMessage = "Nutanix AHV Cluster Reconfiguration`n`n" + $SlackMessage
+        $SlackMessage = "Nutanix Cluster $($JSON.Cluster.IP) Reconfigured by $($JSON.Cluster.UserName) `n`n" + $SlackMessage
         Update-Slack -Message $SlackMessage -Slack $($JSON.SlackConfig.Slack)
     } else {
         Write-Host (Get-Date)":Skipped - Updating Slack Channel"

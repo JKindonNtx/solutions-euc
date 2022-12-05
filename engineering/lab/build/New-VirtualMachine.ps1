@@ -323,9 +323,9 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
 
     # Update Slack Channel
     if ($Ansible -eq "y") {
-        $Message = "$($OSDetails.Name) has finished running the Ansible Playbook $PlaybookToRun and has been shutdown and snapshotted. The following actions/installs have been executed: $($yaml.roles)"
+        $Message = "$($OSDetails.Name) initiated by $($JSON.Cluster.UserName) has finished running the Ansible Playbook $PlaybookToRun and has been shutdown and snapshotted. The following actions/installs have been executed: $($yaml.roles)"
     } else {
-        $Message = "$($OSDetails.Name) has been shutdown and snapshotted - No post OS Ansible Playbooks have been run"
+        $Message = "$($OSDetails.Name) initiaded by $($JSON.Cluster.UserName) has been shutdown and snapshotted - No post OS Ansible Playbooks have been run"
     }    
     Write-Host (Get-Date)":Updating Slack Channel" 
     Update-Slack -Message $Message -Slack $($JSON.SlackConfig.Slack)
