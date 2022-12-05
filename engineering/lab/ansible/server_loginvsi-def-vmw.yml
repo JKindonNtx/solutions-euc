@@ -2,13 +2,13 @@
 - name: Install Windows Server Gold with Office 2019 x64 - LoginVSI - VMW
   hosts: all
   roles:
-  - ms_net_framework_core
-  - ms_visual_c
-  - MS_RDS_Role
-  - vmware_horizon_agent
-  - adobe_reader_dc
-  - Doro_pdf
-  - java
-  - office2019-x64
-  - ms_file_types
-  - optimize
+  - install_ms_net_framework_core_3.5
+  - install_ms_visual_c_2013u5
+  - install_ms_rds_role
+  - install_vmware_horizon_agent_84_2111
+  - install_adobe_reader_dc
+  - install_doro_pdf_reader_220
+  - install_oracle_java_8u181-windows-x64
+  - install_ms_office_2019_x64
+  - run_ms_file_types
+  - run_optimize 

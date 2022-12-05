@@ -1,0 +1,18 @@
+{
+    "Cluster": {
+		"ip": "10.10.10.10",
+		"username": "euclab",
+		"password": "password",
+		"CVMsshpassword": "nutanix/4u"
+	},
+	"Defaults": {
+		"ISO": "BOOT.iso", 
+		"ISOUrl": "http://URL/BOOT.iso",
+		"VLANName": "VLAN164",
+		"VLAN": "164",
+		"Container": "VDI"
+	},
+	"Slackconfig": {
+		"Slack" : "https://hooks.slack.com/services/slackhook"
+	}
+}

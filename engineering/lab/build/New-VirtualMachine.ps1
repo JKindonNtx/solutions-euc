@@ -219,12 +219,12 @@ if ($confirmationStart -eq 'n') {
 
                 # Remove MDT Build CD-Rom
                 Write-Host (Get-Date)":Eject CD-ROM from VM"
-                Remove-NutanixCdRomV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -VMUUID $VMUUID
+                $CDROM = Remove-NutanixCdRomV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -VMUUID $VMUUID
                 Start-Sleep 5
 
                 # Start the VM Back Up
                 Write-Host (Get-Date)":Power on VM"
-                Set-NutanixVmPowerV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "vms/$($VMUUID)/set_power_state" -Action "ON"
+                $NutanixVmPowerstate = set-NutanixVmPowerV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "vms/$($VMUUID)/set_power_state" -Action "ON"
                 
                 # Wait for the VM to get an IP Address
                 Write-Host (Get-Date)":Wait for IP-address"
@@ -313,15 +313,22 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
     New-NutanixVmSnapV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -VMUUID "$($VMUUID)" -Snapname "$("$($OSDetails.Name)")_Snap_Optimized"
     Write-Host (Get-Date)":Snapshot created"
 
+    # Grabbing YAML content
+    Install-Module powershell-yaml -Force
+    Import-Module powershell-yaml
+    [string[]]$fileContent = Get-Content  "$Playbook"
+    $content = ''
+    foreach ($line in $fileContent) { $content = $content + "`n" + $line }
+    $yaml = ConvertFrom-YAML $content
+
     # Update Slack Channel
     if ($Ansible -eq "y") {
-        $Message = "$($OSDetails.Name) has finished running the Ansible Playbook $PlaybookToRun and has been shutdown and snapshotted"
+        $Message = "$($OSDetails.Name) has finished running the Ansible Playbook $PlaybookToRun and has been shutdown and snapshotted. The following actions/installs have been executed: $($yaml.roles)"
     } else {
         $Message = "$($OSDetails.Name) has been shutdown and snapshotted - No post OS Ansible Playbooks have been run"
     }    
     Write-Host (Get-Date)":Updating Slack Channel" 
     Update-Slack -Message $Message -Slack $($JSON.SlackConfig.Slack)
-
 } else {
     Write-Host (Get-Date)":Invalid Hypervisor defined, quitting"
     Exit
