@@ -73,7 +73,7 @@ function New-NutanixLocalUser
             Write-Host (Get-Date)":Create local user: $username done!" 
             Write-Host (Get-Date)":Add local user: $username to cluster admin role" 
             $sshStream.WriteLine("~/prism/cli/ncli user grant-cluster-admin-role user-name=$($username)")
-            Start-Sleep -Seconds 3
+            Start-Sleep -Seconds 8
             Write-Host (Get-Date)":Add local user: $username to cluster admin role done!"
             $sshStream.Close()
             Remove-SSHSession -Name $Session | Out-Null 
