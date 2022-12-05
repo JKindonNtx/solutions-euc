@@ -221,7 +221,7 @@ if ($confirmationStart -eq 'n') {
 
                 # Start the VM Back Up
                 Write-Host (Get-Date)":Power on VM"
-                Set-NutanixVmPowerV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "vms/$($VMUUID)/set_power_state" -Action "ON"
+                $NutanixVmPowerstate = set-NutanixVmPowerV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "vms/$($VMUUID)/set_power_state" -Action "ON"
                 
                 # Wait for the VM to get an IP Address
                 Write-Host (Get-Date)":Wait for IP-address"
