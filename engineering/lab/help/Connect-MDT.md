@@ -58,6 +58,7 @@ Specifies the password for the user that you are mounting the drive with.
 |  | |
 |---|---|
 | Type:    | String |
+| Aliases: | Pass |
 | Position: | Named |
 | Default Value: | None |
 | Accept pipeline input: | True |
@@ -95,6 +96,7 @@ Specifies the MDT server IP that you will be connecting to, we use an IP to ensu
 Specifies the share name on the MDT server to mount to.
 
 |  | |
+|---|---|
 | Type:    | String |
 | Position: | Named |
 | Default Value: | None |
