@@ -62,7 +62,7 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
 
 # Validate connectivity to MDT Server and mount drive if required
 if ($JSON.VM.method -eq "MDT"){
-    if((Connect-MDT -UserName "$($json.MDTconfig.UserName)" -Password "$($json.MDTconfig.password)" -Domain "$($json.MDTconfig.Domain)" -MDTServerIP "$($json.MDTconfig.serverIP)" -ShareName "$($json.MDTconfig.share)" -Directory "$($json.MDTconfig.Directory)") -eq $true) { 
+    if((Connect-MDT -UserName "$($json.MDTconfig.UserName)" -Password "$($json.MDTconfig.password)" -Domain "$($json.MDTconfig.Domain)" -MDTServerIP "$($json.MDTconfig.serverIP)" -ShareName "$($json.MDTconfig.share)") -eq $true) { 
         Write-Host (Get-Date) ":Connection to MDT Server is good, continuing" 
     } else { 
         Write-Host (Get-Date) ":No Connection to MDT Server, quitting"
