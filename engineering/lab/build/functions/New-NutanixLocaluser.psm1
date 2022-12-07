@@ -4,7 +4,7 @@
 .DESCRIPTION
     Set a local user on the cluster
 .EXAMPLE
-    New-NutanixLocalUser -ClusterIP "10.10.10.10" -CVMsshpassword "password" -username "euclab" -password "password"
+    New-NutanixLocalUser -ClusterIP "10.10.10.10" -CVMsshpassword "password" -username "euclab" -userpassword "password"
 .INPUTS
     ClusterIP - The Nutanix Cluster IP
     CVMsshpassword - The CVM SSH Password
@@ -13,7 +13,7 @@
 .NOTES
     Sven Huisman      01/12/2022         v1.0.0             Function Creation
 .FUNCTIONALITY
-    Create a new local user on the cluster to avoud using admin account
+    Create a new local user on the cluster to avoid using admin account
 #>
 
 function New-NutanixLocalUser
@@ -77,9 +77,11 @@ function New-NutanixLocalUser
             Write-Host (Get-Date)":Add local user: $username to cluster admin role done!"
             $sshStream.Close()
             Remove-SSHSession -Name $Session | Out-Null 
+            $task = ":Add local user: $($username) to cluster admin role done!" 
         } Else {
             #Write-Host (Get-Date)":Local user already exists, quitting"
             Write-Host (Get-Date)":Local user already exists, assuming with the same password"
+            $task = "Local user already exists, assuming with the same password" 
             Start-Sleep 2
             Remove-SSHSession -Name $Session | Out-Null
             #Exit
@@ -88,5 +90,7 @@ function New-NutanixLocalUser
     End
     {
         Write-Host (Get-Date)":Finishing 'New-NutanixLocalUser'" 
+        $global:NutanixLocalUser = $Task
+        Return $global:NutanixLocalUser
     }
 }
