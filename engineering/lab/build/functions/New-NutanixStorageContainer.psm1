@@ -73,7 +73,7 @@ function New-NutanixStorageContainer {
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
         )]
-        [system.string[]]$Container,
+        [system.string[]]$Container
     )
 
     Begin

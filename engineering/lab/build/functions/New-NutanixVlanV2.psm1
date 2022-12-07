@@ -1,66 +1,97 @@
+function New-NutanixVLAN {
 <#
-.Synopsis
-    Creates a new VLAN
-.DESCRIPTION
-    Created a new VLAN
-.EXAMPLE
-    New-NutanixVlanV2 -IP "10.10.10.10" -UserName "admin" -Password "nutanix" -VLAN "164" -VlanName "VLAN164"
-.INPUTS
-    IP - The IP Address for the cluster
-    UserName - The user name to mount the drive as
-    Password - The password for the user
-    VLAN - The VLAN for the network
-    VLANName - The name for the VLAN
+    .SYNOPSIS
+    Creates a VLAN.
 
-.NOTES
-    Sven Huisman        29/11/2022          v1.0.0              Function Creation
-    David Brett         29/11/2022          v1.0.1              Update error handling
-.FUNCTIONALITY
-    Created a new VLAN
+    .DESCRIPTION
+    This function will create a new VLAN on a Nutanix Cluster.
+    
+    .PARAMETER IP
+    The Nutanix Cluster IP
+
+    .PARAMETER UserName
+    The user name to use for connection
+
+    .PARAMETER Password
+    The password for the connection
+
+    .PARAMETER VLAN
+    The VLAN Number
+
+    .PARAMETER VLANName
+    The VLAN Description
+
+    .EXAMPLE
+    PS> New-NutanixVLAN -IP "10.10.10.10" -UserName "admin" -Password "nutanix" -VLAN "164" -VLANName "VLAN164"
+
+    .INPUTS
+    This function will take inputs via pipeline by property
+
+    .OUTPUTS
+    Task variable containing the output of the Invoke-RestMethod command run
+
+    .LINK
+    https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/help/New-NutanixVLAN.md
+
+    .NOTES
+    Author          Version         Date            Detail
+    Sven Huisman    v1.0.0          28/11/2022      Function creation
+    David Brett     v1.0.1          06/12/2022      Updated Parameter definition and added Alias' for IP, UserName and Password
+                                                    Updated function header to include MD help file
+                                                    Changed Write-Host from hardcoded function name to $($PSCmdlet.MyInvocation.MyCommand.Name)
+
 #>
 
-function New-NutanixVlanV2
-{
-    [CmdletBinding(SupportsShouldProcess=$true, 
-                  PositionalBinding=$false)]
+
+    [CmdletBinding()]
+
     Param
     (
-        [Parameter(Mandatory=$true, 
-                   ValueFromPipeline=$true,
-                   ValueFromPipelineByPropertyName=$true
-                   )]
-        [string[]]
-        $IP,
-        [Parameter(Mandatory=$true, 
-                   ValueFromPipeline=$true,
-                   ValueFromPipelineByPropertyName=$true
-                   )]
-        [string[]]
-        $UserName,
-        [Parameter(Mandatory=$true, 
-                   ValueFromPipeline=$true,
-                   ValueFromPipelineByPropertyName=$true
-                   )]
-        [string[]]
-        $Password,
-        [Parameter(Mandatory=$true, 
-                   ValueFromPipeline=$true,
-                   ValueFromPipelineByPropertyName=$true
-                   )]
-        [string[]]
-        $VLAN,
-        [Parameter(Mandatory=$true, 
-                   ValueFromPipeline=$true,
-                   ValueFromPipelineByPropertyName=$true
-                   )]
-        [string[]]
-        $VLANName
+        [Parameter(
+            Mandatory=$true, 
+            ValueFromPipeline=$true,
+            ValueFromPipelineByPropertyName=$true
+        )]
+        [Alias('ClusterIP')]
+        [system.string[]]$IP,
+
+        [Parameter(
+            Mandatory=$true, 
+            ValueFromPipeline=$true,
+            ValueFromPipelineByPropertyName=$true
+        )]
+        [Alias('User')]
+        [system.string[]]$UserName,
+
+        [Parameter(
+            Mandatory=$true, 
+            ValueFromPipeline=$true,
+            ValueFromPipelineByPropertyName=$true
+        )]
+        [Alias('Pass')]
+        [system.string[]]$Password,
+
+        [Parameter(
+            Mandatory=$true, 
+            ValueFromPipeline=$true,
+            ValueFromPipelineByPropertyName=$true
+        )]
+        [system.string[]]$VLAN,
+
+        [Parameter(
+            Mandatory=$true, 
+            ValueFromPipeline=$true,
+            ValueFromPipelineByPropertyName=$true
+        )]
+        [system.string[]]$VLANName
     )
 
     Begin
     {
-        Write-Host (Get-Date)":Starting 'New-NutanixVlanV2'" 
-    }
+        Set-StrictMode -Version Latest
+        Write-Host (Get-Date)":Starting $($PSCmdlet.MyInvocation.MyCommand.Name)"
+    } # Begin
+
 
     Process
     {
@@ -74,11 +105,13 @@ function New-NutanixVlanV2
         $headers = @{ Authorization = "Basic $encodedCredentials" }
         $URL = "https://$($IP):9440/PrismGateway/services/rest/v2.0/networks"
 
+        # Create JSON Payload
         $Payload = "{ `
             ""name"":""" + $VLANName + """, `
             ""vlan_id"":""" + $VLAN + """ `
         }"
 
+        # Invoke RestMethod
         try {
             $task = Invoke-RestMethod -Uri $URL -method "POST" -body $Payload -ContentType 'application/json' -SkipCertificateCheck -headers $headers;
         }
@@ -87,11 +120,12 @@ function New-NutanixVlanV2
             Write-Host (Get-Date) ": Going once"
             $task = Invoke-RestMethod -Uri $URL -method "POST" -body $Payload -ContentType 'application/json' -SkipCertificateCheck -headers $headers;
         }
-    }
+    } # Process
     
     End
     {
-        Write-Host (Get-Date)":Finishing 'New-NutanixVlanV2'" 
+        Write-Host (Get-Date)":Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" 
         Return $task
-    }
-}
+    } # End
+
+} # New-NutanixVLAN
