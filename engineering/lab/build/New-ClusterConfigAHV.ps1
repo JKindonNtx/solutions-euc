@@ -96,7 +96,7 @@ if ($confirmationStart -eq 'n') {
     if($null -eq $VLANUUID){
         # VLAN not available
         Write-Host (Get-Date) ":VLAN not found, creating"
-        $VLAN = New-NutanixVlanV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -VLAN "$($JSON.VM.VLAN)" -VLANName "$VLANName"
+        $VLAN = New-NutanixVLAN -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -VLAN "$($JSON.VM.VLAN)" -VLANName "$VLANName"
         Start-Sleep 5
         $VLANinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "networks"
         $VLANUUID = ($VLANinfo.entities | Where-Object {$_.name -eq $VLANName}).uuid
