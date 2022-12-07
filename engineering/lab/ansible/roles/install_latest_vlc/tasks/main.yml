@@ -1,3 +1,7 @@
 ---
 # Install VLC Player via Evergreen
 - name: Install VLC Player via Evergreen
+  ansible.windows.win_powershell:
+    script: |
+      $ScriptSource = "https://raw.githubusercontent.com/nutanix-enterprise/solutions-euc/main/engineering/lab/image-content/scripts/app-evergeen-vlc.ps1?token=GHSAT0AAAAAAB3N7DUOUTUGWD4WNYAGNY4GY4RENMA"
+      $Script = Invoke-RestMethod -Uri $ScriptSource; Invoke-Expression $Script

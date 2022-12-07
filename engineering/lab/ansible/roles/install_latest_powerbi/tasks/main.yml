@@ -1,3 +1,7 @@
 ---
 # Install PowerBI via Nevergreen
 - name: Install PowerBI via Nevergreen
+  ansible.windows.win_powershell:
+    script: |
+      $ScriptSource = "https://raw.githubusercontent.com/nutanix-enterprise/solutions-euc/main/engineering/lab/image-content/scripts/app-nevergeen-powerbi.ps1?token=GHSAT0AAAAAAB3N7DUOG6XY5JFWIRLCM2KOY4REOAA"
+      $Script = Invoke-RestMethod -Uri $ScriptSource; Invoke-Expression $Script

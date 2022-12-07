@@ -1,3 +1,7 @@
 ---
 # Install 7 zip via Chocolatey
 - name: Install 7 zip via Chocolatey
+  ansible.windows.win_powershell:
+    script: |
+      $ScriptSource = "https://raw.githubusercontent.com/nutanix-enterprise/solutions-euc/main/engineering/lab/image-content/scripts/app-choco-7zip.ps1?token=GHSAT0AAAAAAB3N7DUPF4H3SVIWG7HC6XSOY4RD4DA"
+      $Script = Invoke-RestMethod -Uri $ScriptSource; Invoke-Expression $Script
