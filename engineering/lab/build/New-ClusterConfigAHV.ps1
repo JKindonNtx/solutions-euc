@@ -89,8 +89,9 @@ if ($confirmationStart -eq 'n') {
     $SlackMessage = ""
 
     # Add new local user to the cluster and disable admin account
-    New-NutanixLocalUser -ClusterIP $($JSON.Cluster.IP) -CVMsshpassword $($JSON.Cluster.CVMsshpassword) -username $($github.username) -userpassword $($JSON.Cluster.password)
-    $SlackMessage = $SlackMessage + "User added as Cluster Admin: $($github.username)`n"
+    new-NutanixLocalUser -ClusterIP $($JSON.Cluster.IP) -CVMsshpassword $($JSON.Cluster.CVMsshpassword) -username $($github.username) -userpassword $($JSON.Cluster.password)
+    $SlackMessage = $SlackMessage + "$($global:NutanixLocalUser)`n"
+    #$SlackMessage = $SlackMessage + "User added as Cluster Admin: $($github.username)`n"
     $SendToSlack = "y"
     
     # Check and Update the Network
