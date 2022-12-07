@@ -1,0 +1,6 @@
+{
+	"ConnectionServer": "HOSTNAME",
+	"UserName":	"administrator",
+	"Password": "password",
+	"Domain": "DOMAINNAME"
+}

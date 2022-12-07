@@ -1,0 +1,1 @@
+Extract this directory in %VSISHARE% directory.
