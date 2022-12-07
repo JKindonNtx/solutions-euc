@@ -45,7 +45,7 @@ $VLANName = "VLAN" + $($JSON.VM.VLAN)
 # Check on build type and if AHV then gather cluster specific information
 if ($JSON.vm.Hypervisor -eq "AHV"){
     Write-Host (Get-Date) ":AHV build selected, getting cluster specific information"
-    $Clusterinfo = Get-Cluster -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)"
+    $Clusterinfo = Get-NutanixCluster -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)"
     $VMTimezone = ($Clusterinfo.entities | Where-Object {$_.status.resources.network.external_ip -eq $($JSON.Cluster.IP)}).status.resources.config.timezone
     $Containerinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "storage_containers"
     $StorageUUID = ($Containerinfo.entities | Where-Object {$_.name -eq $($JSON.VM.Container)}).storage_container_uuid
@@ -102,7 +102,7 @@ if ($JSON.VM.method -eq "MDT"){
 Do { $Ansible = Read-Host "Would you like to run an Ansible Playbook post OS Build? [y/n]" } Until (($Ansible -eq "y") -or ($Ansible -eq "n"))
 
 if($Ansible -eq "y"){
-    $PlaybookToRun = (Get-Ansible -SearchString $SearchString -AnsiblePath "$($JSON.Ansibleconfig.ansiblepath)").PlaybookToRun
+    $PlaybookToRun = (Get-AnsiblePlaybooks -SearchString $SearchString -AnsiblePath "$($JSON.Ansibleconfig.ansiblepath)").PlaybookToRun
 } else {
     $PlaybookToRun = "No Playbooks being run"
 }
