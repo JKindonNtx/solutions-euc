@@ -25,7 +25,7 @@ $JSONFile = "/workspaces/solutions-euc/engineering/lab/build/LabConfig.json"
 foreach($function in $functions){ Write-Host (Get-Date)":Importing - $function." ; import-module $function }
 
 # Read the JSON input file into an object
-if($null -eq ($JSON = (Read-JSON -JSONFile $JSONFile))){
+if($null -eq ($JSON = (Get-JSON -JSONFile $JSONFile))){
     Write-Host (Get-Date) ":Unable to read JSON configuration file, quitting"
     Break 
 } else {
