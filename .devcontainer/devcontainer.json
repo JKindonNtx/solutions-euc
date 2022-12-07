@@ -6,11 +6,15 @@
 		// Update 'VARIANT' to pick a Python version: 3, 3.10, 3.9, 3.8, 3.7, 3.6
 		// Append -bullseye or -buster to pin to an OS version.
 		// Use -bullseye variants on local on arm64/Apple Silicon.
+		// Version specifics can be set for Packer, Ansible or pywinrm. If set to latest, the current release will be utilised
+			// Packer: https://releases.hashicorp.com/packer/
+			// Ansible: https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html
+			// pywinrm: https://pypi.org/project/pywinrm/#history
 		"args": {
 			"VARIANT": "3.10-bullseye",
-			"PACKER_VERSION": "1.8.3",
-			"ANSIBLE_VERSION": "6.2.0",
-			"PYWINRM_VERSION": "0.4.3"
+			"PACKER_VERSION": "latest",
+			"ANSIBLE_VERSION": "latest",
+			"PYWINRM_VERSION": "latest"
 		}
 	},
 	"runArgs": [
