@@ -1,0 +1,10 @@
+---
+- name: Install Windows 10 Gold with heavy apps set
+  hosts: all
+  roles:
+  - install_base_chocolatey
+  - install_base_evergreen
+  - install_base_nevergreen
+  - install_latest_7zip
+  - install_latest_vlc
+  - install_latest_powerbi
