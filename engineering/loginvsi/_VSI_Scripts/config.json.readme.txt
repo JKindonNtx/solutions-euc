@@ -1,0 +1,59 @@
+{
+    "TestName":  "Shorttestname",  #Put in a short testname. This is is just a part of the final testname.
+    "Runs": 5, #Number of runs.
+    "IdleTime": 40, #Idle time after all VMs are booted. Used in VSI automation.
+    "Share":  "\\\\Server\\LoginVSI", #Change Server to the correct server.
+    "HostingType":  "AHV", #Use AHV, ESXi or HyperV . Used for VSI automation and for the results uploaded to perf.nutanix.com
+    "DeliveryType": "Citrix", #User Citrix or #VMware . Used for VSI automation and for the results uploaded to perf.nutanix.com
+    "DesktopBrokerVersion": "7.1912_3", #Version of the desktop broker. Used for the results uploaded to perf.nutanix.com
+    "DesktopBrokerAgentVersion": "7.1912_3", #Version of the broker agent in the desktops. Used for the results uploaded to perf.nutanix.com
+    "CloneType": "MCS", #MCS, PVS, Linked Clones, Instant Clones
+    "TargetPlatform": "Single user", # Single user (VDI) or Multi user (RDSH)
+    "CaptureHostData":  true, #Set to true if you want to capture host performance data. AHV uses REST API, ESXi uses esxtop through SSH connection
+    "CaptureClusterstats": true, #Set to true if you want to capture AOS cluster performance data. Uses REST API connecting to PE.
+    "CaptureNVIDIAData":  true, #Set to true if you want to capture NVIDIA performance data. Uses nvidia-smi through SSH connection
+    "CaptureLaunchersData":  false, #You can also capture performance data from the Launchers. At Nutanix usually not used.
+    "CaptureCitrixData":  false, #Potentially to capture Citrix data, not present at the moment.
+    "SingleNodeTest": true, #Set to true if testing on a single node from a cluster. Set to false if testing more than one node.
+    "RebootHost": false, #Set to true if you want to reboot the host in between test runs. There isn't a proven benefit in doing this. 
+    "CVMpresent": true, #Set to true by default. Set to false if testing on non-Nutanix nodes.
+    "CVMDisabled": false, #Set to false by default. Set to true if the CVM is powered off on the node being tested on.
+    "Uploadresults": false, #Set to true if the results need to be uploaded to perf.nutanix.com. Usually only set to true when testing new W10 versions, AOS versions, or AHV/ESXi versions on a single node.
+    "Datacenter": "Durham", #Used as identifier for the results uploaded to perf.nutanix.com
+    "ClusterName": "DRMAMDKB-A", #Used as an identifier for the results uploaded to perf.nutanix.com
+    "TargetHost":  "DRMAMDKB-1", #Used as identifier for capturing performance data on the host and nvidia perf stats.
+    "HardwareType": "HPE-DX385-12-Gen10Plus", #Used as an identifier for the results uploaded to perf.nutanix.com
+    "CPUType": "AMD EPYC 7542 @ 2.90GHz", #Used as an identifier for the results uploaded to perf.nutanix.com
+    "PoolName": "LoginVSI-AMD", #Used in automation to enable and disable the pool and to connect to from the clients
+    "NodeCount" : 1, #Used for the results uploaded to perf.nutanix.com and Slack
+    "CPUCores": 64, #Used for the results uploaded to perf.nutanix.com and Slack
+    "CPUThreadCount": 128, #Used for the results uploaded to perf.nutanix.com
+    "CPUSocketCount": 2, #Used for the results uploaded to perf.nutanix.com and Slack
+    "CPUSpeed": 2.9, #Used for the results uploaded to perf.nutanix.com and Slack
+    "MemoryGB": 1024, #Used for the results uploaded to perf.nutanix.com
+    "SSDCount": 2, #Used for the results uploaded to perf.nutanix.com
+    "Tag": "Testing", #Used for the results uploaded to perf.nutanix.com
+    "LoginVSIVersion": "4.1.40.1", #Used for the results uploaded to perf.nutanix.com
+    "WorkloadType": "KnowledgeWorker", #KnowledgeWorker, OfficeWorker, PowerWorker, TaskWorker or KnowledgeWorker-Edge. Case-sensitive, used for the results uploaded to perf.nutanix.com 
+    "AOSVersion": "5.20", #Used for the results uploaded to perf.nutanix.com
+    "HypervisorVersion": "20201105.2030", #Used for the results uploaded to perf.nutanix.com
+    "TargetOS": "Windows 10", Windows 7, Windows 10, Windows 11, Windows Server 2016, Windows Server 2019, Windows Server 2022. Case-sesitive, used for the results uploaded to perf.nutanix.com
+    "TargetOSVersion": "20H2-19042.1052", #Version number-Buildnumber. Used for the results uploaded to perf.nutanix.com
+    "OfficeVersion": "2016-x86", #Used for the results uploaded to perf.nutanix.com
+    "ToolsGuestVersion": "", #VMware Tools 11.0.1 for example. Leave empty if on AHV. Used for the results uploaded to perf.nutanix.com
+    "OptimizationsVersion": "1.4", #1.4 uses the latest VMware OSOT date Aug 2021. When using newer, increase this number. Optimization versions tracked in other dox. Used for the results uploaded to perf.nutanix.com
+    "GPUProfile": "", #GPU profile used by target VMs. RTX8000P-1B for example. Used for the results uploaded to perf.nutanix.com
+    "VMCount": 360, #Used by VSI automation to keep track of number of VMs being ready to connect to after power down and start up of the desktops.
+    "SessionCount": 360, #Used by VSI automation to start the number of sessions. This is also being written to the LoginVSI configuration file. 
+    "LogoffTimeOut": 1200, #Used by VSI automation to know the amount of seconds to wait after the last sessions logged on (steady state). This is also being written to the LoginVSI configuration file and used by per data capturing.
+    "VMCPUCount": 2, #Number of vCPUs per desktop. Used for the results uploaded to perf.nutanix.com
+    "VMMemoryGB": 4, #Amount of memory per desktop. Used for the results uploaded to perf.nutanix.com
+    "VMname": "W10-20H2", #Desktop naming configuration, starts with this name, followed by number until VMCount. Not being used at the moment. In some cases needed used to reboot the VMs (when not using Citrix or VMWare as broker)
+    "SessionCfg": "ICA", #ICA, PCoIP or Blast. Used to configure LoginVSI and for the results uploaded to perf.nutanix.com
+    "Tools":  {
+        "ppd":  "\\\\VSIServer\\LoginVSI\\_VSI_Tools\\PPD\\PPD.exe" #location of PPD.exe. Change the VSIserver to the hostname of the VSI management server.
+    },
+    "Slack" : "https://hooks.slack.com/services/xxxxxx/xxxxxx/xxxxxxxxxxxxxx", #Slack url for the incoming webhook for reporting the LoginVSI runs.
+    "localGitrepo": "D:\\Scripts\\xxxx-xxxx-results\\", #Change this to the location of the local git repo for the VSI images of the results.
+    "GitURL": "github.com/username/xxxx-xxxx-results/" #Change this url to the correct location of the git repo..
+}
