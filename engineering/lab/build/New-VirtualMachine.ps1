@@ -314,18 +314,23 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
     Write-Host (Get-Date)":Snapshot created"
 
     # Grabbing YAML content
+    if ($Ansible -eq "y") {
     Install-Module powershell-yaml -Force
     Import-Module powershell-yaml
     [string[]]$fileContent = Get-Content  "$Playbook"
     $content = ''
     foreach ($line in $fileContent) { $content = $content + "`n" + $line }
     $yaml = ConvertFrom-YAML $content
+    }
+    
+    # Fetching local GitHub user to report owner
+    $GitHub = Get-GitHubInfo
 
     # Update Slack Channel
     if ($Ansible -eq "y") {
-        $Message = "$($OSDetails.Name) initiated by $($JSON.Cluster.UserName) has finished running the Ansible Playbook $PlaybookToRun and has been shutdown and snapshotted. The following actions/installs have been executed: $($yaml.roles)"
+        $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has finished running the Ansible Playbook $PlaybookToRun and has been shutdown and snapshotted. The following actions/installs have been executed: $($yaml.roles)"
     } else {
-        $Message = "$($OSDetails.Name) initiaded by $($JSON.Cluster.UserName) has been shutdown and snapshotted - No post OS Ansible Playbooks have been run"
+        $Message = "$($OSDetails.Name) initiaded by $($GitHub.UserName) has been shutdown and snapshotted - No post OS Ansible Playbooks have been run"
     }    
     Write-Host (Get-Date)":Updating Slack Channel" 
     Update-Slack -Message $Message -Slack $($JSON.SlackConfig.Slack)
