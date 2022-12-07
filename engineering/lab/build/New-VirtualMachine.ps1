@@ -42,16 +42,19 @@ if($null -eq ($JSON = (Read-JSON -JSONFile $JSONFile))){
 # Build VLAN Name 
 $VLANName = "VLAN" + $($JSON.VM.VLAN)
 
+# Fetching local GitHub user to report owner
+$GitHub = Get-GitHubInfo
+
 # Check on build type and if AHV then gather cluster specific information
 if ($JSON.vm.Hypervisor -eq "AHV"){
     Write-Host (Get-Date) ":AHV build selected, getting cluster specific information"
-    $Clusterinfo = Get-Cluster -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)"
+    $Clusterinfo = Get-Cluster -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)"
     $VMTimezone = ($Clusterinfo.entities | Where-Object {$_.status.resources.network.external_ip -eq $($JSON.Cluster.IP)}).status.resources.config.timezone
-    $Containerinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "storage_containers"
+    $Containerinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "storage_containers"
     $StorageUUID = ($Containerinfo.entities | Where-Object {$_.name -eq $($JSON.VM.Container)}).storage_container_uuid
-    $Networkinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "networks"
+    $Networkinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "networks"
     $VLANUUID = ($Networkinfo.entities | Where-Object {$_.name -eq $VLANName}).uuid
-    $ISOinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "images"
+    $ISOinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "images"
     $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($json.VM.ISO)}).vm_disk_id
 
     # Validate ISO, Storage Container and VLAN are available for the build
@@ -170,7 +173,7 @@ if ($confirmationStart -eq 'n') {
                 $VMtaskID = $VMtask.task_uuid
                 Write-Host (Get-Date)":Wait for VM create task ($VMtaskID) to finish" 
                 Do {
-                    $VMtaskinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "tasks/$($VMtaskID)"
+                    $VMtaskinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "tasks/$($VMtaskID)"
                     $VMtaskstatus = $VMtaskinfo.percentage_complete
                     If ( $VMtaskstatus -ne 100) {
                         Start-Sleep -Seconds 5
@@ -192,10 +195,10 @@ if ($confirmationStart -eq 'n') {
 
                 # Get the Virtual Machine Information into a variable
                 Write-Host (Get-Date)":Gather Virtual Machine Details"
-                $VMinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "vms"
+                $VMinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "vms"
                 $VMUUID = ($VMinfo.entities | Where-Object {$_.name -eq $("$($OSDetails.Name)")}).uuid
                 Write-Host (Get-Date)":ID is $VMUUID"
-                $VMNIC = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "vms/$($VMUUID)/nics"
+                $VMNIC = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "vms/$($VMUUID)/nics"
                 $VMMAC = ($VMNIC.entities | Where-Object {$_.is_connected -eq "True"}).mac_address
 
                 # Update the CustomSettings File
@@ -203,7 +206,7 @@ if ($confirmationStart -eq 'n') {
 
                 # Power on the VM
                 Write-Host (Get-Date)":Power on VM"
-                Set-NutanixVmPowerV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "vms/$($VMUUID)/set_power_state" -Action "ON"
+                Set-NutanixVmPowerV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "vms/$($VMUUID)/set_power_state" -Action "ON"
                 
                 # Preparing MDT phase, monitoring the VM to ensure the Task Sequence has finished
                 Write-Host (Get-Date)":Waiting for the VM to PXE boot to the MDT share and start the task sequence"
@@ -212,25 +215,25 @@ if ($confirmationStart -eq 'n') {
                 # Wait for task sequence to finish and VM Shutdown to be completed
                 Write-Host (Get-Date)":Wait for VM to power off" 
                 Do {
-                    Write-Host "Current Power State: $((Get-NutanixV2Silent -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "vms/$($VMUUID)").power_state)"
+                    Write-Host "Current Power State: $((Get-NutanixV2Silent -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "vms/$($VMUUID)").power_state)"
                     start-sleep 30
                 }
-                Until (((Get-NutanixV2Silent -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "vms/$($VMUUID)").power_state) -eq "off")
+                Until (((Get-NutanixV2Silent -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "vms/$($VMUUID)").power_state) -eq "off")
 
                 # Remove MDT Build CD-Rom
                 Write-Host (Get-Date)":Eject CD-ROM from VM"
-                $CDROM = Remove-NutanixCdRomV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -VMUUID $VMUUID
+                $CDROM = Remove-NutanixCdRomV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VMUUID $VMUUID
                 Start-Sleep 5
 
                 # Start the VM Back Up
                 Write-Host (Get-Date)":Power on VM"
-                $NutanixVmPowerstate = set-NutanixVmPowerV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "vms/$($VMUUID)/set_power_state" -Action "ON"
+                $NutanixVmPowerstate = set-NutanixVmPowerV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "vms/$($VMUUID)/set_power_state" -Action "ON"
                 
                 # Wait for the VM to get an IP Address
                 Write-Host (Get-Date)":Wait for IP-address"
                 Start-Sleep 10
                 Do {
-                    $VMNIC = Get-NutanixV2Silent -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "vms/$($VMUUID)/nics"
+                    $VMNIC = Get-NutanixV2Silent -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "vms/$($VMUUID)/nics"
                     $VMip = ($VMNIC.entities | Where-Object {$_.is_connected -eq "True"}).ip_address
                     If ([string]::IsNullOrEmpty($VMip) -Or $VMip.StartsWith("169.254")) {
                         Start-Sleep -Seconds 5
@@ -294,15 +297,15 @@ if ($Ansible -eq "y") {
 if ($JSON.vm.Hypervisor -eq "AHV"){
     # Power off the VM
     Write-Host (Get-Date)":Power off VM"
-    Set-NutanixVmPowerV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "vms/$($VMUUID)/set_power_state" -Action "ACPI_SHUTDOWN"
+    Set-NutanixVmPowerV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "vms/$($VMUUID)/set_power_state" -Action "ACPI_SHUTDOWN"
 
     # Wait for task sequence to finish and VM Shutdown to be completed
     Write-Host (Get-Date)":Wait for VM to power off" 
     Do {
-        Write-Host "Current Power State: $((Get-NutanixV2Silent -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "vms/$($VMUUID)").power_state)"
+        Write-Host "Current Power State: $((Get-NutanixV2Silent -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "vms/$($VMUUID)").power_state)"
         start-sleep 15
     }
-    Until (((Get-NutanixV2Silent -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "vms/$($VMUUID)").power_state) -eq "off")
+    Until (((Get-NutanixV2Silent -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "vms/$($VMUUID)").power_state) -eq "off")
 
     # Finished Build
     Start-Sleep 5
@@ -310,7 +313,7 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
 
     # Create VM Snapshot
     Write-Host (Get-Date)":Create snapshot"
-    New-NutanixVmSnapV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -VMUUID "$($VMUUID)" -Snapname "$("$($OSDetails.Name)")_Snap_Optimized"
+    New-NutanixVmSnapV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VMUUID "$($VMUUID)" -Snapname "$("$($OSDetails.Name)")_Snap_Optimized"
     Write-Host (Get-Date)":Snapshot created"
 
     # Grabbing YAML content
