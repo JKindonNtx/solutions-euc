@@ -49,7 +49,7 @@ function Get-GitHubInfo
         $GitHubDetails = New-Object -TypeName psobject 
 
         # Build the object to return
-        $GitHubDetails | Add-Member -MemberType NoteProperty -Name "Username" -Value $GitHubInfo[5].Split('=')[1]
+        $GitHubDetails | Add-Member -MemberType NoteProperty -Name "UserName" -Value $GitHubInfo[5].Split('=')[1]
         $GitHubDetails | Add-Member -MemberType NoteProperty -Name "Email Address" -Value $GitHubInfo[6].Split('=')[1]
     }
     
