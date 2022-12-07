@@ -133,7 +133,7 @@ if ($confirmationStart -eq 'n') {
         # ISO file not available
         Write-Host (Get-Date) ":ISO file not found, uploading"
         $ISOURL = "$($JSON.VM.ISOUrl)" + "$($JSON.VM.ISO)"
-        $ISOTask = New-NutanixIsoV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -StorageUUID $StorageUUID -ISOurl "$ISOURL" -ISOname "$($JSON.VM.ISO)"
+        $ISOTask = New-NutanixISO -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -StorageUUID $StorageUUID -ISOurl "$ISOURL" -ISOname "$($JSON.VM.ISO)"
 
         # Wait for upload task to complete
         $ISOTaskUUID = $ISOTask.task_uuid
