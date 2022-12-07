@@ -1,63 +1,83 @@
+function Get-MdtOSGuid {
 <#
-.Synopsis
-    Connect to MDT Server and gather Operating System GUID
-.DESCRIPTION
-    Connect to MDT Server and gather Operating System GUID
-.EXAMPLE
-    Get-MdtOSGuid -SearchString "SRV" -OSVersion "SRV"
-.INPUTS
-    WinVerBuild - The search string to filter the OS Versions
-    OSversion - The OS Version to build from MDT
-.NOTES
-    David Brett      28/11/2022         v1.0.0             Function Creation
-.FUNCTIONALITY
-    Connect to MDT Server and gather Operating System GUID
+    .SYNOPSIS
+    Connect to MDT Server and gather Operating System GUID.
+
+    .DESCRIPTION
+    This function will connect to a MDT server and obtain a list of all the operating systems available using OperatingSystems.xml file. It will then search for the selected Operating System GUID and return this.
+    
+    .PARAMETER WinVerBuild
+    The search string for the specific windows version
+
+    .PARAMETER OSversion
+    The OS version to use for the MDT build
+
+    .EXAMPLE
+    PS> Get-MdtOSGuid -WinVerBuild "2210" -OSVersion "SRV"
+
+    .INPUTS
+    This function will take inputs via pipeline by property
+
+    .OUTPUTS
+    PSCustomObject containing the details of the Operating System GUID
+
+    .LINK
+    https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/help/Get-MdtOSGuid.md
+
+    .NOTES
+    Author          Version         Date            Detail
+    David Brett     v1.0.0          28/11/2022      Function creation
+
 #>
 
-function Get-MdtOSGuid
-{
-    [CmdletBinding(SupportsShouldProcess=$true, 
-                  PositionalBinding=$false)]
+
+    [CmdletBinding()]
+
     Param
     (
-        [Parameter(Mandatory=$true, 
+        [Parameter(
+            Mandatory=$true, 
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
-            )]
-        [string[]]
-        $WinVerBuild,
-        [Parameter(Mandatory=$true, 
+        )]
+        [system.string[]]$WinVerBuild,
+
+        [Parameter(
+            Mandatory=$true, 
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
-            )]
-        [string[]]
-        $OSversion
+        )]
+        [system.string[]]$OSversion
     )
 
     Begin
     {
-        Write-Host (Get-Date)":Starting 'Get-MdtOSGuid'" 
-    }
+        Set-StrictMode -Version Latest
+        Write-Host (Get-Date)":Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" 
+    } # Begin
 
     Process
     {
-        # Display Functionå Parameters
+        # Display Function Parameters
         Write-Host (Get-Date)":WinVerBuild: $WinVerBuild" 
         Write-Host (Get-Date)":OSversion: $OSversion" 
 
+        # Gather a list of the available Operating Systems
         Write-Host (Get-Date) ":Getting available operating systems..."
         [xml]$OperatingSystems = Get-Content -path "/mnt/mdt/control/operatingsystems.xml"
 
+        # Build new custom PSObject
         $MdtOSGuid = New-Object -TypeName psobject 
 
         # Search XML file for matching Operating System
+        # Update the PSCustomObject with the OS GUID
         foreach($OperatingSystem in $OperatingSystems.oss.os){
             $OS = $OperatingSystem.Name
             if($OSversion -eq "SRV"){
                 # Server based operating system
                 if($OS -like "*$WinVerBuild*") {
                     if(($OS -like "*ServerDataCenter*") -and ($OS -notlike "*ServerDataCenterCore*")){
-                        Write-Host (Get-Date) ":Operating System selected - $os."
+                        Write-Host (Get-Date) ":Operating System selected - $OS."
                         $MdtOSGuid | Add-Member -MemberType NoteProperty -Name "Guid" -Value $OperatingSystem.guid
                         Write-Host (Get-Date) ":Operating system GUID - $($MdtOSGuid.Guid)"
                     }
@@ -73,11 +93,12 @@ function Get-MdtOSGuid
                 }
             }
         }
-    }
+    } # Process
     
     End
     {
-        Write-Host (Get-Date)":Finishing 'Get-MdtOSGuid'" 
+        Write-Host (Get-Date)":Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" 
         Return $MdtOSGuid
-    }
-}
+    } # End
+
+} # Get-MdtOSGuid
