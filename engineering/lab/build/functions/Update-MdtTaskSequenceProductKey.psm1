@@ -1,56 +1,79 @@
+function Update-MdtTaskSequenceProductKey {
 <#
-.Synopsis
-    Update the MDT Task Sequence Product Key in the Unattend File
-.DESCRIPTION
-    Update the MDT Task Sequence Product Key in the Unattend File
-.EXAMPLE
-    Update-MdtTaskSequenceProductKey -TaskSequenceID "WSRV-BASE" -SearchString "SRV" -WinVerBuild "SRV"
-.INPUTS
-    TaskSequenceID - The Task Sequence to update
-    SearchString - The OS Search String
-    WinVerBuild - The windows version
-.NOTES
-    David Brett      28/11/2022         v1.0.0             Function Creation
-.FUNCTIONALITY
-    Update the MDT Task Sequence Product Key in the Unattend File
+    .SYNOPSIS
+    Update the MDT Task Sequence Product Key in the Unattend File.
+
+    .DESCRIPTION
+    This function will update the MDT Task Sequence Product Key in the Unattend File for Server Builds as this is a required step to have a zero touch install.
+    
+    .PARAMETER JSON
+    The Lab Details JSON File
+
+    .PARAMETER TaskSequenceID
+    The Nutanix Cluster IP
+
+    .PARAMETER SearchString
+    The OS Search String
+
+    .PARAMETER WinVerBuild
+    The windows version
+
+    .EXAMPLE
+    PS> Update-MdtTaskSequenceProductKey -JSON $JSON -TaskSequenceID "WSRV-BASE" -SearchString "SRV" -WinVerBuild "SRV"
+
+    .INPUTS
+    This function will take inputs via pipeline by property
+
+    .OUTPUTS
+    None
+
+    .LINK
+    https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/help/Update-MDTTaskSequenceProductKey.md
+
+    .NOTES
+    Author          Version         Date            Detail
+    David Brett     v1.0.0          28/11/2022      Function creation
 #>
 
-function Update-MdtTaskSequenceProductKey
-{
-    [CmdletBinding(SupportsShouldProcess=$true, 
-                  PositionalBinding=$false)]
+
+    [CmdletBinding()]
+
     Param
     (
-        [Parameter(Mandatory=$true, 
+        [Parameter(
+            Mandatory=$true, 
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
-            )]
-        [System.object[]]
-        $JSON,
-        [Parameter(Mandatory=$true, 
+        )]
+        [System.object[]]$JSON,
+
+        [Parameter(
+            Mandatory=$true, 
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
-            )]
-        [string[]]
-        $SearchString,
-        [Parameter(Mandatory=$true, 
+        )]
+        [system.string[]]$SearchString,
+
+        [Parameter(
+            Mandatory=$true, 
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
-            )]
-        [string[]]
-        $WinVerBuild,
-        [Parameter(Mandatory=$true, 
+        )]
+        [system.string[]]$WinVerBuild,
+
+        [Parameter(
+            Mandatory=$true, 
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
-            )]
-        [string[]]
-        $TaskSequenceID
+        )]
+        [system.string[]]$TaskSequenceID
     )
 
     Begin
     {
-        Write-Host (Get-Date)":Starting 'Update-MdtTaskSequenceProductKey'" 
-    }
+        Set-StrictMode -Version Latest
+        Write-Host (Get-Date)":Starting $($PSCmdlet.MyInvocation.MyCommand.Name)"
+    } # Begin
 
     Process
     {
@@ -78,10 +101,11 @@ function Update-MdtTaskSequenceProductKey
         } else {
             Write-Host (Get-Date) ":Skipping Unattended Setup File - Desktop OS"
         }
-    }
+    } # Process
     
     End
     {
-        Write-Host (Get-Date)":Finishing 'Update-MdtTaskSequenceProductKey'" 
-    }
-}
+        Write-Host (Get-Date)":Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" 
+    } # End
+
+} # Update-MDTTaskSequenceProductKey
