@@ -50,7 +50,7 @@ Before you start, make sure to have the following:
 | Category | Requirement |
 | --- | --- |
 | Infrastructure | Nutanix with Prism Element |
-| Infrastructure | Storage Container configured on the Nutanix Cluster |
+| Infrastructure | Storage Container configured on the Nutanix Cluster. See `New-ClusterConfigAHV.ps1` |
 | Infrastructure | Network VLAN Configured on the Nutanix Cluster. See `New-ClusterConfigAHV.ps1` |
 | Infrastructure | MDT Boot ISO uploaded to the Nutanix Cluster. See `New-ClusterConfigAHV.ps1` |
 | Infrastructure | MDT Task Sequence configured for the relevant build |
