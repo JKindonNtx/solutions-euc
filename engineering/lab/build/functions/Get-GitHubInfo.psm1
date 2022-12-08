@@ -57,10 +57,12 @@ function Get-GitHubInfo
         if($GitLine -like "user.email*") { 
             $GitHubDetails | Add-Member -MemberType NoteProperty -Name "Email Address" -Value $GitLine.Split('=')[1]
         } 
-    } 
+    }
+    }
+
     End
     {
         Write-Host (Get-Date)":Finishing 'Get-GitHubInfo'" 
         Return $GitHubDetails
     }
-    }
+}
