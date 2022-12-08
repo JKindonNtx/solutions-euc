@@ -203,7 +203,7 @@ if ($confirmationStart -eq 'n') {
 
                 # Power on the VM
                 Write-Host (Get-Date)":Power on VM"
-                Set-NutanixVmPowerV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "vms/$($VMUUID)/set_power_state" -Action "ON"
+                Set-NutanixVMPower -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "vms/$($VMUUID)/set_power_state" -Action "ON"
                 
                 # Preparing MDT phase, monitoring the VM to ensure the Task Sequence has finished
                 Write-Host (Get-Date)":Waiting for the VM to PXE boot to the MDT share and start the task sequence"
@@ -224,7 +224,7 @@ if ($confirmationStart -eq 'n') {
 
                 # Start the VM Back Up
                 Write-Host (Get-Date)":Power on VM"
-                $NutanixVmPowerstate = set-NutanixVmPowerV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "vms/$($VMUUID)/set_power_state" -Action "ON"
+                $NutanixVmPowerstate = Set-NutanixVMPower -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "vms/$($VMUUID)/set_power_state" -Action "ON"
                 
                 # Wait for the VM to get an IP Address
                 Write-Host (Get-Date)":Wait for IP-address"
@@ -294,7 +294,7 @@ if ($Ansible -eq "y") {
 if ($JSON.vm.Hypervisor -eq "AHV"){
     # Power off the VM
     Write-Host (Get-Date)":Power off VM"
-    Set-NutanixVmPowerV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "vms/$($VMUUID)/set_power_state" -Action "ACPI_SHUTDOWN"
+    Set-NutanixVMPower -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "vms/$($VMUUID)/set_power_state" -Action "ACPI_SHUTDOWN"
 
     # Wait for task sequence to finish and VM Shutdown to be completed
     Write-Host (Get-Date)":Wait for VM to power off" 
