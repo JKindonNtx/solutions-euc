@@ -76,14 +76,14 @@ function New-NutanixSnapshot {
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
         )]
-        [system.string[]]$VLAN,
+        [system.string[]]$VMUUID,
 
         [Parameter(
             Mandatory=$true, 
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
         )]
-        [system.string[]]$VLANName
+        [system.string[]]$SnapName
     )
 
     Begin

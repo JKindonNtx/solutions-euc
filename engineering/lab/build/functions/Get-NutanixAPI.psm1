@@ -88,7 +88,7 @@ function Get-NutanixAPI {
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
         )]
-        [Switch[]]$Silent
+        [switch[]]$Silent
     )
 
     Begin

@@ -212,10 +212,10 @@ if ($confirmationStart -eq 'n') {
                 # Wait for task sequence to finish and VM Shutdown to be completed
                 Write-Host (Get-Date)":Wait for VM to power off" 
                 Do {
-                    Write-Host "Current Power State: $((Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "vms/$($VMUUID)" -Silent).power_state)"
+                    Write-Host "Current Power State: $((Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "vms/$($VMUUID)" -Silent $true).power_state)"
                     start-sleep 30
                 }
-                Until (((Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "vms/$($VMUUID)" -Silent).power_state) -eq "off")
+                Until (((Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "vms/$($VMUUID)" -Silent $true).power_state) -eq "off")
 
                 # Remove MDT Build CD-Rom
                 Write-Host (Get-Date)":Eject CD-ROM from VM"
@@ -230,7 +230,7 @@ if ($confirmationStart -eq 'n') {
                 Write-Host (Get-Date)":Wait for IP-address"
                 Start-Sleep 10
                 Do {
-                    $VMNIC = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "vms/$($VMUUID)/nics" -Silent
+                    $VMNIC = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "vms/$($VMUUID)/nics" -Silent $true
                     $VMip = ($VMNIC.entities | Where-Object {$_.is_connected -eq "True"}).ip_address
                     If ([string]::IsNullOrEmpty($VMip) -Or $VMip.StartsWith("169.254")) {
                         Start-Sleep -Seconds 5
@@ -299,10 +299,10 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
     # Wait for task sequence to finish and VM Shutdown to be completed
     Write-Host (Get-Date)":Wait for VM to power off" 
     Do {
-        Write-Host "Current Power State: $((Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "vms/$($VMUUID)" -Silent).power_state)"
+        Write-Host "Current Power State: $((Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "vms/$($VMUUID)" -Silent $true).power_state)"
         start-sleep 15
     }
-    Until (((Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "vms/$($VMUUID)" -Silent).power_state) -eq "off")
+    Until (((Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "vms/$($VMUUID)" -Silent $true).power_state) -eq "off")
 
     # Finished Build
     Start-Sleep 5
@@ -310,7 +310,7 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
 
     # Create VM Snapshot
     Write-Host (Get-Date)":Create snapshot"
-    New-NutanixSnapshot -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -VMUUID "$($VMUUID)" -Snapname "$("$($OSDetails.Name)")_Snap_Optimized"
+    $Snapshot = New-NutanixSnapshot -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -VMUUID "$($VMUUID)" -Snapname "$("$($OSDetails.Name)")_Snap_Optimized"
     Write-Host (Get-Date)":Snapshot created"
 
     # Grabbing YAML content
@@ -330,7 +330,7 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
     if ($Ansible -eq "y") {
         $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has finished running the Ansible Playbook $PlaybookToRun and has been shutdown and snapshotted. The following actions/installs have been executed: $($yaml.roles)"
     } else {
-        $Message = "$($OSDetails.Name) initiaded by $($GitHub.UserName) has been shutdown and snapshotted - No post OS Ansible Playbooks have been run"
+        $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been shutdown and snapshotted - No post OS Ansible Playbooks have been run"
     }    
     Write-Host (Get-Date)":Updating Slack Channel" 
     Update-Slack -Message $Message -Slack $($JSON.SlackConfig.Slack)

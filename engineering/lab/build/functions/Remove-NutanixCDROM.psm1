@@ -1,4 +1,4 @@
-function Remove-NutanixCdRomV2 {
+function Remove-NutanixCDROM {
 <#
     .SYNOPSIS
     Removes a CD-ROM.

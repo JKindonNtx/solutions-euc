@@ -88,7 +88,6 @@ function Set-NutanixvTPM {
     End
     {
         Write-Host (Get-Date)":Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" 
-        Return $task
     } # End
 
 } # Set-NutanixvTPM

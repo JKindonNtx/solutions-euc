@@ -93,8 +93,11 @@ function Update-MdtTaskSequenceProductKey {
             $USPath = "/mnt/mdt/control/$($TaskSequenceID)/Unattend.xml"
             $USXML = [xml](Get-Content $USPath)
             $PassSettings = $USXML.unattend.settings.component | Where-Object {$_.name -eq "Microsoft-Windows-Shell-Setup"}
-            foreach($Pass in $PassSettings){
-                if($null -ne $Pass.ProductKey){ $pass.ProductKey = $PK } 
+            foreach($Pass in $PassSettings){ 
+                if([bool]$Pass.psobject.properties['ProductKey']){
+                    Write-Host (Get-Date) ":Product key found, updating"
+                    $pass.ProductKey = $PK
+                }
             }
             $USXML.Save($USPath)
             Write-Host (Get-Date) ":Updated Product Key to $PK"
