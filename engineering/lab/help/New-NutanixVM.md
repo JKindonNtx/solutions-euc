@@ -12,6 +12,7 @@ New-NutanixVM
     [-StorageUUID] <String>
     [-ISOUUID] <String>
     [-VLANUUID] <String>
+    [-UserName] <String>
     [<CommonParameters>]
 ```
 
@@ -24,7 +25,7 @@ This function will create a new Virtual Machine on a Nutanix Cluster.
 ### EXAMPLE 1:
 
 ```PowerShell
-New-NutanixVM -JSON $JSON -Name "VM" -VMTimeZone "GMT" - StorageUUID "{UUID}" -ISOUUID "{UUID}" -VLANUUID "{UUID}"
+New-NutanixVM -JSON $JSON -Name "VM" -VMTimeZone "GMT" - StorageUUID "{UUID}" -ISOUUID "{UUID}" -VLANUUID "{UUID}" -UserName $UserName
 ```
 
 Creates a new Virtual Machine on the Nutanix Cluster
@@ -46,6 +47,19 @@ The Object containing all the Virtual Machine config details.
 ### -Name
 
 The VM Name.
+
+|  | |
+|---|---|
+| Type:    | String |
+| Default Value: | None |
+| Accept pipeline input: | True |
+| Accept wildcard characters: | False |
+| Mandatory: | True |
+
+### -UserName
+
+The User Name to connect to the Nutanix Cluster.
+
 |  | |
 |---|---|
 | Type:    | String |
@@ -57,6 +71,7 @@ The VM Name.
 ### -VMtimezone
 
 The Time Zone for the VM.
+
 |  | |
 |---|---|
 | Type:    | String |
@@ -68,6 +83,7 @@ The Time Zone for the VM.
 ### -StorageUUID
 
 The Storage UUID.
+
 |  | |
 |---|---|
 | Type:    | String |
@@ -79,6 +95,7 @@ The Storage UUID.
 ### -ISOUUID
 
 The ISO UUID.
+
 |  | |
 |---|---|
 | Type:    | String |
@@ -90,6 +107,7 @@ The ISO UUID.
 ### -VLANUUID
 
 The VLAN UUID.
+
 |  | |
 |---|---|
 | Type:    | String |
