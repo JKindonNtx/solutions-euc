@@ -199,7 +199,7 @@ if ($confirmationStart -eq 'n') {
                 $VMMAC = ($VMNIC.entities | Where-Object {$_.is_connected -eq "True"}).mac_address
 
                 # Update the CustomSettings File
-                Update-MdtControl -Name "$($OSDetails.Name)" -TaskSequenceID "$($OSDetails.TaskSequenceID)" -VMMAC $VMMAC
+                Update-MDTControl -Name "$($OSDetails.Name)" -TaskSequenceID "$($OSDetails.TaskSequenceID)" -VMMAC $VMMAC
 
                 # Power on the VM
                 Write-Host (Get-Date)":Power on VM"
