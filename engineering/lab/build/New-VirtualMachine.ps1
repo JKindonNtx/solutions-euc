@@ -164,7 +164,7 @@ if ($confirmationStart -eq 'n') {
             try {
                 # Create the VM
                 Write-Host (Get-Date)":Create the VM with name "$($OSDetails.Name)""
-                $VMTask = New-NutanixVmV2 -JSON $JSON -Name "$($OSDetails.Name)" -VMTimezone $VMtimezone -StorageUUID $StorageUUID -ISOUUID $ISOUUID -VLANUUID $VLANUUID
+                $VMTask = New-NutanixVM -JSON $JSON -Name "$($OSDetails.Name)" -VMTimezone $VMtimezone -StorageUUID $StorageUUID -ISOUUID $ISOUUID -VLANUUID $VLANUUID
 
                 # Wait for VM to finish creating
                 $VMtaskID = $VMtask.task_uuid
@@ -310,7 +310,7 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
 
     # Create VM Snapshot
     Write-Host (Get-Date)":Create snapshot"
-    New-NutanixVmSnapV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -VMUUID "$($VMUUID)" -Snapname "$("$($OSDetails.Name)")_Snap_Optimized"
+    New-NutanixSnapshot -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -VMUUID "$($VMUUID)" -Snapname "$("$($OSDetails.Name)")_Snap_Optimized"
     Write-Host (Get-Date)":Snapshot created"
 
     # Grabbing YAML content

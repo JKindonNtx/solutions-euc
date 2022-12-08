@@ -31,7 +31,7 @@ function New-NutanixSnapshot {
     Task variable containing the output of the Invoke-RestMethod command run
 
     .LINK
-    https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/help/New-NutanixVLAN.md
+    https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/help/New-NutanixSnapshot.md
 
     .NOTES
     Author          Version         Date            Detail
