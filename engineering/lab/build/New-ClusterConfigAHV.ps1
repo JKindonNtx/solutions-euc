@@ -90,9 +90,11 @@ if ($confirmationStart -eq 'n') {
     $SlackMessage = ""
 
     # Add new local user to the cluster and disable admin account
-    new-NutanixLocalUser -ClusterIP $($JSON.Cluster.IP) -CVMsshpassword $($JSON.Cluster.CVMsshpassword) -username $($github.username) -userpassword $($JSON.Cluster.password)
-    $SlackMessage = $SlackMessage + "$($global:NutanixLocalUser)`n"
-    $SendToSlack = "y"
+    $Result = New-NutanixLocalUser -ClusterIP $($JSON.Cluster.IP) -CVMsshpassword $($JSON.Cluster.CVMsshpassword) -LocalUser $($github.username) -LocalPassword $($JSON.Cluster.password)
+    if($Result -eq "added"){
+        $SlackMessage = "New User Added: $($github.username)`n"
+        $SendToSlack = "y"
+    }
     
     # Check and Update the Network
     $VLANinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "networks"
@@ -105,7 +107,7 @@ if ($confirmationStart -eq 'n') {
         $VLANinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "networks"
         $VLANUUID = ($VLANinfo.entities | Where-Object {$_.name -eq $VLANName}).uuid
         if(!($null -eq $VLANUUID)) { Write-Host (Get-Date) ":VLAN Created" } else { Write-Host (Get-Date) ":Error Creating VLAN"; Exit}
-        $SlackMessage = "VLAN Added: $VLANName`n"
+        $SlackMessage = $SlackMessage + "VLAN Added: $VLANName`n"
         $SendToSlack = "y"
     } else {
         # VLAN is present on the cluster

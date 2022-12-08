@@ -25,7 +25,7 @@ function New-NutanixVM {
     The VLAN Description
 
     .EXAMPLE
-    PS> New-NutanixVM -JSON $JSON -Name "VM" -VMTimeZone "GMT" - StorageUUID "{UUID}" -ISOUUID "{UUID}" -VLANUUID "{UUID}"
+    PS> New-NutanixVM -JSON $JSON -Name "VM" -VMTimeZone "GMT" - StorageUUID "{UUID}" -ISOUUID "{UUID}" -VLANUUID "{UUID}" -UserName $UserName
 
     .INPUTS
     This function will take inputs via pipeline by property
@@ -63,6 +63,13 @@ function New-NutanixVM {
             ValueFromPipelineByPropertyName=$true
         )]
         [system.string[]]$Name,
+
+        [Parameter(
+            Mandatory=$true, 
+            ValueFromPipeline=$true,
+            ValueFromPipelineByPropertyName=$true
+        )]
+        [system.string[]]$UserName,
 
         [Parameter(
             Mandatory=$true, 
@@ -139,7 +146,7 @@ function New-NutanixVM {
             [string] $Secureboot = "false"
         }
 
-        $credPair = "$($JSON.Cluster.UserName):$($JSON.Cluster.password)"
+        $credPair = "$($UserName):$($JSON.Cluster.password)"
         $encodedCredentials = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($credPair))
         $headers = @{ Authorization = "Basic $encodedCredentials" }
         $URL = "https://$($JSON.Cluster.ip):9440/PrismGateway/services/rest/v2.0/vms"

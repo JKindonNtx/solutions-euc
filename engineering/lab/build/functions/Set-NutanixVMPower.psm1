@@ -4,7 +4,7 @@ function Set-NutanixVMPower {
     Changes the Power State of a VM.
 
     .DESCRIPTION
-    This function will ceither switch ON or OFF the power for a Virtual Machine.
+    This function will either switch ON or OFF the power for a Virtual Machine.
     
     .PARAMETER IP
     The Nutanix Cluster IP

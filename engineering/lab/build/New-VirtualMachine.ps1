@@ -167,7 +167,7 @@ if ($confirmationStart -eq 'n') {
             try {
                 # Create the VM
                 Write-Host (Get-Date)":Create the VM with name "$($OSDetails.Name)""
-                $VMTask = New-NutanixVM -JSON $JSON -Name "$($OSDetails.Name)" -VMTimezone $VMtimezone -StorageUUID $StorageUUID -ISOUUID $ISOUUID -VLANUUID $VLANUUID
+                $VMTask = New-NutanixVM -JSON $JSON -Name "$($OSDetails.Name)" -VMTimezone $VMtimezone -StorageUUID $StorageUUID -ISOUUID $ISOUUID -VLANUUID $VLANUUID -UserName "$($github.username)"
 
                 # Wait for VM to finish creating
                 $VMtaskID = $VMtask.task_uuid
