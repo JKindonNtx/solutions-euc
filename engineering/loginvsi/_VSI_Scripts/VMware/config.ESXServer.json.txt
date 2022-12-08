@@ -1,0 +1,6 @@
+{
+	"vSphereServer": "vcenterserver",
+	"UserName":	"administrator@vsphere.local",
+	"vcPassword": "vcenterPassword",
+	"rootPassword": "ESXrootPassword"
+}

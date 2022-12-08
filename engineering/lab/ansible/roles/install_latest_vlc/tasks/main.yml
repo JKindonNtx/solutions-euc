@@ -1,0 +1,12 @@
+---
+# Install VLC Player via Evergreen
+- name: Install VLC Player via Evergreen
+  ansible.windows.win_powershell:
+    script: |
+      $Script = "app-evergeen-vlc.ps1"
+      
+      $BuildSource = "C:\deployment"
+      $ScriptSource = "$BuildSource\scripts"
+      $CustomSource = "$BuildSource\custom"
+
+      & "$ScriptSource\$Script"

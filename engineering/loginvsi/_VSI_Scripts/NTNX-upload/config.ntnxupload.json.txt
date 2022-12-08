@@ -1,0 +1,4 @@
+{
+    "api": "http://perf.nutanix.com:8080/api",
+    "token": "xxx"
+}

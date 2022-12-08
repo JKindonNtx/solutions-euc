@@ -43,19 +43,26 @@ function Get-GitHubInfo
     {
         Write-Host (Get-Date)":Gathering Github configuration" 
 
-        # Collecting the complete github configuration
-        $GitHubInfo = git config --list        
-      
-        $GitHubDetails = New-Object -TypeName psobject 
+    # Collecting the complete github configuration
+    $GitHubInfo = git config --list    
 
-        # Build the object to return
-        $GitHubDetails | Add-Member -MemberType NoteProperty -Name "UserName" -Value $GitHubInfo[5].Split('=')[1]
-        $GitHubDetails | Add-Member -MemberType NoteProperty -Name "Email Address" -Value $GitHubInfo[6].Split('=')[1]
+    # Create Custom PS Object
+    $GitHubDetails = New-Object -TypeName psobject 
+
+    # Loop through Git output and grab Username and Email
+    foreach ($GitLine in $GitHubInfo) { 
+        if($GitLine -like "user.name*") { 
+            $GitHubDetails | Add-Member -MemberType NoteProperty -Name "UserName" -Value $GitLine.Split('=')[1]
+        } 
+        if($GitLine -like "user.email*") { 
+            $GitHubDetails | Add-Member -MemberType NoteProperty -Name "Email Address" -Value $GitLine.Split('=')[1]
+        } 
     }
-    
+    }
+
     End
     {
-        Write-Host (Get-Date)":Finishing 'Get-GitHubDetails'" 
+        Write-Host (Get-Date)":Finishing 'Get-GitHubInfo'" 
         Return $GitHubDetails
     }
 }

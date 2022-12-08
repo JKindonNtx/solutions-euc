@@ -1,0 +1,8 @@
+{
+    "Cluster": "cluster IP",
+    "CVMaddress": "CVM IP",
+    "username":  "admin",
+    "password":  "Password",
+    "CVMpassword": "Password",
+    "AHVpassword": "Password"
+}
