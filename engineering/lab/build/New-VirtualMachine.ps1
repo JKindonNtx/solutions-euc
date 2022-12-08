@@ -109,12 +109,12 @@ if($Ansible -eq "y"){
 
 # Write out a "SNAZZY" header
 Write-Host "
-_   _ _   _ _____  _    _   _ _____  __  
-| \ | | | | |_   _|/ \  | \ | |_ _\ \/ / 
-|  \| | | | | | | / _ \ |  \| || | \  /  
-| |\  | |_| | | |/ ___ \| |\  || | /  \  
-|_| \_|\___/  |_/_/   \_\_| \_|___/_/\_\ 
-                                                                                                                                                                                        
+  _   _       _              _       __     ____  __   ____        _ _     _ 
+ | \ | |_   _| |_ __ _ _ __ (_)_  __ \ \   / /  \/  | | __ ) _   _(_) | __| |
+ |  \| | | | | __/ _` | '_ \| \ \/ /  \ \ / /| |\/| | |  _ \| | | | | |/ _` |
+ | |\  | |_| | || (_| | | | | |>  <    \ V / | |  | | | |_) | |_| | | | (_| |
+ |_| \_|\__,_|\__\__,_|_| |_|_/_/\_\    \_/  |_|  |_| |____/ \__,_|_|_|\__,_|
+                                                                                                                                                                                                                                                                 
 "
 
 # Display the selected options selected back to the user
@@ -315,12 +315,12 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
 
     # Grabbing YAML content
     if ($Ansible -eq "y") {
-    Install-Module powershell-yaml -Force
-    Import-Module powershell-yaml
-    [string[]]$fileContent = Get-Content  "$Playbook"
-    $content = ''
-    foreach ($line in $fileContent) { $content = $content + "`n" + $line }
-    $yaml = ConvertFrom-YAML $content
+        Install-Module powershell-yaml -Force
+        Import-Module powershell-yaml
+        [string[]]$fileContent = Get-Content  "$Playbook"
+        $content = ''
+        foreach ($line in $fileContent) { $content = $content + "`n" + $line }
+        $yaml = ConvertFrom-YAML $content
     }
     
     # Fetching local GitHub user to report owner
