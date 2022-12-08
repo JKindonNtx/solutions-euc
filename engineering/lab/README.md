@@ -4,13 +4,18 @@
 
 This repository is for your Nutanix End User Computing Lab Build Modules. It helps you to automate the creation and maintenance of Windows Desktop and Server images used in the Nutanix EUC Solutions engineering lab.
 
-## Requirements
+## Overview
 
-The PowerShell script to create the golden images: `/build/New-VirtualMachine.ps1`
+This repository includes everything you will need to deploy lab virtual machines.
 
-This can be run using Visual Studio Code and Docker Desktop.
+There are two main script components
 
-Currently, the script is using:
+- A PowerShell script to configure the Nutanix Clusters `/build/New-ClusterConfigAHV.ps1`
+- A PowerShell script to create the golden images: `/build/New-VirtualMachine.ps1`
+
+Both scripts can be executed with Visual Studio Code and Docker Desktop integration.
+
+Currently, the deployment of virtual machines use:
 
 - Nutanix v2 API calls to create the VM
 - MDT server to deploy the base Operating System
