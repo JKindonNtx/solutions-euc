@@ -71,8 +71,6 @@ function CheckForModules {
     #endregion
 }
 
-
-
 #endregion
 
 #region Variables
@@ -94,7 +92,6 @@ $InstallExe         = "PBIDesktopSetup_x64.exe"
 $Arguments          = "-quiet -norestart ACCEPT_EULA=1"
 
 #endregion
-
 
 #Region Execute
 # ============================================================================

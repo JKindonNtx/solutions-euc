@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-    Downloads and Installs VLC Player via Evergreen
+    Downloads and Installs Microsoft 365 Apps via Evergreen
 .DESCRIPTION
     Uses the Evergreen module by Aaron Parker
     https://stealthpuppy.com/evergreen/
 .EXAMPLE
-	.\P3-App-Evergeen-VLC.ps1
+	.\P3-App-Evergreen-Microsoft365Apps.ps1
 #>
 
 #region Params
@@ -23,7 +23,7 @@ function CheckForModules {
     <#
     .SYNOPSIS
         Installs modules
-#>
+    #>
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingWriteHost", "")]
     [CmdletBinding()]
     Param (
@@ -84,12 +84,12 @@ $Modules            = @("Evergreen")
 CheckForModules
 
 #//Release Data
-$Application        = "VideoLanVlcPlayer"
+$Application        = "Microsoft365Apps"
 $DownloadFolder     = "C:\Apps\Temp\"
-$URI                = (Get-EvergreenApp -Name "VideoLanVlcPlayer" | Where-Object {$_.Architecture -eq "x64" -and $_.Type -eq "EXE"}).uri
+$URI                = (Get-EvergreenApp -Name "Microsoft365Apps" | Where-Object {$_.Channel -eq "Current"}).uri
 $AppInstallSource   = $URI | Split-Path -Leaf 
 $InstallExe         = $AppInstallSource
-$Arguments          = "/S"
+$Arguments          = "/configure c:\deployment\custom\OfficeConfig.xml"
 #endregion
 
 #Region Execute
@@ -126,4 +126,3 @@ $InstallParams = @{
 Start-Process @InstallParams
 
 #endregion
-

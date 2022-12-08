@@ -1,0 +1,10 @@
+---
+# Copy deployment scripts and configuration files
+- name: Copy deployment scripts and configuration files
+  win_copy:
+    src: /workspaces/solutions-euc/engineering/lab/image-content/
+    dest: C:/deployment/
+    force: yes
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=netcredentials_only
