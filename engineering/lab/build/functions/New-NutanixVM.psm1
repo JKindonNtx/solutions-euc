@@ -1,72 +1,103 @@
+function New-NutanixVM {
 <#
-.Synopsis
-    Create a new VM on a Nutanix Cluster
-.DESCRIPTION
-    Create a new VM on a Nutanix Cluster
-.EXAMPLE
-    New-NutanixVmV2 -Name "VM" -VMTimeZone "GMT" - StorageUUID "{UUID}" -ISOUUID "{UUID}" -VLANUUID "{UUID}"
-.INPUTS
-    TaskSequenceID - The Task Sequence to update
-    Name - The VM Name
-    VMtimezone - The VM Timezone
-    StorageUUID - The Storage UUID
-    ISOUUID - The ISO UUID
-    VLANUUID - The VLAN UUID
-.NOTES
-    Sven Huisman        29/11/2022          v1.0.0              Function Creation
-    David Brett         28/11/2022          v1.0.0              Update Error Handling
-.FUNCTIONALITY
-    Create a new VM on a Nutanix Cluster
+    .SYNOPSIS
+    Creates a Virtual Machine.
+
+    .DESCRIPTION
+    This function will create a new Virtual Machine on a Nutanix Cluster.
+    
+    .PARAMETER JSON
+    The LabConfig JSON File
+
+    .PARAMETER Name
+    The user name to use for connection
+
+    .PARAMETER VMtimezone
+    The password for the connection
+
+    .PARAMETER StorageUUID
+    The VLAN Number
+
+    .PARAMETER ISOUUID
+    The VLAN Description
+
+    .PARAMETER VLANUUID
+    The VLAN Description
+
+    .EXAMPLE
+    PS> New-NutanixVM -JSON $JSON -Name "VM" -VMTimeZone "GMT" - StorageUUID "{UUID}" -ISOUUID "{UUID}" -VLANUUID "{UUID}"
+
+    .INPUTS
+    This function will take inputs via pipeline by property
+
+    .OUTPUTS
+    Task variable containing the output of the Invoke-RestMethod command run
+
+    .LINK
+    https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/help/New-NutanixVM.md
+
+    .NOTES
+    Author          Version         Date            Detail
+    Sven Huisman    v1.0.0          28/11/2022      Function creation
+    David Brett     v1.0.1          06/12/2022      Updated Parameter definition
+                                                    Updated function header to include MD help file
+                                                    Changed Write-Host from hardcoded function name to $($PSCmdlet.MyInvocation.MyCommand.Name)
+
 #>
 
-function New-NutanixVmV2
-{
-    [CmdletBinding(SupportsShouldProcess=$true, 
-                  PositionalBinding=$false)]
+
+    [CmdletBinding()]
+
     Param
     (
-        [Parameter(Mandatory=$true, 
+        [Parameter(
+            Mandatory=$true, 
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
-            )]
-        [System.object[]]
-        $JSON,
-        [Parameter(Mandatory=$true, 
+        )]
+        [System.object[]]$JSON,
+
+        [Parameter(
+            Mandatory=$true, 
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
-            )]
-        [string[]]
-        $Name,
-        [Parameter(Mandatory=$true, 
+        )]
+        [system.string[]]$Name,
+
+        [Parameter(
+            Mandatory=$true, 
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
-            )]
-        [string[]]
-        $VMtimezone,
-        [Parameter(Mandatory=$true, 
+        )]
+        [system.string[]]$VMtimezone,
+
+        [Parameter(
+            Mandatory=$true, 
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
-            )]
-        [string[]]
-        $StorageUUID,
-        [Parameter(Mandatory=$true, 
+        )]
+        [system.string[]]$StorageUUID,
+
+        [Parameter(
+            Mandatory=$true, 
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
-            )]
-        [string[]]
-        $ISOUUID,
-        [Parameter(Mandatory=$true, 
+        )]
+        [system.string[]]$ISOUUID,
+
+        [Parameter(
+            Mandatory=$true, 
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
-            )]
-        [string[]]
-        $VLANUUID
+        )]
+        [system.string[]]$VLANUUID
     )
 
     Begin
     {
-        Write-Host (Get-Date)":Starting 'New-NutanixVmV2'" 
-    }
+        Set-StrictMode -Version Latest
+        Write-Host (Get-Date)":Starting $($PSCmdlet.MyInvocation.MyCommand.Name)"
+    } # Begin
 
     Process
     {
@@ -113,6 +144,7 @@ function New-NutanixVmV2
         $headers = @{ Authorization = "Basic $encodedCredentials" }
         $URL = "https://$($JSON.Cluster.ip):9440/PrismGateway/services/rest/v2.0/vms"
 
+        # Create Payload
         $Payload = "{ `
         ""boot"": { `
           ""boot_device_order"": [ `
@@ -165,6 +197,7 @@ function New-NutanixVmV2
         ] `
         }"
 
+        # Invoke Rest Method
         try {
             $task = Invoke-RestMethod -Uri $URL -method "POST" -body $Payload -ContentType 'application/json' -SkipCertificateCheck -headers $headers;
         }
@@ -173,11 +206,12 @@ function New-NutanixVmV2
             Write-Host (Get-Date) ": Going once"
             $task = Invoke-RestMethod -Uri $URL -method "POST" -body $Payload -ContentType 'application/json' -SkipCertificateCheck -headers $headers;
         }
-    }
+    } # Process
     
     End
     {
-        Write-Host (Get-Date)":Finishing 'New-NutanixVmV2'" 
+        Write-Host (Get-Date)":Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" 
         Return $task
-    }
-}
+    } # End
+
+} # New-NutanixVM

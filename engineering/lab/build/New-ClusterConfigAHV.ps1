@@ -25,7 +25,7 @@ $JSONFile = "/workspaces/solutions-euc/engineering/lab/build/LabConfig.json"
 foreach($function in $functions){ Write-Host (Get-Date)":Importing - $function." ; import-module $function }
 
 # Read the JSON input file into an object
-if($null -eq ($JSON = (Read-JSON -JSONFile $JSONFile))){
+if($null -eq ($JSON = (Get-JSON -JSONFile $JSONFile))){
     Write-Host (Get-Date) ":Unable to read JSON configuration file, quitting"
     Break 
 } else {
@@ -40,12 +40,12 @@ $GitHub = Get-GitHubInfo
 
 # Write out a "SNAZZY" header
 Write-Host "
-_   _ _   _ _____  _    _   _ _____  __  
-| \ | | | | |_   _|/ \  | \ | |_ _\ \/ / 
-|  \| | | | | | | / _ \ |  \| || | \  /  
-| |\  | |_| | | |/ ___ \| |\  || | /  \  
-|_| \_|\___/  |_/_/   \_\_| \_|___/_/\_\ 
-                                                                                                                                                                                        
+   ____ _           _               ____             __ _            _    _   ___     __
+  / ___| |_   _ ___| |_ ___ _ __   / ___|___  _ __  / _(_) __ _     / \  | | | \ \   / /
+ | |   | | | | / __| __/ _ \ '__| | |   / _ \| '_ \| |_| |/ _` |   / _ \ | |_| |\ \ / / 
+ | |___| | |_| \__ \ ||  __/ |    | |__| (_) | | | |  _| | (_| |  / ___ \|  _  | \ V /  
+  \____|_|\__,_|___/\__\___|_|     \____\___/|_| |_|_| |_|\__, | /_/   \_\_| |_|  \_/   
+                                                          |___/                                                                                                                                                                                                            
 "
 
 # Display the selected options selected back to the user
@@ -70,6 +70,7 @@ Write-Host "
 # ====================================================================================================================================================
 # Configure the Nutanix Cluster ready for use
 # ====================================================================================================================================================
+
 # Check if admin is used as user.
 if ($($github.username).ToLower() -eq 'admin') { 
     Write-Host (Get-Date) ":Don't use the admin account, enter different user in the config file, user will be created."
@@ -94,14 +95,24 @@ if ($confirmationStart -eq 'n') {
     $SendToSlack = "y"
     
     # Check and Update the Network
+<<<<<<< db_function_updates
+    $VLANinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "networks"
+=======
     $VLANinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "networks"
+>>>>>>> main
     $VLANUUID = ($VLANinfo.entities | Where-Object {$_.name -eq $VLANName}).uuid
     if($null -eq $VLANUUID){
         # VLAN not available
         Write-Host (Get-Date) ":VLAN not found, creating"
+<<<<<<< db_function_updates
+        $VLAN = New-NutanixVLAN -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -VLAN "$($JSON.VM.VLAN)" -VLANName "$VLANName"
+        Start-Sleep 5
+        $VLANinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "networks"
+=======
         $VLAN = New-NutanixVlanV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VLAN "$($JSON.VM.VLAN)" -VLANName "$VLANName"
         Start-Sleep 5
         $VLANinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "networks"
+>>>>>>> main
         $VLANUUID = ($VLANinfo.entities | Where-Object {$_.name -eq $VLANName}).uuid
         if(!($null -eq $VLANUUID)) { Write-Host (Get-Date) ":VLAN Created" } else { Write-Host (Get-Date) ":Error Creating VLAN"; Exit}
         $SlackMessage = "VLAN Added: $VLANName`n"
@@ -112,14 +123,24 @@ if ($confirmationStart -eq 'n') {
     }
 
     # Check and Update the Storage Containers
+<<<<<<< db_function_updates
+    $Storageinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "storage_containers"
+=======
     $Storageinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "storage_containers"
+>>>>>>> main
     $StorageUUID = ($Storageinfo.entities | Where-Object {$_.name -eq $($JSON.VM.Container)}).storage_container_uuid
     if($null -eq $StorageUUID){
         # Storage Container not available
         Write-Host (Get-Date) ":Storage Container not found, creating"
+<<<<<<< db_function_updates
+        $Storage = New-NutanixStorageContainer -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -Container "$($JSON.VM.Container)"
+        Start-Sleep 5
+        $Storageinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "storage_containers"
+=======
         $Storage = New-NutanixStorageV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -Container "$($JSON.VM.Container)"
         Start-Sleep 5
         $Storageinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "storage_containers"
+>>>>>>> main
         $StorageUUID = ($Storageinfo.entities | Where-Object {$_.name -eq $($JSON.VM.Container)}).storage_container_uuid
         if(!($null -eq $StorageUUID)) { Write-Host (Get-Date) ":Storage Container Created" } else { Write-Host (Get-Date) ":Error Creating Storage Container"; Exit}
         $SlackMessage = $SlackMessage + "Storage Container Added: $($JSON.VM.Container)`n"
@@ -130,19 +151,31 @@ if ($confirmationStart -eq 'n') {
     }
 
     #Check and Update the ISO Image
+<<<<<<< db_function_updates
+    $ISOinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "images"
+=======
     $ISOinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "images"
+>>>>>>> main
     $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($JSON.VM.ISO)}).vm_disk_id
     if($null -eq $ISOUUID){
         # ISO file not available
         Write-Host (Get-Date) ":ISO file not found, uploading"
         $ISOURL = "$($JSON.VM.ISOUrl)" + "$($JSON.VM.ISO)"
+<<<<<<< db_function_updates
+        $ISOTask = New-NutanixISO -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -StorageUUID $StorageUUID -ISOurl "$ISOURL" -ISOname "$($JSON.VM.ISO)"
+=======
         $ISOTask = New-NutanixIsoV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -StorageUUID $StorageUUID -ISOurl "$ISOURL" -ISOname "$($JSON.VM.ISO)"
+>>>>>>> main
 
         # Wait for upload task to complete
         $ISOTaskUUID = $ISOTask.task_uuid
         Write-Host (Get-Date)":Wait for ISO Upload ($ISOTaskUUID) to finish" 
         Do {
+<<<<<<< db_function_updates
+            $ISOtaskinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIPath "tasks/$($ISOTaskUUID)"
+=======
             $ISOtaskinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "tasks/$($ISOTaskUUID)"
+>>>>>>> main
             $ISOtaskstatus = $ISOtaskinfo.percentage_complete
             If ( $ISOtaskstatus -ne 100) {
                 Start-Sleep -Seconds 5
@@ -154,7 +187,11 @@ if ($confirmationStart -eq 'n') {
         Until ($ISOtaskstatus -eq 100)
 
         # Confirm that ISO is availavle
+<<<<<<< db_function_updates
+        $ISOinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -APIpath "images"
+=======
         $ISOinfo = Get-NutanixV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "images"
+>>>>>>> main
         $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($JSON.VM.ISO)}).vm_disk_id
         if(!($null -eq $ISOUUID)) { Write-Host (Get-Date) ":ISO Uploaded" } else { Write-Host (Get-Date) ":Error Uploading ISO"; Exit}
         $SlackMessage = $SlackMessage + "ISO Uploaded: $($JSON.VM.ISO)`n"

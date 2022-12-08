@@ -1,43 +1,60 @@
+function Get-MdtOS {
 <#
-.Synopsis
-    Connect to MDT Server and gether Operating Systems
-.DESCRIPTION
-    Connect to MDT Server and gether Operating Systems
-.EXAMPLE
-    Get-MdtOS -SearchString "SRV" -OSVersion "SRV"
-.INPUTS
-    SearchString - The search string to filter the OS Versions
-    OSversion - The OS Version to build from MDT
-.NOTES
-    David Brett      28/11/2022         v1.0.0             Function Creation
-.FUNCTIONALITY
-    Connect to MDT Server and gether Operating Systems
+    .SYNOPSIS
+    Connect to MDT Server and gather Operating Systems.
+
+    .DESCRIPTION
+    This function will connect to a MDT server and obtain a list of all the operating systems available using the directories in the OS folder of the MDT share.
+    
+    .PARAMETER SearchString
+    The search string to filter the OS Versions
+
+    .PARAMETER OSversion
+    The OS version to use for the MDT build
+
+    .EXAMPLE
+    PS> Get-MdtOS -SearchString "SRV" -OSVersion "SRV"
+
+    .INPUTS
+    This function will take inputs via pipeline by property
+
+    .OUTPUTS
+    PSCustomObject containing the details of the Operating Systems available
+
+    .LINK
+    https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/help/Get-MdtOS.md
+
+    .NOTES
+    Author          Version         Date            Detail
+    David Brett     v1.0.0          28/11/2022      Function creation
+
 #>
 
-function Get-MdtOS
-{
-    [CmdletBinding(SupportsShouldProcess=$true, 
-                  PositionalBinding=$false)]
+
+    [CmdletBinding()]
+
     Param
     (
-        [Parameter(Mandatory=$true, 
+        [Parameter(
+            Mandatory=$true, 
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
-            )]
-        [string[]]
-        $SearchString,
-        [Parameter(Mandatory=$true, 
+        )]
+        [system.string[]]$SearchString,
+
+        [Parameter(
+            Mandatory=$true, 
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
-            )]
-        [string[]]
-        $OSversion
+        )]
+        [system.string[]]$OSversion
     )
 
     Begin
     {
-        Write-Host (Get-Date)":Starting 'Get-MdtOS'" 
-    }
+        Set-StrictMode -Version Latest
+        Write-Host (Get-Date)":Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" 
+    } # Begin
 
     Process
     {
@@ -45,11 +62,15 @@ function Get-MdtOS
         Write-Host (Get-Date)":SearchString: $SearchString" 
         Write-Host (Get-Date)":OSversion: $OSversion" 
 
+        # Get available operating systems from MDT Server
         Write-Host (Get-Date)":Gathering available Operating Systems" 
         $Folders = get-childitem -path "/mnt/mdt/Operating Systems"
 
+        # Create empty Custom PS Object
         $MdtOSDetails = New-Object -TypeName psobject 
 
+        # Loop through folders and check SearchString
+        # If applicable add to OSArray
         $i = 1 
         $Builds = @() 
         foreach ($Folder in $Folders){
@@ -84,11 +105,12 @@ function Get-MdtOS
         $MdtOSDetails | Add-Member -MemberType NoteProperty -Name "Name" -Value $Name
         $MdtOSDetails | Add-Member -MemberType NoteProperty -Name "TaskSequenceID" -Value $TaskSequenceID
 
-    }
+    } # Process
     
     End
     {
-        Write-Host (Get-Date)":Finishing 'Get-MdtOS'" 
+        Write-Host (Get-Date)":Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" 
         Return $MdtOSDetails
-    }
-}
+    } # End
+
+} # Get-MdtOS

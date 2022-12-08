@@ -1,50 +1,69 @@
+function Update-MDTControl {
 <#
-.Synopsis
-    Update the MDT Control File
-.DESCRIPTION
-    Update the MDT Control File
-.EXAMPLE
-    Update-MdtControl -Name "VM" -TaskSequenceID "WSRV-BASE" -VMMAC "12:23:34:45:56:67"
-.INPUTS
-    TaskSequenceID - The Task Sequence Name
-    VMMAC - The VM MAC Address
-    Name - The VM Name
-.NOTES
-    David Brett      28/11/2022         v1.0.0             Function Creation
-.FUNCTIONALITY
-    Update the MDT Control File
+    .SYNOPSIS
+    Updates the MDT Control File.
+
+    .DESCRIPTION
+    This function will update the MDT control file to allow for auto start of a Task Sequence.
+    
+    .PARAMETER TaskSequenceID
+    The Nutanix Cluster IP
+
+    .PARAMETER VMMAC
+    The user name to use for connection
+
+    .PARAMETER Name
+    The password for the connection
+
+    .EXAMPLE
+    PS> Update-MDTControl -Name "VM" -TaskSequenceID "WSRV-BASE" -VMMAC "12:23:34:45:56:67"
+
+    .INPUTS
+    This function will take inputs via pipeline by property
+
+    .OUTPUTS
+    None
+
+    .LINK
+    https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/help/Update-MDTControl.md
+
+    .NOTES
+    Author          Version         Date            Detail
+    David Brett     v1.0.0          28/11/2022      Function creation
 #>
 
-function Update-MdtControl
-{
-    [CmdletBinding(SupportsShouldProcess=$true, 
-                  PositionalBinding=$false)]
+
+    [CmdletBinding()]
+
     Param
     (
-        [Parameter(Mandatory=$true, 
+        [Parameter(
+            Mandatory=$true, 
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
-            )]
-        [string[]]
-        $Name,
-        [Parameter(Mandatory=$true, 
+        )]
+        [system.string[]]$Name,
+
+        [Parameter(
+            Mandatory=$true, 
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
-            )]
-        [string[]]
-        $VMMAC,
-        [Parameter(Mandatory=$true, 
+        )]
+        [system.string[]]$VMMAC,
+
+        [Parameter(
+            Mandatory=$true, 
             ValueFromPipeline=$true,
             ValueFromPipelineByPropertyName=$true
-            )]
-        [string[]]
-        $TaskSequenceID
+        )]
+        [system.string[]]$TaskSequenceID
     )
 
     Begin
     {
-        Write-Host (Get-Date)":Starting 'Update-MdtControl'" 
-    }
+        Set-StrictMode -Version Latest
+        Write-Host (Get-Date)":Starting $($PSCmdlet.MyInvocation.MyCommand.Name)"
+    } # Begin
 
     Process
     {
@@ -64,10 +83,11 @@ function Update-MdtControl
         Add-Content -Path "/mnt/mdt/control/CustomSettings.ini" -value "SkipComputerName=YES`r"
         Add-Content -Path "/mnt/mdt/control/CustomSettings.ini" -value "SkipTaskSequence=YES`r"
         Add-Content -Path "/mnt/mdt/control/CustomSettings.ini" -value "SkipWizard=YES`r"
-    }
+    } # Process
     
     End
     {
-        Write-Host (Get-Date)":Finishing 'Update-MdtControl'" 
-    }
-}
+        Write-Host (Get-Date)":Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" 
+    } # End
+
+} # Update-MDTControl
