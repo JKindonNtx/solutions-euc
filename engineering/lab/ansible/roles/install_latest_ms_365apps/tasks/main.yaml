@@ -1,9 +1,9 @@
 ---
-# Install 7 zip via Chocolatey
-- name: Install 7 zip via Chocolatey
+# Install Microsoft 365 Apps via Evergreen
+- name: Install Microsoft 365 Apps via Evergreen
   ansible.windows.win_powershell:
     script: |
-      $Script = "app-choco-7zip.ps1"
+      $Script = "app-evergreen-microsoft365apps.ps1"
       
       $BuildSource = "C:\deployment"
       $ScriptSource = "$BuildSource\scripts"

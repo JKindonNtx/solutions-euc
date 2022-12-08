@@ -1,9 +1,9 @@
 ---
-# Install 7 zip via Chocolatey
-- name: Install 7 zip via Chocolatey
+# Install PowerBI via Nevergreen
+- name: Install PowerBI via Nevergreen
   ansible.windows.win_powershell:
     script: |
-      $Script = "app-choco-7zip.ps1"
+      $Script = "app-nevergeen-powerbi.ps1"
       
       $BuildSource = "C:\deployment"
       $ScriptSource = "$BuildSource\scripts"

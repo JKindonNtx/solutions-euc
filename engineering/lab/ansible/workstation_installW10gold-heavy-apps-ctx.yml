@@ -1,10 +1,13 @@
 ---
-- name: Install Windows 10 Gold with heavy apps set
+- name: Install Windows 10 Gold with heavy app set
   hosts: all
   roles:
+  - run_ms_deployment_scripts
   - install_base_chocolatey
   - install_base_evergreen
   - install_base_nevergreen
   - install_latest_7zip
   - install_latest_vlc
-  - install_latest_powerbi
+  - install_latest_ms_powerbi
+  - install_latest_ms_365apps
+  - install_latest_ms_teams

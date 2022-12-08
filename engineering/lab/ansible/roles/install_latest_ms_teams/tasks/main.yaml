@@ -1,9 +1,9 @@
 ---
-# Install 7 zip via Chocolatey
-- name: Install 7 zip via Chocolatey
+# Install Microsoft Teams via Chocolatey
+- name: Install Microsoft Teams via Chocolatey
   ansible.windows.win_powershell:
     script: |
-      $Script = "app-choco-7zip.ps1"
+      $Script = "app-choco-teams.ps1"
       
       $BuildSource = "C:\deployment"
       $ScriptSource = "$BuildSource\scripts"
