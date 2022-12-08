@@ -219,7 +219,7 @@ if ($confirmationStart -eq 'n') {
 
                 # Remove MDT Build CD-Rom
                 Write-Host (Get-Date)":Eject CD-ROM from VM"
-                $CDROM = Remove-NutanixCdRomV2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -VMUUID $VMUUID
+                $CDROM = Remove-NutanixCDROM -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($JSON.Cluster.UserName)" -VMUUID $VMUUID
                 Start-Sleep 5
 
                 # Start the VM Back Up
