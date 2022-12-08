@@ -71,8 +71,6 @@ function CheckForModules {
     #endregion
 }
 
-
-
 #endregion
 
 #region Variables

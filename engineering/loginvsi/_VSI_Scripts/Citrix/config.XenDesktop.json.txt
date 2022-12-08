@@ -1,0 +1,9 @@
+{
+    "StoreFront": "HOSTNAME",
+    "Controller": "HOSTNAME.DOMAIN.com",
+    "Server": true,
+    "Cloud": false,
+    "CustomerID": "ID",
+    "APIKey": "KEY",
+    "SecretKey": "SECRET"
+}

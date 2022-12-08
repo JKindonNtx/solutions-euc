@@ -4,9 +4,9 @@ FROM mcr.microsoft.com/vscode/devcontainers/python:${VARIANT}
 
 # Options
 ARG USERNAME="vscode"
-ARG PACKER_VERSION="none"
-ARG ANSIBLE_VERSION="none"
-ARG PYWINRM_VERSION="none"
+ARG PACKER_VERSION="latest"
+ARG ANSIBLE_VERSION="latest"
+ARG PYWINRM_VERSION="latest"
 
 COPY library-scripts/*.sh /tmp/library-scripts/
 
@@ -17,15 +17,24 @@ RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/home/$USERNA
     && echo "$SNIPPET" >> "/home/$USERNAME/.bashrc"
 
 # Install Packer
-RUN if [ "${PACKER_VERSION}" != "none" ]; then \
-        bash /tmp/library-scripts/packer-debian.sh "${PACKER_VERSION}"; \
+RUN if [ "${PACKER_VERSION}" = "latest" ]; then \
+        bash /tmp/library-scripts/packer-debian.sh ; \
+    else \
+        bash /tmp/library-scripts/packer-debian.sh "${PACKER_VERSION}" ; \
     fi
 
 # Install Ansible
-RUN if [ "${ANSIBLE_VERSION}" != "none" ]; then \
-        pip3 --disable-pip-version-check --no-cache-dir install \
-        ansible==${ANSIBLE_VERSION} \
-        pywinrm==${PYWINRM_VERSION}; \
+RUN if [ "${ANSIBLE_VERSION}" = "latest" ]; then \
+        pip3 --disable-pip-version-check --no-cache-dir install ansible ; \
+    else \
+        pip3 --disable-pip-version-check --no-cache-dir install ansible==${ANSIBLE_VERSION} ; \
+    fi
+
+# Install pywinrm
+RUN if [ "${PYWINRM_VERSION}" = "latest" ]; then \
+        pip3 --disable-pip-version-check --no-cache-dir install pywinrm ; \
+    else \
+        pip3 --disable-pip-version-check --no-cache-dir install pywinrm==${PYWINRM_VERSION} ; \
     fi
 
 # Install Additional Packages
