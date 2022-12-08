@@ -63,7 +63,6 @@ function Function-Template {
         Write-Host (Get-Date)":Parameter2: $Parameter2" 
 
         # Place for Function Execution Code
-        Install-Module -Name Posh-SSH -Force
 
     } # Process
     
