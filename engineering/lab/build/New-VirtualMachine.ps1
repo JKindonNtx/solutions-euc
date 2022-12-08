@@ -184,7 +184,7 @@ if ($confirmationStart -eq 'n') {
                 # Add virtual TPM to VM if needed
                 if ($($JSON.VM.vTPM) -eq 'true' -or $($OSversion) -eq '11') {
                     Write-Host (Get-Date)":Add vTPM to VM "$($OSDetails.Name)""
-                    Set-NutanixvTpmAcli -ClusterIP "$($JSON.Cluster.IP)" -CVMsshpassword "$($JSON.Cluster.CVMsshpassword)" -VMname "$($OSDetails.Name)"
+                    Set-NutanixvTPM -ClusterIP "$($JSON.Cluster.IP)" -CVMsshpassword "$($JSON.Cluster.CVMsshpassword)" -VMname "$($OSDetails.Name)"
                     Write-Host (Get-Date)":vTPM added to VM "$($OSDetails.Name)""
                 } else {
                     Write-Host (Get-Date)":vTPM not required on VM "$($OSDetails.Name)""
