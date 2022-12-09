@@ -1,9 +1,9 @@
 ---
-# Install PowerBI via Nevergreen
-- name: Install PowerBI via Nevergreen
+# Install FSLogix apps via Chocolatey
+- name: Install FSLogix apps via Chocolatey
   ansible.windows.win_powershell:
     script: |
-      $Script = "app-nevergeen-ms-powerbi.ps1"
+      $Script = "app-choco-ms-fslogixapps.ps1"
       
       $BuildSource = "C:\deployment"
       $ScriptSource = "$BuildSource\scripts"

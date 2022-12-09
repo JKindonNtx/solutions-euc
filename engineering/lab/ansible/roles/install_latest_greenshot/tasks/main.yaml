@@ -1,9 +1,9 @@
 ---
-# Install PowerBI via Nevergreen
-- name: Install PowerBI via Nevergreen
+# Install Greenshot via Chocolatey
+- name: Install Greenshot via Chocolatey
   ansible.windows.win_powershell:
     script: |
-      $Script = "app-nevergeen-ms-powerbi.ps1"
+      $Script = "app-choco-greenshot.ps1"
       
       $BuildSource = "C:\deployment"
       $ScriptSource = "$BuildSource\scripts"

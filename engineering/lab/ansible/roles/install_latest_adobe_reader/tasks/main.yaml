@@ -1,9 +1,9 @@
 ---
-# Install PowerBI via Nevergreen
-- name: Install PowerBI via Nevergreen
+# Install Adobe Reader via Chocolatey
+- name: Install Adobe Reader via Chocolatey
   ansible.windows.win_powershell:
     script: |
-      $Script = "app-nevergeen-ms-powerbi.ps1"
+      $Script = "app-choco-adobe-reader.ps1"
       
       $BuildSource = "C:\deployment"
       $ScriptSource = "$BuildSource\scripts"

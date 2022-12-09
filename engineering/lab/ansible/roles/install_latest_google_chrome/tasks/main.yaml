@@ -1,9 +1,9 @@
 ---
-# Install PowerBI via Nevergreen
-- name: Install PowerBI via Nevergreen
+# Install Google Chrome via Chocolatey
+- name: Install Google Chrome via Chocolatey
   ansible.windows.win_powershell:
     script: |
-      $Script = "app-nevergeen-ms-powerbi.ps1"
+      $Script = "app-choco-google-chrome.ps1"
       
       $BuildSource = "C:\deployment"
       $ScriptSource = "$BuildSource\scripts"

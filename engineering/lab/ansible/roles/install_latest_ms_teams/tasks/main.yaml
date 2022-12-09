@@ -3,7 +3,7 @@
 - name: Install Microsoft Teams via Chocolatey
   ansible.windows.win_powershell:
     script: |
-      $Script = "app-choco-teams.ps1"
+      $Script = "app-choco-ms-teams.ps1"
       
       $BuildSource = "C:\deployment"
       $ScriptSource = "$BuildSource\scripts"
