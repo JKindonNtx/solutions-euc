@@ -222,10 +222,15 @@ if ($confirmationStart -eq 'n') {
                 # Wait for task sequence to finish and VM Shutdown to be completed
                 Write-Host (Get-Date)":Wait for VM to power off" 
                 Do {
-                    Write-Host "Current Power State: $((Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "vms/$($VMUUID)" -Silent $true).power_state)"
+                    Write-Host (Get-Date)":Current Power State: $((Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "vms/$($VMUUID)" -Silent $true).power_state)"
                     start-sleep 30
                 }
                 Until (((Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "vms/$($VMUUID)" -Silent $true).power_state) -eq "off")
+
+                # Slack message to inform that MDT job is finished
+                Write-Host (Get-Date)":Updating Slack Channel" 
+                $MDTmessage = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been created on cluster $($JSON.Cluster.IP) using MDT" 
+                Update-Slack -Message $MDTMessage -Slack $($JSON.SlackConfig.Slack)
 
                 # Remove MDT Build CD-Rom
                 Write-Host (Get-Date)":Eject CD-ROM from VM"
