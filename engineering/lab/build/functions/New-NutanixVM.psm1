@@ -146,6 +146,8 @@ function New-NutanixVM {
             [string] $Secureboot = "false"
         }
 
+        $VMDescription = "$(Get-Date -DisplayHint Date) $UserName"
+
         $credPair = "$($UserName):$($JSON.Cluster.password)"
         $encodedCredentials = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($credPair))
         $headers = @{ Authorization = "Basic $encodedCredentials" }
@@ -162,6 +164,7 @@ function New-NutanixVM {
           ""secure_boot"": " + $Secureboot + ", `
           ""uefi_boot"": " + $UEFI + " `
         }, `
+        ""description"": """ + $VMDescription + """, `
         ""machine_type"": """ + $Machinetype + """, `
         ""memory_mb"": " + $($JSON.VM.vRAM) + ", `
         ""name"": """ + $Name + """, `
