@@ -45,7 +45,7 @@ function Get-GitHubInfo {
         Write-Host (Get-Date)":Gathering Github configuration" 
 
         # Collecting the complete github configuration
-        $GitHubInfo = git config --list    
+        $GitHubInfo = git config --global --list    
 
         # Create Custom PS Object
         $GitHubDetails = New-Object -TypeName psobject 
