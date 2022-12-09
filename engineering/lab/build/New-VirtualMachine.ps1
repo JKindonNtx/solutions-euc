@@ -45,6 +45,13 @@ $VLANName = "VLAN" + $($JSON.VM.VLAN)
 # Fetching local GitHub user to report owner
 $GitHub = Get-GitHubInfo
 
+# Sanity Check Github User Account Name to ensure compliance with Nutanix account requirements
+If ($GitHub.UserName -like "* *") {
+    Write-Host (Get-Date) ":UserName: ($($GitHub.UserName)) contains spaces which are not valid in Nutanix Prism Accounts. Removing space from the Username"
+    $GitHub.UserName = $GitHub.UserName -Replace " ",""
+    Write-Host (Get-Date) ":Updated UserName is: $($GitHub.UserName)"
+}
+
 # Check on build type and if AHV then gather cluster specific information
 if ($JSON.vm.Hypervisor -eq "AHV"){
     Write-Host (Get-Date) ":AHV build selected, getting cluster specific information"
@@ -326,7 +333,7 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
         $yaml = ConvertFrom-YAML $content
     }
     
-    # Fetching local GitHub user to report owner
+    # Fetching local GitHub user to report owner (This replaces username alterations made for account creation and reports Github UserName value)
     $GitHub = Get-GitHubInfo
 
     # Update Slack Channel

@@ -38,6 +38,13 @@ $VLANName = "VLAN" + $($JSON.VM.VLAN)
 # Fetching local GitHub user to report owner
 $GitHub = Get-GitHubInfo
 
+# Sanity Check Github User Account Name to ensure compliance with Nutanix account requirements
+If ($GitHub.UserName -like "* *") {
+    Write-Host (Get-Date) ":UserName: ($($GitHub.UserName)) contains spaces which are not valid in Nutanix Prism Accounts. Removing space from the Username"
+    $GitHub.UserName = $GitHub.UserName -Replace " ",""
+    Write-Host (Get-Date) ":Updated UserName is: $($GitHub.UserName)"
+}
+
 # Write out a "SNAZZY" header
 Write-Host "
    ____ _           _               ____             __ _            _    _   ___     __
