@@ -5,6 +5,7 @@
   - install_ms_net_framework_core_3.5
   #- run_ms_windows_update
   - install_ms_visual_c_2013u5
+  - install_ms_rds_role
   - install_citrix_vda_server_2203_1
   #- vmware_horizon_agent
   - install_adobe_reader_dc

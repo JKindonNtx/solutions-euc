@@ -1,9 +1,8 @@
 - name: Install Remote-Desktop-Services
   win_feature:
-    name: Remote-Desktop-Services
+    name: RDS-RD-Server
     state: present
     include_management_tools: yes
 
-- name: Reboot if required
+- name: Reboot to complete RDS Role
   ansible.windows.win_reboot:
-  when: win_feature.reboot_required
