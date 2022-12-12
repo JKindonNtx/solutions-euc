@@ -237,7 +237,7 @@ if ($confirmationStart -eq 'n') {
 
                 # Slack message to inform that MDT job is finished
                 Write-Host (Get-Date)":Updating Slack Channel" 
-                $MDTmessage = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been created on cluster $($JSON.Cluster.IP) using MDT" 
+                $MDTmessage = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been created on cluster $($ClusterName) using MDT" 
                 Update-Slack -Message $MDTMessage -Slack $($JSON.SlackConfig.Slack)
 
                 # Remove MDT Build CD-Rom
@@ -351,9 +351,9 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
 
     # Update Slack Channel
     if ($Ansible -eq "y") {
-        $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has finished running the Ansible Playbook $PlaybookToRun and has been shutdown and snapshotted. The following actions/installs have been executed: $($yaml.roles)"
+        $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has finished running the Ansible Playbook $PlaybookToRun and has been shutdown and snapshotted on cluster $($ClusterName). The following actions/installs have been executed: $($yaml.roles)"
     } else {
-        $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been shutdown and snapshotted - No post OS Ansible Playbooks have been run"
+        $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been shutdown and snapshotted on cluster $($ClusterName) - No post OS Ansible Playbooks have been run"
     }    
     Write-Host (Get-Date)":Updating Slack Channel" 
     Update-Slack -Message $Message -Slack $($JSON.SlackConfig.Slack)
