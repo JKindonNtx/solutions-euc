@@ -16,7 +16,7 @@ If (!(Test-Path -Path $OptimizerRoot)) {
 }
 
 Write-Host "Extracting Archive to $($OptimizerHome)" -ForegroundColor Cyan
-Expand-Archive -Path ($CustomSource + $OptimizerSource) -DestinationPath $OptimizerHome -Force
+Expand-Archive -Path ($CustomSource + "\" + $OptimizerSource) -DestinationPath $OptimizerHome -Force
 
 #//  Remove execution if using BIS-F
 & "$OptimizerHome\CtxOptimizerEngine.ps1" -mode Execute
