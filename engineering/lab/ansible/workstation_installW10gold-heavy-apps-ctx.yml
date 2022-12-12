@@ -22,3 +22,9 @@
   - install_latest_notepadplusplus
   - install_latest_ms_onedrive
   - install_latest_google_chrome
+  - run_ms_windows_update
+  - run_cust_create_shortcuts
+  - run_cust_import_start_layout_win10
+  - run_cust_imageoptimize_citrix
+  - run_cust_cleanup_build
+  - run_cust_bisf_seal

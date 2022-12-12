@@ -1,0 +1,12 @@
+---
+# Run Citrix Optimizer
+- name: Run Citrix Optimizer
+  ansible.windows.win_powershell:
+    script: |
+      $Script = "cust-imageoptimize-citrix.ps1"
+      
+      $BuildSource = "C:\deployment"
+      $ScriptSource = "$BuildSource\scripts"
+      $CustomSource = "$BuildSource\custom"
+
+      & "$ScriptSource\$Script"
