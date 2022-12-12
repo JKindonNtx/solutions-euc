@@ -1,0 +1,8 @@
+---
+# Run BISF sealing
+- name: Run BISF sealing
+  ansible.windows.win_powershell:
+    script: |
+      Copy-Item -Path C:\deployment\custom\bisf\* -Destination C:\Program Files (x86)\Base Image Script Framework (BIS-F)
+      
+      &"C:\Program Files (x86)\Base Image Script Framework (BIS-F)\Framework\PrepBISF_Start.ps1"

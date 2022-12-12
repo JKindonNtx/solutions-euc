@@ -1,0 +1,12 @@
+---
+# Run Create Shortcuts
+- name: Run Create Shortcuts
+  ansible.windows.win_powershell:
+    script: |
+      $Script = "cust-createshortcuts.ps1"
+      
+      $BuildSource = "C:\deployment"
+      $ScriptSource = "$BuildSource\scripts"
+      $CustomSource = "$BuildSource\custom"
+
+      & "$ScriptSource\$Script"
