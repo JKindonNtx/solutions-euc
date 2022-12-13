@@ -51,18 +51,11 @@ If ($GitHub.UserName -like "* *") {
     $GitHub.UserName = $GitHub.UserName -Replace " ",""
     Write-Host (Get-Date) ":Updated UserName is: $($GitHub.UserName)"
 }
-$cluster = 
-
 
 # Check on build type and if AHV then gather cluster specific information
 if ($JSON.vm.Hypervisor -eq "AHV"){
     Write-Host (Get-Date) ":AHV build selected, getting cluster specific information"
-    # Commenting this line to switch from v3 to v2 API to pull back the timezone information
-    # $Clusterinfo = Get-NutanixCluster -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)"
     $Clusterinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "cluster"
-    # Commenting this line to switch from v3 to v2 API to pull back the timezone information
-    # $VMTimezone = ($Clusterinfo.entities | Where-Object {$_.status.resources.network.external_ip -eq $($JSON.Cluster.IP)}).status.resources.config.timezone
-    # Grabbing the Cluster Timezone as well as the CLuster Name for future messaging edits
     $VMTimezone = $Clusterinfo.timezone
     $ClusterName = $Clusterinfo.name
     $Containerinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "storage_containers"
