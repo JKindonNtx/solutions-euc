@@ -3,7 +3,13 @@
 - name: Run Cleanup Image Temp Files
   ansible.windows.win_powershell:
     script: |
-      $PathToClean = "C:\Apps\Temp"
+      $PathToClean = "C:\Apps"
+
+      if (Test-Path -Path $PathToClean) {
+        Remove-Item -path $PathToClean -force -Recurse
+      }
+
+      $PathToClean = "$Env:PUBLIC\Desktop\*"
 
       if (Test-Path -Path $PathToClean) {
         Remove-Item -path $PathToClean -force -Recurse

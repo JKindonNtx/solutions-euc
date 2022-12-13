@@ -3,7 +3,7 @@
 - name: Install Microsoft 365 Apps via Evergreen
   ansible.windows.win_powershell:
     script: |
-      $Script = "app-evergreen-microsoft365apps.ps1"
+      $Script = "app-evergreen-ms-365apps.ps1"
       
       $BuildSource = "C:\deployment"
       $ScriptSource = "$BuildSource\scripts"
