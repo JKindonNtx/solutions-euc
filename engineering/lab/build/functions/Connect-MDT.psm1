@@ -102,11 +102,17 @@ function Connect-MDT {
         # Build Commands and Map Drive to MDT Server
         $Command = "sudo"
         $LocalPath = "/mnt/mdt"
-
+        $mapDrive = $false
+        
         # Test for the local directory
         if(Test-Path -Path $LocalPath){
             # Path exists
             Write-Host (Get-Date)":Directory $LocalPath exists" 
+            if(Test-Path -Path "$LocalPath/Control"){
+                Write-Host (Get-Date)":MDT Connection ok"
+            } else {
+                $mapDrive = $true
+            }
         } else {
             # Path does not exist create local directory
             Write-Host (Get-Date)":Directory $LocalPath does not exist - creating" 
@@ -118,10 +124,7 @@ function Connect-MDT {
             Write-Host (Get-Date)":Settings rights on $LocalPath" 
             $null = Start-Process -filepath $Command -argumentlist $Arguments -passthru -wait
 
-            # Mount MDT server to new local path
-            $Arguments = "mount -t cifs -o rw,file_mode=0117,dir_mode=0177,username=" + $UserName + ",password=" + $Password + ",domain=" + $Domain + " //" + $MDTServerIP + "/" + $ShareName + " " + $LocalPath
-            Write-Host (Get-Date)":Mounting drive to $LocalPath" 
-            $null = Start-Process -filepath $Command -argumentlist $Arguments -wait
+            $mapDrive = $true
         }
     } # Process
     
@@ -129,6 +132,12 @@ function Connect-MDT {
     {
         Write-Host (Get-Date)":Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" 
 
+        if($mapDrive){
+            # Mount MDT server to new local path
+            $Arguments = "mount -t cifs -o rw,file_mode=0117,dir_mode=0177,username=" + $UserName + ",password=" + $Password + ",domain=" + $Domain + " //" + $MDTServerIP + "/" + $ShareName + " " + $LocalPath
+            Write-Host (Get-Date)":Mounting drive to $LocalPath" 
+            $null = Start-Process -filepath $Command -argumentlist $Arguments -wait
+        }
         # Validate Drive Mapped ok and return True or False
         $Mounted = $LocalPath + "/Control"
         if(Test-Path -Path $Mounted){ 
