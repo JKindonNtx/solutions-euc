@@ -5,7 +5,7 @@ Set-ExecutionPolicy Bypass -Force
 Set-MpPreference -DisableRealtimeMonitoring $True -ErrorAction SilentlyContinue
 
 $BuildSource = "C:\deployment"
-$CustomSource = "$BuildSource\custom\"
+$CustomSource = "$BuildSource\custom"
 
 $OptimizerRoot = "C:\Tools"
 $OptimizerHome  = "C:\Tools\CitrixOptimizer"
