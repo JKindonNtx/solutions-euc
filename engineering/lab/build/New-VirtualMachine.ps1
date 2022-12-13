@@ -51,12 +51,20 @@ If ($GitHub.UserName -like "* *") {
     $GitHub.UserName = $GitHub.UserName -Replace " ",""
     Write-Host (Get-Date) ":Updated UserName is: $($GitHub.UserName)"
 }
+$cluster = 
+
 
 # Check on build type and if AHV then gather cluster specific information
 if ($JSON.vm.Hypervisor -eq "AHV"){
     Write-Host (Get-Date) ":AHV build selected, getting cluster specific information"
-    $Clusterinfo = Get-NutanixCluster -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)"
-    $VMTimezone = ($Clusterinfo.entities | Where-Object {$_.status.resources.network.external_ip -eq $($JSON.Cluster.IP)}).status.resources.config.timezone
+    # Commenting this line to switch from v3 to v2 API to pull back the timezone information
+    # $Clusterinfo = Get-NutanixCluster -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)"
+    $Clusterinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "cluster"
+    # Commenting this line to switch from v3 to v2 API to pull back the timezone information
+    # $VMTimezone = ($Clusterinfo.entities | Where-Object {$_.status.resources.network.external_ip -eq $($JSON.Cluster.IP)}).status.resources.config.timezone
+    # Grabbing the Cluster Timezone as well as the CLuster Name for future messaging edits
+    $VMTimezone = $Clusterinfo.timezone
+    $ClusterName = $Clusterinfo.name
     $Containerinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "storage_containers"
     $StorageUUID = ($Containerinfo.entities | Where-Object {$_.name -eq $($JSON.VM.Container)}).storage_container_uuid
     $Networkinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "networks"
@@ -229,7 +237,7 @@ if ($confirmationStart -eq 'n') {
 
                 # Slack message to inform that MDT job is finished
                 Write-Host (Get-Date)":Updating Slack Channel" 
-                $MDTmessage = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been created on cluster $($JSON.Cluster.IP) using MDT" 
+                $MDTmessage = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been created on cluster $($ClusterName) using MDT" 
                 Update-Slack -Message $MDTMessage -Slack $($JSON.SlackConfig.Slack)
 
                 # Remove MDT Build CD-Rom
@@ -343,9 +351,9 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
 
     # Update Slack Channel
     if ($Ansible -eq "y") {
-        $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has finished running the Ansible Playbook $PlaybookToRun and has been shutdown and snapshotted. The following actions/installs have been executed: $($yaml.roles)"
+        $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has finished running the Ansible Playbook $PlaybookToRun and has been shutdown and snapshotted on cluster $($ClusterName). The following actions/installs have been executed: $($yaml.roles)"
     } else {
-        $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been shutdown and snapshotted - No post OS Ansible Playbooks have been run"
+        $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been shutdown and snapshotted on cluster $($ClusterName) - No post OS Ansible Playbooks have been run"
     }    
     Write-Host (Get-Date)":Updating Slack Channel" 
     Update-Slack -Message $Message -Slack $($JSON.SlackConfig.Slack)

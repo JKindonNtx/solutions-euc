@@ -1,0 +1,16 @@
+---
+- name: Install Windows Server Gold with Office 2019 x64 - LoginVSI - CTX
+  hosts: all
+  roles:
+  - install_ms_net_framework_core_3.5
+  - install_ms_visual_c_2013u5
+  - install_ms_rds_role
+  - install_citrix_vda_server_2203_1
+  - install_adobe_reader_dc
+  - install_doro_pdf_reader_220
+  - install_oracle_java_8u181-windows-x64
+  - install_ms_office_2019_x64
+  - run_ms_file_types
+  - install_citrix_wem_agent_onprem_2209
+  - run_ms_deployment_scripts
+  - run_cust_imageoptimize_citrix
