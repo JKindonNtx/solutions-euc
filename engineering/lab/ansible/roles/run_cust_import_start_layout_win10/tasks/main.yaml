@@ -3,7 +3,9 @@
 - name: Run Import Start Layout
   ansible.windows.win_powershell:
     script: |
+      $Layout = "CustomLayout-Basic-Office-x64.xml"
       $BuildSource = "C:\deployment"
       $CustomSource = "$BuildSource\custom"
+      $LayoutPath = "$CustomSource\$Layout"
 
-      Import-StartLayout -LayoutPath '$CustomSource\CustomLayout-Basic-Office-x64.xml' -MountPath 'c:\' -Verbose
+      Import-StartLayout -LayoutPath $LayoutPath -MountPath 'c:\' -Verbose
