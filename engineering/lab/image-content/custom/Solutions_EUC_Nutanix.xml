@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <metadata>
+    <schemaversion>2.0</schemaversion>
+    <version>1.0</version>
+    <id>7DE44BF7-4AAA-4FD2-B561-C39652ED9C6C</id>
+    <displayname>Solutions EUC Nutanix</displayname>
+    <description>Solutions EUC Nutanix optimizations required for a consistent baseline</description>
+    <category>OS Optimizations</category>
+    <author>Solutions EUC Nutanix</author>
+    <lastupdatedate>12/14/2022</lastupdatedate>
+  </metadata>
+  <group>
+    <id>Scheduled Tasks</id>
+    <displayname>Scheduled Tasks</displayname>
+    <description>Scheduled Tasks to disable as part of the optimization</description>
+    <entry>
+      <name>MicrosoftEdgeUpdateTaskMachineCore</name>
+      <description>Disable MicrosoftEdgeUpdateTaskMachineCore</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>MicrosoftEdgeUpdateTaskMachineCore</name>
+          <path>\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>MicrosoftEdgeUpdateTaskMachineUA</name>
+      <description>Disable MicrosoftEdgeUpdateTaskMachineUA</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>MicrosoftEdgeUpdateTaskMachineUA</name>
+          <path>\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Office Automatic Updates 2.0</name>
+      <description>Disable Office Automatic Updates 2.0</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Office Automatic Updates 2.0</name>
+          <path>\Microsoft\Office\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>.NET Framework NGEN v4.0.30319 64 Critical</name>
+      <description>Disable .NET Framework NGEN v4.0.30319 64 Critical</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>.NET Framework NGEN v4.0.30319 64 Critical</name>
+          <path>\Microsoft\Windows\.NET Framework\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>.NET Framework NGEN v4.0.30319 Critical</name>
+      <description>Disable .NET Framework NGEN v4.0.30319 Critical</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>.NET Framework NGEN v4.0.30319 Critical</name>
+          <path>\Microsoft\Windows\.NET Framework\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Scheduled Start</name>
+      <description>Disable Scheduled Start</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Scheduled Start</name>
+          <path>\Microsoft\Windows\WindowsUpdate\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>.NET Optimizations</id>
+    <displayname>.NET Optimizations</displayname>
+    <description>Runs the ngen .NET Optimizations</description>
+    <entry>
+      <name>.NET ngen 32 Bit Optimizations</name>
+      <description>.NET ngen 32 Bit Optimizations</description>
+      <execute>1</execute>
+      <action>
+        <plugin>PowerShell</plugin>
+        <executeparams>
+          <value><![CDATA[try {
+Get-ChildItem  $env:SystemRoot\Microsoft.NET\Framework ngen.exe -Recurse | ForEach-Object {
+  & $_.FullName executequeueditems
+};
+Get-ChildItem  $env:SystemRoot\Microsoft.NET\Framework ngen.exe -Recurse | ForEach-Object {
+  & $_.FullName update /force
+};
+$Global:CTXOE_Details = ".NET32 Bit  ngen optimizations complete"; 
+$Global:CTXOE_Result = $True; 
+} catch {
+$Global:CTXOE_Details = ".NET32 Bit  ngen optimizations errored"; 
+$Global:CTXOE_Result = $False; 
+}
+]]></value>
+        </executeparams>
+      </action>
+      <analyze_not_supported />
+      <rollback_not_supported />
+    </entry>
+    <entry>
+      <name>.NET ngen 64 Bit Optimizations</name>
+      <description>.NET ngen 64 Bit Optimizations</description>
+      <execute>1</execute>
+      <action>
+        <plugin>PowerShell</plugin>
+        <executeparams>
+          <value><![CDATA[try {
+Get-ChildItem  $env:SystemRoot\Microsoft.NET\Framework64 ngen.exe -Recurse | ForEach-Object {
+  & $_.FullName executequeueditems
+};
+Get-ChildItem  $env:SystemRoot\Microsoft.NET\Framework64 ngen.exe -Recurse | ForEach-Object {
+  & $_.FullName update /force
+};
+$Global:CTXOE_Details = ".NET64 Bit  ngen optimizations complete"; 
+$Global:CTXOE_Result = $True; 
+} catch {
+$Global:CTXOE_Details = ".NET64 Bit  ngen optimizations errored"; 
+$Global:CTXOE_Result = $False; 
+}
+]]></value>
+        </executeparams>
+      </action>
+      <analyze_not_supported />
+      <rollback_not_supported />
+    </entry>
+  </group>
+  <group>
+    <id>Services</id>
+    <displayname>Services</displayname>
+    <description>Disables unwanted services</description>
+    <entry>
+      <name>wuauserv</name>
+      <description>Disable wuauserv</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Services</plugin>
+        <params>
+          <name>wuauserv</name>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>edgeupdate</name>
+      <description>Disable edgeupdate</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Services</plugin>
+        <params>
+          <name>edgeupdate</name>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>edgeupdatem</name>
+      <description>disable edgeupdatem</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Services</plugin>
+        <params>
+          <name>edgeupdatem</name>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>MicrosoftEdgeElevationService</name>
+      <description>Disable MicrosoftEdgeElevationService</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Services</plugin>
+        <params>
+          <name>MicrosoftEdgeElevationService</name>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>Registry Optimizations</id>
+    <displayname>Registry Optimizations</displayname>
+    <description>Registry Tweaks</description>
+    <entry>
+      <name>Disable WU Medic Service</name>
+      <description>Disable WU Medic Service</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Start</name>
+          <path>HKLM\SYSTEM\CurrentControlSet\Services\WaaSMedicSvc</path>
+          <value>4</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+</root>

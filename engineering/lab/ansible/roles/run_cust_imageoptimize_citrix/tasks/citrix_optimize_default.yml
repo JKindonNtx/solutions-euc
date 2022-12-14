@@ -1,4 +1,11 @@
 ---
+- name: Reboot before Optimizations
+  ansible.windows.win_reboot:
+
+- name: Pause for 2 minutes
+  ansible.builtin.pause:
+    minutes: 2
+
 # Run Citrix Optimizer
 - name: Run Citrix Optimizer
   ansible.windows.win_powershell:
@@ -10,3 +17,6 @@
       $CustomSource = "$BuildSource\custom"
 
       & "$ScriptSource\$Script"
+
+- name: Reboot after Optimizations
+  ansible.windows.win_reboot:
