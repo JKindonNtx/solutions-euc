@@ -1,0 +1,14 @@
+---
+- name: Run Citrix Optimizer - Nutanix Defaults
+  ansible.windows.win_powershell:
+    script: |
+      $Script = "cust-imageoptimize-citrix-nutanix.ps1"
+      
+      $BuildSource = "C:\deployment"
+      $ScriptSource = "$BuildSource\scripts"
+      $CustomSource = "$BuildSource\custom"
+
+      & "$ScriptSource\$Script"
+
+- name: Reboot after Nutanix Optimizations
+  ansible.windows.win_reboot:

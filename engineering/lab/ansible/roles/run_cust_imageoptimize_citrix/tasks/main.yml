@@ -1,0 +1,7 @@
+---
+- name: Include list of optimization tasks
+  block:
+    - include_tasks: citrix_optimize_default.yml
+    - include_tasks: citrix_optimize_nutanix.yml
+  become: yes
+  become_method: runas
