@@ -1,0 +1,11 @@
+---
+- name: Run Citrix Optimizer - 3rd Party Apps Template
+  ansible.windows.win_powershell:
+    script: |
+      $Script = "cust-imageoptimize-citrix-3rdparty.ps1"
+      
+      $BuildSource = "C:\deployment"
+      $ScriptSource = "$BuildSource\scripts"
+      $CustomSource = "$BuildSource\custom"
+
+      & "$ScriptSource\$Script"
