@@ -174,7 +174,7 @@ if ($confirmationStart -eq 'n') {
         Write-Host (Get-Date) ":ISO file found"
     }
 
-    # Get Cluster Name
+    # Get Cluster Name and update Slack Message
     $Clusterinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "cluster"
     $ClusterName = $Clusterinfo.name
 
