@@ -174,9 +174,13 @@ if ($confirmationStart -eq 'n') {
         Write-Host (Get-Date) ":ISO file found"
     }
 
+    # Get Cluster Name
+    $Clusterinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "cluster"
+    $ClusterName = $Clusterinfo.name
+
     # Update Slack Channel
     if ($SendToSlack -eq "y") {
-        $SlackMessage = "Nutanix Cluster $($JSON.Cluster.IP) Reconfigured by $($github.username) `n`n" + $SlackMessage
+        $SlackMessage = "Nutanix Cluster $($ClusterName) Reconfigured by $($github.username) `n`n" + $SlackMessage
         Update-Slack -Message $SlackMessage -Slack $($JSON.SlackConfig.Slack)
     } else {
         Write-Host (Get-Date)":Skipped - Updating Slack Channel"
