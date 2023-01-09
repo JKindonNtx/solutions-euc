@@ -215,6 +215,9 @@ if ($confirmationStart -eq 'n') {
                 $VMNIC = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "vms/$($VMUUID)/nics"
                 $VMMAC = ($VMNIC.entities | Where-Object {$_.is_connected -eq "True"}).mac_address
 
+                # Backup the MDT Control File
+                $MDTControlOriginal = Backup-MDTControl
+                
                 # Update the CustomSettings File
                 Update-MDTControl -Name "$($OSDetails.Name)" -TaskSequenceID "$($OSDetails.TaskSequenceID)" -VMMAC $VMMAC
 
@@ -233,6 +236,9 @@ if ($confirmationStart -eq 'n') {
                     start-sleep 30
                 }
                 Until (((Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "vms/$($VMUUID)" -Silent $true).power_state) -eq "off")
+
+                # Restore the MDT Control File
+                Restore-MDTControl -ControlFile $MDTControlOriginal
 
                 # Slack message to inform that MDT job is finished
                 Write-Host (Get-Date)":Updating Slack Channel" 
