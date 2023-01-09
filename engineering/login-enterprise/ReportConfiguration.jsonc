@@ -1,0 +1,246 @@
+{
+    "VMsToExcludeFromMonitoring": [
+        "cp-template*",
+        "cp-parent*",
+        "cp-replica*",
+        "stCtlVM*",
+        "NTNX-*-CVM"
+    ],
+    "ReportSections": [
+        "TestRunDetails",
+        "SuccessRates",
+        "SessionProperties",
+        "Table:Configuration",
+        "SessionOverviewVmCounters",
+        "EuxChart",
+        "Counters:Host Raw",
+        "Counters:VM Raw",
+        "LoginTimes",
+        "AppResponseTimes",
+        "EuxTimers"
+    ],
+    "SessionOverviewVmCounters": [
+        "cpu.usagemhz.average",
+        "cpu.demand.average",
+        "virtualdisk.read.average",
+        "virtualdisk.write.average"
+    ],
+    "CounterChartSections": [
+        {
+            "SheetName": "Host Raw",
+            "ComputeType": "Host",
+            "Section Title": "Host",
+            "Timestamp": "Timestamp",
+            "TimezoneOffset": "0",
+            "Charts": [
+                {
+                    "Title": "CPU usage in Percentage",
+                    "Counters": [
+                        {
+                            "id": "cpu.usage.average",
+                            "description": "Percentage of physical cores at base frequency"
+                        },
+                        {
+                            "id": "cpu.utilization.average",
+                            "description": "Percentage of physical and SMT cores at current turbo frequency"
+                        },
+                        {
+                            "id": "cpu.coreUtilization.average",
+                            "description": "Percentage of physical cores at current turbo frequency"
+                        },
+                        {
+                            "id": "cpu.latency.average",
+                            "description": "Percent of time the virtual machines are unable to run##because it is contending for access to the physical CPU(s)"
+                        }
+                    ]
+                },
+                {
+                    "Title": "Memory optimizations in MB",
+                    "DivideBy": 1024,
+                    "Counters": [
+                        {
+                            "id": "mem.compressed.average",
+                            "description": "Guest physical memory pages that have undergone memory compression"
+                        },
+                        {
+                            "id": "mem.vmmemctl.average",
+                            "description": "Amount of guest physical memory reclaimed from the virtual machine by the balloon driver in the guest"
+                        },
+                        {
+                            "id": "mem.swapused.average",
+                            "description": "Swap storage space consumed"
+                        }
+                    ]
+                },
+                {
+                    "Title": "Memory usage in MB",
+                    "DivideBy": 1024,
+                    "Counters": [
+                        {
+                            "id": "mem.consumed.average",
+                            "description": "Amount of host physical memory consumed for backing up guest physical memory pages"
+                        },
+                        {
+                            "id": "mem.shared.average",
+                            "description": "Amount of guest physical memory that is shared within a single virtual machine or across virtual machines"
+                        },
+                        {
+                            "id": "mem.zero.average",
+                            "description": "Guest physical memory pages whose content is 0x00"
+                        }
+                    ]
+                },
+                {
+                    "Title": "Disk I/O in MBps",
+                    "DivideBy": 1024,
+                    "Counters": [
+                        {
+                            "id": "disk.read.average",
+                            "description": "Average number of kilobytes read from the disk each second"
+                        },
+                        {
+                            "id": "disk.write.average",
+                            "description": "Average number of kilobytes written to the disk each second"
+                        }
+                    ]
+                },
+                {
+                    "Title": "Network issues in numbers",
+                    "Counters": [
+                        {
+                            "id": "net.droppedRx.summation",
+                            "description": "Number of receives dropped"
+                        },
+                        {
+                            "id": "net.droppedTx.summation",
+                            "description": "Number of transmits dropped"
+                        }
+                    ]
+                },
+                {
+                    "Title": "Network packet rate in thousands per second",
+                    "DivideBy": 1000,
+                    "Counters": [
+                        {
+                            "id": "net.packetsRx.summation",
+                            "description": "Number of packets received during the interval"
+                        },
+                        {
+                            "id": "net.packetsTx.summation",
+                            "description": "Number of packets transmitted during the interval"
+                        }
+                    ]
+                },
+                {
+                    "Title": "Network I/O rate in MBps",
+                    "DivideBy": 1024,
+                    "Counters": [
+                        {
+                            "id": "net.bytesRx.average",
+                            "description": "Number of kilobytes received during the interval"
+                        },
+                        {
+                            "id": "net.bytesTx.average",
+                            "description": "Number of kilobytes transmitted during the interval"
+                        }
+                    ]
+                },
+                {
+                    "Title": "Power usage",
+                    "Counters": [
+                        {
+                            "id": "power.power.average",
+                            "description": "Power usage in Watts"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "SheetName": "VM Raw",
+            "Section Title": "Virtual Machine",
+            "ComputeType": "VM",
+            "Timestamp": "Timestamp",
+            "Timezone": "UTC",
+            "Charts": [
+                {
+                    "Title": "CPU demand in MHz",
+                    "Counters": [
+                        {
+                            "id": "cpu.demand.average",
+                            "description": "The amount of CPU resources a virtual machine would use if there were no CPU contention or CPU limit"
+                        },
+                        {
+                            "id": "cpu.usagemhz.average",
+                            "description": "CPU usage in megahertz during the interval"
+                        }
+                    ]
+                },
+                {
+                    "Title": "CPU Latency",
+                    "Counters": [
+                        {
+                            "id": "cpu.latency.average",
+                            "description": "Percent of time the virtual machine is unable to run because it is contending for access to the physical CPU(s)"
+                        }
+                    ]
+                },
+                {
+                    "Title": "Memory optimizations in MB",
+                    "DivideBy": 1024,
+                    "Counters": [
+                        {
+                            "id": "mem.compressed.average",
+                            "description": "Guest physical memory pages that have undergone memory compression"
+                        },
+                        {
+                            "id": "mem.vmmemctl.average",
+                            "description": "Amount of guest physical memory reclaimed from the virtual machine by the balloon driver in the guest"
+                        },
+                        {
+                            "id": "mem.swapped.average",
+                            "description": "Swap storage space consumed"
+                        }
+                    ]
+                },
+                {
+                    "Title": "Memory swapped in MB",
+                    "DivideBy": 1024,
+                    "Counters": [
+                        {
+                            "id": "mem.swapin.average",
+                            "description": "Rate at which guest physical memory is swapped in from the swap space"
+                        },
+                        {
+                            "id": "mem.swapout.average",
+                            "description": "Rate at which guest physical memory is swapped out to the swap space"
+                        }
+                    ]
+                },
+                {
+                    "Title": "Memory used in Percentage",
+                    "Counters": [
+                        {
+                            "id": "mem.usage.average",
+                            "description": "Percentage of memory that has been consumed"
+                        }
+                    ]
+                },
+                {
+                    "Title": "Disk I/O in MBps",
+                    "DivideBy": 1024,
+                    "Counters": [
+                        {
+                            "id": "virtualDisk.read.average",
+                            "description": "Average number of kilobytes read from the virtual disk each second"
+                        },
+                        {
+                            "id": "virtualDisk.write.average",
+                            "description": "Average number of kilobytes written to the virtual disk each second"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

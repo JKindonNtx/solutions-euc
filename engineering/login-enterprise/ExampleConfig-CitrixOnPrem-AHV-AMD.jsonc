@@ -1,0 +1,70 @@
+{
+    "Domain": {
+        "NetBios": "WSPERF",
+        // Alternatively use LDAP://DC=example,DC=loginvsi,DC=com when current machine/user is part of the domain
+        "LDAPPath": "",
+        // leave empty if current machine/user is part of the domain and has rights to create resources in AD
+        "LDAPUsername": "", // remember it's json, so \ needs to be escaped
+        // leave empty if current machine/user is part of the domain and has rights to create resources in AD
+        "LDAPPassword": ""
+    },
+    "Users": {
+        "BaseName": "VSIEnt",
+        "GroupName": "${Users.BaseName}", // Resolves to "testUser"
+        "Password": "Password!",
+        "NetBios": "${Domain.NetBios}", // Resolves to "EXAMPLE"
+        "OU": "OU=Target,OU=Users,OU=LoginEnterprise",
+        "NumberOfDigits": 4 // usernames will be basename + numberofdigits, e.g. testUser001 etc in this example
+    },
+    "LoginEnterprise": {
+        "ApplianceURL": "https://url",
+        "ApplianceToken": "" //Get this from external notifications/public api, make sure to create a system access token with access level: Configuration
+    },
+    "Launchers": {
+        "NamingPattern": "W10-2023LE-",
+        "GroupName": "LE-Launchers" // Launcher group name to be used in login enterprise
+    },
+    "Target": {
+        "DDC": "WS-CDC1.wsperf.nutanix.com",
+        "ZoneName": "Primary",
+        "SessionsSupport": "SingleSession", // or MultiSession
+        "HypervisorConnection": "DRMAMDKB-AHV", // AHV-TRPTEST83-LAN
+        "HypervisorNetwork": "VLAN164",
+        "NTNXHost": "DRMAMDKB-3",
+        "CVM": "10.56.68.128",
+        "CVM_admin": "svenhuisman",
+        "CVM_password": "password",
+        "IPMI_admin": "admin",
+        "IPMI_password": "password",
+        "CVM_storage": "VDI",
+        "FunctionalLevel": "L7_9", // L5, L7, L7_6, L7_7, L7_8, L7_9, L7_20, L7_25
+        "NamingPattern": "W10AMD8LE-####",
+        "ADContainer": "OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com",
+        "DomainName": "wsperf.nutanix.com",
+        "StorefrontURL": "http://ws-CDC1.wsperf.nutanix.com/Citrix/Store",
+        "DesktopPoolName": "Login-ENT-AMD",
+        // MHz below which a VM is considered idle
+        "VMCPUsageMHzThreshold": 10,
+        "MinutesToWaitAfterIdleVMs": 40,
+        "SkipImagePrep": true, //Optionally skip imageprep fase of MCS if you image is already generalized.
+        // You can override any variable from the target section within the imagestotest array
+        "ImagesToTest": [
+            {
+                "ParentVM": "XDHyp:\\HostingUnits\\${Target.HypervisorConnection}\\W10-22H2-da8c_Snap_Optimized.template",
+                "NumCPUs": 1,
+                "NumCores": 2,
+                "MemoryMB": 4096,
+                "LogonsPerMinute": 5,
+                "DurationInMinutes": 20,
+                "NumberOfSessions": 180,
+                "NumberOfVMs": 180,
+                "PowerOnVMs": 180, // Amount of VMs to poweron initially, set to same value as amount of VM's by default
+                "Comment": "LoginVSI test on AMD - AHV"
+            }
+        ],
+        "ImageIterations": 1
+    },
+    "Test": {
+        "Name": "LE-CDC1-KW"
+    }
+}

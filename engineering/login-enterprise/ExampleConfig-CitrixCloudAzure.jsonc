@@ -1,0 +1,75 @@
+{
+    "Domain": {
+        "NetBios": "EXAMPLE",
+        // Alternatively use LDAP: //DC=lab,DC=loginvsi,DC=com when current machine/user is part of the domain
+        "LDAPPath": "LDAP://DC=example,DC=loginvsi,DC=com",
+        // leave empty if current machine/user is part of the domain and has rights to create resources in AD
+        "LDAPUsername": "",
+        // leave empty if current machine/user is part of the domain and has rights to create resources in AD
+        "LDAPPassword": ""
+    },
+    "Users": {
+        "BaseName": "testUser",
+        "GroupName": "${Users.BaseName}", // Resolves to "testUser"
+        "Password": "SuperSecurePassword!123",
+        "NetBios": "${Domain.NetBios}", // Resolves to "EXAMPLE"
+        "OU": "OU=TestUsers",
+        "NumberOfDigits": 3 // usernames will be basename + numberofdigits, e.g. testUser001 etc in this example
+    },
+    "LoginEnterprise": {
+        "ApplianceURL": "https://loginenterprise.example.loginvsi.com",
+        "ApplianceToken": "" //Get this from external notifications/public api, make sure to create a system access token with access level: Configuration
+    },
+    "Azure": {
+        "SubscriptionId": "",
+        "Username": "",
+        "Password": "", // Leave username and password blank for prompt
+        "Location": "westeurope"
+    },
+    "Launchers": {
+        "ResourceGroup": "Example",
+        "Image": "Win2019Datacenter",
+        "Size": "Standard_D2_v3",
+        "Admin": "loginvsi",
+        "Password": "Password!123",
+        "NamingPattern": "th-Launch_",
+        "GroupName": "th-Launchers",
+        "WebConnectorPath": "C:\\BrowserConnector\\BrowserConnector.exe"
+    },
+    "Target": {
+        //https://developer.cloud.com/citrix-cloud/citrix-cloud-api-overview/docs/get-started-with-citrix-cloud-apis
+        "CVADURL": "https://api-us.cloud.com/cvad/manage",
+        "ClientID": "",
+        "Secret": "",
+        "CustomerID": "",
+        //"SiteID": "b32c07d8-14cd-47e3-8e00-2507998056a8", //get it from https://api-us.cloud.com/cvad/manage/Me
+        "ZoneName": "Example",
+        "SessionsSupport": "SingleSession", // or MultiSession
+        "HypervisorConnection": "Example",
+        "NetworkPath": "XDHyp:\\HostingUnits\\${Target.HypervisorConnection}\\virtualprivatecloud.folder\\West Europe.region\\virtualprivatecloud.folder\\Example.resourcegroup\\Example-vnet.virtualprivatecloud\\default.network",
+        "FunctionalLevel": 1811,
+        "NamingPattern": "ex-###",
+        "ADContainer": "OU=Example,DC=example,DC=loginvsi,DC=com",
+        "DomainName": "example.loginvsi.com",
+        "WorkspaceURL": "https://example.cloud.com",
+        "DesktopPoolName": "AZ_testHenk",
+        "ResourceGroup": "Example",
+        "PowerOnVMs": "${Target.NumberOfVMs}", // Amount of VMs to poweron initially, set to same value as amount of VM's by default
+        "SkipImagePrep": false,
+        // You can override any variable from the target section within the imagestotest array
+        "ImagesToTest": [
+            {
+                "ParentVM": "XDHyp:\\HostingUnits\\HHO-CTXTest\\image.folder\\Example.resourcegroup\\Example.vm",
+                "LogonsPerMinute": 3,
+                "DurationInMinutes": 5,
+                "NumberOfSessions": 1,
+                "NumberOfVMs": 1,
+                "Comment": "This is a comment!"
+            }
+        ],
+        "ImageIterations": 1
+    },
+    "Test": {
+        "Name": "Example"
+    }
+}
