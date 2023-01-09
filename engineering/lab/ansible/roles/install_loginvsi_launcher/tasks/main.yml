@@ -1,0 +1,10 @@
+---
+# Install Login Enterprise Launcher
+- name: Install Login Enterprise Launcher
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\LoginVSI\\Enterprise\\Launcher\\Setup.msi"
+    state: present
+    product_id: '{C8823BA9-FA93-4C86-A48E-97E552F76AA6}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only

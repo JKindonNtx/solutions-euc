@@ -12,6 +12,6 @@
   become_flags: logon_type=new_credentials logon_flags=net_credentials_only
   register: citrix_workspace_app_install
 
-- name: Reboot after VDA
+- name: Reboot after Workspace App
   ansible.windows.win_reboot:
   when: citrix_workspace_app_install.changed

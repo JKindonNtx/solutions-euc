@@ -1,0 +1,23 @@
+---
+# Install VMware Horizon client
+- name: Create Log Folder
+  win_file:
+    path: C:\Logs
+    state: directory
+    
+- name: Install Horizon client
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\VMware\\Horizon\\Client\\VMware-Horizon-Client-2209-8.7.0-20649873.exe"
+    arguments: /silent /norestart INSTALL_SFB=0 INSTALL_HTML5MMR=0 URL_FILTERING_ENABLED=0 AUTO_UPDATE_ENABLED=0
+    state: present
+    expected_return_code: [0, 3010]
+    product_id: '{C8088F15-0D42-4A3A-9434-404153244125}'
+    log_path: C:\\Logs\\HorizonAgent.log
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  register: HorizonClient_install
+
+- name: Reboot to complete VMware Horizon Client install
+  ansible.windows.win_reboot:
+  when: HorizonClient_install.changed
