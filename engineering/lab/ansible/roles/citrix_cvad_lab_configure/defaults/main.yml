@@ -1,0 +1,21 @@
+#// CVAD Variables
+cvad_site_name: NutanixEUC                        # The name of your XenDesktop site. For example: "MySite".
+cvad_database_server: "localhost\\SQLEXPRESS"     # The name of your SQL server or SQL server instance (e.g. "SQLServer1.mycompany.com" or "SQLCTX01.mycompany.com\InStance1").
+cvad_database_server_port: 1433                    # The SQL port number (1433 by default)
+cvad_database_name_site: CTX_Site_DB              # The name for the site database. For example: "CTX_Site_DB".
+cvad_database_name_logging: CTX_Logging_DB        # The name for the logging database. For example: "CTX_Logging_DB".
+cvad_database_name_monitoring: CTX_Monitoring_DB  # The name for the monitoring database. For example: "CTX_Monitoring_DB".
+cvad_license_server: "localhost"                  # The Licence Server Name
+cvad_license_server_port: 27000                    # The port number for the initial contact, for example 27000 (this is the default value)
+cvad_licensing_model: UserDevice                  # The licensing model. Possible values are UserDevice and Concurrent.
+cvad_product_code: XDT                            # The product code. Possible values are XDT (for XenDesktop) or MPS (for the XenDesktop 7.x App Edition).                         
+cvad_product_edition: PLT                         # The product edition. Possible values are STD (Standard), ENT (Enterprise) or PLT (Platinum).                                     
+cvad_admin_group: WSPERF\domain admins            # The name of the Active Directory user or group, for example "MyDomain\CTXAdmins".
+cvad_role: Full Administrator                    # The role to assign to the new XenDesktop administrator. The following built-in roles are available
+cvad_scope: All                                  # The scope (the objects) to which the permissions (defined in the role) apply                      
+cvad_grooming_days: 365                           # The number of days you want to monitoring data to be saved in the database, for example 365 days.
+
+#// StoreFront Variables
+sf_store_virtual_path: /Citrix/Store
+sf_transport_type: HTTP
+sf_gateway_name: FakeGateway1

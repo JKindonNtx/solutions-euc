@@ -1,0 +1,124 @@
+---
+- name: Install Storefront Pre-Reqs
+  block:
+    - name: Install Windows Features
+      win_feature:
+        name:
+        - Web-Server
+        - Web-WebServer
+        - Web-Common-Http
+        - Web-Default-Doc
+        - Web-Dir-Browsing
+        - Web-Http-Errors
+        - Web-Static-Content
+        - Web-Http-Redirect
+        - Web-Health
+        - Web-Http-Logging
+        - Web-Log-Libraries
+        - Web-Http-Tracing
+        - Web-Performance
+        - Web-Stat-Compression
+        - Web-Dyn-Compression
+        - Web-Security
+        - Web-Filtering
+        - Web-Basic-Auth
+        - Web-Windows-Auth
+        - Web-App-Dev
+        - Web-Net-Ext45
+        - Web-AppInit
+        - Web-ASP
+        - Web-Asp-Net45
+        - Web-CGI
+        - Web-ISAPI-Ext
+        - Web-ISAPI-Filter
+        - Web-Includes
+        - Web-Mgmt-Tools
+        - Web-Mgmt-Console
+        - Web-Mgmt-Compat
+        - Web-Metabase
+        - Web-Lgcy-Mgmt-Console
+        - Web-Lgcy-Scripting
+        - Web-WMI
+        - Web-Scripting-Tools
+        - NET-Framework-Features
+        - NET-Framework-45-Features
+        - NET-Framework-45-Core
+        - NET-Framework-45-ASPNET
+        - NET-WCF-Services45
+        - NET-WCF-HTTP-Activation45
+        - NET-WCF-TCP-PortSharing45
+        - WAS
+        - Telnet-Client
+        state: present
+      register: win_feature
+  rescue:
+    - name: Install Windows Features (Second pass due to fail)
+      win_feature:
+        name:
+        - Web-Server
+        - Web-WebServer
+        - Web-Common-Http
+        - Web-Default-Doc
+        - Web-Dir-Browsing
+        - Web-Http-Errors
+        - Web-Static-Content
+        - Web-Http-Redirect
+        - Web-Health
+        - Web-Http-Logging
+        - Web-Log-Libraries
+        - Web-Http-Tracing
+        - Web-Performance
+        - Web-Stat-Compression
+        - Web-Dyn-Compression
+        - Web-Security
+        - Web-Filtering
+        - Web-Basic-Auth
+        - Web-Windows-Auth
+        - Web-App-Dev
+        - Web-Net-Ext45
+        - Web-AppInit
+        - Web-ASP
+        - Web-Asp-Net45
+        - Web-CGI
+        - Web-ISAPI-Ext
+        - Web-ISAPI-Filter
+        - Web-Includes
+        - Web-Mgmt-Tools
+        - Web-Mgmt-Console
+        - Web-Mgmt-Compat
+        - Web-Metabase
+        - Web-Lgcy-Mgmt-Console
+        - Web-Lgcy-Scripting
+        - Web-WMI
+        - Web-Scripting-Tools
+        - NET-Framework-Features
+        - NET-Framework-45-Features
+        - NET-Framework-45-Core
+        - NET-Framework-45-ASPNET
+        - NET-WCF-Services45
+        - NET-WCF-HTTP-Activation45
+        - NET-WCF-TCP-PortSharing45
+        - WAS
+        - Telnet-Client
+        state: present
+      register: win_feature
+
+- name: Make sure no orphaned SIDs in Administrators Group
+  ansible.windows.win_powershell:
+    script: | 
+      @(([ADSI]"WinNT://./Administrators").psbase.Invoke('Members')|% {$_.GetType().InvokeMember('AdsPath','GetProperty',$null,$($_),$null)}) -match '^WinNT'|%{$_.replace("WinNT://","")}|%{if($_ -match "S-1"){Remove-LocalGroupMember -Group "Administrators" -Member "$_"}}
+
+- name: Reboot if features require
+  win_reboot:
+  when: win_feature.reboot_required
+
+- name: Install Storefront Components {{ build_number }}
+  win_package:
+    path: "{{ cvad_source_path }}\\x64\\Storefront\\CitrixStoreFront-x64.exe"
+    arguments: '-silent'
+    state: present
+  register: sf_install
+
+- name: Reboot after Storefront
+  win_reboot:
+  when: sf_install.reboot_required

@@ -1,0 +1,44 @@
+---
+# Install PVS Pre-Reqs
+- name: Install PVS Pre-Reqs
+  win_feature:
+    name:
+    - NET-Framework-45-Core
+    - GPMC
+    - RSAT-ADDS-Tools
+    - RDS-Licensing-UI
+    - WAS
+    - Telnet-Client
+    state: present
+  register: win_feature
+
+- name: Reboot if features required
+  win_reboot:
+  when: win_feature.reboot_required
+
+- name: Create Log Folder
+  win_file:
+    path: C:\Logs
+    state: directory
+
+- name: Install PVS Console {{ build_number }}
+  win_package:
+    path: "{{ pvs_source_path }}\\console\\PVS_Console_x64.exe"
+    arguments: /s /v"/qn /l C:\Logs\Install_PVS_Console.log"
+    state: present
+    expected_return_code: [0, 3, 3010]
+    creates_path: C:\Program Files\Citrix\Provisioning Services Console
+  register: pvs_console_install
+
+- name: Install PVS Server {{ build_number }}
+  win_package:
+    path: "{{ pvs_source_path }}\\server\\PVS_Server_x64.exe"
+    arguments: /s /v"/qn /l C:\Logs\Install_PVS_Server.log"
+    state: present
+    expected_return_code: [0, 3, 3010]
+    creates_path: C:\Program Files\Citrix\Provisioning Services
+  register: pvs_server_install
+
+- name: Reboot if install required
+  win_reboot:
+  when: pvs_server_install.reboot_required

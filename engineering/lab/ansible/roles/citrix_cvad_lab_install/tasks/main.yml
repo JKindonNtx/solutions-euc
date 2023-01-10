@@ -1,0 +1,9 @@
+---
+- name: Include list of Build components
+  block:
+    - include_tasks: install_cvad.yml
+    - include_tasks: install_storefront.yml
+    - include_tasks: install_sql_management.yml
+    - include_tasks: install_nutanix_plugins.yml
+  become: true
+  become_method: runas

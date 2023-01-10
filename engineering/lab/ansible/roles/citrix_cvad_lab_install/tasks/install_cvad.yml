@@ -1,0 +1,67 @@
+---
+# Install Virtual Apps and Desktops
+- name: Install DDC Pre-Reqs
+  win_feature:
+    name:
+    - NET-Framework-45-Core
+    - GPMC
+    - RSAT-ADDS-Tools
+    - RDS-Licensing-UI
+    - WAS
+    - Telnet-Client
+    state: present
+  register: win_feature
+
+- name: Reboot if features required
+  win_reboot:
+  #when: win_feature.reboot_required
+
+- name: Create Log Folder
+  win_file:
+    path: C:\Logs
+    state: directory
+
+- name: Install DDC Components {{ build_number }}
+  win_package:
+    path: "{{ cvad_source_path }}\\x64\\XenDesktop Setup\\XenDesktopServerSetup.exe"
+    arguments: /components CONTROLLER,DESKTOPSTUDIO,DESKTOPDIRECTOR,LICENSESERVER /configure_firewall /noreboot /quiet /logpath C:\Logs /IGNORE_HW_CHECK_FAILURE
+    state: present
+    expected_return_code: [0, 3, 3010]
+    creates_path: C:\Program Files\Citrix\Desktop Studio
+  register: ddc_install
+
+- name: Reboot after DDC
+  win_reboot:
+  when: ddc_install.changed
+
+- name: Remove DDC RunOnce Key
+  win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce
+    name: "!XenDesktopSetup"
+    state: absent
+  register: ddc_resume
+
+- name: Resume DDC Install {{ build_number }}
+  win_package:
+    path: C:\ProgramData\Citrix\XenDesktopSetup\XenDesktopServerSetup.exe
+    state: present
+    expected_return_code: [0, 3, 3010]
+    creates_path: C:\Program Files\Citrix\Desktop Studio
+  when: ddc_resume.changed
+
+- name: Configure SQL Express Instance for 1433 access
+  ansible.windows.win_powershell:
+    script: |
+      import-module sqlps;
+      $MachineObject = new-object ('Microsoft.SqlServer.Management.Smo.WMI.ManagedComputer') "localhost"
+      $instance = $MachineObject.getSmoObject(
+        "ManagedComputer[@Name='localhost']/" + 
+        "ServerInstance[@Name='SQLEXPRESS']"
+      )
+
+      $instance.ServerProtocols['Tcp'].IPAddresses['IPAll'].IPAddressProperties['TcpPort'].Value = "1433"
+      $instance.ServerProtocols['Tcp'].IPAddresses['IPAll'].IPAddressProperties['TcpDynamicPorts'].Value = ""
+      $instance.ServerProtocols['Tcp'].Alter()
+
+      Get-Service -Name 'MSSQL$SQLEXPRESS' | restart-service
+      Get-Service -Name 'SQLBrowser' | restart-service

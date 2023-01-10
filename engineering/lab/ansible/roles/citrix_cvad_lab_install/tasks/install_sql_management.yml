@@ -1,0 +1,12 @@
+---
+# Install SQL Management Studio via Chocolatey
+- name: Install SQL Management Studio via Chocolatey
+  ansible.windows.win_powershell:
+    script: |
+      if (-not (Test-Path "C:\ProgramData\chocolatey\choco.exe")) {
+          Write-Host "Chocolatey not installed, attempting to install"
+          Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+      }
+
+      choco install sql-server-management-studio -Y --limit-output --ignore-checksums
+

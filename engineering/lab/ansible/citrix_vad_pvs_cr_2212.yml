@@ -1,0 +1,8 @@
+- name: Deploy Lab Components - PVS Current Release {{ build_number }}
+  hosts: PVS
+  vars_files:
+    - ./ctx_vars/cr_2212.yml
+  gather_facts: yes
+  roles:
+    - citrix_cvad_lab_pvs_install
+    - citrix_cvad_lab_pvs_configure

@@ -1,0 +1,15 @@
+---
+- name: Configure Domain Login
+  script: files/dir-configure-domain.ps1
+  args:
+    creates: C:\Logs\directordomain.txt
+
+- name: Configure Default Page
+  script: files/dir-configure-default.ps1
+  args:
+    creates: C:\Logs\directordefault.txt
+
+- name: Disable SSL Warning
+  script: files/dir-disable-sslwarn.ps1
+  args:
+    creates: C:\Logs\diablesslwarn.txt
