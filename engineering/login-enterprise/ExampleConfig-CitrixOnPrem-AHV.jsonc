@@ -42,6 +42,7 @@
         "ADContainer": "OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com",
         "DomainName": "wsperf.nutanix.com",
         "StorefrontURL": "http://ws-CDC1.wsperf.nutanix.com/Citrix/Store",
+        "Workload": "Knowledge Worker", // Knowledge Worker or Task Worker
         "DesktopPoolName": "Login-ENT-AMD",
         // MHz below which a VM is considered idle
         "VMCPUsageMHzThreshold": 10,

@@ -1,4 +1,4 @@
-function ConvertTo-VSIVCExcelDocument {
+function ConvertTo-VSINTNXExcelDocument {
     param(
         $SourceFolder,
         $OutputFile

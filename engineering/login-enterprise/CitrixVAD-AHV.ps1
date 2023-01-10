@@ -79,21 +79,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
     for ($i = 1; $i -le $VSI_Target_ImageIterations; $i++) {
         
-       # if (-not $SkipLaunchers) {
-       #     $NumberOfLaunchers = [System.Math]::Ceiling($VSI_Target_NumberOfSessions / 15)
-       #     Set-VSIHVLaunchers -Amount $NumberOfLaunchers `
-       #         -vCenterServer $VSI_Launchers_vCenterServer `
-       #         -vCenterUser $VSI_Launchers_vCenterUsername `
-       #         -vCenterPass $VSI_Launchers_vCenterPassword `
-       #         -CustomizationSpec $VSI_Launchers_CustomizationSpec `
-       #         -ParentVM $VSI_Launchers_ParentVM `
-       #         -Snapshot $VSI_Launchers_Snapshot `
-       #         -VMHost $VSI_Launchers_VMHost `
-       #         -Datastore $VSI_Launchers_Datastore `
-       #         -NamingPattern $VSI_Launchers_NamingPattern `
-       #         -LauncherGroupName $VSI_Launchers_GroupName `
-       #         -Force:$Force.IsPresent
-       #}
         # Will only create the pool if it does not exist
         ## AHV
 
@@ -142,13 +127,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             -LauncherGroupName $VSI_Launchers_GroupName `
             -AccountGroupName $VSI_Users_GroupName `
             -ConnectorName "Citrix Storefront" `
-            -ConnectorParams @{serverURL = $VSI_Target_StorefrontURL; resource = $VSI_Target_DesktopPoolName }
+            -ConnectorParams @{serverURL = $VSI_Target_StorefrontURL; resource = $VSI_Target_DesktopPoolName } `
+            -Workload $VSI_Target_Workload
         
         # Wait for VM's to have settled down
         if (-not ($SkipWaitForIdleVMs)) {
             Write-Host (Get-Date) "Wait for VMs to become idle"
-            Start-Sleep -Seconds 300
-            #Start-VSIVCMonitoring -Hostuuid $Host_uuid $VSI_Target_Cluster -vCenterServer $VSI_Target_vCenterServer -vCenterUserName $VSI_Target_vCenterUsername -vCenterPassword $VSI_Target_vCenterPassword -StopWhenVMsAreReady -CPUUtilMHz $VSI_Target_VMCPUsageMHzThreshold -vCenterCounterConfigurationFile $ReportConfigFile
+            Start-Sleep -Seconds 60
         }
         Write-Host (Get-Date) "Waiting for $VSI_Target_MinutesToWaitAfterIdleVMs minutes before starting test"
         Start-sleep -Seconds $($VSI_Target_MinutesToWaitAfterIdleVMs * 60)
@@ -159,8 +144,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $FolderName = "$($VSI_Test_Name)_Run$($TestRun.counter)_$($VSI_Target_NumberOfSessions)Sessions"
         $OutputFolder = "$ScriptRoot\results\$FolderName"
         $monitoringJob = Start-VSINTNXMonitoring -OutputFolder $OutputFolder -DurationInMinutes $VSI_Target_DurationInMinutes -RampupInMinutes $VSI_Test_RampupInMinutes -Hostuuid $Hostuuid -IPMI_ip $IPMI_ip -NTNXCounterConfigurationFile $ReportConfigFile -AsJob
-        
-        #Get-VSIHVInfo -OutputFolder $OutputFolder -DesktopPoolName $VSI_Target_DesktopPoolName -ConnectionServer $VSI_Target_ConnectionServer -ConnectionServerUser $VSI_Target_ConnectionServerUser -ConnectionServerPassword $VSI_Target_ConnectionServerUserPassword
         Get-NTNXHostinfo -NTNXHost $VSI_Target_NTNXHost -OutputFolder $OutputFolder
         # Wait for test to finish
         Wait-LETest -testId $testId
@@ -169,7 +152,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         Export-LEMeasurements -Folder $OutputFolder -TestRun $TestRun -DurationInMinutes $VSI_Target_DurationInMinutes
         $XLSXPath = "$OutputFolder.xlsx"
-        ConvertTo-VSIVCExcelDocument -SourceFolder $OutputFolder -OutputFile $XLSXPath
+        ConvertTo-VSINTNXExcelDocument -SourceFolder $OutputFolder -OutputFile $XLSXPath
         #if (-not ($SkipPDFExport)) {
         #    Export-LEPDFReport -XLSXFile $XLSXPath -ReportConfigurationFile $ReportConfigFile
         #}

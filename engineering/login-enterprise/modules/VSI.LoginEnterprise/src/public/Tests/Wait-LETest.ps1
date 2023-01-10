@@ -1,6 +1,6 @@
 function Wait-LETest {
     Param (
-        [Parameter(Mandatory)] [string] $testId
+        [Parameter(Mandatory)] [AllowEmptyString()] [string] $testId
     )
     if (-not ([string]::IsNullOrEmpty($testId))) {
     
@@ -12,8 +12,7 @@ function Wait-LETest {
             $TestRun = Get-LETestRuns -testId $testId | Select-Object -Last 1
             $CurrentDate = (Get-Date).ToUniversalTime()
             If ($null -ne $TestRun.Started) {
-                #$Timespan = New-TimeSpan (get-date $TestRun.Started) $CurrentDate
-                $TimeSpan = New-TimeSpan -Start $TestRun.Started -End $CurrentDate
+                $Timespan = New-TimeSpan (get-date $TestRun.Started) $CurrentDate
             }
             Write-Log -Update "Test state: $($TestRun.State), $([Math]::Round($TimeSpan.TotalMinutes,0)) of $($test.rampupDurationInMinutes + $test.testDurationInMinutes + $test.rampDownDurationInMinutes ) estimated minutes elapsed, $($TestRun.loginCounts.successCount)/$($TestRun.loginCounts.totalCount) logins, $($TestRun.engineCounts.successCount)/$($TestRun.engineCounts.totalCount) engines, $($TestRun.appExecutionCounts.successCount)/$($TestRun.appExecutionCounts.totalCount) applications                                             "
             $state = (Get-LETest -testId $testid -include "none").state
