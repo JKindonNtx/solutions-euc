@@ -5,7 +5,7 @@ Function Enable-VSICTXDesktopPool {
         $ADUserName,
         $ADPassword,
         $PowerOnVMs,
-        $VMRegistrationTimeOutMinutes = 20,
+        $VMRegistrationTimeOutMinutes = 45,
         $DDC,
         $HypervisorType,
         $Affinity,

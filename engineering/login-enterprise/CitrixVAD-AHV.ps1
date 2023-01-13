@@ -143,7 +143,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     
    
     #$VSI_Test_RampupInMinutes = [Math]::Round($VSI_Target_NumberOfSessions / $VSI_Target_LogonsPerMinute, 0, [MidpointRounding]::AwayFromZero)
-    $VSI_Test_RampupInMinutes = 48
+    $VSI_Target_RampupInMinutes = 48
 
 
     for ($i = 1; $i -le $VSI_Target_ImageIterations; $i++) {
@@ -200,7 +200,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         # Update the test params/create test if not exist
         $testId = Set-LELoadTest -TestName $VSI_Test_Name `
             -SessionAmount $VSI_Target_NumberOfSessions `
-            -RampupInMinutes $VSI_Test_RampupInMinutes `
+            -RampupInMinutes $VSI_Target_RampupInMinutes `
             -DurationInMinutes $VSI_Target_DurationInMinutes `
             -LauncherGroupName $VSI_Launchers_GroupName `
             -AccountGroupName $VSI_Users_GroupName `

@@ -1,5 +1,5 @@
 # About
-Automation Toolkit around Login Enterprise (LE) and VMWare/Citrix to fully automate test execution.
+Automation Toolkit around Login Enterprise (LE) and VMware/Citrix to fully automate test execution.
 Will take care of:
 * Creating Accounts in LE and AD
 * Creating/Updating Test settings in LE

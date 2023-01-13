@@ -9,7 +9,6 @@ function Wait-LETest {
         $state = $test.state
         while (($state -eq "running") -or ($state -eq "stopping")) {
             Start-Sleep -Seconds 1
-            Write-Log -Update "Test state: $($TestRun.State), $($TestRun.loginCounts.successCount)/$($TestRun.loginCounts.totalCount) logins"
             $TestRun = Get-LETestRuns -testId $testId | Select-Object -Last 1
             $CurrentDate = (Get-Date).ToUniversalTime()
             If ($null -ne $TestRun.Started) {
