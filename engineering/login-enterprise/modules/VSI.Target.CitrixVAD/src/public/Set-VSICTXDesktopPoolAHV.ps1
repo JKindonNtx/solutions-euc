@@ -7,7 +7,7 @@ function Set-VSICTXDesktopPoolAHV {
         $Networkmap,
         $CpuCount,
         $CoresCount,
-        $MemoryMB,
+        $MemoryGB,
         $ContainerID,
         $NamingPattern,
         $OU,
@@ -96,7 +96,7 @@ function Set-VSICTXDesktopPoolAHV {
 
         ## AHV ##
         #if($hypervisor -eq 'AHV'){
-    
+        $MemoryMB = $($MemoryGB) * 1024
         $connectionCustomProperties = "<CustomProperties></CustomProperties>"
         $hostingCustomProperties = "<CustomProperties></CustomProperties>"
         $provcustomProperties = @"

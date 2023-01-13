@@ -6,9 +6,45 @@ Function Enable-VSICTXDesktopPool {
         $ADPassword,
         $PowerOnVMs,
         $VMRegistrationTimeOutMinutes = 20,
-        $DDC
+        $DDC,
+        $HypervisorType,
+        $Affinity,
+        $ClusterIP,
+        $CVMSSHPassword,
+        $VMnameprefix,
+        $Hosts
     )
-    
+    #Power off VMs
+    $desktops = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount 2000
+    $totalDesktops = $desktops.Count
+    Start-Sleep 2
+    Write-Log "Initiate the shutdown for all the VMs."
+    foreach ($desktop in $desktops) { 
+        $desktop | New-BrokerHostingPowerAction -Action TurnOff | Out-Null
+        #Start-Sleep 1
+    }
+ 
+    $desktops = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $totalDesktops | Where-Object {$_.PowerState -eq "On"}	
+  
+    $startTime = Get-Date
+    $date = Get-Date
+    $timeout = 120
+    while ($desktops.Count -ne 0) {
+        $desktops = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $totalDesktops | Where-Object {$_.PowerState -eq "On"}	
+        Write-Log -Update "$($desktops.Count) of $($totalDesktops) still running."
+     
+        $date = Get-Date
+        if (($date - $startTime).TotalMinutes -gt $timeout) {
+            Write-Log "Shutdown took to long." 
+            Stop-Transcript
+        }
+        Start-Sleep 10
+    }
+         
+    Write-Log "All VMs are down."
+
+    # End Power off VMs
+
     $ExistingVMCount = (Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName | Measure-Object).Count
     $NumberOfVMsToProvision = $NumberOfVMs - $ExistingVMCount
     Write-Log "Already $ExistingVMCount VM(s) in $DesktopPoolName"
@@ -53,7 +89,28 @@ Function Enable-VSICTXDesktopPool {
             #New-BrokerMachine -Cataloguid $Uid -MachineName "LGNV\az-henk006$" -ErrorAction Stop | Add-BrokerMachine -DesktopGroup $DesktopPoolName -ErrorAction Stop
         }
         Write-Log ""
-    }  
+    } 
+    # Set affinity to hosts
+    Write-Log "Hypervisortype = $HypervisorType and Affinity is set to $Affinity"
+    if (($HypervisorType) -eq "AHV" -And ($Affinity)) {
+        Write-Log "Set Affinity to Host with IP $Hosts."
+        # Install Posh-SSH module. Required to connect to the hosts using SSH. Used for capturing performance stats.
+        if (!((Get-Module -ListAvailable *) | Where-Object {$_.Name -eq "Posh-SSH"})) {
+            Write-Log "SSH module not found, installing missing module."
+            Install-Module -Name Posh-SSH -RequiredVersion 2.3.0 -Confirm:$false -Force -Scope CurrentUser
+        }
+        # Build the command and add the vTPM using SSH
+        $VMs = $VMnameprefix -Replace '#','?'
+        $command = "~/bin/acli vm.affinity_set $VMs host_list=$($hosts)"
+        $password = ConvertTo-SecureString "$CVMsshpassword" -AsPlainText -Force
+        $HostCredential = New-Object System.Management.Automation.PSCredential ("nutanix", $password)
+        $session = New-SSHSession -ComputerName $ClusterIP -Credential $HostCredential -AcceptKey -KeepAliveInterval 5
+        $SSHOutput = (Invoke-SSHCommand -Index $session.SessionId -Command $command -Timeout 7200).output
+        Remove-SSHSession -Name $Session | Out-Null
+        Write-Log "Affinity Set Finished."
+    }
+    
+    # End set affinity to hosts
     Write-Log "Powering on $PowerOnVMs machines"
     $PoweredOnVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount 2000 | Select-Object -Last $PowerOnVMs | New-BrokerHostingPowerAction -Action TurnOn
 

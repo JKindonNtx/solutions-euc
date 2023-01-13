@@ -111,7 +111,7 @@ function Export-LEMeasurements {
 
         $VSIresults = Get-LEtestrunResults -testRunId $testRun.Id
         $VSICollection = @()
-        foreach ($result in $VSICollection) {
+        foreach ($result in $VSIresults) {
             $VSIresult = New-Object PSObject
             $VSIresult | Add-Member -MemberType NoteProperty -Name "type" -Value $result.type
             $VSIresult | Add-Member -MemberType NoteProperty -Name "state" -Value $result.state
@@ -124,8 +124,10 @@ function Export-LEMeasurements {
             $VSIresult | Add-Member -MemberType NoteProperty -Name "Apps success" -Value $result.appExecutionCounts.successCount
             $VSIresult | Add-Member -MemberType NoteProperty -Name "Apps total" -Value $result.appExecutionCounts.totalCount
             $VSIresult | Add-Member -MemberType NoteProperty -Name "EUX score" -Value $result.euxScore.score
+            $VSIresult | Add-Member -MemberType NoteProperty -Name "EUX version" -Value $result.euxScore.version
             $VSIresult | Add-Member -MemberType NoteProperty -Name "EUX state" -Value $result.euxScore.state
             $VSIresult | Add-Member -MemberType NoteProperty -Name "vsiMax" -Value $result.vsiMax.maxSessions
+            $VSIresult | Add-Member -MemberType NoteProperty -Name "vsiMax version" -Value $result.vsiMax.version
             $VSIresult | Add-Member -MemberType NoteProperty -Name "vsiMax state" -Value $result.vsiMax.state
             $VSIresult | Add-Member -MemberType NoteProperty -Name "Comment" -Value $result.comment
             $VSIresult | Add-Member -MemberType NoteProperty -Name "started" -Value $result.started
