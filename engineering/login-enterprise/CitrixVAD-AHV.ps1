@@ -38,7 +38,7 @@ $NTNXInfra = Get-NTNXinfo -Config $Config
 # End Get Infra-info
 
 #region RunTest
-
+#Set the multiplier for the Workloadtype. This adjusts the required MHz per user setting.
 ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     Set-VSIConfigurationVariables -ImageConfiguration $ImageToTest
 
@@ -55,16 +55,18 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $WLmultiplier = 1.2
     }
      # Calculate number of VMs and sessions
-     If ($VSI_Target_AutocalcVMs){
-        $TotalCores = $NTNXInfra.Testinfra.CPUCores
+    If ($VSI_Target_AutocalcVMs){
+        $TotalCores = $NTNXInfra.Testinfra.CPUCores * $VSI_Target_NodeCount
         $TotalGHz = $TotalCores * $NTNXInfra.Testinfra.CPUSpeed * 1000
         $vCPUsperVM = $VSI_Target_NumCPUs * $VSI_Target_NumCores
-        $GHzperVM = 680 * $WLmultiplier
+        $GHzperVM = 690 * $WLmultiplier
+        # Set the vCPU multiplier. This affects the number of VMs per node.
         $vCPUMultiplier = "1.$vCPUsperVM"
-        $TotalMem = [Math]::Round($NTNXInfra.Testinfra.MemoryGB * 0.92, 0, [MidpointRounding]::AwayFromZero)
+        #$TotalMem = [Math]::Round($NTNXInfra.Testinfra.MemoryGB * 0.92, 0, [MidpointRounding]::AwayFromZero) * $VSI_Target_NodeCount
+        $TotalMem = $VSI_Target_NodeCount * (($($NTNXInfra.Testinfra.MemoryGB) - 32) * 0.94)
         $MemperVM = $VSI_Target_MemoryGB
         if ($($VSI_Target_SessionsSupport.ToLower()) -eq "multisession") {
-            $VSI_Target_NumberOfVMS = [Math]::Round($TotalCores - 4 / $vCPUsperVM * 2, 0, [MidpointRounding]::AwayFromZero)
+            $VSI_Target_NumberOfVMS = [Math]::Round($TotalCores - (4 * $VSI_Target_NodeCount) / $vCPUsperVM * 2, 0, [MidpointRounding]::AwayFromZero)
             $VSI_Target_PowerOnVMs = $VSI_Target_NumberOfVMS
             if ($TotalMem = lower than ($VSI_Target_NumberOfVMS *  $MemperVM)){
                 $VSI_Target_NumberOfVMS = [Math]::Round($TotalMem / $MemperVM, 0, [MidpointRounding]::AwayFromZero)
@@ -82,27 +84,22 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             }
             $VSI_Target_NumberOfSessions = $VSI_Target_NumberOfVMS
         }
-        ($NTNXInfra.Target.ImagesToTest | Where{$_.Comment -eq $VSI_Target_Comment}).NumberOfVMs = $VSI_Target_NumberOfVMS
-        ($NTNXInfra.Target.ImagesToTest | Where{$_.Comment -eq $VSI_Target_Comment}).PowerOnVMs =  $VSI_Target_PowerOnVMs
-        ($NTNXInfra.Target.ImagesToTest | Where{$_.Comment -eq $VSI_Target_Comment}).NumberOfSessions = $VSI_Target_NumberOfSessions
-        Write-Host "Autocalc is enabled and the number of VMs is set to $VSI_Target_NumberOfVMS and the number of sessions to $VSI_Target_NumberOfSessions"
+        ($NTNXInfra.Target.ImagesToTest | Where-Object{$_.Comment -eq $VSI_Target_Comment}).NumberOfVMs = $VSI_Target_NumberOfVMS
+        ($NTNXInfra.Target.ImagesToTest | Where-Object{$_.Comment -eq $VSI_Target_Comment}).PowerOnVMs =  $VSI_Target_PowerOnVMs
+        ($NTNXInfra.Target.ImagesToTest | Where-Object{$_.Comment -eq $VSI_Target_Comment}).NumberOfSessions = $VSI_Target_NumberOfSessions
+        $NTNXInfra.Target.ImagesToTest = @($NTNXInfra.Target.ImagesToTest | Where-Object Comment -eq $VSI_Target_Comment)
+        Write-Host "AutoCalc is enabled and the number of VMs is set to $VSI_Target_NumberOfVMS and the number of sessions to $VSI_Target_NumberOfSessions on $VSI_Target_NodeCount Node(s)"
         Write-Host ""
     }
 
     # Setup testname
-    if ($VSI_Target_Workload -Like "Task*"){
-        $LEWorkload = "TW"
-    }
-    if ($VSI_Target_Workload -Like "Knowledge*"){
-        $LEWorkload = "KW"
-    }
-    if ($VSI_Target_Workload -Like "Power*"){
-        $LEWorkload = "PW"
-    }
     $NTNXid = (New-Guid).Guid.SubString(1,6)
     $NTNXTestname = "$($NTNXid)_1n_A$($NTNXInfra.Testinfra.AOSversion)_AHV_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
     # End Setup testname
    
+    # Slack update
+    $SlackMessage = "New Login Enterprise test started on Cluster $($NTNXInfra.TestInfra.ClusterName). Testname: $($NTNXTestname)."
+    Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
     
     Connect-VSICTX -DDC $VSI_Target_DDC
 
@@ -151,6 +148,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         # Will only create the pool if it does not exist
         ## AHV
 
+        # Slack update
+        $SlackMessage = "Testname: $($NTNXTestname) Run$i is started on Cluster $($NTNXInfra.TestInfra.ClusterName)."
+        Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
+
         $ContainerId=Get-NTNXStorageUUID -Storage $VSI_Target_CVM_storage
         $Hostuuid=Get-NTNXHostUUID -NTNXHost $VSI_Target_NTNXHost
         $IPMI_ip=Get-NTNXHostIPMI -NTNXHost $VSI_Target_NTNXHost
@@ -186,9 +187,15 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword `
             -VMnameprefix $NTNXInfra.Target.NamingPattern `
             -Hosts $NTNXInfra.Testinfra.Hostip
-       
+
+        # Set number of sessions per launcher
+        if ($($VSI_Target_SessionCfg.ToLower()) -eq "ica") {
+            $SessionsperLauncher = 20
+        } else {
+            $SessionsperLauncher = 12
+        }
         if (-not ($SkipLaunchers)) {
-            $NumberOfLaunchers = [System.Math]::Ceiling($VSI_Target_NumberOfSessions / 15)
+            $NumberOfLaunchers = [System.Math]::Ceiling($VSI_Target_NumberOfSessions / $SessionsperLauncher)
             # Wait for all launchers to be registered in LE
             Wait-LELaunchers -Amount $NumberOfLaunchers -NamingPattern $VSI_Launchers_NamingPattern
         
@@ -232,16 +239,22 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #Write config to OutputFolder
         $NTNXInfra.Testinfra.VMCPUCount = [Int]$VSI_Target_NumCPUs * [Int]$VSI_Target_NumCores
         $NTNXInfra.Testinfra.Testname = $FolderName
-        $NTNXInfra | ConvertTo-Json | Set-Content -Path $OutputFolder\Testconfig.json -Force
+        $NTNXInfra | ConvertTo-Json -Depth 20 | Set-Content -Path $OutputFolder\Testconfig.json -Force
         Export-LEMeasurements -Folder $OutputFolder -TestRun $TestRun -DurationInMinutes $VSI_Target_DurationInMinutes
         $XLSXPath = "$OutputFolder.xlsx"
         ConvertTo-VSINTNXExcelDocument -SourceFolder $OutputFolder -OutputFile $XLSXPath
         #if (-not ($SkipPDFExport)) {
         #    Export-LEPDFReport -XLSXFile $XLSXPath -ReportConfigurationFile $ReportConfigFile
         #}
-
+        $Testresult = import-csv "$OutputFolder\VSI-results.csv"
+        # Slack update
+        $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName). $($Testresult.activesessionCount) sessions active of $($Testresult."login total") total sessions. EUXscore: $($Testresult."EUX score") - VSImax: $($Testresult.vsiMax)."
+        Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
 
     }
-
+    # Analyze Run results
+    Get-VSIResults -TestName $NTNXTestname -Path $ScriptRoot
+    # Slack update
+    Update-VSISlackresults -TestName $NTNXTestname -Path $ScriptRoot
 }
 #endregion

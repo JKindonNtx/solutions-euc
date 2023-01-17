@@ -35,8 +35,7 @@ Function Enable-VSICTXDesktopPool {
      
         $date = Get-Date
         if (($date - $startTime).TotalMinutes -gt $timeout) {
-            Write-Log "Shutdown took to long." 
-            Stop-Transcript
+            throw "Shutdown took to long." 
         }
         Start-Sleep 10
     }
@@ -107,7 +106,7 @@ Function Enable-VSICTXDesktopPool {
         $session = New-SSHSession -ComputerName $ClusterIP -Credential $HostCredential -AcceptKey -KeepAliveInterval 5
         $SSHOutput = (Invoke-SSHCommand -Index $session.SessionId -Command $command -Timeout 7200).output
         Remove-SSHSession -Name $Session | Out-Null
-        Write-Log "Affinity Set Finished."
+        Write-Log "Set Affinity Finished."
     }
     
     # End set affinity to hosts

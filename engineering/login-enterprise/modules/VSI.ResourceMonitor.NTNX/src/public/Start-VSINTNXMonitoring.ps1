@@ -38,7 +38,7 @@ function Start-VSINTNXMonitoring {
         $StartTimeStamp = [DateTime]::new($StartTimeStamp.Year, $StartTimeStamp.Month, $StartTimeStamp.Day, $StartTimeStamp.Hour, $StartTimeStamp.Minute, 0)
     
         $StopMonitoring = $false
-        $SampleSize = 20
+        $SampleSize = 30
     
         while ($StopMonitoring -eq $false) {
             $CurrentTime = Get-Date

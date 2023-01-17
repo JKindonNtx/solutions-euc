@@ -18,6 +18,7 @@ Will take care of:
 .\CitrixVAD-AHV.ps1 -ConfigFile Config-CitrixOnPrem-AHV.jsonc
 
 # Requirements
+* Use Powershell 5.1. Powershell 6 or higher does not support Citrix snappins
 * Install Citrix Cloud Powershell SDK
 * Run the scripts from a Windows domain member.
 * Install-Module ImportExcel
