@@ -74,31 +74,37 @@ Function Update-VSISlackresults {
                         $EUXBase = (Import-Csv -path "$($Path)\results\$Testrun\EUX-score.csv").EUXScore[1]
                         $Testrun = $Testrun -replace "$TestName" -replace "_"
                         $VSIMax = $($result.vsiMax)
+                        $VSIMaxState = $($result."vsiMax state")
                         $EUX = $($result."EUX score")
                         $ActiveSessions = $($result.activesessionCount)
                         $TotalLogins = $($result."login total")
                       @{
-                        title = "$Testrun - VSIMax"
+                        title = "$Testrun-VSIMax"
                         value = $VSIMax
                         short = "true"
                         }
                       @{
-                        title = "EUXBase"
+                        title = "$Testrun-VSIMax state"
+                        value = $VSIMaxState
+                        short = 'true'
+                        }
+                      @{
+                        title = "$Testrun-EUXBase"
                         value = $EUXBase
                         short = 'true'
                         }
                       @{
-                        title = "EUX"
+                        title = "$Testrun-EUX"
                         value = $EUX
                         short = 'true'
                         }
                       @{
-                        title = "Active Sessions"
+                        title = "$Testrun-Active Sessions"
                         value = $ActiveSessions
                         short = "true"
                         }
                       @{
-                        title = "Total Logins"
+                        title = "$Testrun-Total Logins"
                         value = $TotalLogins
                         short = 'true'
                         }
