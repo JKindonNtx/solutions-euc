@@ -1,35 +1,36 @@
 function Start-VSINTNXMonitoring {
     param(
-        [Parameter(Mandatory = $true, ParameterSetName = 'TestMonitoring')]
-        [Int32]$DurationInMinutes,
-        [Parameter(Mandatory = $true, ParameterSetName = 'TestMonitoring')]
-        [Int32]$RampupInMinutes,
-        [Parameter(Mandatory = $true, ParameterSetName = 'TestMonitoring')]
-        [string]$Hostuuid,
-        [Parameter(Mandatory = $false, ParameterSetName = 'TestMonitoring')]
-        [switch]$AsJob,
-        [Parameter(Mandatory = $true, ParameterSetName = 'TestMonitoring')]
-        [string]$IPMI_ip,
-        [Parameter(Mandatory = $true, ParameterSetName = 'TestMonitoring')]
-        [string]$OutputFolder,
-        [Parameter(Mandatory = $true, ParameterSetName = 'TestMonitoring')]
-        [string]$NTNXCounterConfigurationFile = ".\ReportConfigurationNTNX.jsonc",
-        [Parameter(Mandatory = $false, ParameterSetName = 'TestMonitoring')]
-        [string]$StopMonitoringCheckFile = "$env:temp\VSIMonitoring_Stop.chk"
+        [Parameter(Mandatory = $true)] [Int32]$DurationInMinutes,
+        [Parameter(Mandatory = $true)] [Int32]$RampupInMinutes,
+        [Parameter(Mandatory = $true)] [string]$Hostuuid,
+        [Parameter(Mandatory = $false)] [switch]$AsJob,
+        [Parameter(Mandatory = $true)] [string]$IPMI_ip,
+        [Parameter(Mandatory = $true)] [string]$Path,
+        [Parameter(Mandatory = $true)] [string]$OutputFolder,
+        [Parameter(Mandatory = $true)] [string]$NTNXCounterConfigurationFile = ".\ReportConfigurationNTNX.jsonc",
+        [Parameter(Mandatory = $false)] [string]$StopMonitoringCheckFile = "$env:temp\VSIMonitoring_Stop.chk"
     )
 
     $NTNXCounterConfiguration = Get-Content $NTNXCounterConfigurationFile | ConvertFrom-Json
 
     $MonitoringScriptBlock = {
         param(
+            $Path,
             $Hostuuid,
+            $VSI_Target_CVM,
+            $VSI_Target_CVM_admin,
+            $VSI_Target_CVM_Password,
             $IPMI_ip,
+            $VSI_Target_IPMI_admin,
+            $VSI_Target_IPMI_Password,
             $DurationInMinutes,
             $RampupInMinutes,
             $OutputFolder,
             $NTNXCounterConfiguration,
             $StopMonitoringCheckFile
         )
+        Import-Module "$Path\modules\VSI.ResourceMonitor.NTNX\src\internal\Invoke-PublicApiMethodNTNX.ps1" -Force
+        Import-Module "$Path\modules\VSI.ResourceMonitor.NTNX\src\internal\Invoke-PublicApiMethodRedfish.ps1" -Force
 
         if (-not (Test-Path $OutputFolder)) { New-Item -ItemType Directory -Path $OutputFolder | Out-Null }
 
@@ -38,7 +39,7 @@ function Start-VSINTNXMonitoring {
         $StartTimeStamp = [DateTime]::new($StartTimeStamp.Year, $StartTimeStamp.Month, $StartTimeStamp.Day, $StartTimeStamp.Hour, $StartTimeStamp.Minute, 0)
     
         $StopMonitoring = $false
-        $SampleSize = 30
+        $SampleSize = 20
     
         while ($StopMonitoring -eq $false) {
             $CurrentTime = Get-Date
@@ -49,11 +50,11 @@ function Start-VSINTNXMonitoring {
             
             $file = "$($OutputFolder)\Host Raw.csv"
 
-            $results = Invoke-PublicApiMethodNTNX -Method "GET" -Path "hosts/$($hostuuid)/stats/?metrics=hypervisor_cpu_usage_ppm&metrics=hypervisor_memory_usage_ppm"
+            $results = Invoke-PublicApiMethodNTNX -Method "GET" -Path "hosts/$($Hostuuid)/stats/?metrics=hypervisor_cpu_usage_ppm&metrics=hypervisor_memory_usage_ppm"
             $resultsPower = Invoke-PublicApiMethodRedfish -IPMI_ip $IPMI_ip -Method "GET" -Path "Chassis/1/Power"
 
             $item = New-Object PSObject  
-            $item | Add-Member -MemberType NoteProperty -Name "Timestamp" -Value (Get-Date ($StartTimeStamp.ToUniversalTime()) -Format "o") -Force  
+            $item | Add-Member -MemberType NoteProperty -Name "Timestamp" -Value (Get-Date ($StartTimeStamp) -Format "o") -Force  
             
             foreach ($result in $results.stats_specific_responses) {
                 if ($result.metric -eq "hypervisor_cpu_usage_ppm" -Or $result.metric -eq "hypervisor_memory_usage_ppm") {
@@ -76,7 +77,7 @@ function Start-VSINTNXMonitoring {
     if ($AsJob.IsPresent) {
         Get-Job -Name VSIMonitoringJob -ErrorAction Ignore | Stop-Job
         Get-Job -Name VSIMonitoringJob -ErrorAction Ignore | Remove-Job
-        return (Start-Job -ScriptBlock $MonitoringScriptBlock -Name VSIMonitoringJob -ArgumentList @($Hostuuid, $IPMI_ip, $DurationInMinutes, $RampupInMinutes, $OutputFolder, $NTNXCounterConfiguration, $StopMonitoringCheckFile))
+        return (Start-Job -ScriptBlock $MonitoringScriptBlock -Name VSIMonitoringJob -ArgumentList @($Path, $Hostuuid, $VSI_Target_CVM, $VSI_Target_CVM_admin, $VSI_Target_CVM_Password, $IPMI_ip, $VSI_Target_IPMI_admin, $VSI_Target_IPMI_Password, $DurationInMinutes, $RampupInMinutes, $OutputFolder, $NTNXCounterConfiguration, $StopMonitoringCheckFile))
     }
 
 }

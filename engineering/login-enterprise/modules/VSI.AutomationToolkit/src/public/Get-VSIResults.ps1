@@ -37,6 +37,7 @@ Function Get-VSIResults {
         Write-Log "Analyzing $count of $($testDirectories.Count) tests."
         $data = Import-Csv "$Path\results\$($TestName)_Run$count\VSI-results.csv"
         $result += $data
+        $count++
     }
     $result | Export-Csv "$($Path)\testresults\$TestName\VSI-results.csv" -NoTypeInformation
     Copy-Item "$($Path)\results\$($TestName)_Run1\Testconfig.json" -Destination "$($Path)\testresults\$TestName"

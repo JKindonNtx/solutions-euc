@@ -36,7 +36,7 @@ Function Update-VSISlackresults {
                 pretext = "Test results from test *$TestName* on hardware type $($config.TestInfra.hardwareType):"
                 fields = @(
                     @{
-                        title = "CLuster Name"
+                        title = "Cluster Name"
                         value = "$($config.TestInfra.ClusterName)"
                         short = "true"
                         }
@@ -70,7 +70,9 @@ Function Update-VSISlackresults {
                     $averageEUX = $($Finalresults."EUX score") | Measure-Object -Average
                     ForEach ($result in $Finalresults){
                         $Testrun = $($result.Comment)
-                        $Testrun = $Testrun -replace "$($Config.TestName)" -replace "_" -replace "$($Config.Target.ImagesToTest.Comment)"
+                        $Testrun = $Testrun -replace "-$($Config.Target.ImagesToTest.Comment)"
+                        $EUXBase = (Import-Csv -path "$($Path)\results\$Testrun\EUX-score.csv").EUXScore[1]
+                        $Testrun = $Testrun -replace "$TestName" -replace "_"
                         $VSIMax = $($result.vsiMax)
                         $EUX = $($result."EUX score")
                         $ActiveSessions = $($result.activesessionCount)
@@ -79,6 +81,11 @@ Function Update-VSISlackresults {
                         title = "$Testrun - VSIMax"
                         value = $VSIMax
                         short = "true"
+                        }
+                      @{
+                        title = "EUXBase"
+                        value = $EUXBase
+                        short = 'true'
                         }
                       @{
                         title = "EUX"

@@ -39,7 +39,7 @@ Function Enable-VSICTXDesktopPool {
         }
         Start-Sleep 10
     }
-         
+    Write-Log ""     
     Write-Log "All VMs are down."
 
     # End Power off VMs

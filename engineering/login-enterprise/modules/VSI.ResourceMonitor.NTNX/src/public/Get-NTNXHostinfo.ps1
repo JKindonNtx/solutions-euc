@@ -1,7 +1,7 @@
 function Get-NTNXHostinfo {
     ##############################
     #.SYNOPSIS
-    #Captures performance data
+    #Captures Host info
     ##############################
     Param
     (

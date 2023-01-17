@@ -229,7 +229,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         Start-LETest -testId $testId -Comment "$FolderName-$VSI_Target_Comment"
         $TestRun = Get-LETestRuns -testId $testId | Select-Object -Last 1
         # Start monitoring
-        $monitoringJob = Start-VSINTNXMonitoring -OutputFolder $OutputFolder -DurationInMinutes $VSI_Target_DurationInMinutes -RampupInMinutes $VSI_Test_RampupInMinutes -Hostuuid $Hostuuid -IPMI_ip $IPMI_ip -NTNXCounterConfigurationFile $ReportConfigFile -AsJob
+        $monitoringJob = Start-VSINTNXMonitoring -OutputFolder $OutputFolder -DurationInMinutes $VSI_Target_DurationInMinutes -RampupInMinutes $VSI_Target_RampupInMinutes -Hostuuid $Hostuuid -IPMI_ip $IPMI_ip -Path $Scriptroot -NTNXCounterConfigurationFile $ReportConfigFile -AsJob
         Get-NTNXHostinfo -NTNXHost $VSI_Target_NTNXHost -OutputFolder $OutputFolder
         # Wait for test to finish
         Wait-LETest -testId $testId
@@ -241,7 +241,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $NTNXInfra.Testinfra.Testname = $FolderName
         $NTNXInfra | ConvertTo-Json -Depth 20 | Set-Content -Path $OutputFolder\Testconfig.json -Force
         Export-LEMeasurements -Folder $OutputFolder -TestRun $TestRun -DurationInMinutes $VSI_Target_DurationInMinutes
-        $XLSXPath = "$OutputFolder.xlsx"
+        $XLSXPath = "$OutputFolder\$FolderName.xlsx"
         ConvertTo-VSINTNXExcelDocument -SourceFolder $OutputFolder -OutputFile $XLSXPath
         #if (-not ($SkipPDFExport)) {
         #    Export-LEPDFReport -XLSXFile $XLSXPath -ReportConfigurationFile $ReportConfigFile
