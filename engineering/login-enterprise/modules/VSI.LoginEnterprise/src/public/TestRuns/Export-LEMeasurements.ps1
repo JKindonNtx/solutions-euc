@@ -60,6 +60,7 @@ function Export-LEMeasurements {
         foreach ($Measurement in $SessionMeasurements | Where-Object { $_.measurementId -eq "connection" -or $_.measurementId -eq "group_policies" -or $_.measurementId -eq "total_login_time" -or $_.measurementId -eq "user_profile" }) {
             $LoginTime = New-Object PSObject
             $LoginTime | Add-Member -MemberType NoteProperty -Name "id" -Value $Measurement.measurementId
+            $LoginTime | Add-Member -MemberType NoteProperty -Name "timestamp" -Value $Measurement.timestamp
             $LoginTime | Add-Member -MemberType NoteProperty -Name "offsetInSeconds" -Value ((New-TimeSpan -Start (Get-Date $TestRun.started) -End (Get-Date $Measurement.timestamp)).TotalSeconds)
             $LoginTime | Add-Member -MemberType NoteProperty -Name "result" -Value ($Measurement.duration / 1000)
             $LoginTime | Add-Member -MemberType NoteProperty -Name "sessionId" -Value $Measurement.userSessionId
@@ -87,14 +88,14 @@ function Export-LEMeasurements {
 
         $AppMeasurements = Get-LEMeasurements -testRunId $testRun.Id -include "applicationMeasurements"
         #id, offsetInSeconds, result, userSessionId, appexecutionId, applicationName
-        $AppMeasurements = $AppMeasurements | Select-Object measurementId, @{Name = "offSetInSeconds"; Expression = { ((New-TimeSpan -Start (Get-Date $TestRun.started) -End (Get-Date $_.timestamp)).TotalSeconds) } }, userSessionId, @{Name = "result"; Expression = { $_.duration } }, appexecutionId, @{Name = "applicationName"; Expression = { Foreach ($App in $Applications) { if ($App.id -eq $_.applicationId) { $app.Name } } } }
+        $AppMeasurements = $AppMeasurements | Select-Object measurementId, timestamp, @{Name = "offSetInSeconds"; Expression = { ((New-TimeSpan -Start (Get-Date $TestRun.started) -End (Get-Date $_.timestamp)).TotalSeconds) } }, userSessionId, @{Name = "result"; Expression = { $_.duration } }, appexecutionId, @{Name = "applicationName"; Expression = { Foreach ($App in $Applications) { if ($App.id -eq $_.applicationId) { $app.Name } } } }
         $AppMeasurements | Export-Csv -Path "$($Folder)\Raw AppMeasurements.csv" -NoTypeInformation
    
         $AppExecutions = @()
         foreach ($UserSession in $UserSessions) {
             $ApplicationExecutions = Get-LEAppExecutions -testRunId $TestRun.Id -UserSessionId $UserSession.id
             #id,state, userSessionId, startOffset, endOffset, applicationName
-            $ApplicationExecutions = $ApplicationExecutions | Select-Object id, state, userSessionId, @{Name = "startOffSetInSeconds"; Expression = { ((New-TimeSpan -Start (Get-Date $TestRun.started) -End (Get-Date $_.created)).TotalSeconds) } }, @{Name = "endOffSetInSeconds"; Expression = { ((New-TimeSpan -Start (Get-Date $TestRun.started) -End (Get-Date $_.lastModified)).TotalSeconds) } }, @{Name = "applicationName"; Expression = { Foreach ($App in $Applications) { if ($App.id -eq $_.applicationId) { $app.Name } } } }
+            $ApplicationExecutions = $ApplicationExecutions | Select-Object id, created, state, userSessionId, @{Name = "startOffSetInSeconds"; Expression = { ((New-TimeSpan -Start (Get-Date $TestRun.started) -End (Get-Date $_.created)).TotalSeconds) } }, @{Name = "endOffSetInSeconds"; Expression = { ((New-TimeSpan -Start (Get-Date $TestRun.started) -End (Get-Date $_.lastModified)).TotalSeconds) } }, @{Name = "applicationName"; Expression = { Foreach ($App in $Applications) { if ($App.id -eq $_.applicationId) { $app.Name } } } }
             $AppExecutions += $ApplicationExecutions
         }
         $AppExecutions | Export-Csv -Path "$($Folder)\Raw AppExecutions.csv" -NoTypeInformation

@@ -59,16 +59,16 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $TotalCores = $NTNXInfra.Testinfra.CPUCores * $VSI_Target_NodeCount
         $TotalGHz = $TotalCores * $NTNXInfra.Testinfra.CPUSpeed * 1000
         $vCPUsperVM = $VSI_Target_NumCPUs * $VSI_Target_NumCores
-        $GHzperVM = 690 * $WLmultiplier
+        $GHzperVM = 680 * $WLmultiplier
         # Set the vCPU multiplier. This affects the number of VMs per node.
         $vCPUMultiplier = "1.$vCPUsperVM"
         #$TotalMem = [Math]::Round($NTNXInfra.Testinfra.MemoryGB * 0.92, 0, [MidpointRounding]::AwayFromZero) * $VSI_Target_NodeCount
         $TotalMem = $VSI_Target_NodeCount * (($($NTNXInfra.Testinfra.MemoryGB) - 32) * 0.94)
         $MemperVM = $VSI_Target_MemoryGB
         if ($($VSI_Target_SessionsSupport.ToLower()) -eq "multisession") {
-            $VSI_Target_NumberOfVMS = [Math]::Round($TotalCores - (4 * $VSI_Target_NodeCount) / $vCPUsperVM * 2, 0, [MidpointRounding]::AwayFromZero)
+            $VSI_Target_NumberOfVMS = [Math]::Round(($TotalCores - (4 * $VSI_Target_NodeCount)) / $vCPUsperVM * 2, 0, [MidpointRounding]::AwayFromZero)
             $VSI_Target_PowerOnVMs = $VSI_Target_NumberOfVMS
-            if ($TotalMem = lower than ($VSI_Target_NumberOfVMS *  $MemperVM)){
+            if ($TotalMem -le ($VSI_Target_NumberOfVMS *  $MemperVM)){
                 $VSI_Target_NumberOfVMS = [Math]::Round($TotalMem / $MemperVM, 0, [MidpointRounding]::AwayFromZero)
                 $VSI_Target_PowerOnVMs = $VSI_Target_NumberOfVMS
             }
@@ -156,9 +156,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $Hostuuid=Get-NTNXHostUUID -NTNXHost $VSI_Target_NTNXHost
         $IPMI_ip=Get-NTNXHostIPMI -NTNXHost $VSI_Target_NTNXHost
         $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $VSI_Target_HypervisorConnection +"\"+ $VSI_Target_HypervisorNetwork +".network" }
+        $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
         
         # refactor to: Set-VSIHVDesktopPool, will create/update desktop pool, no need to worry about remove/create
-        Set-VSICTXDesktopPoolAHV -ParentVM $VSI_Target_ParentVM `
+        Set-VSICTXDesktopPoolAHV -ParentVM $ParentVM `
             -HypervisorConnection $VSI_Target_HypervisorConnection `
             -Networkmap $networkMap `
             -CpuCount $VSI_Target_NumCPUs `

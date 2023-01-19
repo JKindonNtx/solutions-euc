@@ -66,7 +66,7 @@ Function Update-VSISlackresults {
                         short = "true"
                         }
                     $Finalresults = import-csv "$($Path)\testresults\$TestName\VSI-results.csv" | Sort-Object started
-                    $averageVsiMax = $Finalresults.vsiMax | Measure-Object -Average
+                    $averageVsiMax = $Finalresults.vsiMax | Where-Object { $_ -ne "" } | ForEach-Object { $_.Replace(" ","") } | Measure-Object -Average
                     $averageEUX = $($Finalresults."EUX score") | Measure-Object -Average
                     ForEach ($result in $Finalresults){
                         $Testrun = $($result.Comment)
@@ -74,6 +74,9 @@ Function Update-VSISlackresults {
                         $EUXBase = (Import-Csv -path "$($Path)\results\$Testrun\EUX-score.csv").EUXScore[1]
                         $Testrun = $Testrun -replace "$TestName" -replace "_"
                         $VSIMax = $($result.vsiMax)
+                        if ($VSIMax -eq $null) {
+                            $VSIMax = "Not reached"
+                        }
                         $VSIMaxState = $($result."vsiMax state")
                         $EUX = $($result."EUX score")
                         $ActiveSessions = $($result.activesessionCount)

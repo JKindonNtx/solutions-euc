@@ -54,7 +54,7 @@ function Start-VSINTNXMonitoring {
             $resultsPower = Invoke-PublicApiMethodRedfish -IPMI_ip $IPMI_ip -Method "GET" -Path "Chassis/1/Power"
 
             $item = New-Object PSObject  
-            $item | Add-Member -MemberType NoteProperty -Name "Timestamp" -Value (Get-Date ($StartTimeStamp) -Format "o") -Force  
+            $item | Add-Member -MemberType NoteProperty -Name "Timestamp" -Value (Get-Date ($StartTimeStamp.ToUniversalTime()) -Format "o") -Force  
             
             foreach ($result in $results.stats_specific_responses) {
                 if ($result.metric -eq "hypervisor_cpu_usage_ppm" -Or $result.metric -eq "hypervisor_memory_usage_ppm") {

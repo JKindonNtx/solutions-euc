@@ -56,7 +56,7 @@
         // You can override any variable from the target section within the imagestotest array
         "ImagesToTest": [
             {
-                "ParentVM": "XDHyp:\\HostingUnits\\${Target.HypervisorConnection}\\W10-22H2-da8c_Snap_Optimized.template",
+                "ParentVM": "W10-22H2-da8c_Snap_Optimized.template",
                 "NumCPUs": 1,
                 "NumCores": 2,
                 "MemoryGB": 4,
