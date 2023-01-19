@@ -1,0 +1,10 @@
+*.xlsx
+*.csv
+*.jsonc
+*.pdf
+/results/*
+/testresults/*
+!ExampleConfig*.jsonc
+!ReportConfiguration.jsonc
+test.ps1
+/TestRunReporter/*

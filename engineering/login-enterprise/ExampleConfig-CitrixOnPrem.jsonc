@@ -1,0 +1,74 @@
+{
+    "Domain": {
+        "NetBios": "EXAMPLE",
+        // Alternatively use LDAP://DC=example,DC=loginvsi,DC=com when current machine/user is part of the domain
+        "LDAPPath": "LDAP://Example-DC01/DC=example,DC=loginvsi,DC=com",
+        // leave empty if current machine/user is part of the domain and has rights to create resources in AD
+        "LDAPUsername": "example\\henk", // remember it's json, so \ needs to be escaped
+        // leave empty if current machine/user is part of the domain and has rights to create resources in AD
+        "LDAPPassword": "MySuperSecurePassword!123"
+    },
+    "Users": {
+        "BaseName": "testUser",
+        "GroupName": "${Users.BaseName}", // Resolves to "testUser"
+        "Password": "SuperSecurePassword!123",
+        "NetBios": "${Domain.NetBios}", // Resolves to "EXAMPLE"
+        "OU": "OU=TestUsers",
+        "NumberOfDigits": 3 // usernames will be basename + numberofdigits, e.g. testUser001 etc in this example
+    },
+    "LoginEnterprise": {
+        "ApplianceURL": "https://loginenterprise.example.loginvsi.com",
+        "ApplianceToken": "" //Get this from external notifications/public api, make sure to create a system access token with access level: Configuration
+    },
+    "Launchers": {
+        //In this example same vcenter is used for launchers and targets
+        "vCenterServer": "${Target.vCenterServer}",
+        "vCenterUsername": "${Target.vCenterUsername}",
+        "vCenterPassword": "${Target.vCenterPassword}",
+        "CustomizationSpec": "Launchers",
+        "ParentVM": "EXAMPLE-LauncherParent",
+        "Snapshot": "MyFirstSnapshot",
+        "VMHost": "Launchers01",
+        "Datastore": "EXAMPLE-LAUNCHERS",
+        "NamingPattern": "Launcher_",
+        "GroupName": "Toolbox" // Launcher group name to be used in login enterprise
+    },
+    "Target": {
+        "DDC": "EXAMPLE-CTX01.example.loginvsi.com",
+        "ZoneName": "Primary",
+        "SessionsSupport": "SingleSession", // or MultiSession
+        "HypervisorConnection": "Example network",
+        "FunctionalLevel": "LMIN",
+        "NamingPattern": "exa-###",
+        "ADContainer": "OU=TargetVMs,DC=example,DC=loginvsi,DC=com",
+        "DomainName": "example.loginvsi.com",
+        "StorefrontURL": "https://example-ctx01.example.loginvsi.com/Citrix/Store",
+        "vCenterServer": "vcenter.example.loginvsi.com",
+        "vCenterUsername": "example\\henk", //remember it's json so \ needs to be escaped
+        "vCenterPassword": "MySuperSecurePassword!123",
+        "Cluster": "ExampleCluster",
+        "DesktopPoolName": "ExamplePool",
+        // MHz below which a VM is considered idle
+        "VMCPUsageMHzThreshold": 100,
+        "MinutesToWaitAfterIdleVMs": 1,
+        "PowerOnVMs": "${Target.NumberOfVMs}", // Amount of VMs to poweron initially, set to same value as amount of VM's by default
+        "SkipImagePrep": false, //Optionally skip imageprep fase of MCS if you image is already generalized.
+        // You can override any variable from the target section within the imagestotest array
+        "ImagesToTest": [
+            {
+                "ParentVM": "XDHyp:\\HostingUnits\\${Target.HypervisorConnection}\\W10-21H1ENT-CTX.vm\\MDTReady.snapshot",
+                "NumCPUs": 2,
+                "MemoryMB": 4096,
+                "LogonsPerMinute": 3,
+                "DurationInMinutes": 5,
+                "NumberOfSessions": 10,
+                "NumberOfVMs": 10,
+                "Comment": "This is a comment!"
+            }
+        ],
+        "ImageIterations": 1
+    },
+    "Test": {
+        "Name": "ExampleTest"
+    }
+}

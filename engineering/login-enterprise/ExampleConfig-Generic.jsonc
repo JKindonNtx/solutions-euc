@@ -1,0 +1,59 @@
+{
+    "Domain": {
+        "NetBios": "EXAMPLE",
+        // Alternatively use LDAP://DC=example,DC=loginvsi,DC=com when current machine/user is part of the domain
+        "LDAPPath": "LDAP://Example-DC01/DC=example,DC=loginvsi,DC=com",
+        // leave empty if current machine/user is part of the domain and has rights to create resources in AD
+        "LDAPUsername": "example\\henk", // remember it's json, so \ needs to be escaped
+        // leave empty if current machine/user is part of the domain and has rights to create resources in AD
+        "LDAPPassword": "MySuperSecurePassword!123"
+    },
+    "Users": {
+        "BaseName": "testUser",
+        "GroupName": "${Users.BaseName}", // Resolves to "testUser"
+        "Password": "SuperSecurePassword!123",
+        "NetBios": "${Domain.NetBios}", // Resolves to "EXAMPLE"
+        "OU": "OU=TestUsers",
+        "NumberOfDigits": 3 // usernames will be basename + numberofdigits, e.g. testUser001 etc in this example
+    },
+    "LoginEnterprise": {
+        "ApplianceURL": "https://loginenterprise.example.loginvsi.com",
+        "ApplianceToken": "" //Get this from external notifications/public api, make sure to create a system access token with access level: Configuration
+    },
+    "Launchers": {
+        //In this example same vcenter is used for launchers and targets
+        "vCenterServer": "${Target.vCenterServer}",
+        "vCenterUsername": "${Target.vCenterUsername}",
+        "vCenterPassword": "${Target.vCenterPassword}",
+        "CustomizationSpec": "Launchers",
+        "ParentVM": "EXAMPLE-LauncherParent",
+        "Snapshot": "MyFirstSnapshot",
+        "VMHost": "Launchers01",
+        "Datastore": "EXAMPLE-LAUNCHERS",
+        "NamingPattern": "Launcher_",
+        "GroupName": "Toolbox" // Launcher group name to be used in login enterprise
+    },
+    "Target": {
+        "vCenterServer": "vcenter.example.loginvsi.com",
+        "vCenterUsername": "example\\henk", //remember it's json so \ needs to be escaped
+        "vCenterPassword": "MySuperSecurePassword!123",
+        "VMFolder": "/EXAMPLE/vm/VMware Horizon", //Get these values from the details page of an existing pool
+        "Cluster": "/EXAMPLE/host/ExampleCluster",
+        "ResourcePool": "${Target.Cluster}/Resources",
+        // MHz below which a VM is considered idle
+        "VMCPUsageMHzThreshold": 100,
+        "MinutesToWaitAfterIdleVMs": 1,
+        "LogonsPerMinute": 5,
+        "DurationInMinutes": 5, //How long should the test continue to run after all sessions have logged on
+        "NumberOfSessions": 10,
+        "Comment": "This is a comment that will appear in the report"
+    },
+    "Test": {
+        "ConnectorName": "Custom Connector",
+        "ConnectorParams": {
+            "host": "",
+            "commandLine": ""
+        },
+        "Name": "ExampleTest" //Name of the test in LoginEnterprise
+    }
+}
