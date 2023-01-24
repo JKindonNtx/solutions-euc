@@ -1,0 +1,12 @@
+---
+#- name: Create SF Vars
+- name: Create StoreFront Store
+  script: files/create-storefront-store.ps1
+  environment:
+    sf_host_base_url: "{{ sf_host_base_url }}"
+    sf_store_virtual_path: "{{ sf_store_virtual_path }}"
+    sf_transport_type: "{{ sf_transport_type }}"
+    sf_gateway_url: "{{ sf_gateway_url }}"
+    sf_gateway_name: "{{ sf_gateway_name }}"
+  become: true
+  become_method: runas

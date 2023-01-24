@@ -1,0 +1,9 @@
+---
+- name: Include list of configuration components
+  block:
+    - include_tasks: configure_cvad_site.yml
+    - include_tasks: configure_cvad_director.yml
+    - include_tasks: configure_cvad_policies.yml
+    - include_tasks: configure_storefront_store.yml
+  become: true
+  become_method: runas

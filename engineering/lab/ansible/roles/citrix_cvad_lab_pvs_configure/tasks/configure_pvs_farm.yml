@@ -1,0 +1,18 @@
+---
+- name: Configure PVS Farm {{ build_number }}
+  script: "files/configure_pvs_farm.ps1"
+  environment:
+    pvs_database_server: "{{ pvs_database_server }}"
+    pvs_database_instance: "{{ pvs_database_instance }}"
+    pvs_database_name: "{{ pvs_database_name }}"
+    pvs_farm_name: "{{ pvs_farm_name }}"
+    pvs_site_name: "{{ pvs_site_name }}"
+    pvs_collection_name: "{{ pvs_collection_name }}"
+    pvs_store: "{{ pvs_store }}"
+    pvs_store_path: "{{ pvs_store_path }}"
+    pvs_admin_group: "{{ pvs_admin_group }}"
+    pvs_license_server: "{{ pvs_license_server }}"
+    pvs_username: "{{ pvs_username }}"
+    pvs_password: "{{ pvs_password }}"
+  become: true
+  become_method: runas

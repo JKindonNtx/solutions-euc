@@ -1,0 +1,29 @@
+---
+- name: Install Windows 10 Gold with Session Recording Components
+  hosts: all
+  roles:
+  - run_ms_deployment_scripts
+  #- install_ms_net_framework_3.5
+  - install_base_chocolatey
+  - install_base_evergreen
+  - install_base_nevergreen
+  - install_latest_ms_vcredists
+  - install_citrix_vda_client_2203_2
+  - install_citrix_session_recording_agent_2203_2
+  - install_latest_7zip
+  - install_latest_vlc
+  - install_latest_ms_fslogix
+  - install_latest_bisf
+  - install_latest_adobe_reader
+  - install_latest_mozilla_firefox
+  - install_latest_notepadplusplus
+  - install_latest_google_chrome
+  - install_ms_office_2019_x64
+  - run_ms_windows_update
+  - run_ms_file_types
+  - run_cust_create_shortcuts
+  - run_cust_import_start_layout_win10
+  - run_cust_imageoptimize_citrix
+  - run_cust_imageoptimize_citrix_3rdparty
+  - run_cust_cleanup_build
+  - run_cust_bisf_seal

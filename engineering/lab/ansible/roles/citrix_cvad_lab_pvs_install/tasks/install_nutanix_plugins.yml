@@ -1,0 +1,20 @@
+---
+- name: Install Nutanix AHV Plugin for Citrix {{ build_number }}
+  win_package:
+    path: "{{ nutanix_plugin_source_path }}\\NutanixAHV_Citrix_plugin.msi"
+    #arguments: 'TRANSFORMS="{{ nutanix_plugin_source_path }}\\Nutanix.mst"'
+    arguments: 'IAGREE=Yes PLUGININSTALLPATH="C:\Program Files\Common Files\Citrix\HCLPlugins\CitrixMachineCreation\v1.0.0.0\" INSTALLFOLDER="C:\Program Files\Common Files\Citrix\HCLPlugins\CitrixMachineCreation\v1.0.0.0\NutanixAcropolis\" REGISTERPLUGINSTOREPATH="C:\Program Files\Common Files\Citrix\HCLPlugins\CitrixMachineCreation\v1.0.0.0\" INSTALLERTYPE=pvs PVSINSTALLFOLDER="C:\Program Files\Common Files\Citrix\HCLPlugins\CitrixMachineCreation\v1.0.0.0\NutanixAHV\" ADDLOCAL=PVS_F7_14_INSTALLFOLDER'
+    state: present
+  register: ahvplugin_install
+
+- name: Reboot after AHV plugin if required
+  win_reboot:
+  when: ahvplugin_install.reboot_required
+
+- name: Register Plugin
+  ansible.windows.win_powershell:
+    script: | 
+      Cd "C:\Program Files\Common Files\Citrix\HCLPlugins\"
+      Add-PSSnapin Citrix.*
+      .\RegisterPlugins.exe -PluginsRoot "C:\Program Files\Common Files\Citrix\HCLPlugins\CitrixMachineCreation\v1.0.0.0"
+

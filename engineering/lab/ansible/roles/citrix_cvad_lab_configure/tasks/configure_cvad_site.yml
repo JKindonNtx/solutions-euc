@@ -1,0 +1,23 @@
+---
+  - name: Create or Join CVAD Site
+    script: files/create-cvad-site.ps1
+    args:
+      creates: C:\Logs\sitedone.txt
+    environment:
+      cvad_site_name: "{{ cvad_site_name }}"
+      cvad_database_server: "{{ cvad_database_server }}"
+      cvad_database_server_port: "{{ cvad_database_server_port }}"
+      cvad_database_name_site: "{{ cvad_database_name_site }}"
+      cvad_database_name_logging: "{{ cvad_database_name_logging }}"
+      cvad_database_name_monitoring: "{{ cvad_database_name_monitoring }}"
+      cvad_license_server: "{{ cvad_license_server }}"
+      cvad_license_server_port: "{{ cvad_license_server_port }}"
+      cvad_licensing_model: "{{ cvad_licensing_model }}"                  
+      cvad_product_code: "{{ cvad_product_code }}"                                   
+      cvad_product_edition: "{{ cvad_product_edition }}"
+      cvad_admin_group: "{{ cvad_admin_group }}"
+      cvad_role:  "{{ cvad_role }}"
+      cvad_scope: "{{ cvad_scope }}"                                 
+      cvad_grooming_days: "{{ cvad_grooming_days }}"
+    become: true
+    become_method: runas
