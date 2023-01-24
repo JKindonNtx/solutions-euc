@@ -1,0 +1,26 @@
+---
+# Install Citrix VDA client
+#- name: Create Log Folder
+#  win_file:
+#    path: C:\Logs
+#    state: directory
+
+- name: Install Microsoft MSMQ
+  ansible.windows.win_optional_feature:
+    name:
+    - MSMQ-Container
+    - MSMQ-Server
+    - MSMQ-HTTP
+    state: present
+
+- name: Install Session Recording Agent
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Citrix\\Citrix_Virtual_Apps_and_Desktops_7_2203_2000\\x64\\Session Recording\\SessionRecordingAgentx64.msi"
+    arguments: SESSIONRECORDINGSERVERNAME=SR-SRV01.contoso.local SESSIONRECORDINGBROKERPROTOCOL=HTTP SESSIONRECORDINGBROKERPORT=80
+    state: present
+    expected_return_code: [0, 3, 3010]
+    product_id: '{9da40a8e-bda9-417e-8f2a-cf0716525f7e}'
+  become: true
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  register: citrix_session_recording_agent_install

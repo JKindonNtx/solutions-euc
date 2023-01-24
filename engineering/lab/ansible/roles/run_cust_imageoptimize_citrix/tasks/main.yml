@@ -3,5 +3,5 @@
   block:
     - include_tasks: citrix_optimize_default.yml
     - include_tasks: citrix_optimize_nutanix.yml
-  become: yes
+  become: true
   become_method: runas

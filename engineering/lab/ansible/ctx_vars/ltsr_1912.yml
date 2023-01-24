@@ -1,7 +1,9 @@
 ---
 install_dir: c:\ansible_install
-cvad_source_path: '\\10.57.64.39\MDTLoginVSI$\Applications\Citrix_Virtual_Apps_and_Desktops_7_1912_6000'
-nutanix_plugin_source_path: '\\10.57.64.39\MDTLoginVSI$\Applications\Nutanix'
+#cvad_source_path: '\\10.57.64.39\MDTLoginVSI$\Applications\Citrix_Virtual_Apps_and_Desktops_7_1912_6000'
+cvad_source_path: "{{ sourcefiles_path }}\\Apps\\Citrix\Citrix_Virtual_Apps_and_Desktops_7_1912_6000"
+#nutanix_plugin_source_path: '\\10.57.64.39\MDTLoginVSI$\Applications\Nutanix'
+nutanix_plugin_source_path: "{{ sourcefiles_path }}\\Apps\\Nutanix\\Citrix\\Director Plugin 1.1.3.0"
 nutanix_plugin_director_install: 'NutanixAHV_Citrix_Director_Plugin_Installer_1.1.3.0.msi'
 
 sf_host_base_url: http://cvad1912.wsperf.nutanix.com
@@ -11,6 +13,7 @@ build_version: 1912_LTSR # Build Version for Policy Import
 build_number: "1912_6000"
 
 #pvs_source_path: '\\10.57.64.39\MDTLoginVSI$\Applications\Citrix_Provisioning_2212'
+#pvs_source_path: "{{ sourcefiles_path }}\\Apps\\Citrix\\Citrix_Provisioning_2212"
 
 #pvs_database_server: 10.57.64.115
 pvs_database_instance: SQLEXPRESS

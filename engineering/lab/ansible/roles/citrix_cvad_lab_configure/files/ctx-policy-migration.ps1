@@ -8,7 +8,8 @@ Param(
      $BuildVersion,
 
      [Parameter(Mandatory = $False)]
-     $PolicyDataLocation = "\\10.57.64.39\MDTLoginVSI$\Applications\CitrixPolicyStore\$BuildVersion",
+     #$PolicyDataLocation = "\\10.57.64.39\MDTLoginVSI$\Applications\CitrixPolicyStore\$BuildVersion",
+     $PolicyDataLocation = "\\ws-files.wsperf.nutanix.com\Automation\Apps\Citrix\CitrixPolicyStore\$BuildVersion",
 
      [Parameter(Mandatory = $False)]
      $PolicyDataFile = "SitePolicySet.txt"
