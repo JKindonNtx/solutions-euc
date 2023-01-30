@@ -1,0 +1,8 @@
+---
+- name: Include list of install components
+  block:
+    - include_tasks: install_pvs_components.yml
+    - include_tasks: install_sql_management.yml
+    - include_tasks: install_nutanix_plugins.yml
+  become: true
+  become_method: runas

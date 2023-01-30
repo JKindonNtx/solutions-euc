@@ -1,0 +1,20 @@
+# disables Internet Explorer Enhanced Security in Windows
+---
+
+- name: Create install directory for ansible operations
+  win_file: 
+    path: "{{ install_dir }}"
+    state: directory
+
+- name: copy script to server
+  win_copy:
+    src: files/disable-ieesc.ps1
+    dest: "{{ install_dir }}//disable-ieesc.ps1"
+
+- name: Run script to disable IE Enhanced Sec
+  win_shell: "{{ install_dir }}//disable-ieesc.ps1"
+  become: true
+  become_method: runas
+
+
+

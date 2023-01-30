@@ -1,0 +1,6 @@
+---
+- name: Include list of configuration components
+  block:
+     - include_tasks: configure_pvs_farm.yml
+  become: true
+  become_method: runas

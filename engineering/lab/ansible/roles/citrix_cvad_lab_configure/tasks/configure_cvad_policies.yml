@@ -1,0 +1,39 @@
+---
+  - name: Create directory structure for script
+    ansible.windows.win_file:
+      path: C:\Tools
+      state: directory
+
+  - name: Copy Policy Migration Script
+    ansible.windows.win_copy:
+      src: files/ctx-policy-migration.ps1
+      dest: C:\Tools\ctx-policy-migration.ps1
+
+  - name: Import existing Citrix Site Policies
+    ansible.windows.win_powershell:
+      script: |
+        $ControlFile = "C:\Tools\ImportedPolicyFlag.txt"
+        $ScriptFile = "C:\Tools\ctx-policy-migration.ps1"
+        
+        if (!(Test-Path -Path $ControlFile)) {
+          Write-Verbose "Control flag does not exist: importing policies"
+          PowerShell.exe -ExecutionPolicy Bypass -File $ScriptFile -Mode Import -BuildVersion {{ build_version }}
+          New-Item -Path $ControlFile -ItemType File -Force | Out-Null
+        }
+
+  - name: Create Scheduled Task for Policy Export
+    community.windows.win_scheduled_task:
+      name: Citrix Policy Export
+      description: Exports Citrix Policy to central location for backup and import purposes
+      enabled: true
+      path: \Custom
+      actions:
+      - path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+        arguments: -ExecutionPolicy Bypass -NonInteractive -File C:\Tools\ctx-policy-migration.ps1 -Mode Export -BuildVersion "{{ build_version }}"
+      triggers:
+      - type: daily
+        start_boundary: '2017-10-09T09:00:00'
+      logon_type: password
+      username: "{{ ansible_domain_user }}"
+      password: "{{ ansible_password }}"
+      compatibility: 4

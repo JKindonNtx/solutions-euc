@@ -1,0 +1,12 @@
+
+---
+- name: Deploy Lab Components {{ BuildNumber }}
+  hosts: CVAD
+  vars_files:
+    - ./ctx_vars/cr_2212.yml
+  gather_facts: yes
+  roles:
+    - win-disable-ieesec
+    - win-disable-ipv6
+    - citrix_cvad_lab_install
+    - citrix_cvad_lab_configure
