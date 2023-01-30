@@ -111,7 +111,8 @@ Function Enable-VSICTXDesktopPool {
     
     # End set affinity to hosts
     Write-Log "Powering on $PowerOnVMs machines"
-    $PoweredOnVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount 2000 | Select-Object -Last $PowerOnVMs | New-BrokerHostingPowerAction -Action TurnOn
+    $PoweredOnVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount 2000 | Select-Object -Last $PowerOnVMs
+    $SetPowerOnVMs = $PoweredOnVMs | New-BrokerHostingPowerAction -Action TurnOn
 
     # Wait untill NumberOfVMs matches buffer provided
     $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName
@@ -127,6 +128,10 @@ Function Enable-VSICTXDesktopPool {
             $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName
             $RegisteredVMCount = ($BrokerVMS | Where-Object { $_.RegistrationState -eq "Registered" } | Measure-Object).Count
             $TS = New-TimeSpan -Start $Start -End (Get-Date)
+            if ($TS.TotalMinutes -gt 15) {
+                $PowerOnStuckVMs = $PoweredOnVMs | Where-Object {$_.PowerState -eq "Off"} | New-BrokerHostingPowerAction -Action TurnOn
+                Start-Sleep -Seconds 60
+            }
             if ($TS.TotalMinutes -gt $VMRegistrationTimeOutMinutes) {
                 throw "VMs failed to register within $VMRegistrationTimeOutMinutes minutes"
             }
