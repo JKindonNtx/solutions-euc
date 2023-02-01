@@ -1,0 +1,3 @@
+# Conclusion
+
+Most Citrix DaaS workloads are either unprotected or under-protected. Budget constraints and deployment complexity prohibit enterprises from protecting their Citrix DaaS deployments, which can result in significant downtime caused by software and hardware glitches and user errors. With increasingly virtualized critical workloads, data protection and disaster recovery aren't optional. Using application-granular snapshots and recovery, policy-based protection domains, asynchronous multisite replication, and centralized Prism management, Nutanix provides the functionality to back up critical data, protect applications, and survive disasters efficiently while Citrix DaaS reduces deployment complexity without requiring specialized skills.
