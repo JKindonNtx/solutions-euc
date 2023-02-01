@@ -56,10 +56,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     }
      # Calculate number of VMs and sessions
     If ($VSI_Target_AutocalcVMs){
+        If ($VSI_Target_Max) {
+            $VSI_VSImax = 1
+        } Else {$VSI_VSImax = 0.8 }
         $TotalCores = $NTNXInfra.Testinfra.CPUCores * $VSI_Target_NodeCount
         $TotalGHz = $TotalCores * $NTNXInfra.Testinfra.CPUSpeed * 1000
         $vCPUsperVM = $VSI_Target_NumCPUs * $VSI_Target_NumCores
-        $GHzperVM = 680 * $WLmultiplier
+        $GHzperVM = 540 * $WLmultiplier
         # Set the vCPU multiplier. This affects the number of VMs per node.
         $vCPUMultiplier = "1.$vCPUsperVM"
         #$TotalMem = [Math]::Round($NTNXInfra.Testinfra.MemoryGB * 0.92, 0, [MidpointRounding]::AwayFromZero) * $VSI_Target_NodeCount
@@ -72,11 +75,11 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 $VSI_Target_NumberOfVMS = [Math]::Round($TotalMem / $MemperVM, 0, [MidpointRounding]::AwayFromZero)
                 $VSI_Target_PowerOnVMs = $VSI_Target_NumberOfVMS
             }
-            $RDSHperVM = [Math]::Round(30 / $WLmultiplier, 0, [MidpointRounding]::AwayFromZero)
-            $VSI_Target_NumberOfSessions = $VSI_Target_NumberOfVMS * $RDSHperVM
+            $RDSHperVM = [Math]::Round(18 / $WLmultiplier, 0, [MidpointRounding]::AwayFromZero)
+            $VSI_Target_NumberOfSessions = [Math]::Round($VSI_Target_NumberOfVMS * $RDSHperVM * $VSI_VSImax, 0, [MidpointRounding]::AwayFromZero)
         }
         if ($($VSI_Target_SessionsSupport.ToLower()) -eq "singlesession") {
-            $VSI_Target_NumberOfVMS = [Math]::Round($TotalGHz / ($GHzperVM * $vCPUMultiplier), 0, [MidpointRounding]::AwayFromZero)
+            $VSI_Target_NumberOfVMS = [Math]::Round(($TotalGHz / ($GHzperVM * $vCPUMultiplier) * $VSI_VSImax), 0, [MidpointRounding]::AwayFromZero)
             $VSI_Target_PowerOnVMs = $VSI_Target_NumberOfVMS
             if ($TotalMem -le ($VSI_Target_NumberOfVMS *  $MemperVM)){
                 $VSI_Target_NumberOfVMS = [Math]::Round($TotalMem / $MemperVM, 0, [MidpointRounding]::AwayFromZero)
@@ -98,7 +101,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     # End Setup testname
    
     # Slack update
-    $SlackMessage = "New Login Enterprise test started on Cluster $($NTNXInfra.TestInfra.ClusterName). Testname: $($NTNXTestname)."
+    $SlackMessage = "New Login Enterprise test started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName). Testname: $($NTNXTestname)."
     Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
     
     Connect-VSICTX -DDC $VSI_Target_DDC
@@ -149,7 +152,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         ## AHV
 
         # Slack update
-        $SlackMessage = "Testname: $($NTNXTestname) Run$i is started on Cluster $($NTNXInfra.TestInfra.ClusterName)."
+        $SlackMessage = "Testname: $($NTNXTestname) Run$i is started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName)."
         Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
 
         $ContainerId=Get-NTNXStorageUUID -Storage $VSI_Target_CVM_storage
