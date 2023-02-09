@@ -1,22 +1,36 @@
 ---
-# Install Citrix VDA client
-#- name: Create Log Folder
-#  win_file:
-#    path: C:\Logs
-#    state: directory
-
 - name: Install Microsoft MSMQ
   ansible.windows.win_optional_feature:
     name:
-    - MSMQ-Container
+    #- IIS-WebServerRole
+    #- IIS-WebServer
+    #- IIS-WebServerManagementTools
+    #- IIS-ApplicationDevelopment
+    #- IIS-CommonHttpFeatures    
+    #- IIS-DefaultDocument
+    #- IIS-DirectoryBrowsing
+    #- IIS-HealthAndDiagnostics
+    #- IIS-HttpCompressionStatic
+    #- IIS-HttpErrors
+    #- IIS-HttpLogging
+    #- IIS-HttpRedirect
+    #- IIS-HttpTracing
+    #- IIS-IIS6ManagementCompatibility
+    #- IIS-ISAPIExtensions
+    #- IIS-LoggingLibraries
+    #- IIS-Metabase
+    #- IIS-Performance
+    #- IIS-RequestMonitor
+    #- IIS-StaticContent
     - MSMQ-Server
-    - MSMQ-HTTP
+    - MSMQ-Container
+    #- MSMQ-HTTP
     state: present
 
 - name: Install Session Recording Agent
   win_package:
     path: "{{ sourcefiles_path }}\\Apps\\Citrix\\Citrix_Virtual_Apps_and_Desktops_7_2203_2000\\x64\\Session Recording\\SessionRecordingAgentx64.msi"
-    arguments: SESSIONRECORDINGSERVERNAME=SR-SRV01.contoso.local SESSIONRECORDINGBROKERPROTOCOL=HTTP SESSIONRECORDINGBROKERPORT=80
+    arguments: SESSIONRECORDINGSERVERNAME={{ session_recording_host }} SESSIONRECORDINGBROKERPROTOCOL={{ session_recording_protocol }} SESSIONRECORDINGBROKERPORT={{ session_recording_port }}
     state: present
     expected_return_code: [0, 3, 3010]
     product_id: '{9da40a8e-bda9-417e-8f2a-cf0716525f7e}'
