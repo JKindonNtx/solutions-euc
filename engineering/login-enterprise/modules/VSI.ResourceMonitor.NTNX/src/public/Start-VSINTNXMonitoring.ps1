@@ -49,12 +49,16 @@ function Start-VSINTNXMonitoring {
             }
             
             $file = "$($OutputFolder)\Host Raw.csv"
+            $filecluster = "$($OutputFolder)\Cluster Raw.csv"
 
             $results = Invoke-PublicApiMethodNTNX -Method "GET" -Path "hosts/$($Hostuuid)/stats/?metrics=hypervisor_cpu_usage_ppm&metrics=hypervisor_memory_usage_ppm"
             $resultsPower = Invoke-PublicApiMethodRedfish -IPMI_ip $IPMI_ip -Method "GET" -Path "Chassis/1/Power"
+            $resultsCluster = Invoke-PublicApiMethodNTNX -Method "GET" -Path "cluster/stats/?metrics=hypervisor_cpu_usage_ppm&metrics=hypervisor_cpu_usage_ppm&metrics=hypervisor_memory_usage_ppm&metrics=controller_num_write_iops&metrics=controller_num_read_iops&metrics=controller_num_iops&metrics=controller_avg_io_latency_usecs&metrics=controller_avg_read_io_latency_usecs&metrics=controller_avg_write_io_latency_usecs"
 
             $item = New-Object PSObject  
             $item | Add-Member -MemberType NoteProperty -Name "Timestamp" -Value (Get-Date ($StartTimeStamp.ToUniversalTime()) -Format "o") -Force  
+            $clusteritem = New-Object PSObject  
+            $clusteritem | Add-Member -MemberType NoteProperty -Name "Timestamp" -Value (Get-Date ($StartTimeStamp.ToUniversalTime()) -Format "o") -Force 
             
             foreach ($result in $results.stats_specific_responses) {
                 if ($result.metric -eq "hypervisor_cpu_usage_ppm" -Or $result.metric -eq "hypervisor_memory_usage_ppm") {
@@ -67,6 +71,17 @@ function Start-VSINTNXMonitoring {
             }
             $item | Add-Member Noteproperty "PowerConsumedWatts" $resultsPower.PowerControl.PowerConsumedWatts
             $item | Export-Csv -Path $File -NoTypeInformation -Append
+
+            foreach ($clusterresult in $resultsCluster.stats_specific_responses) {
+                if ($clusterresult.metric -eq "hypervisor_cpu_usage_ppm" -Or $clusterresult.metric -eq "hypervisor_memory_usage_ppm") {
+                    $actualvalue = $clusterresult.values[0] / 10000
+                    $clusteritem | Add-Member Noteproperty $clusterresult.metric $actualvalue
+                }
+                else {
+                    $clusteritem | Add-Member Noteproperty $clusterresult.metric $clusterresult.values[0]
+                }
+            }
+            $clusteritem | Export-Csv -Path $Filecluster -NoTypeInformation -Append
 
             $StartTimeStamp = $StartTimeStamp.AddSeconds($SampleSize)
             if ((New-TimeSpan -Start $Started -End (Get-Date)).TotalMinutes -ge ($DurationInMinutes + $RampupInMinutes)) { $StopMonitoring = $true }
