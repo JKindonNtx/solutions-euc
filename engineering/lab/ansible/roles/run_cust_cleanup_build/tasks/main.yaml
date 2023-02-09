@@ -14,3 +14,9 @@
       if (Test-Path -Path $PathToClean) {
         Remove-Item -path $PathToClean -force -Recurse
       }
+
+      $PathToClean = "c:\deployment\scripts"
+
+      if (Test-Path -Path $PathToClean) {
+        Remove-Item -path $PathToClean -force -Recurse
+      }
