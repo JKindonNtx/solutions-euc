@@ -10,7 +10,7 @@
   - install_latest_ms_vcredists
   - install_citrix_vda_client_2203_2
   - install_citrix_session_recording_agent_2203_2
-  - install_citrix_wem_agent_onprem_2209
+  - install_citrix_wem_agent_onprem_2212
   - install_latest_7zip
   - install_latest_vlc
   - install_latest_ms_fslogix
