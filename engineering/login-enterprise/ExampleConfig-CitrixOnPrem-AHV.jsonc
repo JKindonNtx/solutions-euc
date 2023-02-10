@@ -44,6 +44,9 @@
         "IPMI_password": "password", // Used to get power consumption of host
         "CVMsshpassword":  "password", // Used to set affinity on VMs
         "CVM_storage": "VDI", // Storage container where VMs are deployed
+        "Files": "ws-files.wsperf.nutanix.com", // Specify Nutanix Files url if you want to capture files stats. Leave empty if not used.
+        "Files_api": "filesapi", // Specify the Nutanix Files API user, make sure to create this user.
+        "Files_password": "password", // Specify the Nutanix Files API password
         "FunctionalLevel": "L7_9", // L5, L7, L7_6, L7_7, L7_8, L7_9, L7_20, L7_25
         "NamingPattern": "W10AMD8LE-####", // Naming pattern of VMs. Also used to set affinity
         "ADContainer": "OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com",
