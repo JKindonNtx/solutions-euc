@@ -1,9 +1,9 @@
 ---
-# Install Base Image Script Framework via Chocolatey
-- name: Install Base Image Script Framework via Chocolatey
+# Install Microsoft Edge via Chocolatey
+- name: Install Microsoft Edge via Chocolatey
   ansible.windows.win_powershell:
     script: |
-      $Script = "app-choco-bisf.ps1"
+      $Script = "app-choco-ms-edge.ps1"
       
       $BuildSource = "C:\deployment"
       $ScriptSource = "$BuildSource\scripts"

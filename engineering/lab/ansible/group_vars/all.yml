@@ -11,3 +11,6 @@ ansible_port: 5985
 citrix_delivery_controllers: WS-CDC1.wsperf.nutanix.com,WS-CDC2.wsperf.nutanix.com
 grid_license_server: contmcdc001
 wem_infra_server: ws-cdc1.wsperf.nutanix.com
+session_recording_host: sessionrecording.wsperf.nutanix.com
+session_recording_protocol: "http"
+session_recording_port: "80"
