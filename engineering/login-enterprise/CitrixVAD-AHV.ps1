@@ -36,6 +36,12 @@ $configFile = $configFile -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?m
 $config = $configFile | ConvertFrom-Json
 $NTNXInfra = Get-NTNXinfo -Config $Config
 # End Get Infra-info
+#Set affinity
+if ($VSI_Target_NodeCount -eq "1"){
+    $NTNXInfra.Testinfra.SetAffinity = $true
+} else {
+    $NTNXInfra.Testinfra.SetAffinity = $false
+ }
 
 #region RunTest
 #Set the multiplier for the Workloadtype. This adjusts the required MHz per user setting.
@@ -242,6 +248,9 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         Wait-LETest -testId $testId
         #Cleanup monitoring job
         $monitoringJob | Wait-Job | Remove-Job
+        if ($VSI_Target_Files -ne $Null) {
+            $monitoringFilesJob | Wait-Job | Remove-Job
+        }
 
         #Write config to OutputFolder
         $NTNXInfra.Testinfra.VMCPUCount = [Int]$VSI_Target_NumCPUs * [Int]$VSI_Target_NumCores

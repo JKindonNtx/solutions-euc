@@ -5,7 +5,7 @@ Function Enable-VSICTXDesktopPool {
         $ADUserName,
         $ADPassword,
         $PowerOnVMs,
-        $VMRegistrationTimeOutMinutes = 45,
+        $VMRegistrationTimeOutMinutes = 120,
         $DDC,
         $HypervisorType,
         $Affinity,
@@ -44,7 +44,7 @@ Function Enable-VSICTXDesktopPool {
 
     # End Power off VMs
 
-    $ExistingVMCount = (Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName | Measure-Object).Count
+    $ExistingVMCount = (Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -MaxRecordCount 2000 | Measure-Object).Count
     $NumberOfVMsToProvision = $NumberOfVMs - $ExistingVMCount
     Write-Log "Already $ExistingVMCount VM(s) in $DesktopPoolName"
     if ($NumberOfVMsToProvision -gt 0) {
@@ -115,7 +115,7 @@ Function Enable-VSICTXDesktopPool {
     $SetPowerOnVMs = $PoweredOnVMs | New-BrokerHostingPowerAction -Action TurnOn
 
     # Wait untill NumberOfVMs matches buffer provided
-    $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName
+    $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount 2000
     $RegisteredVMCount = ($BrokerVMS | Where-Object { $_.RegistrationState -eq "Registered" } | Measure-Object).Count
     $Start = Get-Date
     Write-Log "Waiting for $PowerOnVMs VMs to be registered"
@@ -125,12 +125,13 @@ Function Enable-VSICTXDesktopPool {
             Write-Log ""
             break
         } else {          
-            $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName
+            $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount 2000
             $RegisteredVMCount = ($BrokerVMS | Where-Object { $_.RegistrationState -eq "Registered" } | Measure-Object).Count
             $TS = New-TimeSpan -Start $Start -End (Get-Date)
             if ($TS.TotalMinutes -gt 15) {
+                $PoweredOnVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount 2000 | Select-Object -Last $PowerOnVMs
                 $PowerOnStuckVMs = $PoweredOnVMs | Where-Object {$_.PowerState -eq "Off"} | New-BrokerHostingPowerAction -Action TurnOn
-                Start-Sleep -Seconds 60
+                Start-Sleep -Seconds 300
             }
             if ($TS.TotalMinutes -gt $VMRegistrationTimeOutMinutes) {
                 throw "VMs failed to register within $VMRegistrationTimeOutMinutes minutes"

@@ -46,6 +46,7 @@ function New-VSIADUsers {
     }
 
     $DS = New-Object System.DirectoryServices.DirectorySearcher($newOU, "(&(objectClass=user)(cn=$($BaseName)*))")
+    $DS.PageSize = 1000
     Foreach ($Result in $DS.FindAll()) {
         $User = $Result.GetDirectoryEntry()
         If ([string]::IsNullOrEmpty($LDAPUsername)) {
@@ -58,6 +59,7 @@ function New-VSIADUsers {
         $Parent.CommitChanges()
     }
     $DS = New-Object System.DirectoryServices.DirectorySearcher($newOU, "(&(objectClass=group)(cn=$($BaseName)))")
+    $DS.PageSize = 1000
     Foreach ($Result in $DS.FindAll()) {
         $Group = $Result.GetDirectoryEntry()
         If ([string]::IsNullOrEmpty($LDAPUsername)) {
@@ -90,12 +92,12 @@ function New-VSIADUsers {
         Write-Verbose "Creating $Name in $($newOU.Path)"
         $user = $newOU.Create("user", "cn=$Name")
         $user.Put("samAccountName", $Name) | Out-Null
-        $user.Put("mail", "$Name@rd.local") | Out-Null
+        $user.Put("mail", "$Name@wsperf.nutanix.com") | Out-Null
         $user.Put("displayName", $Name) | Out-Null
         $user.Put("givenName", $Name) | Out-Null
         $user.Put("name", $Name) | Out-Null
         $user.Put("scriptPath", $LogonScript) | Out-Null
-        $user.Put("userPrincipalName", "$($Name)@rd.local") | Out-Null
+        $user.Put("userPrincipalName", "$($Name)@wsperf.nutanix.com") | Out-Null
         $user.Put("userAccountControl", 66080) | Out-Null
         $user.SetInfo() | Out-Null
         $user.SetPassword($Password) | Out-Null

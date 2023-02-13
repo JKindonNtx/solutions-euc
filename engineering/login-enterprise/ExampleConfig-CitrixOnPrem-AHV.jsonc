@@ -65,7 +65,7 @@
                 "MemoryGB": 4,
                 "DurationInMinutes": 10, // Steady state time
                 "AutocalcVMs": true, // Will automatically calculate the number of VMs and sessions based on hardware
-                "Max": false, // Used with AutocalcVMs. If set to true, more sessions will be used to get a VSImax. If set to false, CPU 80% is the target
+                "Max": true, // Used with AutocalcVMs. If set to true, more sessions will be used to get a VSImax. If set to false, CPU 80% is the target
                 "NumberOfSessions": 220, // This is ignored when Autocalc is set to true
                 "NumberOfVMs": 220, // This is ignored when Autocalc is set to true
                 "PowerOnVMs": 220, // Amount of VMs to poweron initially, set to same value as amount of VM's by default. This is ignored when Autocalc is set to true
