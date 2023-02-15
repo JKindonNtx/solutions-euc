@@ -28,6 +28,9 @@ Traditionally, Storage has been a focal point for Citrix Session Recording deplo
 | :---: | --- | --- |
 | 1.0 | March 2023 | Original publication. |
 
+# Nutanix Files
+
+<!--JK: Need a description-->
 # Citrix Session Recording
 
 [Citrix Session Recording (SR)](https://docs.citrix.com/en-us/session-recording/current-release/) records, catalogs, and archives sessions for retrieval and playback.
@@ -39,22 +42,22 @@ Session Recording provides flexible policies to trigger recordings of applicatio
 SR consists of several key concepts and components outlined below:
 
 [Session Recording database](https://docs.citrix.com/en-us/session-recording/current-release/system-requirements.html#session-recording-database)
-: fref
+: fref <!--JK: Need a description-->
 
 [Session Recording server](https://docs.citrix.com/en-us/session-recording/current-release/system-requirements.html#session-recording-server)
-: lkj
+: lkj <!--JK: Need a description-->
 
 [Session Recording Policy Console](https://docs.citrix.com/en-us/session-recording/current-release/system-requirements.html#session-recording-policy-console)
-: dsf
+: dsf <!--JK: Need a description-->
 
 [Session Recording agent](https://docs.citrix.com/en-us/session-recording/current-release/system-requirements.html#session-recording-agent)
-: dfd
+: dfd <!--JK: Need a description-->
 
 [Session Recording player](https://docs.citrix.com/en-us/session-recording/current-release/system-requirements.html#session-recording-player)
-: dfd
+: dfd <!--JK: Need a description-->
 
 [Session Recording Storage Repository](https://docs.citrix.com/en-us/session-recording/current-release/get-started/scalability-considerations.html#storage)
-: sdfs
+: sdfs <!--JK: Need a description-->
 
 ### Citrix Session Recording Test Environment
 
