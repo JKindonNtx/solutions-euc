@@ -243,6 +243,9 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if ($VSI_Target_Files -ne $Null) {
             $monitoringFilesJob = Start-NTNXFilesMonitoring -OutputFolder $OutputFolder -DurationInMinutes $VSI_Target_DurationInMinutes -RampupInMinutes $VSI_Target_RampupInMinutes -Path $Scriptroot -NTNXCounterConfigurationFile $ReportConfigFile -AsJob
         }
+        if ($VSI_Target_NetScaler -ne $Null) {
+            $monitoringNSJob = Start-NTNXNSMonitoring -OutputFolder $OutputFolder -DurationInMinutes $VSI_Target_DurationInMinutes -RampupInMinutes $VSI_Target_RampupInMinutes -Path $Scriptroot -AsJob
+        }
         Get-NTNXHostinfo -NTNXHost $VSI_Target_NTNXHost -OutputFolder $OutputFolder
         # Wait for test to finish
         Wait-LETest -testId $testId
@@ -250,6 +253,9 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $monitoringJob | Wait-Job | Remove-Job
         if ($VSI_Target_Files -ne $Null) {
             $monitoringFilesJob | Wait-Job | Remove-Job
+        }
+        if ($VSI_Target_NetScaler -ne $Null) {
+            $monitoringNSJob | Wait-Job | Remove-Job
         }
 
         #Write config to OutputFolder

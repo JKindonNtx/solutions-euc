@@ -58,12 +58,12 @@ function Set-VSICTXDesktopPoolAHV {
         }
         if ($null -ne (Get-ProvScheme -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -ea SilentlyContinue)) {
             Write-Log "Removing existing VMS for $DesktopPoolName"
-            Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName | Unlock-ProvVM
-            $Tasks = Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName | Remove-ProvVM
+            Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -MaxRecordCount 2500 | Unlock-ProvVM
+            $Tasks = Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -MaxRecordCount 2500 | Remove-ProvVM
             foreach ($Task in $Tasks) {
                 if ($Task.TaskState -ne "Finished") {
                     Write-Log "Failed to remove VM, attempting to remove with forget"
-                    $VM = Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName | Where-Object { $_.ADAccountSid -eq $Task.FailedVirtualMachines[0] }
+                    $VM = Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -MaxRecordCount 2500 | Where-Object { $_.ADAccountSid -eq $Task.FailedVirtualMachines[0] }
                     $Task2 = $VM  | Remove-ProvVM -AdminAddress $DDC -ForgetVM
                     if ($Task2.TaskState -ne "Finished") {
                         throw "Failed to remove existing VM $($VM.VMName) from provisioning scheme"
@@ -81,9 +81,9 @@ function Set-VSICTXDesktopPoolAHV {
                 $IP | Unlock-AcctIdentityPool
             }
             Write-Log "Removing existing AD Accounts for $DesktopPoolName"
-            if ($null -ne (Get-AcctADAccount -AdminAddress $DDC -IdentityPoolName $DesktopPoolName -ea SilentlyContinue)) {
-                Get-AcctADAccount -AdminAddress $DDC -IdentityPoolName $DesktopPoolName | Where-Object { $_.Lock -eq $true } | Foreach-Object { $_ | Unlock-AcctADAccount | Out-Null }
-                Get-AcctADAccount -AdminAddress $DDC -IdentityPoolName $DesktopPoolName | Foreach-Object { $_ | Remove-AcctADAccount -Force | Out-Null }
+            if ($null -ne (Get-AcctADAccount -AdminAddress $DDC -IdentityPoolName $DesktopPoolName -MaxRecordCount 2500 -ea SilentlyContinue)) {
+                Get-AcctADAccount -AdminAddress $DDC -IdentityPoolName $DesktopPoolName -MaxRecordCount 2500 | Where-Object { $_.Lock -eq $true } | Foreach-Object { $_ | Unlock-AcctADAccount | Out-Null }
+                Get-AcctADAccount -AdminAddress $DDC -IdentityPoolName $DesktopPoolName -MaxRecordCount 2500 | Foreach-Object { $_ | Remove-AcctADAccount -Force | Out-Null }
             }
             Write-Log "Removing existing identitypool $DesktopPoolName"
             Remove-AcctIdentityPool -AdminAddress $DDC -IdentityPoolName $DesktopPoolName
