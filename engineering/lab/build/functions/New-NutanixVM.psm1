@@ -158,8 +158,8 @@ function New-NutanixVM {
         ""boot"": { `
           ""boot_device_order"": [ `
             ""CDROM"", `
-            ""NIC"", `
-            ""DISK"" `
+            ""DISK"", `
+            ""NIC""
           ], `
           ""secure_boot"": " + $Secureboot + ", `
           ""uefi_boot"": " + $UEFI + " `

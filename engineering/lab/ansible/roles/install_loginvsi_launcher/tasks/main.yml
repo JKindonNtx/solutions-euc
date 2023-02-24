@@ -1,10 +1,26 @@
 ---
 # Install Login Enterprise Launcher
+- name: Create Install Folder
+  win_file:
+    path: C:\\Install
+    state: directory
+
+- name: copy file from UNC path
+  win_copy:
+    src: "{{ sourcefiles_path }}\\Apps\\LoginVSI\\Enterprise\\Launcher\\"
+    dest: 'C:\Install\'
+    remote_src: true
+    force: yes
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=netcredentials_only
+
 - name: Install Login Enterprise Launcher
   win_package:
-    path: "{{ sourcefiles_path }}\\Apps\\LoginVSI\\Enterprise\\Launcher\\Setup.msi"
+    path: "C:\\Install\\Setup.msi"
     state: present
     product_id: '{C8823BA9-FA93-4C86-A48E-97E552F76AA6}'
+    arguments: 'serverurl=https://WS-LE1.wsperf.nutanix.com secret=431BE4CA96D0551635C2B41D487A1572B2BF3DC7'
   become: yes
   become_method: runas
   become_flags: logon_type=new_credentials logon_flags=net_credentials_only
