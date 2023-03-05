@@ -20,7 +20,7 @@ This document covers the following subject areas:
 - Overview of the Citrix Session Recording Solution.
 - Considerations for Citrix Session Recording on Nutanix.
 
-Traditionally, Storage has been a focal point for Citrix Session Recording deployments with a preference for locally attached storage on the Session Recording Servers. We wanted to understand why this was the case, and identify if Nutanix Files could provide an alternative approach to locally attached disks.
+Traditionally, Storage has been a focal point for Citrix Session Recording deployments with a preference for locally attached storage on the Session Recording Servers. We wanted to understand if Nutanix Files could provide an alternative approach to locally attached disks, as well as understanding the optimal configuration both local and Files based configurations when deployed on Nutanix.
 
 ## Document Version History
 
@@ -67,104 +67,23 @@ SR consists of several key concepts and components outlined below:
 
 ### Citrix Session Recording Test Environment
 
-For our validation and testing, we built the following environment. We tested utilizing the Current Release (2210) of Session Recording and we deployed all components on premises on Nutanix AHV. With direct feedback from the product management team, LTSR testing was not performed due to a number of known issues.
+For our validation and testing we utilized the Current Release (2212) of Citrix Session Recording and we deployed all components on premises on Nutanix AHV.
 
 | Component | Product Version | Operating System | Quantity | CPU/Memory |
 | --- | --- | --- | --- | --- |
 | Session Recording Database | Microsoft SQL Server 2016 | Windows Server 2016 | 1 | |
-| Session Recording Server & Policy Console & Web Console | 2212 | Windows Server 2022 | 2 | 4vCPU/12GB |
+| Session Recording Server & Policy Console & Web Console | 2212 | Windows Server 2022 | 2 | 4vCPU/12GB | <!--JK: TBD -->
 | Session Recording Agent | 2212 | Windows 10 Enterprise 22H2 | 1500 | |
 | Session Recording Player | 2212 | Windows Server 2022 | 2 | 2vCPU/8GB|
-| Citrix NetScaler | NS13.1: Build 37.38 | Linux | 1 | |
+| Citrix NetScaler | NS13.1: Build 37.38 | Linux | 1 | | <!--JK: TBD -->
 
-### Session Recording Configuration with Local Storage
-
-To mirror configurations known to be operating with the Nutanix AOS platform at scale, we configured the following settings to baseline:
-
-| Component | Detail | Notes |
-| --- | --- | --- |
-| MSMQ Message Storage Size | 1048576 KB. Left in the default location  | This is the default Windows Setting for MSMQ Cache | 
-| MSMQ Journal Storage Limit | 1048576 KB. Left in the default location | This by default is unlimited |
-| A central Directory for Mount Points | C:\SessionRecordings | This is to reduce the requirement on Drive letters and simplify the topology |
-| A folder per physical disk Mount | C:\SessionRecordings\SR1 -> Disk 1 | |
-| A single share configured on the SR Server | \\\ServerName\SessionRecordings$ -> C:\SessionRecordings | This is to allow access for all SR servers to all shares | 
-| Multiple Directories configured in the SR Server configuration | \\\ServerName\SessionRecordings\SR1\Recordings | Session Recording creates the Recordings Directory |
-
-<note>
-    MSMQ is extremely disk intensive. Distribution of messages to multiple disks directly impacts performance and queue data.
-</note>
-
-### Nutanix Files Configuration
-
-We deployed Nutanix Files to support the Recording Storage Repository. The following configuration was used for Files:
-
-<!--JK: Need to chat with Jarian around important items of note and how to structure them-->
-
-| Component | Setting |
-| --- | --- |
-| Version | TBD |
-| Platform | Nutanix AHV |
-| File Server Size | | 
-| File Server Configuration | |
-| File Server Name | FS01 |
-| Share Name | SessionRecording | 
-| Distributed share | Enabled |
-| Compression | |
-
-Additionally, we deployed a single Active Directory Group containing both SR Servers. This Group was used to assign full control permissions to the *SessionRecording* Share.
-
-<!--JK: Image Here - maybe also discuss permission sets-->
-
-To ensure optimal use of Distributed Shares, we configured each Session Recording with its own Top Level Directory (TLD) on the *SessionRecording* Share.
-
-| Server | TLD Path |
-| --- | --- |
-| SR01 | \\\NTXFS\SessionRecording\SR01\Recordings |
-| SR02 | \\\NTXFS\SessionRecording\SR02\Recordings |
-
-<note>
-    Citrix Session Recording Servers create their own directory structure based on the configuration input into the Session Recording Server Properties. All Session Recording Servers should have access to all shares. Nutanix recommends leveraging an Active Directory Group containing the Session Recording Computer Accounts.
-</note>
-
-### Citrix NetScaler Configuration <!--JK: This whole section needs to be considered post testing -->
-
-Citrix NetScaler was utilized for load balancing using the [guidance provided by Citrix](https://docs.citrix.com/en-us/session-recording/2203-ltsr/best-practices/configure-load-balancing-in-an-existing-deployment.html). We implemented the [TCP passthrough](https://docs.citrix.com/en-us/session-recording/2203-ltsr/best-practices/configure-load-balancing-in-an-existing-deployment.html#configure-load-balancing-through-tcp-passthrough) model for simplicity.
-
-We made one significant change to the load balancing configuration. We chose *Round Robin* for our load balancing method type
-
-<!--JK: do we see more risk or value by including LB configurations?? If we keep, then we need to make the data anonymous-->
-
-```
-enable ns feature LB
-
-add server WS-SR01 10.57.64.34 -comment "Session Recording Server"
-add server WS-SR02 10.57.64.35 -comment "Session Recording Server"
-
-add service WS-SR01_80 WS-SR01 TCP 80 -gslb NONE -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -sp OFF -cltTimeout 9000 -svrTimeout 9000 -CKA NO -TCPB NO -CMP NO
-add service WS-SR02_80 WS-SR02 TCP 80 -gslb NONE -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -sp OFF -cltTimeout 9000 -svrTimeout 9000 -CKA NO -TCPB NO -CMP NO
-
-add service WS-SR01_443 WS-SR01 TCP 443 -gslb NONE -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -sp OFF -cltTimeout 9000 -svrTimeout 9000 -CKA NO -TCPB NO -CMP NO
-add service WS-SR02_443 WS-SR02 TCP 443 -gslb NONE -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -sp OFF -cltTimeout 9000 -svrTimeout 9000 -CKA NO -TCPB NO -CMP NO
-
-add service WS-SR01_1801 WS-SR01 TCP 1801 -gslb NONE -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -sp OFF -cltTimeout 9000 -svrTimeout 9000 -CKA NO -TCPB NO -CMP NO
-add service WS-SR02_1801 WS-SR02 TCP 1801 -gslb NONE -maxClient 0 -maxReq 0 -cip DISABLED -usip NO -useproxyport YES -sp OFF -cltTimeout 9000 -svrTimeout 9000 -CKA NO -TCPB NO -CMP NO
-
-add lb vserver lbvs_sr_80 TCP 10.57.64.72 80 -persistenceType SOURCEIP -lbMethod ROUNDROBIN-cltTimeout 9000
-bind lb vserver lbvs_sr_80 WS-SR01_80
-bind lb vserver lbvs_sr_80 WS-SR02_80
-
-add lb vserver lbvs_sr_443 TCP 10.57.64.72 443 -persistenceType SOURCEIP -lbMethod ROUNDROBIN-cltTimeout 9000
-bind lb vserver lbvs_sr_443 WS-SR01_443
-bind lb vserver lbvs_sr_443 WS-SR02_443
-
-add lb vserver lbvs_sr_1801 TCP 10.57.64.72 1801 -persistenceType SOURCEIP -lbMethod ROUNDROBIN-cltTimeout 9000
-bind lb vserver lbvs_sr_1801 WS-SR01_1801
-bind lb vserver lbvs_sr_1801 WS-SR02_1801
-```
+<Note>
+    Due to direct feedback from the Citrix product management team, Session Recording LTSR testing was not performed due to a number of known issues which were resolved in newer releases.
+</Note>
 
 ### Citrix Session Recording Server Configuration
 
-Each Session Recording Server was configured with the following settings:
+Each Session Recording Server was configured with the following settings to support load balancing:
 
 -  Load Balancing was enabled by [setting the appropriate registry value](https://docs.citrix.com/en-us/session-recording/2203-ltsr/best-practices/configure-load-balancing-in-an-existing-deployment.html#step-2-configure-an-existing-session-recording-server-to-support-load-balancing)
 
@@ -188,16 +107,11 @@ Each Session Recording Server was configured with the following settings:
     Note that we specifically configured both methods to support either TCP or HTTP/HTTPS configurations.
 </note>
 
--  MSMQ storage buffer was increased from the default 1Gb to 4Gb (Computer Management -> Services and Applications -> Message Queuing Properties) <!--JK: This needs to be killed -->
-
-    ![MSMQ Storage Size](../images/TN-TBD-MSMQ-Storage-Size.png "MSMQ Storage Size")
-
 - Windows Defender Antivirus was disabled during the testing. Citrix provide guidance on Antivirus configurations for [Session Recording Servers including MSMQ](https://docs.citrix.com/en-us/tech-zone/build/tech-papers/antivirus-best-practices.html#session-recording---server), the [Session Recording Agent](https://docs.citrix.com/en-us/tech-zone/build/tech-papers/antivirus-best-practices.html#session-recording---agent) and the [Session Recording Player](https://docs.citrix.com/en-us/tech-zone/build/tech-papers/antivirus-best-practices.html#session-recording---player).
-
 
 ### Citrix Image Build
 
-We built a fresh gold image with the following relevant components installed:
+We built a fresh gold image on Nutanix AHV with the following components installed:
 
 - Windows 10 Enterprise 22H2
 - Nutanix VirtIO Drivers
@@ -213,29 +127,142 @@ We built a fresh gold image with the following relevant components installed:
 - Base Image Script Framework used for Image Sealing
 
 The image build was automated and a snapshot was output to be used with Machine Creation Services Provisioning. 
+
 ### Citrix Session Recording Agent Configuration
 
-The Session Recording Agent was deployed with default configurations. It is critical to understand that each Recording Agent must have a unique QMID else data will be lost when interacting with the SR servers. To ensure this was always unique, we sealed our base images with the Base Image Script Framework which executes the appropriate configurations to provide a unique QMID.
+The Session Recording Agent was deployed with default configurations. It is critical to understand that each Recording Agent must have a unique QMID else data will be lost when interacting with the SR servers. To ensure this was always unique, we sealed our base images with the **Base Image Script Framework** which executes the appropriate configurations to provide a unique QMID.
 
 [VDAs can have the same QMId under certain conditions](https://docs.citrix.com/en-us/session-recording/current-release/install-upgrade-uninstall.html#step-8-complete-the-installation)
 
-<!--JK: Need to note what was installed, and the importance of sealing for MSMQ ID-->
+### Session Recording Configuration with Local Storage
+
+To mirror configurations known to be operating with the Nutanix AOS platform at scale, we configured the following settings to baseline:
+
+| Component | Detail |
+| --- | --- |
+| MSMQ Message Storage Size | **1048576 KB**. Left in the default location. This is the default setting for the MSMQ Cache | 
+| MSMQ Journal Storage Limit | **1048576 KB**. Left in the default location. This by default is **unlimited** |
+| A central directory for Mount Points | **C:\SessionRecordings**. This is to reduce the requirement on drive letters and simplify the topology |
+| A single root share configured on the SR Server | **C:\SessionRecordings** shared as **\\\ServerName\SessionRecordings$**. This is to allow access for all SR servers to all shares. |
+| Active Directory Group Permissions | We deployed a single Active Directory Group containing all SR Servers. This Group was used to assign **full control** permissions to the **SessionRecording$** Share. |
+| **A directory per physical disk mount** | A scale configuration unit per disk  
+| Disk 1 | **C:\SessionRecordings\SR1** |
+| Disk 2 | **C:\SessionRecordings\SR2** |
+| Disk 3 | **C:\SessionRecordings\SR3** |
+| Disk 4 | **C:\SessionRecordings\SR4** |
+| Disk 5 | **C:\SessionRecordings\SR5** |
+| **Multiple directories configured in the SR Server configuration** | The Session Recording Server creates the Recordings Directory |
+| Share 1 | **\\\ServerName\SessionRecordings$\SR1\Recordings** |
+| Share 2 | **\\\ServerName\SessionRecordings$\SR2\Recordings** |
+| Share 3 | **\\\ServerName\SessionRecordings$\SR3\Recordings** |
+| Share 4 | **\\\ServerName\SessionRecordings$\SR4\Recordings** |
+| Share 5 | **\\\ServerName\SessionRecordings$\SR5\Recordings** |
+
+<note>
+    MSMQ is extremely disk intensive. Distribution of messages to multiple disks directly increases performance and the ability to empty queues.
+</note>
+
+### Session Recording Configuration with Nutanix Files
+
+We deployed Nutanix Files to support the Recording Storage repository. We tested two File Server configurations, one based on Hybrid technology, the other using an All-Flash configuration.
+
+The following configuration was used for Files based on Hybrid configurations:
+
+<!--JK: Need to chat with Jarian around important items of note and how to structure them-->
+
+| Component | Setting |
+| --- | --- |
+| Version | TBD |
+| Platform | Nutanix AHV |
+| File Server Size | | 
+| File Server Configuration | |
+| File Server Name | |
+| Share Name | | 
+| Distributed share | |
+| Compression | |
+
+The following configuration was used for Files based on All-Flash configurations:
+
+| Component | Setting |
+| --- | --- |
+| Version | TBD |
+| Platform | Nutanix AHV |
+| File Server Size | | 
+| File Server Configuration | |
+| File Server Name |  |
+| Share Name | | 
+| Distributed share | Enabled |
+| Compression | |
+
+Additionally, we deployed a single Active Directory Group containing both SR Servers. This Group was used to assign full control permissions to the *SessionRecording* Share.
+
+We tested two scenarios for Nutanix files, one using a Single Top Level Directory (TLD), the second using multiple TLDs to distribute load amongst File Server Virtual Machines (FSVM) when using multiple SR Servers <!--JK: is this effectively the same thing? Am i just confusing things here by splitting - should the model simply be "A TLD per SR Server"-->.
+
+For the single TLD test, we configured the Session Recording Server with a single share:
+
+| Server | TLD Path |
+| --- | --- |
+| WS-SR01 | \\\files\SessionRecording\WS-SR01\Recordings |
+
+<!--JK: Image here? -->
+
+For the distributed test, we configured each Session Recording with its own Top Level Directory (TLD):
+
+| Server | TLD Path |
+| --- | --- |
+| WS-SR01 | TBD |
+| WS-SR02 | \\\files\SessionRecording$\WS-SR02\Recordings |
+
+<!--JK: Image here? -->
+
+<!--JK: Not sure if there is any value in this model below?-->
+- \\files\SessionRecording$\WS-SR01_1\Recordings
+- \\files\SessionRecording$\WS-SR01_2\Recordings
+
+<note>
+    Citrix Session Recording Servers create their own directory structure based on the configuration input into the Session Recording Server Properties. All Session Recording Servers should have access to all shares. Nutanix recommends leveraging an Active Directory Group containing the Session Recording Computer Accounts.
+</note>
+
+#### Single TLD Results
+ 
+ TBD
+#### Multiple TLD Results
+
+TBD
+
+### Citrix NetScaler Configuration <!--JK: This whole section needs to be considered post testing -->
+
+Citrix NetScaler was utilized for load balancing using the [guidance provided by Citrix](https://docs.citrix.com/en-us/session-recording/2203-ltsr/best-practices/configure-load-balancing-in-an-existing-deployment.html). We implemented the [TCP passthrough](https://docs.citrix.com/en-us/session-recording/2203-ltsr/best-practices/configure-load-balancing-in-an-existing-deployment.html#configure-load-balancing-through-tcp-passthrough) model for simplicity.
+
+We made one significant change to the load balancing configuration. We chose *Round Robin* for our load balancing method type
+
+<!--JK: do we see more risk or value by including LB configurations?? If we keep, then we need to make the data anonymous-->
 
 # Testing Logic
 
 We used Login Enterprise to perform multiple 1500 concurrent session tests against the environment. <!--JK: Need to get some input from the team-->
 
-We used the included *Record entire sessions (for everyone without notification)* Policy so that we could capture the entire session without interaction.
+We used the ***Record entire sessions (for everyone without notification)*** Policy so that we could capture the entire session without interaction.
 ![Session Recording Policy](../images/TN-TBD-Session-Recording-Policy.png "Session Recording Policy")
 
-    - need to capture that we retrieved sessions whilst they were being recording too
+During the testing we actively played back both finished recordings (completed) and live recordings (active) via both the traditional console and the web console.
 
 # Test Results
 
-## Infrastructure Servers
+    - When NetScaler is used with default configurations, data is lost and sessions will not "complete" their recordings -> this is tracked in the event logs for SR
+    - When MSMQ thresholds are increases, there is significantly higher disk activity due to the way MSMQ stores and flushes data
+    - Moving MSMQ queues to alternate drives had no positive impacts on performance
+    - Distribution of data across multiple disks enhanced performance of queue flushing
+    - The amount of data sent to the Session Recording Server is typically what will mandate scale out scenarios
+      - A knowledge worker profile with intense web browser utilization overloaded the session recording servers ability to flush MSMQ at TBD
+      - A task worker profile with Login Enterprise showed significantly better results on the SR server scalability
+    - The "Active Session Recording" Counter shows unexpected results, typically resulting in duplicate figures compared to active ICA sessions
+    - Delayed reboots will occur if VDA is still flushing data
+  <!--JK:(Can we validate this one above?)-->
 
-    - Can we get some data for CPU/Mem Usage
-    - SQL Data?
+<!--JK: Need to put something here-->
+
+## Infrastructure Servers
 
 ## Nutanix Files
 
@@ -246,7 +273,11 @@ We used the included *Record entire sessions (for everyone without notification)
 
 # Conclusion
 
-<--Text Here-->
+- Customer milage will vary based on the type of data being ingested
+- Heavy workloads and boot storms will directly impact scale considerations
+- Nutanix Files and local Storage configuration performed similarly
+- All-Flash and Hybrid Configurations performed similarly
+- MSMQ is the bottleneck for performance
 
 # Appendix
 
