@@ -90,7 +90,7 @@ function New-NutanixLocalUser {
         # Build the SSH Session
         $password = ConvertTo-SecureString "$CVMSSHPassword" -AsPlainText -Force
         $HostCredential = New-Object System.Management.Automation.PSCredential ("nutanix", $password)
-        $session = New-SSHSession -ComputerName $ClusterIP -Credential $HostCredential -AcceptKey -KeepAliveInterval 5
+        $session = New-SSHSession -ComputerName $ClusterIP -Credential $HostCredential -AcceptKey -KeepAliveInterval 5 -Force
 
         # Check for local user
         Write-Host (Get-Date)":Check if there is a local user called $LocalUser" 
