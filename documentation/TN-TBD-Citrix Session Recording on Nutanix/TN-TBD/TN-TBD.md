@@ -152,7 +152,7 @@ We configured the following settings to baseline the environment:
 | Active Directory Group Permissions | We deployed a single Active Directory Group containing all SR Servers. This Group was used to assign **full control** permissions to the **SessionRecording$** Share. |
 | A dedicated Storage Container on AOS | This Container was used to store Session Recording data disks. |
 | A directory per physical disk mount | For example, **Disk 1** mounted to **C:\SessionRecordings\SR1**.  |
-| SR Server storage configuration | **\\\ServerName\SessionRecordings$\SR1\Recordings**. The Session Recording Server creates the Recordings Directory. |
+| SR Server storage configuration | **\\\ServerName\SessionRecordings$\SR1\Recordings**. The Session Recording Server creates the ***Recordings*** Directory. |
 
 <!--JK: Should we include compression, dedup and Erasure coding configurations?-->
 ### Session Recording Configuration with Nutanix Files
@@ -213,29 +213,136 @@ During the testing we actively played back both finished recordings (completed) 
 
 Our goal was to understand a scale unit configuration for growth. We wanted to identify at what point, either the storage or server (MSMQ) configurations became a bottleneck.
 
+Whilst we [monitored key metrics as outlined by Citrix](https://docs.citrix.com/en-us/session-recording/current-release/get-started/scalability-considerations.html#measuring-throughput) we ultimately decided to focus on the *Message in Queue* and *Bytes in Queue* MSMQ performance counters to measure impact. This was decided on due to MSMQ being the key transport model for data between Agents and Session Recording Servers. If there are delay in any component of the transfer process, these counters show the impact. This is true for *normal state* operations, *disk latency or write challenges* or *inbound data overload scenarios*. 
+
+In a healthy and optimal scenario, the MSMQ counters should display a *Store and Flush* pattern, where data is received, processed, and removed from the queues. Sustained data load within the queues without a downward trend indicate that the server is constantly under load with an inability to flush data faster than data is received. Finally, when the MSMQ cache limit is reached, data will queue on the Agent prior until a slot is made available for the data to be moved to the Session Recording Server.
+
+If the MSMQ cache is full, and event log entry (Event ID 2183, Source MSMQ) is logged with the following warning: *Machine MSMQ storage quota was exceeded or there is insufficient disk space. No more messages can be stored in user queues. You can increase Message Queuing storage quota or purge unneeded messages by using Computer Management console.* This event indicates that there is too much data being delivered to the Session Recording Server, and that it is likely you need to consider scaling out.
+
 # Test Results
 
-- With a Knowledge worker profile: <!--data-->
-- With a Task Worker profile: <!--data-->
-- When load balancing Session Recording Servers, Burst impacts are reduced
-- When load balancing Session Recording Servers, we identified data loss when using the suggested "least bandwidth" load balancing Method. This was experienced as "live" sessions never transitioning to "complete"
-- MSMQ is the overarching limiting feature of the solution. Moving MSMQ queues to alternate drives had no positive impacts on performance
-- The amount of data sent to the Session Recording Server is typically what will mandate scale out scenarios
-  - A knowledge worker profile with intense web browser utilization overloaded the session recording servers ability to flush MSMQ at <!--TBD-->
-  - A task worker profile with Login Enterprise showed significantly better results on the SR server scalability
-- When MSMQ thresholds are increased, there is significantly higher disk activity due to the way MSMQ stores and flushes data
-- The "Active Session Recording" Counter shows unexpected results, typically resulting in duplicate figures compared to active ICA sessions
-- Performance was notably better on an all-flash deployment as expected given the ability to write data to disk quicker
-- Performance was similar across local disk and Nutanix Files storage configurations
+Perfmon natively alters it's scale based on the data collected. To standardize the perfmon data outputs, we scaled all data sets to the "worst case" scale for consistency. This equated to:
+
+- Bytes in Queue: 0.00000001
+- Messages in Queue: 0.001
+
+All graphs reflect these scale ratios.
+
+## Data Gathering and Benchmarking Tests
+
+### Multiple local disks with loopback share configuration - 6 disks
+
+This test was executed using a NetScaler load balancer with load distribution on a round robin basis. One node was configured on all flash cluster, the other one a hybrid cluster. The load test was based on a 1500 session load distributed across both servers.
+
+The below image shows WS-SR01 with 6 local disks configured in a loopback configuration. Each disk is configured identically and Session Recording is configured with 6 write locations. WS-SR01 is deployed on an all-flash cluster.
+
+![All Flash Server - 6 local disks](../images/TN-TBD-WS-SR01_Local_6_Disks_Flash_Perfmon.png "All Flash Server - 6 local disks")
+
+The below image shows WS-SR02 with 6 local disks configured in a loopback configuration. Each disk is configured identically and Session Recording is configured with 6 write locations. WS-SR02 is deployed on an hybrid cluster.
+
+![Hybrid Server - 6 local disks](../images/TN-TBD-WS-SR02_Local_6_Disks_Hybrid_Perfmon.png "Hybrid Server - 6 local disks")
+
+The data shows several key facts: <!--JK: Need to add some context here-->
+- The all-flash configuration was able to handle more sessions and data prior to the queue ramp up than the hybrid server. This is evident by the rapid upward trajectory of the black lines indicating messages in queue.
+- Both scenarios show that neither server was able to fully flush its queues throughout the test.
+
+### Multiple local disks with loopback share configuration - 3 disks
+
+This test was executed using a NetScaler load balancer with load distribution on a round robin basis. One node was configured on all flash cluster, the other one a hybrid cluster. The load test was based on a 1500 session load distributed across both servers.
+
+The below image shows WS-SR01 with 3 local disks configured in a loopback configuration. Each disk is configured identically and Session Recording is configured with 3 write locations. WS-SR01 is deployed on an all-flash cluster.
+
+![All Flash Server - 3 local disks](../images/TN-TBD-WS-SR01_Local_3_Disks_Flash_Perfmon.png "All Flash Server - 3 local disks")
+
+The below image shows WS-SR02 with 3 local disks configured in a loopback configuration. Each disk is configured identically and Session Recording is configured with 3 write locations. WS-SR02 is deployed on an hybrid cluster.
+
+![Hybrid Server - 3 local disks](../images/TN-TBD-WS-SR02_Local_3_Disks_Hybrid_Perfmon.png "Hybrid Server - 3 local disks")
+
+The data shows several key facts: <!--JK: Need to add some context here-->
+- TBD
+- TBD
+
+### Single local disk with loopback share configuration
+
+This test was executed using a NetScaler load balancer with load distribution on a round robin basis. One node was configured on all flash cluster, the other one a hybrid cluster. The load test was based on a 1500 session load distributed across both servers.
+
+The below image shows WS-SR01 with 1 local disk configured in a loopback configuration. Session Recording is configured with 1 write location. WS-SR01 is deployed on an all-flash cluster.
+
+![All Flash Server - 1 local disk](../images/TN-TBD-WS-SR01_Local_1_Disk_Flash_Perfmon.png "All Flash Server - 1 local disk")
+
+<note>
+    NOTE ABOUT SCALE CHANGE IMPORTANCE HERE FOR THE ABOVE IMAGE <!--JK: Need to add some context here-->
+</note>
+
+The below image shows WS-SR02 with 1 local disk configured in a loopback configuration. Session Recording is configured with 3 write location. WS-SR02 is deployed on an hybrid cluster.
+
+![Hybrid Server - 1 local disk](../images/TN-TBD-WS-SR02_Local_1_Disk_Hybrid_Perfmon.png "Hybrid Server - 1 local disk")
+
+The data shows several key facts: <!--JK: Need to add some context here-->
+- Scale changes for Flash Server here
+- TBD
+- TBD
+
+### Nutanix Files - single TLD per server
+
+Given our learnings with local storage, we could see no value in further testing with multiple write locations. So for Nutanix Files we configured a single TLD per server.
+
+This test was executed using a NetScaler load balancer with load distribution on a round robin basis. Both the Files deployment and corresponding SR node were housed with one pair on an all flash cluster, the other on a hybrid cluster. The load test was based on a 1500 session load distributed across both servers.
+
+The below image shows WS-SR01 configured with a single Nutanix File Share location (all flash). Session Recording is configured with 1 write location.
+
+![All Flash Server - 1 Nutanix Files share](../images/TN-TBD-WS-SR01_NtxFiles_1_TLD_Flash_Perfmon.png "All Flash Server - 1 Nutanix Files share")
+
+<note>
+    NOTE ABOUT SCALE CHANGE IMPORTANCE HERE FOR THE ABOVE IMAGE <!--JK: Need to add some context here-->
+</note>
+
+The below image shows WS-SR02 configured with a single Nutanix File Share location (Hybrid). Session Recording is configured with 1 write location.
+
+![Hybrid Server - 1 Nutanix Files share](../images/TN-TBD-WS-SR02_NtxFiles_1_TLD_Hybrid_Perfmon.png "Hybrid Server - 1 Nutanix Files share")
+
+The data shows several key facts: <!--JK: Need to add some context here-->
+- Scale changes for Flash Server here
+- Files performs fine
+
+## Final State Testing
+
+### Single local disk with loopback share configuration
+
+This test was executed using a NetScaler load balancer with load distribution on a round robin basis. The load test was based on a 1500 session load distributed across both servers. Both servers were deployed on the same all flash cluster.
+
+### Nutanix Files - single TLD per server
+
+This test was executed using a NetScaler load balancer with load distribution on a round robin basis. The load test was based on a 1500 session load distributed across both servers. Both servers were deployed on the same all flash cluster, Nutanix Files was used on an all flash clusters. A single TLD was configured per Session Recording Server.
 
 # Conclusion
 
-- Customer milage will vary based on the type of data being ingested
-- Heavy workloads and boot storms will directly impact scale considerations
-- Nutanix Files and local Storage configuration performed similarly
-- All-Flash as expected out performed Hybrid. The ability for MSMQ to quickly flush data to disk resulted in higher density per SR server
-- MSMQ is the bottleneck for performance - single threaded pain - try and avoid MSMQ filling its queue
-- Always design for 50% of server use to cover for outages
+Our testing may not represent a typical deployment of Session Recording. We did not use any form of selective or trigger based recording scenarios, preferring to identify a break point for the solution and a scale unit strategy which can be used across any scenario. Whilst benchmarking and validating findings, we were privileged to engage with multiple Nutanix customers who used Session Recording in numerous different ways, unique to their business.
+
+#### General Sizing and scaling
+- Citrix documentation, whilst somewhat "*it depends*" when it comes to Session Recording sizing is something we have found to be fair. There are many different considerations and environment specific challenges that will directly impact the amount of data sent to Session Recording, and as such the associated sizing of servers and storage.
+- There is rarely a scenario where a *Scale Up* logic will improve Session Recording Performance. A *Scale Out* logic will typically be required. This is backed up by [Citrix documentation and guidance](https://docs.citrix.com/en-us/session-recording/current-release/get-started/scalability-considerations.html#scaling-out)
+- The amount of data sent to the Session Recording Server is typically what will mandate scale out scenarios:
+  - A knowledge worker profile with intense web browser utilization overloaded the Session Recording servers ability to flush MSMQ at a much shorter threshold than a task worker profile.
+  - A task worker profile with Login Enterprise showed significantly better results on Session Recording server scalability.
+- Heavy workloads and logon storms will directly impact scale considerations.
+- Load balancing configurations should be considered, however throughput should be considered and measured. Do not underestimate sizing of the load balancer.
+  - When load balancing Session Recording Servers, burst impacts are reduced and MSMQ impact is less.
+  - When load balancing Session Recording Servers, we identified data loss when using the suggested "least bandwidth" load balancing Method. This was experienced as "live" sessions never transitioning to "complete". Transitioning to Round Robin Load Balancing and 24 Hour persistence resolved these issues.
+- Whilst storage is a focal point for Session Recording sizing, the storage backend is only half the story. Each Session Recording Server has a break point typically associated with MSMQ
+- The "Active Session Recording" Counter shows unexpected results, typically resulting in duplicate figures compared to active ICA sessions. This can be challenging when trying to analyze perfmon data
+
+#### MSMQ
+- MSMQ is the overarching limiting feature of the solution. Moving MSMQ queues to alternate drives had no positive impacts on performance.
+- Performance was actually reduced when multiple disks were configured within Session Recording. This aligns to the challenge of MSMQ being single threaded. Consider larger capacity disks before larger quantities of disk.
+- We chose to increase the size of the MSMQ cache as we felt architecturally, the risk would be less by having more data stored on the Session Recording Server, than by having that same data queues on the Session Recording Agents. We did however draw the line at 4Gb for our testing. If there is a need to grow more than this, then it's likely time to consider another Session Recording Server.
+- When MSMQ thresholds are increased, there is significantly higher disk activity due to the way MSMQ stores and flushes data.
+
+#### Nutanix Infrastructure
+- All Flash, as expected, out performed Hybrid with local disk configurations. The ability for MSMQ to quickly flush data to disk resulted in higher density per SR server.
+- Nutanix Files and local storage configuration performed similarly, proving that Nutanix Files offers a robust, performant and efficient system to store Session Recording Datasets. <!--Check this, we may actually have better performance with Files-->
+- Nutanix Files deployed on all flash clusters significantly outperformed hybrid clusters, the same patters as identified in local storage configurations.
+- Based on our findings, at scale, all flash deployments are most suited to Session Recording deployments.
 
 # Appendix
 
