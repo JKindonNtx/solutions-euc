@@ -485,7 +485,7 @@ Our testing may not represent a typical deployment of Session Recording. We did 
 
 Nutanix wishes to thank the customers who shared their time to discuss existing Session Recording deployments on Nutanix Infrastructure, and for sharing both their challenges, and resolutions to those challenges for their unique environments.
 
-Nutanix also recognizes the [following CUGC blogpost](https://blogs.mycugc.org/2019/04/02/scaling-and-load-balancing-session-recording/) as a point of reference when working through initial configurations and considerations. The Citrix Session Recording capability has improved since the time of writing, particularly in relation to load balancing and Storage capability, however it proved a solid point of reference.
+Nutanix also recognizes the [following CUGC blog post](https://blogs.mycugc.org/2019/04/02/scaling-and-load-balancing-session-recording/) as a point of reference when working through initial configurations and considerations. The Citrix Session Recording capability has improved since the time of writing, particularly in relation to load balancing and Storage capability, however it proved a solid point of reference.
 
 Critically, at the time of the above post being written, Citrix had a clear preference for locally attached storage only. This stance has been changed with the introduction of powerful and scalable remote storage capability such as Nutanix Files.
 
