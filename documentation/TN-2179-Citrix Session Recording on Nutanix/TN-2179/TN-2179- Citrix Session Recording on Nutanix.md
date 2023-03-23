@@ -85,7 +85,7 @@ For our validation and testing, we utilized the Current Release (2212) of Citrix
 | Citrix NetScaler | NS13.1: Build 37.38 | Linux | 1 | Default appliance size |
 
 <Note>
-    Due to direct feedback from the Citrix product management team, Session Recording LTSR testing was not performed due to several known issues which were resolved in newer releases.
+    Due to direct feedback from the Citrix product management team, Session Recording 2203 LTSR testing was not performed due to several known issues which were resolved in newer releases. We tested only using Session Recording 2212.
 </Note>
 
 ### Citrix Session Recording Server Configuration
@@ -447,7 +447,15 @@ The data proves that Session Recording and the MSMQ engine do not handle a non-g
 
 # Conclusion
 
-Our testing may not represent a typical deployment of Session Recording. We did not use any form of selective or trigger-based recording scenarios, preferring to identify a breakpoint for the solution and a scale unit strategy that can be used across any scenario. 
+The following sections identify learnings and summary points.
+
+## Nutanix Infrastructure
+
+- All Flash, as expected, outperformed Hybrid with local disk configurations. The ability for MSMQ to quickly flush data to disk resulted in higher density per SR server.
+- Nutanix Files and local storage configuration performed similarly, proving that Nutanix Files offers a robust, performant, and efficient system to store Session Recording datasets.
+- Based on our findings, at scale, all-flash deployments are most suited to Session Recording deployments.
+- Without Continuously Available Shares, Session Recording was not able to withstand a non-graceful outage of a File Server Virtual Machine which resulted in data loss. A graceful reboot did not impact Session Recording functionality. 
+- Shares with CA enabled were able to withstand both a graceful and non-graceful outage with Nutanix Files. As such, Nutanix recommends using Continuous Availability when storing Session Recording Data on Nutanix Files.
 
 ## General Sizing and scaling
 
@@ -471,13 +479,7 @@ Our testing may not represent a typical deployment of Session Recording. We did 
 - We chose to increase the size of the MSMQ cache as we felt architecturally, the risk would be less by having more data stored on the Session Recording Server, than by having that same data queued on the Session Recording Agents. We did however draw the line at 4GiB for our testing. If there is a need to grow more than this, then it's likely time to consider another Session Recording Server.
 - When MSMQ thresholds are increased, there is significantly higher disk activity due to the way MSMQ stores and flushes data.
 
-## Nutanix Infrastructure
-
-- All Flash, as expected, outperformed Hybrid with local disk configurations. The ability for MSMQ to quickly flush data to disk resulted in higher density per SR server.
-- Nutanix Files and local storage configuration performed similarly, proving that Nutanix Files offers a robust, performant, and efficient system to store Session Recording datasets.
-- Based on our findings, at scale, all-flash deployments are most suited to Session Recording deployments.
-- Without Continuously Available Shares, Session Recording was not able to withstand a non-graceful outage of a File Server Virtual Machine which resulted in data loss. A graceful reboot did not impact Session Recording functionality. 
-- Shares with CA enabled were able to withstand both a graceful and non-graceful outage with Nutanix Files. As such, Nutanix recommends using Continuous Availability when storing Session Recording Data on Nutanix Files.
+Our testing may not represent a typical deployment of Session Recording. We did not use any form of selective or trigger-based recording scenarios, preferring to identify a breakpoint for the solution and a scale unit strategy that can be used across any scenario. 
 
 # Appendix
 
