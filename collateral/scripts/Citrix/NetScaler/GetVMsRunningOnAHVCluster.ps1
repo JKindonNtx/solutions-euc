@@ -1,3 +1,13 @@
+<#
+.SYNOPSIS
+    This Script will count all the AHV hosted VMs in a Citrix configuration
+.DESCRIPTION
+    This Script check all of the hosting connections, select the AHV hosting connections, 
+    loop through all of the Machine Catalogs to count all of the VMs in that Machine Catalog.
+.NOTES
+    ...
+#>
+
 # Adding Snapins
 add-pssnapin *citrix*
 
