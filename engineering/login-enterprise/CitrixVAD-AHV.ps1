@@ -23,38 +23,46 @@ Add-PSSnapin Citrix*
 Set-VSIConfigurationVariables -ConfigurationFile $ConfigFile
 
 #region PREP
+#Remove existing SSH keys.
+if (((Get-Module -ListAvailable *) | Where-Object {$_.Name -eq "Posh-SSH"})) {
+    Get-SSHTrustedHost | Remove-SSHTrustedHost
+}
 # Fix trailing slash issue
 $VSI_LoginEnterprise_ApplianceURL = $VSI_LoginEnterprise_ApplianceURL.TrimEnd("/")
 # Populates the $global:LE_URL
 Connect-LEAppliance -Url $VSI_LoginEnterprise_ApplianceURL -Token $VSI_LoginEnterprise_ApplianceToken
 
 #endregion
-
-# Get Infra-info
 $configFile = Get-Content -Path $ConfigFile
 $configFile = $configFile -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/'
 $config = $configFile | ConvertFrom-Json
-$NTNXInfra = Get-NTNXinfo -Config $Config
+# Get Infra-info
+$NTNXInfra = Get-NTNXinfo -Config $config
 # End Get Infra-info
-#Set affinity
-if ($VSI_Target_NodeCount -eq "1"){
-    $NTNXInfra.Testinfra.SetAffinity = $true
-} else {
-    $NTNXInfra.Testinfra.SetAffinity = $false
- }
 
 #region RunTest
 #Set the multiplier for the Workloadtype. This adjusts the required MHz per user setting.
 ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     Set-VSIConfigurationVariables -ImageConfiguration $ImageToTest
 
+    #Set affinity
+    if ($VSI_Target_NodeCount -eq "1"){
+        $NTNXInfra.Testinfra.SetAffinity = $true
+    } else {
+        $NTNXInfra.Testinfra.SetAffinity = $false
+    }
+
     if ($VSI_Target_Workload -Like "Task*"){
         $LEWorkload = "TW"
         $WLmultiplier = 0.8
     }
+    if ($VSI_Target_Workload -Like "Office*"){
+        $LEWorkload = "OW"
+        $WLmultiplier = 1.0
+    }
     if ($VSI_Target_Workload -Like "Knowledge*"){
         $LEWorkload = "KW"
-        $WLmultiplier = 1
+        $WLmultiplier = 1.1
     }
     if ($VSI_Target_Workload -Like "Power*"){
         $LEWorkload = "PW"
@@ -68,7 +76,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $TotalCores = $NTNXInfra.Testinfra.CPUCores * $VSI_Target_NodeCount
         $TotalGHz = $TotalCores * $NTNXInfra.Testinfra.CPUSpeed * 1000
         $vCPUsperVM = $VSI_Target_NumCPUs * $VSI_Target_NumCores
-        $GHzperVM = 540 * $WLmultiplier
+        $GHzperVM = 600 * $WLmultiplier
         # Set the vCPU multiplier. This affects the number of VMs per node.
         $vCPUMultiplier = "1.$vCPUsperVM"
         #$TotalMem = [Math]::Round($NTNXInfra.Testinfra.MemoryGB * 0.92, 0, [MidpointRounding]::AwayFromZero) * $VSI_Target_NodeCount
@@ -96,10 +104,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         ($NTNXInfra.Target.ImagesToTest | Where-Object{$_.Comment -eq $VSI_Target_Comment}).NumberOfVMs = $VSI_Target_NumberOfVMS
         ($NTNXInfra.Target.ImagesToTest | Where-Object{$_.Comment -eq $VSI_Target_Comment}).PowerOnVMs =  $VSI_Target_PowerOnVMs
         ($NTNXInfra.Target.ImagesToTest | Where-Object{$_.Comment -eq $VSI_Target_Comment}).NumberOfSessions = $VSI_Target_NumberOfSessions
-        $NTNXInfra.Target.ImagesToTest = @($NTNXInfra.Target.ImagesToTest | Where-Object Comment -eq $VSI_Target_Comment)
         Write-Host "AutoCalc is enabled and the number of VMs is set to $VSI_Target_NumberOfVMS and the number of sessions to $VSI_Target_NumberOfSessions on $VSI_Target_NodeCount Node(s)"
         Write-Host ""
     }
+    $NTNXInfra.Target.ImagesToTest = $ImageToTest
 
     # Setup testname
     $NTNXid = (New-Guid).Guid.SubString(1,6)
@@ -246,7 +254,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if ($VSI_Target_NetScaler -ne $Null) {
             $monitoringNSJob = Start-NTNXNSMonitoring -OutputFolder $OutputFolder -DurationInMinutes $VSI_Target_DurationInMinutes -RampupInMinutes $VSI_Target_RampupInMinutes -Path $Scriptroot -AsJob
         }
-        Get-NTNXHostinfo -NTNXHost $VSI_Target_NTNXHost -OutputFolder $OutputFolder
+        # Get-NTNXHostinfo -NTNXHost $VSI_Target_NTNXHost -OutputFolder $OutputFolder
         # Wait for test to finish
         Wait-LETest -testId $testId
         #Cleanup monitoring job
