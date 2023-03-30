@@ -96,6 +96,8 @@ if ($confirmationStart -eq 'n') {
     $SendToSlack = "n"
     $SlackMessage = ""
 
+    Get-SSHTrustedHost | Remove-SSHTrustedHost
+    
     # Add new local user to the cluster and disable admin account
     $Result = New-NutanixLocalUser -ClusterIP $($JSON.Cluster.IP) -CVMsshpassword $($JSON.Cluster.CVMsshpassword) -LocalUser $($github.username) -LocalPassword $($JSON.Cluster.password)
     if($Result -eq "added"){
