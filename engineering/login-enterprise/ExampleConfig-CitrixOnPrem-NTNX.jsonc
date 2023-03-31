@@ -21,13 +21,13 @@
         "ApplianceToken": "token" //Get this from external notifications/public api, make sure to create a system access token with access level: Configuration
     },
     "Launchers": {
-        "NamingPattern": "W10-2023SH-", // Create your own Launcher VMs and put them in the Launcher AD OU container. Reboot them 2-3 times after creation to set autologin and registering to LE. Use ansible playbook.
-        "GroupName": "LE-Launchers" // Launcher group name to be used in login enterprise
+        "NamingPattern": "LE1-2023-", // Create your own Launcher VMs and put them in the Launcher AD OU container. Reboot them 2-3 times after creation to set autologin and registering to LE. Use ansible playbook.
+        "GroupName": "LE1-Launchers" // Launcher group name to be used in login enterprise
     },
     "Target": {
         "DeliveryType":  "Citrix", // Citrix or VMware (currently only Citrix is functional)
-        "DesktopBrokerVersion":  "7.2203_1", // Broker version
-        "DesktopBrokerAgentVersion":  "7.2203_1", // Brokeragent version installed on the target
+        "DesktopBrokerVersion":  "7.2203_2", // Broker version
+        "DesktopBrokerAgentVersion":  "7.2203_2", // Brokeragent version installed on the target
         "CloneType":  "MCS", // Used for reporting database. MCS or Instant Clones
         "DDC": "WS-CDC1.wsperf.nutanix.com", // Citrix Delivery controller
         "ZoneName": "Primary", // Zonename in Citrix
@@ -47,6 +47,8 @@
         "Files": "ws-files.wsperf.nutanix.com", // Specify Nutanix Files url if you want to capture files stats. Leave empty if not used.
         "Files_api": "filesapi", // Specify the Nutanix Files API user, make sure to create this user.
         "Files_password": "password", // Specify the Nutanix Files API password
+        "NetScaler": "", // The Citrix NetScaler NSIP
+        "NetScaler_Password": "", // The NSROOT password for the Citrix NetScaler
         "FunctionalLevel": "L7_9", // L5, L7, L7_6, L7_7, L7_8, L7_9, L7_20, L7_25
         "NamingPattern": "W10AMD8LE-####", // Naming pattern of VMs. Also used to set affinity
         "ADContainer": "OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com",
@@ -59,7 +61,7 @@
         // You can override any variable from the target section within the imagestotest array
         "ImagesToTest": [
             {
-                "ParentVM": "W10-22H2-da8c_Snap_Optimized.template",
+                "ParentVM": "W10-22H2-da8c_Snap_Optimized.template", //AHV use: snapshotname.template. ESXi use: "vm-name.vm\\snapshotname.snapshot\\snapshotname2.snapshot"
                 "NumCPUs": 1,
                 "NumCores": 2,
                 "MemoryGB": 4,

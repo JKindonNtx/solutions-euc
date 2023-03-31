@@ -111,7 +111,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
     # Setup testname
     $NTNXid = (New-Guid).Guid.SubString(1,6)
-    $NTNXTestname = "$($NTNXid)_1n_A$($NTNXInfra.Testinfra.AOSversion)_AHV_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
+    $NTNXTestname = "$($NTNXid)_1n_A$($NTNXInfra.Testinfra.AOSversion)_$($NTNXInfra.Testinfra.HypervisorType)_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
     # End Setup testname
    
     # Slack update
@@ -176,8 +176,9 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
         
         # refactor to: Set-VSIHVDesktopPool, will create/update desktop pool, no need to worry about remove/create
-        Set-VSICTXDesktopPoolAHV -ParentVM $ParentVM `
+        Set-VSICTXDesktopPoolNTNX -ParentVM $ParentVM `
             -HypervisorConnection $VSI_Target_HypervisorConnection `
+            -HypervisorType $NTNXInfra.Testinfra.HypervisorType `
             -Networkmap $networkMap `
             -CpuCount $VSI_Target_NumCPUs `
             -CoresCount $VSI_Target_NumCores `
