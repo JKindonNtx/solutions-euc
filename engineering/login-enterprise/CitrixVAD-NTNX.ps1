@@ -277,6 +277,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #if (-not ($SkipPDFExport)) {
         #    Export-LEPDFReport -XLSXFile $XLSXPath -ReportConfigurationFile $ReportConfigFile
         #}
+
+        # Upload Config to Influx
+        if($NTNXInfra.Test.UploadResults) {
+            Start-NTNXInfluxUpload -influxDbUrl "http://influx.wsperf.nutanix.com:8086/api/v2/write?org=Nutanix&precision=s" -ResultsPath $OutputFolder -Token "b4yxMiQGOAlR3JftuLHuqssnwo-SOisbC2O6-7od7noAE5W1MLsZxLF7e63RzvUoiOHObc9G8_YOk1rnCLNblA=="
+        }
+
         $Testresult = import-csv "$OutputFolder\VSI-results.csv"
         # Slack update
         $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName). $($Testresult.activesessionCount) sessions active of $($Testresult."login total") total sessions. EUXscore: $($Testresult."EUX score") - VSImax: $($Testresult.vsiMax)."
