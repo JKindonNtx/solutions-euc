@@ -249,10 +249,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $TestRun = Get-LETestRuns -testId $testId | Select-Object -Last 1
         # Start monitoring
         $monitoringJob = Start-VSINTNXMonitoring -OutputFolder $OutputFolder -DurationInMinutes $VSI_Target_DurationInMinutes -RampupInMinutes $VSI_Target_RampupInMinutes -Hostuuid $Hostuuid -IPMI_ip $IPMI_ip -Path $Scriptroot -NTNXCounterConfigurationFile $ReportConfigFile -AsJob
-        if ($VSI_Target_Files -ne $Null) {
+        if ($VSI_Target_Files -ne "") {
             $monitoringFilesJob = Start-NTNXFilesMonitoring -OutputFolder $OutputFolder -DurationInMinutes $VSI_Target_DurationInMinutes -RampupInMinutes $VSI_Target_RampupInMinutes -Path $Scriptroot -NTNXCounterConfigurationFile $ReportConfigFile -AsJob
         }
-        if ($VSI_Target_NetScaler -ne $Null) {
+        if ($VSI_Target_NetScaler -ne "") {
             $monitoringNSJob = Start-NTNXNSMonitoring -OutputFolder $OutputFolder -DurationInMinutes $VSI_Target_DurationInMinutes -RampupInMinutes $VSI_Target_RampupInMinutes -Path $Scriptroot -AsJob
         }
         # Get-NTNXHostinfo -NTNXHost $VSI_Target_NTNXHost -OutputFolder $OutputFolder
@@ -260,10 +260,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         Wait-LETest -testId $testId
         #Cleanup monitoring job
         $monitoringJob | Wait-Job | Remove-Job
-        if ($VSI_Target_Files -ne $Null) {
+        if ($VSI_Target_Files -ne "") {
             $monitoringFilesJob | Wait-Job | Remove-Job
         }
-        if ($VSI_Target_NetScaler -ne $Null) {
+        if ($VSI_Target_NetScaler -ne "") {
             $monitoringNSJob | Wait-Job | Remove-Job
         }
 
@@ -277,6 +277,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #if (-not ($SkipPDFExport)) {
         #    Export-LEPDFReport -XLSXFile $XLSXPath -ReportConfigurationFile $ReportConfigFile
         #}
+
+        # Upload Config to Influx
+        if($NTNXInfra.Test.UploadResults) {
+            Start-NTNXInfluxUpload -influxDbUrl $NTNXInfra.Test.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Test.InfluxToken
+        }
+
         $Testresult = import-csv "$OutputFolder\VSI-results.csv"
         # Slack update
         $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName). $($Testresult.activesessionCount) sessions active of $($Testresult."login total") total sessions. EUXscore: $($Testresult."EUX score") - VSImax: $($Testresult.vsiMax)."
