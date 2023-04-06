@@ -86,9 +86,7 @@
     "Test": {
         "Name": "LE-SH", // Test name in Login Enterprise. Use your own initials. LE-SH
         "Uploadresults":  false, // Upload results to the Nutanix database
-        "BucketName": "LoginRegression", // Specify the Bucket Name in Influx to upload to. Can be either 'LoginRegression' or 'LoginDocuments'
-        "InfluxDBurl": "MANDATORY_TO_DEFINE",
-        "InfluxToken": "Enter Token Here"
+        "BucketName": "LoginRegression" // Specify the Bucket Name in Influx to upload to. Can be either 'LoginRegression' or 'LoginDocuments'
     },
     "TestInfra": {
         "Datacenter":  "Durham", // Datacenter of this Login Enterprise installation
@@ -124,6 +122,8 @@
         "CPUSocketCount":  null, // Autofilled
         "CPUSpeed":  null, // Autofilled
         "MemoryGB":  null, // Autofilled
-        "Slack":  "https://hooks.slack.com/services/xxxxxxxxx" // Enter the Slack hook for reporting purposes.
+        "Slack":  "https://hooks.slack.com/services/xxxxxxxxx", // Enter the Slack hook for reporting purposes.
+        "InfluxDBurl": "MANDATORY_TO_DEFINE",
+        "InfluxToken": "Enter Token Here"
     }
 }

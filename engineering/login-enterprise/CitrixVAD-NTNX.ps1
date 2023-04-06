@@ -280,7 +280,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Upload Config to Influx
         if($NTNXInfra.Test.UploadResults) {
-            Start-NTNXInfluxUpload -influxDbUrl $NTNXInfra.Test.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Test.InfluxToken
+            Start-NTNXInfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken
         }
 
         $Testresult = import-csv "$OutputFolder\VSI-results.csv"
