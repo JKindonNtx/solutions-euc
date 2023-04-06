@@ -78,19 +78,20 @@ function Start-NTNXInfluxUpload {
                     "InfraMemoryGB=$($JSON.TestInfra.MemoryGB)" 
                     )
 
-            $tag = $tag.replace(' ','_')
+            $basetag = $tag
             $csvFilePath = $File
             $csvData = Import-Csv $csvFilePath
             $headers = $csvData | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
 
             foreach ($line in $csvData) {
                 $fields = ""
+                $tag = $basetag
                 foreach($Header in $Headers){
                     if(($header -ne "Timestamp")){
 
                         if(($header -like "*Id*") -or ($header -like "*Name*") -or ($header -like "*timer*")){
                             $Data = $($line.$($Header))
-                            $Fields = $Fields + "$($Header)=""$($Data)"","
+                            $tag = $tag + ",$($Header)=$($Data)"
                         } else {
                             $Data = $($line.$($Header))
                             $Fields = $Fields + "$($Header)=$($Data),"
@@ -98,6 +99,7 @@ function Start-NTNXInfluxUpload {
                     }
                 }
                 $Fields = $Fields.TrimEnd(",")
+                $tag = $tag.replace(' ','_')
                 $CSVDate = $($line.Timestamp)
                 $UnixDate = Get-Date -Date $CSVDate -UFormat %s
                 $NewDate = $UnixDate.Split(".")
