@@ -41,7 +41,7 @@ function Start-NTNXInfluxUpload {
                     "CloneType=$($JSON.Target.CloneType)," +
                     "SessionCfg=$($JSON.Target.SessionCfg)," +
                     "SessionsSupport=$($JSON.Target.SessionsSupport)," +
-                    "NodeCount=$($JSON.Target.SessionCfg)," +
+                    "NodeCount=$($JSON.Target.NodeCount)," +
                     "Workload=$($JSON.Target.Workload)," +
                     "NumCPUs=$($JSON.Target.ImagesToTest.NumCpus)," +
                     "NumCores=$($JSON.Target.ImagesToTest.NumCores)," +
