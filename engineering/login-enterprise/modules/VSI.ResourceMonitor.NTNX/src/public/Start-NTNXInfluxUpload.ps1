@@ -28,6 +28,7 @@ function Start-NTNXInfluxUpload {
                         Authorization = "Token $Token"
                 }
 
+    $vsiresult = Import-CSV "$($ResultsPath)\VSI-results.csv"
     $Files = Get-ChildItem "$($ResultsPath)\*.csv" 
 
     foreach($File in $Files){
@@ -75,7 +76,15 @@ function Start-NTNXInfluxUpload {
                     "InfraCPUThreadCount=$($JSON.TestInfra.CPUThreadCount)," +
                     "InfraCPUSocketCount=$($JSON.TestInfra.CPUSocketCount)," +
                     "InfraCPUSpeed=$($JSON.TestInfra.CPUSpeed)," +
-                    "InfraMemoryGB=$($JSON.TestInfra.MemoryGB)" 
+                    "InfraMemoryGB=$($JSON.TestInfra.MemoryGB)," +
+                    "VSIproductVersion=$($vsiresult.productVersion)," +
+                    "VSIEUXversion=$($vsiresult."EUX version")," +
+                    "VSIactivesessionCount=$($vsiresult.activesessionCount)," +
+                    "VSIEUXscore=$($vsiresult."EUX score")," +
+                    "VSIEUXstate=$($vsiresult."EUX state")," +
+                    "VSIvsiMax=$($vsiresult.vsiMax)," +  
+                    "VSIvsiMaxstate=$($vsiresult."vsiMax state")," + 
+                    "VSIvsiMaxversion=$($vsiresult."vsiMax version")"
                     )
 
             $basetag = $tag
