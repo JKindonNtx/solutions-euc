@@ -34,7 +34,7 @@ function Start-NTNXInfluxUpload {
     foreach($File in $Files){
         if(($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*")){
             $TopLevelTag = $File.BaseName
-            $Tag = ("Run Number=$($Run)," +
+            $Tag = ("Run=$($Run)," +
                     "DataType=$($TopLevelTag)," +
                     "DeliveryType=$($JSON.Target.DeliveryType)," +
                     "DesktopBrokerVersion=$($JSON.Target.DesktopBrokerVersion)," +
