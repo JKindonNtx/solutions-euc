@@ -1,6 +1,6 @@
 # Nutanix Cloud Platform Overview
 
-Nutanix delivers a web-scale, hyperconverged infrastructure solution purpose-built for virtualization and both containerized and private cloud environments. This solution brings the scale, resilience, and economic benefits of web-scale architecture to the enterprise through the Nutanix Cloud Platform, which combines the core HCI product families (Nutanix AOS and Nutanix Prism management) along with other software products that automate, secure, and back up cost-optimized infrastructure.
+Nutanix delivers a web-scale, hyperconverged infrastructure solution purpose-built for virtualization and both containerized and private cloud environments. This solution brings the scale, resilience, and economic benefits of web-scale architecture to the enterprise through the Nutanix Cloud Platform, which combines the core HCI product families (Nutanix AOS and Nutanix Prism Management) along with other software products that automate, secure, and back up cost-optimized infrastructure.
 
 Available attributes of the Nutanix Cloud Platform stack include:
 

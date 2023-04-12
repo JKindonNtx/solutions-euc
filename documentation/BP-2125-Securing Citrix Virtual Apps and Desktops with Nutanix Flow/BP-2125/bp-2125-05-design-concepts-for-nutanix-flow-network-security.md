@@ -2,12 +2,12 @@
 
 Nutanix Flow Network Security is an application-centric security offering for enterprise applications running on Nutanix AHV, such as Citrix Virtual Apps and Desktops. In a typical CVAD environment, you can protect two distinct types of entities with Flow: 
 
-- User Virtual Desktop Agents 
+- User Virtual Desktop Agents (Workers)
 - Infrastructure Virtual Machines, which includes License Server, Studio, Delivery Controllers, and more.
   
-In addition, you can use Nutanix Flow Network Security categories to secure the other applications accessed by desktop VMs if those applications run on AHV. You can control outbound access to applications not running on AHV using outbound IP address–based policies.
+In addition, you can use Nutanix Flow Network Security categories to secure the other applications accessed by Worker VMs if those applications run on AHV. You can control outbound access to applications not running on AHV using outbound IP address–based policies.
 
-To start securing the platform, assign categories to the different VMs in the Nutanix environment. Nutanix recommends designing the simplest possible set of categories and policies to meet your security and connectivity requirements. Creating fewer categories and policies is preferred over creating a unique category for every VM. Categorize VMs into several groups based on their intended use, looking for natural boundaries between groups of VMs. Use these categories to build effective security policies in **Monitor** mode with application and isolation policies. Move the security policies to **Apply** mode after evaluating the output of monitor mode detected flows in the created policies. Once you’ve applied the policies, modify them as required to permit the desired traffic.
+To start securing the platform, assign categories to the different VMs in the Nutanix environment. Nutanix recommends designing the simplest possible set of categories and policies to meet your security and connectivity requirements. Creating fewer categories and policies is preferred over creating a unique category for every VM. Categorize VMs into several groups based on their intended use, looking for natural boundaries between groups of VMs. Use these categories to build effective security policies in **Monitor** mode with application and isolation policies. Move the security policies to **Enforce** mode after evaluating the output of monitor mode detected flows in the created policies. Once you’ve applied the policies, modify them as required to permit the desired traffic.
 
 For the purpose of this document we will be using 2 built in categories to configure the security policies.
 
@@ -47,7 +47,7 @@ Then we have further grouped the VMs using AppTier's into their relevant functio
 
 ## Service Design
 
-This is where you will spend quite some time as you will be mapping out all the ports and protocols that your categories of VMs will require to communicate securely to each other.
+This is where you will spend quite some time as you will be mapping out all the ports and protocols that your categories of VMs will require in order to communicate securely with each other.
 
 First, let's take a look at the overall goal we are trying to achieve.
 
@@ -199,7 +199,7 @@ The examples in this document exclusively use application policies. It’s accep
 Use isolation policies only where you need complete restriction between two zones.
 </note>
 
-Application policy behavior is configurable on both the inbound and outbound sides. The default inbound policy is **Whitelist Only**, and the default outbound is **Allow All**. Using the allow list setting on both sides provides more traffic control but requires more configuration.
+Application policy behavior is configurable on both the inbound and outbound sides. The default inbound policy is **Whitelist Only**, and the default outbound is **Allow All**. Using the allowlist setting on both sides provides more traffic control but requires more configuration.
 
 ![Application Policy: Outbound Allow List](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image05.png "Application Policy: Outbound Allow List")
 
@@ -219,7 +219,7 @@ ID firewall is an extension to Flow Network Security that allows you to write se
 
 Some points worth noting about the VDI policy are.
 
-- It is recommended to disable credential caching on VDI VMs for Flow ID Firewall. The Flow ID Firewall checks the domain controller events for logon attempts. If the VM connection to the domain controller is not available, a user is able to logon (if credential caching enabled) but no event is generated on the domain controller inhibiting the ID Firewall to detect the logon.
+- It is recommended to disable credential caching on VDI VMs for Flow ID Firewall. The Flow ID Firewall checks the domain controller events for logon attempts. If the VM connection to the domain controller is not available, a user is able to log on (if credential caching enabled) but no event is generated on the domain controller inhibiting the ID Firewall to detect the logon.
 - To disable credential caching, see Interactive logon: Number of previous logons to cache (in case domain controller is not available) on Microsoft documentation website.
 - A basic assumption of VDI Policies is that a single end-user is logged on to each desktop VM at a point in time. As a result, if multiple users log into a single desktop VM at once, the security posture of the VM may change in unpredictable ways. Please ensure that for predictable behavior, only one user is logged into desktop VMs at a time.
 

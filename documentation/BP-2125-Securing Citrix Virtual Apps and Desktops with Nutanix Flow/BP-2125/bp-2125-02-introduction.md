@@ -2,19 +2,21 @@
 
 ## Audience
 
-This best practice document is part of the Nutanix Solutions Library. We wrote it for architects and administrators responsible for configuring CVAD on AHV with Nutanix Flow Network Security. Readers of this document should already be familiar with Nutanix AHV, Prism Central, Networking Basics, and Citrix.
+This best practice document is part of the Nutanix Solutions Library. We wrote it for architects and administrators responsible for configuring CVAD on AHV with Nutanix Flow Network Security. Readers of this document should already be familiar with Nutanix AHV, Prism Central, Networking Basics, and Citrix Virtual Apps and Desktops.
 
 ## Purpose
 
-In this document we describe how to use Nutanix Flow Network Security to design a set of categories and security policies for a CVAD environment running on Nutanix AHV, including the infrastructure and desktop VMs. We cover the following subjects:
+In this document we describe how to use Nutanix Flow Network Security to design a set of categories and security policies for a CVAD environment running on Nutanix AHV, including the infrastructure and Worker VMs. We cover the following subjects:
 
 - Nutanix Cloud Platform Overview.
 - Nutanix Flow Network Security Overview.
 - Design concepts for Nutanix Flow Network Security.
 - Implementing Nutanix Flow Network Security.
 - Monitoring Nutanix Flow Network Security.
-- ******How to configure Flow for Citrix Virtual Apps and Desktops.
-- ******Logging and auditing.
+- Enforcing Nutanix Flow Network Security.
+- Auditing Nutanix Flow Network Security.
+- Conclusion.
+- Appendix.
   
 Unless otherwise stated, the solution described in this document is valid on all supported AOS releases.
 

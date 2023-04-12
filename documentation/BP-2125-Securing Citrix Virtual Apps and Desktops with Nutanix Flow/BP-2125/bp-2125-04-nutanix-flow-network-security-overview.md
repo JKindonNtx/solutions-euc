@@ -8,4 +8,4 @@ Nutanix Flow Network Security provides application-centric policies that enable 
 
 Nutanix Flow Network Security protects against new threats designed to spread laterally from one system to another in the same datacenter. Because perimeter-based firewalls traditionally only protect the environment from external threats, it can be difficult to repurpose them to protect internal traffic. Nutanix Flow Network Security applies security rules between all applications and VMs in the datacenter, adding internal protection behind your perimeter firewall.
 
-To learn more about how Nutanix Flow Network Security works, see the [Nutanix documentation](https://www.nutanix.com/products/flow).
+To learn more about how Nutanix Flow Network Security works, see the [Nutanix documentation for Flow](https://www.nutanix.com/products/flow).
