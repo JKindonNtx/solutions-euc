@@ -8,10 +8,11 @@ The full deployment scenario consists of the following steps:
 
 - Enable Nutanix Flow Network Security
 - Create Categories.
-- Assign Categories to VMs.
+- Define Services.
+- Define Addresses.
+- Create Virtual Machine View.
 - Create Security Policies (monitor mode).
-- Apply security policies (enforce mode).
-- Configure Logging.
+- Assign Categories to VMs.
 
 Let’s look at how to enable Nutanix Flow Network Security.
 
@@ -212,7 +213,7 @@ Clicking on your new Security Policy will show you all the rules you have set up
 
 ![New Policy Display CVAD Workers Overview](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image34.png "New Policy Display CVAD Workers Overview")
 
-### CVAD Policy Categories
+## Assign Categories To VMs
 
 Next we will need to add our Virtual Machines to the correct categories so that they are picked up by the relevant Nutanix Flow Security Policies.
 
