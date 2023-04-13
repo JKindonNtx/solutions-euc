@@ -17,11 +17,11 @@ Available attributes of the Nutanix Cloud Platform stack include:
 - Cloud automation and life cycle management.
   
 Nutanix provides services and can be broken down into three main components: 
-- A HCI-based distributed storage fabric. <!--JK: @david-brett moved this to a list - if no good, can move it back-->
-- Management and operational intelligence from Prism. <!--JK: @david-brett moved this to a list - if no good, can move it back-->
-- AHV virtualization. <!--JK: @david-brett moved this to a list - if no good, can move it back-->
+- A HCI-based distributed storage fabric. 
+- Management and operational intelligence from Prism. 
+- AHV virtualization. 
  
-Nutanix Prism furnishes one-click infrastructure management for virtual environments running on AOS. AOS is hypervisor agnostic, supporting two third-party hypervisors (VMware ESXi and Microsoft Hyper-V) in addition to the native Nutanix hypervisor, AHV. <!--JK: @david-brett not sure on the wording here with "furnishes" - can see it may have come from here https://thoughtdata.com/2022/10/08/unified-observability-in-nutanix-ahv-environments-and-nutanix-hyper-converged-infrastructurehci/-->
+Nutanix Prism offers administrators one-click infrastructure management for virtual environments running on AOS. AOS is hypervisor agnostic, supporting two third-party hypervisors (VMware ESXi and Microsoft Hyper-V) in addition to the native Nutanix hypervisor, AHV.
  
 ![Nutanix Cloud Platform](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image01.png "Nutanix Cloud Platform")
 
