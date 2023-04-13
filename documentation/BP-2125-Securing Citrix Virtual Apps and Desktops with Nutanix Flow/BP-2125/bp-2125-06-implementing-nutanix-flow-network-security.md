@@ -6,29 +6,29 @@ For this example, we have a Citrix Virtual Apps and Desktops deployment for an o
 
 The full deployment scenario consists of the following steps:
 
-- Enable Nutanix Flow Network Security
+- Enable Nutanix Flow Network Security.
 - Create Categories.
 - Define Services.
 - Define Addresses.
 - Create Virtual Machine View.
-- Create Security Policies (monitor mode).
+- Create Security Policies (monitor mode). <!--JK: -@david-brett do we need a step that moves from Monitor to enforce?->
 - Assign Categories to VMs.
 
-Let’s look at how to enable Nutanix Flow Network Security.
+The below outlines how to enable Nutanix Flow Network Security.
 
 ## Enable Nutanix Flow Network Security
 
-To enable Nutanix Flow Network Security, do the following:
+To enable Nutanix Flow Network Security, complete the following:
 
 - Log on to the Prism Central web console.
 - Click the collapse menu ("hamburger") button on the left of the main menu and then select "Prism Central Settings" to display the Settings page.
 - Click "Microsegmentation" from the Settings menu (on the left).
 - The "Enable Microsegmentation" dialog box is displayed.
-- To determine whether the registered clusters are capable of supporting microsegmentation, do the following:
-- - Click "View Cluster Capability", and then review the results of the capability checks that Prism Central performed on the registered clusters.
-- Click "Back".
-- Select the "Enable Microsegmentation" check box.
-- Click "OK".
+- To determine whether the registered clusters are capable of supporting microsegmentation, complete the following:
+  - Click "View Cluster Capability", and then review the results of the capability checks that Prism Central performed on the registered clusters.
+  - Click "Back".
+  - Select the "Enable Microsegmentation" check box.
+  - Click "OK".
 
 Once enabled you should see the following showing Nutanix Flow Network Security is enabled and capable on your clusters.
 
@@ -36,78 +36,81 @@ Once enabled you should see the following showing Nutanix Flow Network Security 
 
 ## Create Categories
 
-AppType and AppTier are existing categories in Prism Central called a system category. Update these categories to add AppType and AppTier values for all the applications the CVAD deployment uses. 
+**AppType** and **AppTier** are existing categories in Prism Central identified as a **system category**. Update these categories to add **AppType** and **AppTier** values for all the applications the CVAD deployment uses. <!--JK: @david-brett this below diagram appears a bit off - we have Delivery Controllers and Citrix Infrastructure as values in the AppType -> Based on the document so far, AppType should be Citrix Infrastructure and Citrix Workers, and then AppTier should be "Citrix StoreFront etc -->
 
-- Navigate to the Prism Central menu, select "Administration", then click "Categories". 
-- Select "AppType", then navigate to the "Actions" dropdown menu and click "Update".
+- Navigate to the Prism Central menu, select "**Administration**", then click "**Categories**". 
+- Select "**AppType**", then navigate to the "**Actions**" dropdown menu and click "**Update**".
 
 ![Update AppType](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image08.png "Update AppType")
 
-Use the blue "Add More Values" option to add the AppType's you need
+- Use the blue "**Add More Values**" option to add the **AppType's** you need.
 
 ![Add AppType](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image09.png "Add AppType")
 
-Click "Save" then repeat the process above for the system defined category AppTier adding the relevant values you need.
+- Click "**Save**" then repeat the process above for the system defined category **AppTier** adding the relevant values you need.
 
 ![Add AppTier](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image10.png "Add AppTier")
 
-Click on "Save".
+- Click on "**Save**".
 
 ## Define Services
 
-Next we need to define the services that we mapped earlier in the design phase to secure for our CVAD environment.
+To define the services that mapped earlier in the planning section:
 
-- Navigate to the Prism Central menu, select "Network and Security", then click "Security Policies". 
-- Select "Services" from the top level menu, and click on "Create Service Group".
+- Navigate to the Prism Central menu, select "**Network and Security**", then click "**Security Policies**". 
+- Select "**Services**" from the top level menu, and click on "**Create Service Group**".
 
 ![Create Service Group](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image11.png "Create Service Group")
 
-Create a service group including all the ports and protocols that you defined in the design phase of your implementation.
+- Create a **service group** including all the ports and protocols defined in the planning phase:
 
 ![Licensing Service Group](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image12.png "Licensing Service Group")
 
-Click Save and repeat this process until all your Service Groups are defined.
+- Click **Save** and repeat this process until all **Service Groups** are defined.
 
 ## Define Addresses
 
-Finally, we need to define all our addresses (networks) that will act as part of the Security Policies.
+Finally, define all addresses (networks) that will act as part of the Security Policies.
 
-- Navigate to the Prism Central menu, select "Network and Security", then click "Security Policies". 
-- Select "Addresses" from the top level menu, and click on "Create Address".
+- Navigate to the Prism Central menu, select "**Network and Security**", then click "**Security Policies**". 
+- Select "**Addresses**" from the top level menu, and click on "**Create Address**".
 
 ![Create Address](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image13.png "Create Address")
 
-Create an address group for the defined networks you specified in the design phase of this deployment.
+- Create an **address group** for the defined networks defined in the planning phase:
 
 ![Campus Address](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image14.png "Campus Address")
 
-Click "Create" and repeat this process for every network address space you are planning on using for your Nutanix Flow Network Security Policies.
+- Click "**Create**" and repeat this process for every network address space required for the Nutanix Flow Network Security Policies.
 
-At this point you have defined your AppType's and AppTier's as well as the Service Groups and Address spaces you will be using. Before we move on we need to look at creating a view that will make managing the category assignment easy.
+At this point there are defined **AppType's** and **AppTier's** as well as the **Service Groups** and **Address spaces** required. A custom view should be created to assist in simplifying category assignment.
 
 ## Create Virtual Machine View
 
-- Navigate to the Prism Central menu, select "Compute and Storage", then click "VMs". 
-- Select "View by" from the top level menu on the right, and click on "Add Custom".
+- Navigate to the Prism Central menu, select "**Compute and Storage**", then click "**VMs**". 
+- Select "**View by**" from the top level menu on the right, and click on "**Add Custom**".
 
 ![Add Custom View](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image15.png "Add Custom View")
 
-Give your new view a name and add all the fields that you want to display in the view. Please be sure to include "Categories" here as this will be how you apply the security policies to your VMs.
+- Give the new view a name and add all the fields that required in the view. Be sure to include "**Categories**" here as this  will enable the assignment of **security policies** to VM based on **Category**.
 
 ![Custom View Details](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image16.png "Custom View Details")
 
-Click "Save" to commit the new view, you should now see the custom view defined and on display in Prism Central.
+- Click "**Save**" to commit the new view, a new custom view should now be defined and on display in Prism Central.
+
+<!--JK: @david-brett is this image right below? AppType value shows controllers - isn't that the Tier?-->
 
 ![Custom View Show](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image17.png "Custom View Show")
 
 ## Create Security Policies
 
-Moving on we have to now create the Security Policies to be able to secure the CVAD environment. Let's break this down into 2 separate policies.
+To secure the environment, Security Policies need to be created. There are two examples used in this guide:
+<!--Moving on we have to now create the Security Policies to be able to secure the CVAD environment. Let's break this down into 2 separate policies. -->
 
 - CVAD_Policy_Infrastructure
 - CVAD_Policy_Workers
 
-### CVAD Policy Infrastructure
+### CVAD Policy Infrastructure <!--JK: @david-brett I will stop here an IM you for next steps and make sure I am not ruining your document :) -->
 
 First we will define the policy for the CVAD Infrastructure. 
 

@@ -1,6 +1,6 @@
 # Nutanix Cloud Platform Overview
 
-Nutanix delivers a web-scale, hyperconverged infrastructure solution purpose-built for virtualization and both containerized and private cloud environments. This solution brings the scale, resilience, and economic benefits of web-scale architecture to the enterprise through the Nutanix Cloud Platform, which combines the core HCI product families (Nutanix AOS and Nutanix Prism Management) along with other software products that automate, secure, and back up cost-optimized infrastructure.
+Nutanix delivers a web-scale, hyperconverged infrastructure (HCI) solution purpose-built for virtualization and both containerized and private cloud environments. This solution brings the scale, resilience, and economic benefits of web-scale architecture to the enterprise through the Nutanix Cloud Platform, which combines the core HCI product families (Nutanix AOS and Nutanix Prism Management) along with other software products that automate, secure, and back up cost-optimized infrastructure.
 
 Available attributes of the Nutanix Cloud Platform stack include:
 
@@ -16,7 +16,12 @@ Available attributes of the Nutanix Cloud Platform stack include:
 - Flexible virtual networking for visualization, automation, and security.
 - Cloud automation and life cycle management.
   
-Nutanix provides services and can be broken down into three main components: an HCI-based distributed storage fabric, management and operational intelligence from Prism, and AHV virtualization. Nutanix Prism furnishes one-click infrastructure management for virtual environments running on AOS. AOS is hypervisor agnostic, supporting two third-party hypervisors (VMware ESXi and Microsoft Hyper-V) in addition to the native Nutanix hypervisor, AHV.
+Nutanix provides services and can be broken down into three main components: 
+- A HCI-based distributed storage fabric. <!--JK: @david-brett moved this to a list - if no good, can move it back-->
+- Management and operational intelligence from Prism. <!--JK: @david-brett moved this to a list - if no good, can move it back-->
+- AHV virtualization. <!--JK: @david-brett moved this to a list - if no good, can move it back-->
+ 
+Nutanix Prism furnishes one-click infrastructure management for virtual environments running on AOS. AOS is hypervisor agnostic, supporting two third-party hypervisors (VMware ESXi and Microsoft Hyper-V) in addition to the native Nutanix hypervisor, AHV. <!--JK: @david-brett not sure on the wording here with "furnishes" - can see it may have come from here https://thoughtdata.com/2022/10/08/unified-observability-in-nutanix-ahv-environments-and-nutanix-hyper-converged-infrastructurehci/-->
  
 ![Nutanix Cloud Platform](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image01.png "Nutanix Cloud Platform")
 
