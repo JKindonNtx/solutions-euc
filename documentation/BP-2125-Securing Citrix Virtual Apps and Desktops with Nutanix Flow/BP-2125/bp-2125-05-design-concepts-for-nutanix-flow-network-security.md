@@ -7,7 +7,7 @@ In a typical CVAD environment, you can protect two distinct types of entities wi
   
 In addition, you can use Nutanix Flow Network Security categories to secure the other applications accessed by Worker VMs if those applications run on AHV. You can control outbound access to applications not running on AHV using outbound IP address–based policies.
 
-Before you start to dive into the specifics about what you are inplementing it is important to know what your "end game" is, with that in mind let's take a look at the overall goal we are trying to achieve.
+Before you start to dive into the specifics about what you are implementing it is important to know what your "end game" is, with that in mind let's take a look at the overall goal we are trying to achieve.
 
 ![Overall Goal](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image03.png "Overall Goal")
 
