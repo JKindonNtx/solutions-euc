@@ -38,10 +38,12 @@ Collect the following information with input from all teams:
 - Identify all virtual applications that are going to run on Nutanix AHV.
 - For each application, identify the owner of the application.
 - For each virtual application on AHV, collect as much of the following as possible:
-- Connectivity diagram.
-- List of open ports and protocols.
-- List of inbound and outbound connections.
-- External Internet access requirements.
-- Special connectivity or security requirements such as isolation, load balancing, multicast, and high availability protocols.
-- Identify groups of applications that have similar connectivity requirements.
-- Identify groups of applications that must be totally isolated from each other.
+  - Connectivity diagram.
+  - List of open ports and protocols.
+  - List of inbound and outbound connections.
+  - External Internet access requirements.
+  - Special connectivity or security requirements such as isolation, load balancing, multicast, and high availability protocols.
+  - Identify groups of applications that have similar connectivity requirements.
+  - Identify groups of applications that must be totally isolated from each other.
+
+<!--JK: @david-brett is it worth mentioning this process is iterative and that application changes/new service inclusion etc should consider segmentation?>

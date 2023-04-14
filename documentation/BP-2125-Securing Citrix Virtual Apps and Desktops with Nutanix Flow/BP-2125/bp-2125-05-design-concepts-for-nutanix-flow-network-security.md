@@ -7,29 +7,37 @@ In a typical CVAD environment, you can protect two distinct types of entities wi
   
 In addition, you can use Nutanix Flow Network Security categories to secure the other applications accessed by Worker VMs if those applications run on AHV. You can control outbound access to applications not running on AHV using outbound IP address–based policies.
 
-Before you start to dive into the specifics about what you are implementing it is important to know what your "end game" is, with that in mind let's take a look at the overall goal we are trying to achieve.
+Before you start to detail the specifics of what you are implementing, it is important to define what your goal is. Below is an example scenario which outlines a number of key services and how they communicate. With a clear visual of what is needed, it is simple to start mapping and implementing the required components. <!--JK: @david-brett I altered this slightly for context - see what you think -->
 
 ![Overall Goal](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image03.png "Overall Goal")
 
-To start securing the platform, assign [categories](https://www.nutanixbible.com/12a-book-of-network-services-flow-network-security.html#categories) to different VMs. Nutanix recommends designing the simplest possible set of categories and policies to meet your security and connectivity requirements. Creating fewer categories and policies is preferred over creating a unique category for every VM. Categorize VMs into several groups based on their intended use, looking for natural boundaries between groups of VMs. Use these categories to build effective security policies in **Monitor** mode with application and isolation policies. Move the security policies to **Enforce** mode after evaluating the output of monitor mode detected flows in the created policies. Once you’ve applied the policies, modify them as required to permit the desired traffic.
+<!--
+To start, assign [categories](https://www.nutanixbible.com/12a-book-of-network-services-flow-network-security.html#categories) to different VMs. Nutanix recommends designing the simplest possible set of categories and policies to meet your security and connectivity requirements. Creating fewer categories and policies is preferred over creating a unique category for every VM. Categorize VMs into several groups based on their intended use, looking for natural boundaries between groups of VMs. Use these categories to build effective security policies in **Monitor** mode with application and isolation policies. Move the security policies to **Enforce** mode after evaluating the output of monitor mode detected flows in the created policies. Once you’ve applied the policies, modify them as required to permit the desired traffic.
+-->
+The following process outlines the overall suggested implementation pattern: <!--JK: @david-brett moved the above to a list - see what you think-->
 
-For the purpose of this document, we will be using 2 built-in categories to configure the security policies.
+- Assign [categories](https://www.nutanixbible.com/12a-book-of-network-services-flow-network-security.html#categories) to different VMs. Nutanix recommends designing the simplest possible set of categories and policies to meet your security and connectivity requirements. Creating fewer categories and policies is preferred over creating a unique category for every VM. Categorize VMs into several groups based on their intended use, looking for natural boundaries between groups of VMs.
+-  Use these categories to build effective security policies in **Monitor** mode with application and isolation policies.
+-  Move the security policies to **Enforce** mode after evaluating the output of monitor mode detected flows in the created policies.
+-  Once applied, modify policies as required to permit the desired traffic.
+
+For the purpose of this document, 2 built-in categories are used to configure the security policies.
 
 | **Category** | **Description** | 
 | --- | --- |
-| AppType | We created two definitions in this **category**: "**Citrix Infrastructure**" and "**Citrix Workers**". Using the value of this category, we can divide the application into logical segments to use with a **Security Policy**. |
-| AppTier | We created several definitions in this **category**: such as "**Citrix StoreFront**" and "**Citrix Licensing**". We then associated VMs with the appropriate AppTier **category** |
+| AppType | Two definitions are created in this **category**: "**Citrix Infrastructure**" and "**Citrix Workers**". Using the value of this category, the application is effectively divided into logical segments to use with a **Security Policy**. |
+| AppTier | Several definitions in this **category** such as "**Citrix StoreFront**" and "**Citrix Licensing**" are created. VMs are associated with the appropriate AppTier **category** |
 
-We will also be using 2 main definition types to describe the access methods. Network address spaces we will connect **from** and **to** as well as the services we want to **allow** or **disallow**. Further details regarding the address space and service details can be found later in the document.
+2 main definition types are used to describe the access methods. Network address spaces connections establish **from** and **to** as well as the services to **allow** or **disallow**. Additional details regarding the address space and service details are outlined later in the document.
 
 | **Definition** | **Description** | 
 | --- | --- |
-| Service | Services are the types of network traffic you want to allow or disallow via a policy. These can be individually listed such as HTTP (TCP/80) or grouped such as Citrix_Worker (TCP/UDP/1494/2598), use the appropriate logic to define these for simplicity and security. |
-| Address | Addresses are network ranges that you want to allow or disallow via policy such as 192.168.0.0/24. As with Services these can be defined individually or in a group, again design for simplicity and security here. | 
+| Service | Services are the types of network traffic to allow or disallow via a policy. These can be individually listed such as HTTP (TCP/80) or grouped such as Citrix_Worker (TCP/UDP/1494/2598). Use the appropriate logic to define these for simplicity and security. |
+| Address | Addresses are network ranges to allow or disallow via policy such as 192.168.0.0/24. As with Services these can be defined individually or in a group. | 
 
 ## Category Design
 
-Listed below are some typical components you may use in a CVAD deployment and how you might categorize that for a typical CVAD environment. This is not an exhaustive list of **ALL** the CVAD components but should provide you with a starting point to build out appropriate Nutanix Flow Network Security policies:
+Listed below are some typical components in a CVAD deployment and how they could be categorized. This is not an exhaustive list provides a starting point to build appropriate Nutanix Flow Network Security policies:
 
 - AppType: Citrix Infrastructure
   - AppTier: Citrix Licensing
@@ -41,19 +49,21 @@ Listed below are some typical components you may use in a CVAD deployment and ho
   - AppTier: Workers HR
   - AppTier: Workers Finance
 
-The outline below shows the above components categorized using the previous categories.
+The diagram below shows a visual representation of the above list.
 
 ![Category Overview](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image02.png "Category Overview")
 
-As you can see we have broken the categories down into 2 main **AppType's** and their associated **AppTier's**
+The categories are split into 2 main **AppType's** and their associated **AppTier's**.
 
 ## Service Design 
 
-Service design includes mapping out all the port and protocols that your **categories** of VMs will require in order to communicate with each other.
+Service design includes mapping out all the port and protocols that the **categories** of VMs will require in order to communicate with each other.
 
-Citrix provides an [exhaustive list of ports and protocols](https://docs.citrix.com/en-us/tech-zone/build/tech-papers/citrix-communication-ports.html) associated with all CVAD components. This document is regularly updated as component changes are implemented and is a good reference guide. A properly designed environment will block by default, and allow only the required traffic for the appropriate components, so understanding exactly how services communicate with each other is critical.
+Citrix provides an [exhaustive list of ports and protocols](https://docs.citrix.com/en-us/tech-zone/build/tech-papers/citrix-communication-ports.html) associated with all CVAD components. This document is regularly updated as component changes are implemented and is a good reference guide. 
 
-Referencing the overall goal match your AppTier's into logical groups, then define the ports and protocols required to make that AppTier function correctly.
+A properly designed environment will block by default, and allow only the required traffic for the appropriate components. Understanding exactly how services communicate with each other is critical.
+
+Once the **AppTier's** are divided into logical groups, define the ports and protocols required to make that **AppTier** function correctly.
 
 | **AppTier** | **Service** | **Port** | **Protocol** |
 | --- | --- | --- | --- |
@@ -94,10 +104,15 @@ Referencing the overall goal match your AppTier's into logical groups, then defi
 | Citrix Workers | Remote Assistance | 49152-65525 | TCP |
 | Citrix Workers | HDX Video | 9001 | TCP |
 | Citrix Workers | Wake on LAN | 9 | TCP |
+<!--JK: @david-brett missing some SQL stuff stuff? Also adding a quick note below to capture this is an example - make sure i capture it OK?-->
+
+<note>
+  The above list is a working example only and includes only inbound rule configurations. You should define all required components in a similar fashion to the above list.
+</note>
 
 ## Address Design
 
-Designing for addresses in policies requires an understanding of where the traffic is both sourced **from**, and destined **to**. This can be defined in CIDR network ranges which are then used to restrict or allow traffic flows in and out of your defined application. Based on the working example, the following addresses are defined:
+Designing for addresses in policies requires an understanding of where the traffic is both sourced **from**, and destined **to**. This can be defined in CIDR network ranges which are then used to restrict or allow traffic flows in and out of the defined application. Based on the working example, the following addresses are defined:
 
 | **Network** | **Purpose** | 
 | --- | --- | 
@@ -106,7 +121,7 @@ Designing for addresses in policies requires an understanding of where the traff
 | 192.168.1.0/24 | Microsoft SQL subnet | 
 | 172.24.0.0/22 | Citrix Worker subnet | 
 
-With the service and address information defined, it's time to move onto Security Policies and associated concepts.
+With the Service and Address information defined, Security Policies can be implemented.
 
 ## Security Policy Design
 
@@ -116,27 +131,29 @@ When creating a security policy in Nutanix Flow Network Security there are 4 cho
 
 Secure Application policies create a configurable border around a specific application, called the target group, defined by **AppType** and **AppTier**. You can insulate this target group from all other sources and destinations, then use safe lists to create exceptions to the default deny behavior of the policy, allowing traffic from and to external sources and destinations. These sources and destinations are defined by a category or by network IP address.
 
-The default setting for an App Policy will restrict the inbound access to subnet or category and allow everything outbound. Another point worth noting is that you are able to restrict the VMs within the AppTier from talking to each other should this be required for your specific policy.
+The default setting for an App Policy will restrict the inbound access to subnet or category and allow everything outbound. You are able to restrict the VMs within the **AppTier** from talking to each other should this be required.
 
-The below example shows an inbound access control based on either Source IP or category and an outbound access control of allow all. You can also see that the Citrix Licensing VMs within the AppTier are unable to talk to each other, however the Citrix StoreFront VMs are able to communicate with each other as this is required for them to function correctly.
+The below example shows an inbound access control based on either **Source IP** or **category** and an outbound access control of **allow all**.
 
 ![Application Policy: Outbound Allow All](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image04.png "Application Policy: Outbound Allow All")
 
-In most cases, start with application policies, using Whitelist Only on the inbound and Allow All on the outbound. 
+In most cases, start with application policies, using **Whitelist Only** on the **inbound** and **Allow All** on the **outbound**. 
 
-Application policy behavior is configurable on both the inbound and outbound sides. Using the allowlist setting on both sides provides more traffic control but requires more configuration.
+Application policy behavior is configurable on both the **inbound** and **outbound** sides. Using the allowlist setting on both sides provides more traffic control, but requires more configuration.
 
-The below example shows an inbound access control based on either Source IP or category and an outbound access control of destination IP for Citrix Licensing and category for Citrix StoreFront. As in the previous example, the Citrix Licensing VMs within the AppTier are unable to talk to each other, however the Citrix StoreFront VMs are able to communicate with each other as this is required for them to function correctly.
+The below example shows an inbound access control based on either **Source IP** or **category** and an outbound access control of **destination IP** for *Citrix Licensing* and **category** for *Citrix StoreFront*.
 
 ![Application Policy: Outbound Allow List](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image05.png "Application Policy: Outbound Allow List")
+
+For both examples above, the ***Citrix Licensing*** VMs within the ***Citrix Licencing* AppTier** are unable to talk to each other, however the ***Citrix StoreFront*** VMs are able to communicate with each other as this is required for them to function correctly.
 
 ### Isolate Environments (Isolation Policy)
 
 Use isolation policies only when you need to block two groups from communicating without any exceptions. Isolation policies are evaluated before application policies, so you can combine these two policy types, and you can also use isolation policies to create a boundary that no application policy can bypass. 
 
-For example, create an application policy for Finance worker VMs and another application policy for HR worker VMs. At this point, you could configure Finance and HR to talk to each other. However, if you combine these application policies with an isolated environment policy that separates Finance from HR, these VMs are totally isolated regardless of any application-specific rules.
+For example, using an application policy for **Finance worker** VMs and another application policy for **HR worker** VMs would allow a configuration to ensure Finance and HR can communicate with each other. However, if you combine these application policies with an isolated environment policy that separates Finance from HR, these VMs are totally isolated *regardless* of any application-specific rules.
 
-The below example shows an inbound access control based on either Source IP or category and an outbound access control of allow all. You can also see that the Finance workers can communicate with each other within the AppTier, likewise for the HR workers. What can be seen is that there is an isolation policy in place that prevents any Finance workers communicating with the HR workers.
+The below example outlines an inbound access control based on either **Source IP** or **category** and an outbound access control of **allow all**. **Finance workers** can communicate with each other within the **AppTier**, likewise for the **HR workers**. However, an isolation policy has been defined which prevents any **Finance workers** communicating with the **HR workers** ensuring isolation between discreet workload types.
 
 ![Application Policy: Outbound Allow List](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image05_1.png "Application Policy: Outbound Allow List")
 
@@ -156,16 +173,26 @@ This guide does not cover using the VDI Policy as the example scenario uses a 1:
 
 ### Quarantine Policy
 
-If you need total lockdown for a VM, with configurable exceptions, you can use a Quarantine policy. The Quarantine policy has two modes of operation: strict and forensic. Use strict quarantine to block all inbound and outbound traffic for a quarantined VM. Use forensic quarantine to allow security tools or VMs that should have access to the quarantined VM and block all other traffic. Define the list of allowed inbound and outbound sources, destinations, and ports for any VM in forensic quarantine by updating the policy. 
+If you need complete lockdown for a VM, with configurable exceptions, you can use a Quarantine policy. The Quarantine policy has two modes of operation: strict and forensic. Use strict quarantine to block all inbound and outbound traffic for a quarantined VM. Use forensic quarantine to allow security tools or VMs that should have access to the quarantined VM and block all other traffic. Define the list of allowed inbound and outbound sources, destinations, and ports for any VM in forensic quarantine by updating the policy. 
 
 ![Example Quarantine Policy](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image06.png "Example Quarantine Policy")
 
 Work with the security team to determine what actions you need to take before, during, and after a VM quarantine operation. Consider using VM and storage snapshots along with Flow Network Security quarantine to enable a successful response to any suspicious activity.
 
-## Identify Policy Boundaries
+## Identify Policy Boundaries <!--JK: @david-brett I tried to simplify the wording a touch below - see what you think-->
 
-Application policies use the **AppType** and optional **AppTier** categories exclusively to define a target group protected by the policy. You must assign different **AppType** categories to VMs from different applications. You can assign VMs from different **AppTier's** in the same application the same **AppType**, but they should have different **AppTier** values. This categorization allows the VMs assigned to these categories to exist as different tiers inside the same application policy. If you don’t specify an **AppTier**, Flow only uses the **AppType**.
+Application policies use the **AppType** and optional **AppTier** categories exclusively to define a target group protected by the policy. 
 
-There are many ways to define the boundaries between these applications. You can base them on who manages these VMs, which vendor provides them, or whether they perform the same function. You can also define application boundaries based on the communication required between VMs. A set of tightly integrated VMs that all communicate with each other on many ports is a good candidate for definition as a single application.
+- You must assign different **AppType** categories to VMs from different applications. 
+- You can assign VMs from different **AppTier's** in the same application of the same **AppType**, but they should have different **AppTier** values. This categorization allows the VMs assigned to these categories to exist as different tiers inside the same application policy. 
+- If you don’t specify an **AppTier**, Flow only uses the **AppType**. <!--JK: @david-brett i moved this to a list - see what you think -->
 
-Isolation policy boundaries are easier to identify. If one VM group shouldn’t talk to another VM group, that’s an obvious boundary and these two groups of VMs should have different categories. One example is environment isolation, where Environment: Finance should never communicate with Environment: Finance. You can create isolation policies based on any two categories, but application policies must be based on the AppType category.
+There are many ways to define the boundaries between these applications. These could be:
+
+- Based on who manages these VMs. 
+- Which vendor provides them.
+- Whether the VMs perform the same function. 
+ 
+Application boundaries can be defined based on the communication required between VMs. A set of tightly integrated VMs that all communicate with each other on many ports is a good candidate for a definition as a single application.
+
+Isolation policy boundaries are easier to identify. If one VM group should not talk to another VM group, that’s an obvious boundary and these two groups of VMs should have different **categories**. One example is environment isolation, where **Environment: Finance** should never communicate with **Environment: HR**. You can create isolation policies based on any two **categories**, but application policies must be based on the **AppType category**.

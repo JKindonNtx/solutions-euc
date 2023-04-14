@@ -1,8 +1,8 @@
 # Nutanix Flow Network Security Overview
 
-![Nutanix Flow Platform](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image48.png "Nutanix Flow Platform")
-
 Nutanix Flow Network Security delivers advanced networking and security services for AHV VMs, providing visibility into the virtual network, application-centric protection from network threats, and automation of common networking operations.
+
+![Nutanix Flow Platform](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image48.png "Nutanix Flow Platform")
 
 Fully integrated into AHV virtualization and the Nutanix Cloud Platform, Nutanix Flow Network Security allows organizations to deploy software-defined virtual networking without installing additional products that have separate management and independent software maintenance requirements.
 
