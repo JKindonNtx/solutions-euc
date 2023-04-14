@@ -21,4 +21,13 @@ The Virtual Machine view will update to reflect the quarantined VM.
 
 To take the VM out of quarantine click to select a VM to take out of quarantine to and select "**Actions**" then "**Unquarantine VMs**"
 
-<!--JK: @david-brett I feel this section may be a touch light - how does one access a quarantined VM, what happens when it is quarantined... we mentioned a quarantine policy in previous sections, wonder if we should link in some collateral here?-->
+As mentioned earlier there are 2 types of quarantine:
+
+- Forensic
+- Strict
+
+Depending on the requirements you can define rules to allow inbound access to the virtual machine by editing the Security Policy for quarantine. The options for this are shown below.
+
+![Example Quarantine Policy](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image06.png "Example Quarantine Policy")
+
+Work with the security team to determine what actions you need to take before, during, and after a VM quarantine operation. Consider using VM and storage snapshots along with Flow Network Security quarantine to enable a successful response to any suspicious activity.

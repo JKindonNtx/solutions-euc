@@ -1,4 +1,4 @@
-# Auditing Nutanix Flow Network Security <!--JK: @david-brett rewrote this section as it was muddled - see what you think -->
+# Auditing Nutanix Flow Network Security 
 
 Logging is an important part of security infrastructure, and Flow provides two types of logs: audit logs and policy hit logs. 
 

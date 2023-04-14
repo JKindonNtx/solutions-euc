@@ -46,4 +46,6 @@ Collect the following information with input from all teams:
   - Identify groups of applications that have similar connectivity requirements.
   - Identify groups of applications that must be totally isolated from each other.
 
-<!--JK: @david-brett is it worth mentioning this process is iterative and that application changes/new service inclusion etc should consider segmentation?>
+<note>
+    The process of microsegmentation is an iterative one in that every time a change is made to the environment that may effect communications the security policy and definitions need to be checked and validated.
+</note>

@@ -7,14 +7,11 @@ In a typical CVAD environment, you can protect two distinct types of entities wi
   
 In addition, you can use Nutanix Flow Network Security categories to secure the other applications accessed by Worker VMs if those applications run on AHV. You can control outbound access to applications not running on AHV using outbound IP address–based policies.
 
-Before you start to detail the specifics of what you are implementing, it is important to define what your goal is. Below is an example scenario which outlines a number of key services and how they communicate. With a clear visual of what is needed, it is simple to start mapping and implementing the required components. <!--JK: @david-brett I altered this slightly for context - see what you think -->
+Before you start to detail the specifics of what you are implementing, it is important to define what your goal is. Below is an example scenario which outlines a number of key services and how they communicate. With a clear visual of what is needed, it is simple to start mapping and implementing the required components. 
 
 ![Overall Goal](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image03.png "Overall Goal")
 
-<!--
-To start, assign [categories](https://www.nutanixbible.com/12a-book-of-network-services-flow-network-security.html#categories) to different VMs. Nutanix recommends designing the simplest possible set of categories and policies to meet your security and connectivity requirements. Creating fewer categories and policies is preferred over creating a unique category for every VM. Categorize VMs into several groups based on their intended use, looking for natural boundaries between groups of VMs. Use these categories to build effective security policies in **Monitor** mode with application and isolation policies. Move the security policies to **Enforce** mode after evaluating the output of monitor mode detected flows in the created policies. Once you’ve applied the policies, modify them as required to permit the desired traffic.
--->
-The following process outlines the overall suggested implementation pattern: <!--JK: @david-brett moved the above to a list - see what you think-->
+The following process outlines the overall suggested implementation pattern: 
 
 - Assign [categories](https://www.nutanixbible.com/12a-book-of-network-services-flow-network-security.html#categories) to different VMs. Nutanix recommends designing the simplest possible set of categories and policies to meet your security and connectivity requirements. Creating fewer categories and policies is preferred over creating a unique category for every VM. Categorize VMs into several groups based on their intended use, looking for natural boundaries between groups of VMs.
 -  Use these categories to build effective security policies in **Monitor** mode with application and isolation policies.
@@ -104,7 +101,6 @@ Once the **AppTier's** are divided into logical groups, define the ports and pro
 | Citrix Workers | Remote Assistance | 49152-65525 | TCP |
 | Citrix Workers | HDX Video | 9001 | TCP |
 | Citrix Workers | Wake on LAN | 9 | TCP |
-<!--JK: @david-brett missing some SQL stuff stuff? Also adding a quick note below to capture this is an example - make sure i capture it OK?-->
 
 <note>
   The above list is a working example only and includes only inbound rule configurations. You should define all required components in a similar fashion to the above list.
@@ -179,13 +175,13 @@ If you need complete lockdown for a VM, with configurable exceptions, you can us
 
 Work with the security team to determine what actions you need to take before, during, and after a VM quarantine operation. Consider using VM and storage snapshots along with Flow Network Security quarantine to enable a successful response to any suspicious activity.
 
-## Identify Policy Boundaries <!--JK: @david-brett I tried to simplify the wording a touch below - see what you think-->
+## Identify Policy Boundaries 
 
 Application policies use the **AppType** and optional **AppTier** categories exclusively to define a target group protected by the policy. 
 
 - You must assign different **AppType** categories to VMs from different applications. 
 - You can assign VMs from different **AppTier's** in the same application of the same **AppType**, but they should have different **AppTier** values. This categorization allows the VMs assigned to these categories to exist as different tiers inside the same application policy. 
-- If you don’t specify an **AppTier**, Flow only uses the **AppType**. <!--JK: @david-brett i moved this to a list - see what you think -->
+- If you don’t specify an **AppTier**, Flow only uses the **AppType**. 
 
 There are many ways to define the boundaries between these applications. These could be:
 

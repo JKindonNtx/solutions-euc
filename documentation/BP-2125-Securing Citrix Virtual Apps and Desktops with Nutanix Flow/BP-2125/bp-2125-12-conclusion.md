@@ -16,12 +16,11 @@ Nutanix Flow is a great way to secure CVAD for both Infrastructure and Workers h
 - 1:1 user to desktop mappings can be either secured using an Application Security policy or a VDI security policy based on the business needs.
 - Scale should be considered if using the VDI Security Policies (not covered in this document).
 - 1:Many user to desktop configurations are not currently supported in Nutanix Flow however,
-  - Designing for 1:Many can overcome "some" limitations. <!--JK: @david-brett this seems very vague :) -->
-  - Silo your Server based workers and put restrictions in place based on the application set.
+  - Designing for 1:Many can overcome limitations in that you can "silo" groups of multi-user servers with similar requirements and apply security policies to these as a group. 
 - Nutanix Flow will impact the boot cycle (with a slightly longer boot to registration time) of Citrix Workers so cater for this in your boot timings.
 
 ## Overall Security Posture
 
 - Implementing Nutanix Flow (even for infrastructure only) will help the overall security posture of your deployment.
-- Remember "something" is better than "Nothing". The overall idea is to slow down attackers in your environment. <!--JK: @david-brett this statement kinda devalues flow - you could maybe state that this is one mechanism in an arsenal? I know what you are saying here, just tweak the wording a touch-->
+- Remember the idea is to slow attackers down so aim to put as many obstacles in front of the attackers without impacting your user experience, Nutanix Flow can help with this. 
 - Logging is key, you need to ship your logs to a central location to your Security Operations teams can regularly review and react to them.
