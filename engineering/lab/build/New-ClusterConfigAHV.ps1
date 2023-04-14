@@ -95,8 +95,11 @@ if ($confirmationStart -eq 'n') {
     # Start configuration of the Nutanix Cluster
     $SendToSlack = "n"
     $SlackMessage = ""
-
-    Get-SSHTrustedHost | Remove-SSHTrustedHost
+    
+    #Remove existing SSH keys.
+    if (((Get-Module -ListAvailable *) | Where-Object {$_.Name -eq "Posh-SSH"})) {
+        Get-SSHTrustedHost | Remove-SSHTrustedHost
+    }
     
     # Add new local user to the cluster and disable admin account
     $Result = New-NutanixLocalUser -ClusterIP $($JSON.Cluster.IP) -CVMsshpassword $($JSON.Cluster.CVMsshpassword) -LocalUser $($github.username) -LocalPassword $($JSON.Cluster.password)
