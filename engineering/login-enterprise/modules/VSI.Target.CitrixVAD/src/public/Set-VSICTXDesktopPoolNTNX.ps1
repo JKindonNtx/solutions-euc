@@ -1,9 +1,10 @@
-function Set-VSICTXDesktopPoolAHV {
+function Set-VSICTXDesktopPoolNTNX {
     param(
         $DesktopPoolName,
         $ParentVM,
         [switch]$Force,
         $HypervisorConnection,
+        $HypervisorType,
         $Networkmap,
         $CpuCount,
         $CoresCount,
@@ -93,13 +94,14 @@ function Set-VSICTXDesktopPoolAHV {
         $IP = New-AcctIdentityPool -AdminAddress $DDC -IdentityPoolName $DesktopPoolName -NamingScheme $NamingPattern -NamingSchemeType Numeric -OU $OU -Domain $DomainName -ZoneUid $Zone.Uid -AllowUnicode -ErrorAction Stop
         Write-Log "Creating provisioningscheme $DesktopPoolName"
         #Write-Host $HypervisorConnection $ParentVM
-
-        ## AHV ##
-        #if($hypervisor -eq 'AHV'){
+        
         $MemoryMB = $($MemoryGB) * 1024
-        $connectionCustomProperties = "<CustomProperties></CustomProperties>"
-        $hostingCustomProperties = "<CustomProperties></CustomProperties>"
-        $provcustomProperties = @"
+        
+        ## AHV ##
+        if (($HypervisorType) -eq "AHV") {
+            $connectionCustomProperties = "<CustomProperties></CustomProperties>"
+            $hostingCustomProperties = "<CustomProperties></CustomProperties>"
+            $provcustomProperties = @"
 <CustomProperties xmlns="http://schemas.citrix.com/2014/xd/machinecreation">
   <StringProperty Name="ContainerPath" Value="/$ContainerID.container"/>
   <StringProperty Name="vCPU" Value="$CpuCount"/>
@@ -107,21 +109,35 @@ function Set-VSICTXDesktopPoolAHV {
   <StringProperty Name="CPUCores" Value="$CoresCount"/>
 </CustomProperties>
 "@
-            #}
 
-        $Task = New-ProvScheme -ProvisioningSchemeName $DesktopPoolName `
-            -HostingUnitName $HypervisorConnection `
-            -MasterImageVM $ParentVM `
-            -VMMemoryMB $MemoryMB `
-            -IdentityPoolName $DesktopPoolName `
-            -CleanOnBoot `
-            -NetworkMapping $networkMap `
-            -CustomProperties $provcustomProperties
-        if ($Task.TaskState -ne "Finished") {
-            Write-Log "Failed to create Provisioning scheme"
-            throw $Task.TerminatingError
+            $Task = New-ProvScheme -ProvisioningSchemeName $DesktopPoolName `
+                -HostingUnitName $HypervisorConnection `
+                -MasterImageVM $ParentVM `
+                -VMMemoryMB $MemoryMB `
+                -IdentityPoolName $DesktopPoolName `
+                -CleanOnBoot `
+                -NetworkMapping $networkMap `
+                -CustomProperties $provcustomProperties
+                if ($Task.TaskState -ne "Finished") {
+                    Write-Log "Failed to create Provisioning scheme"
+                    throw $Task.TerminatingError
+                }
+        ## ESXi ##
+        } elseif (($HypervisorType) -eq "ESXi") {
+            $Task = New-ProvScheme -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName `
+                -HostingUnitName $HypervisorConnection `
+                -VMCpuCount $CpuCount `
+                -VMMemoryMB $MemoryMB `
+                -CleanOnBoot `
+                -IdentityPoolName $DesktopPoolName `
+                -MasterImageVM $ParentVM `
+                -NoImagePreparation:$SkipImagePrep
+                if ($Task.TaskState -ne "Finished") {
+                    Write-Log "Failed to create Provisioning scheme"
+                    throw $Task.TerminatingError
+                }
         }
-
+        
         #if ($SessionsSupport -eq "MultiSession") {
         $DesktopKind = "Shared"
         $AllocationType = "Random"

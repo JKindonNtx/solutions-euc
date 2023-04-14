@@ -5,7 +5,7 @@ Function Enable-VSICTXDesktopPool {
         $ADUserName,
         $ADPassword,
         $PowerOnVMs,
-        $VMRegistrationTimeOutMinutes = 120,
+        $VMRegistrationTimeOutMinutes = 180,
         $DDC,
         $HypervisorType,
         $Affinity,
@@ -28,7 +28,7 @@ Function Enable-VSICTXDesktopPool {
   
     $startTime = Get-Date
     $date = Get-Date
-    $timeout = 120
+    $timeout = 180
     while ($desktops.Count -ne 0) {
         $desktops = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $totalDesktops | Where-Object {$_.PowerState -eq "On"}	
         Write-Log -Update "$($desktops.Count) of $($totalDesktops) still running."
