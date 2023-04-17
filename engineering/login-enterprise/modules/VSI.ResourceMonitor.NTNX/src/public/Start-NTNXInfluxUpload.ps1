@@ -31,6 +31,22 @@ function Start-NTNXInfluxUpload {
     $vsiresult = Import-CSV "$($ResultsPath)\VSI-results.csv"
     $Files = Get-ChildItem "$($ResultsPath)\*.csv" 
 
+    if ($BucketName -Like "LoginRegression*") {
+        ## set fixed start date
+        ## calc time diff with measurement start date
+        ## distract time diff from timestamp
+        $StartDate = [DateTime] "01/01/2023 1:00 AM"
+        $UnixStartedDate = Get-Date -Date $StartDate -UFormat %s
+        $NewStartDate = $UnixStartedDate.Split(".")
+        $FormattedStartDate = $NewStartDate[0]
+        $Started = $vsiresult.started
+        $UnixStarted = Get-Date -Date $Started -UFormat %s
+        $NewStarted = $UnixStarted.Split(".")
+        $FormattedStarted = $NewStarted[0]
+        $DeltaTime = $FormattedStarted - $FormattedStartDate
+    }
+    
+
     foreach($File in $Files){
         if(($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*")){
             $TopLevelTag = $File.BaseName
@@ -47,6 +63,9 @@ function Start-NTNXInfluxUpload {
                     "NumCPUs=$($JSON.Target.ImagesToTest.NumCpus)," +
                     "NumCores=$($JSON.Target.ImagesToTest.NumCores)," +
                     "MemoryGB=$($JSON.Target.ImagesToTest.MemoryGB)," +
+                    "SecureBoot=$($JSON.Target.ImagesToTest.SecureBoot)," +
+                    "vTPM=$($JSON.Target.ImagesToTest.vTPM)," +
+                    "CredentialGuard=$($JSON.Target.ImagesToTest.CredentialGuard)," +
                     "AutocalcVMs=$($JSON.Target.ImagesToTest.AutocalcVMs)," +
                     "Max=$($JSON.Target.ImagesToTest.Max)," +
                     "NumberOfSessions=$($JSON.Target.ImagesToTest.NumberOfSessions)," +
@@ -112,7 +131,12 @@ function Start-NTNXInfluxUpload {
                 $CSVDate = $($line.Timestamp)
                 $UnixDate = Get-Date -Date $CSVDate -UFormat %s
                 $NewDate = $UnixDate.Split(".")
-                $FormattedDate = $newdate[0]
+                if ($BucketName -Like "LoginRegression*") {
+                    $FormattedDate = $newdate[0] - $DeltaTime
+                } Else {
+                    $FormattedDate = $newdate[0] 
+                }
+               
                 $Body = "$measurementName,$tag $fields $FormattedDate"
                 $null = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $Body
             }
