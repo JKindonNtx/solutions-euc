@@ -30,10 +30,12 @@
         'All', then all machines in source catalog will be targeted
         'MachineList", an array of defined machines to target
         'CSV" a CSV input of machines to target. Used in conjunction with TargetMachineCSVList Param
-.PARAMETER TargetMachines
-    An array of machines to target
+.PARAMETER TargetMachineList
+    An array of machines to target "VM01","VM02
 .PARAMETER TargetMachineCSVList
     Target CSV File for machine targets. Used in conjunction with the TargetMachineScope Param when using the CSV value
+.PARAMETER MaxRecordCount
+    Overrides the query max for VM lookups - defaults to 10000
 .EXAMPLE
     .\MigrateMCSToManual -SourceCatalog "Kindon-Azure-SouthEastAsia-Dedicated-MCS" -TargetCatalog "Kindon-Azure-SouthEastAsia-Dedicated" -TargetDeliveryGroup ""Kindon-Azure-ASR-Failover" -SetPublishedNameToMachineName -Controller DDC1
     Migrates vm's from source catalog, moves to target catalog and target delivery group and sets the published name to the VM name using the Controller DDC1
@@ -49,11 +51,16 @@
     ChangeLog: Nutanix
         [17.04.23, James Kindon] Add Controller Parameter (localhost by default)
         [17.04.23, James Kindon] Add TargetMachineScope, TargetMachines and TargetMachineCSVList Parameters and altered filtering logic for Get VM's
+        [17.04.23, James Kindon] Add CreateManualCatalog Function and alter validation logic - create on failure to find
+        [17.04.23, James Kindon] Add CreateTargetDeliveryGroup Function and alter validation logic - create on failure to find
+        [17.04.23, James Kindon] Add MaxRecordCount Paramter with default of 10000 objects
+        [17.04.23, James Kindon] Fix DisplayName handling of $null values
     To do:
-        - Add creation of Machine Catalog and Desktop Group
-        - Investigate the need for the GetUpdatedCatalogAccountIdentityPool Function. Might not be needed anymore
+        - Add Desktop Assignment Rules from Source DG? -> Going to need to include a Source Delivery Group lookup I think - will need to mandatory - can't think how to pull from VM in an efficient manner
+        - Add default Users from Source DG?
+        - Investigate the need for the GetUpdatedCatalogAccountIdentityPool Function. Might not be needed anymore - no longer required
         - Validate the Published Desktop Name Logic
-            - What happens if the PublishedName attribute is blank on the VM (takes it from the DG) and the new DG name is different
+            - What happens if the PublishedName attribute is blank on the VM (takes it from the DG) and the new DG name is different - could be solved by taking the published Name from Source DG with a switch?
             - Should I kill the Switch Param for OverridePublishedName - seems to be silly looking at it now - just use -PublishedName
             - Should we add a parameter to
                 - Update the target delivery group published name with the old delivery group (switch) -UpdateDGPublishednameWithSourceDGPublishedName
@@ -61,7 +68,14 @@
                 - Set PublishedName on each Migrated VM to that of the Source Desktop Group - Verbosely yell that new machines are going to be impacted?
         - Validate Catalog Types - We check for manual catalog, but need to validate hosting connection is going to the same cluster as the same as that used on the Source Catalog maybe? What happens if one use IP and one uses name or HTTPS vs HTTP etc? 
             - Maybe an override switch -IgnoreCatalogHostingConnectionDiscrepency? Does this even matter given you could have two hosting connections to the same place and things would work - thoughts....
-            - Need to check for "CatalogKind" = PowerManaged
+        - How to protect from TargetMachineList and TargetMachine being used at the same time - should be only one
+        - Add appropriate Param sets for JSON input
+            - SourceCatalog
+            - TargetCatalog
+            - SourceDeliveryGroup (TBD)
+            - TargetDeliveryGroup
+            - CSV Input? VM List input?
+
 #>
 
 #region Params
@@ -84,11 +98,12 @@ Param(
     [Parameter(Mandatory = $true, ParameterSetName = 'JSON')]
     [String]$JSONInputPath,
 
-    [Parameter(Mandatory = $false)] [ValidateSet('All', 'MachineList', 'CSV')]
+    [Parameter(Mandatory = $false)]
+    [ValidateSet('All', 'MachineList', 'CSV')]
     [String]$TargetMachineScope = "All", # Target Machine Scopes for Migration
 
     [Parameter(Mandatory = $false)]
-    [Array]$TargetMachines, # Array of machines to target
+    [Array]$TargetMachineList, # Array of machines to target
 
     [Parameter(Mandatory = $false)]
     [String]$TargetMachineCSVList, # Target CSV File for TargetMachineScope
@@ -113,7 +128,11 @@ Param(
 
     [Parameter(Mandatory = $false, ParameterSetName = 'NoJSON')]
     [Parameter(ParameterSetName = 'ManualPublishedName')]
-    [String]$PublishedName
+    [String]$PublishedName,
+
+    [Parameter(Mandatory = $false)]
+    [int]$MaxRecordCount = 10000 # Max Record Count Override
+
 )
 #endregion
 
@@ -294,8 +313,10 @@ function AddUsertoVM {
 }
 
 function SetVMDisplayName {
+    [Parameter(Mandatory = $true)]
+    [String]$PublishedName
     #Need to think about this more and compare with Delivery GroupName
-    if ($null -ne $PublishedName) {
+    if ($PublishedName -ne "") {
         Write-Log -Message "$($VM.MachineName): Setting Published Name to $PublishedName" -Level Info
         try {
             Set-BrokerMachine -MachineName $VM.MachineName -PublishedName $PublishedName -AdminAddress $Controller -Verbose -ErrorAction Stop
@@ -305,7 +326,7 @@ function SetVMDisplayName {
         }
     }
     else {
-        Write-Log -Message "$($VM.MachineName): No Published name specified" -Level Info
+        Write-Log -Message "$($VM.MachineName): No Published name specified so ignoring" -Level Info
     }
 }
 
@@ -323,7 +344,7 @@ function LoadCitrixSnapins {
 
 function TryForAuthentication {
     try {
-        Write-Log -Message "Confirming Authentication with Citrix Cloud" -Level Info
+        Write-Log -Message "Confirming Authentication" -Level Info
         $null = Get-BrokerSite -AdminAddress $Controller -ErrorAction Stop # This should trigger an auth call if session has timed out (else Get-XDAuthentication)
     }
     catch [Citrix.Broker.Admin.SDK.SdkOperationException] {
@@ -368,6 +389,36 @@ function CheckCatalogisManual {
         StopIteration
         Exit 1
     }
+}
+
+function CreateManualCatalog {
+    try {
+        $SourceCat = Get-BrokerCatalog -name $SourceCatalog -AdminAddress $Controller
+        New-BrokerCatalog -AllocationType Static -CatalogKind PowerManaged -Name $TargetCatalog -MinimumFunctionalLevel $SourceCat.MinimumFunctionalLevel -ZoneUid $SourceCat.ZoneUid -AdminAddress $Controller -ErrorAction Stop
+    }
+    catch {
+        StopIteration
+        Exit 1
+    }
+}
+
+function CreateTargetDeliveryGroup {
+    try {
+        $SourceCatFunc = (Get-BrokerCatalog -name $SourceCatalog -AdminAddress $Controller).MinimumFunctionalLevel
+        New-BrokerDesktopGroup -Name $TargetDeliveryGroup -DesktopKind Private -MinimumFunctionalLevel $SourceCatFunc -AdminAddress $Controller -ErrorAction Stop
+        Write-Log -Message "Target Delivery Group: $($TargetDeliveryGroup) created successfully" -Level Info
+        
+        Write-Log -Message "Target Delivery Group: $($TargetDeliveryGroup) creating Access Policies" -Level Info
+        $DesktopGroupUid = Get-BrokerDesktopGroup -Name $TargetDeliveryGroup | Select-Object -ExpandProperty Uid
+        New-BrokerAccessPolicyRule -Name $($TargetDeliveryGroup+"_ViaAG") -Enabled $true -AllowedProtocols @("HDX","RDP") -AllowedUsers Filtered -AllowRestart $true -AllowedConnections ViaAG -IncludedSmartAccessFilterEnabled $true -IncludedUserFilterEnabled $true -DesktopGroupUid $DesktopGroupUid
+        New-BrokerAccessPolicyRule -Name $($TargetDeliveryGroup+"_NotViaAG") -Enabled $true -AllowedProtocols @("HDX","RDP") -AllowedUsers Filtered -AllowRestart $true -AllowedConnections NotViaAG -IncludedSmartAccessFilterEnabled $true -IncludedUserFilterEnabled $true -DesktopGroupUid $DesktopGroupUid
+        Write-Log -Message "Target Delivery Group: $($TargetDeliveryGroup) Access Policies created successfuly" -Level Info    
+    }
+    catch {
+        Write-Log -Message $_ -level Warn
+        StopIteration
+        Exit 1
+    }   
 }
 
 function RemoveMCSProvisionedMachine {
@@ -449,7 +500,7 @@ function GetCatalogAccountIdentityPool {
 
 function GetUpdatedCatalogAccountIdentityPool  {
     $UpdatedIdentityPool = try { #get details about the Identity Pool
-        Get-AcctIdentityPool -IdentityPoolName $SourceCatalog -AdminAddress $Controller -AdminAddress $Controller -ErrorAction Stop
+        Get-AcctIdentityPool -IdentityPoolName $SourceCatalog -AdminAddress $Controller-ErrorAction Stop
     }
     catch {
         Write-Log -Message $_ -Level Warn
@@ -525,6 +576,9 @@ TryForAuthentication
 Write-Log -Message "Working with Source Catalog: $($SourceCatalog)" -Level Info
 Write-Log -Message "Working with Target Catalog: $($TargetCatalog)" -Level Info
 Write-Log -Message "Working with Target Delivery Group: $($TargetDeliveryGroup)" -Level Info
+Write-Log -Message "Working with Delivery Controller: $($Controller)" -Level Info
+Write-Log -Message "Working with Target Machine Scope: $($TargetMachineScope)" -Level Info
+
 
 #Region Catalog Handling
 #GetSourceCatalog
@@ -548,9 +602,8 @@ $NewCatalog = try {
     Get-BrokerCatalog -Name $TargetCatalog -AdminAddress $Controller -ErrorAction Stop
 }
 catch {
-    Write-Log -Message $_ -level Warn
-    StopIteration
-    Exit 1
+    Write-Log -Message "Target Catalog: $($TargetCatalog) not found. Creating Target Catalog"
+    CreateManualCatalog
 }
 
 CheckCatalogisManual
@@ -564,38 +617,22 @@ $DeliveryGroup = try {
     Get-BrokerDesktopGroup -name $TargetDeliveryGroup -AdminAddress $Controller -ErrorAction Stop
 }
 catch {
-    Write-Log -Message $_ -level Warn
-    StopIteration
-    Exit 1
-}  
+    Write-Log -Message "Target Delivery Group: $($TargetDeliveryGroup) not found. Creating Target Delivery Group"
+    CreateTargetDeliveryGroup
+} 
 #endregion
 
 #Region VM Handling
 #GetVMs
 ##// Working Section for filtered VMs
 if ($TargetMachineScope -eq "All") {
-    $VMS = try {
-        Write-Log -Message "Source Catalog: Getting VMs from: $SourceCatalog" -Level Info
-        Get-BrokerMachine -CatalogName $SourceCatalog -AdminAddress $Controller -ErrorAction Stop
-    }
-    catch {
-        Write-Log -Message $_ -level Warn
-        StopIteration
-        Exit 1
-    } 
+    Write-Log -Message "Source Catalog: Getting VMs from: $SourceCatalog" -Level Info
+    $VMS = Get-BrokerMachine -CatalogName $SourceCatalog -AdminAddress $Controller -MaxRecordCount $MaxRecordCount -ErrorAction Stop       
 }
 elseif ($TargetMachineScope -eq "MachineList") {
-    if ($null -ne $MachineList) {
-        $VMList = $MachineList ##// Need to get machines now
-        Write-Log -Message "Source Machine List: Getting VMs from specified list" -Level Info
-        $VMS = try {
-            Get-BrokerMachine -CatalogName $SourceCatalog -AdminAddress $Controller | Where-Object { $_.MachineName -in $VMList } ##//Looking for a match...only get machines in $VMList
-        }
-        catch {
-            Write-Log -Message $_ -level Warn
-            StopIteration
-            Exit 1
-        }
+    if ($null -ne $TargetMachineList) {
+        Write-Log -Message "Source Machine List: Getting VMs from specified list $($TargetMachineList)" -Level Info
+        $VMS = Get-BrokerMachine -CatalogName $SourceCatalog -AdminAddress $Controller -MaxRecordCount $MaxRecordCount | Where-Object { $_.HostedMachineName -in $TargetMachineList } ##//Looking for a match...only get machines in $TargetMachineList //MaxRecordCount
     }
     else {
         Write-Log -Message "No Machine Specified in Machine List. Exit Script" -Level Warn
@@ -603,25 +640,24 @@ elseif ($TargetMachineScope -eq "MachineList") {
         Exit 1
     }
 }
-elseif ($TargetMachineList -eq 'CSV') {
-    try {
+elseif ($TargetMachineScope -eq 'CSV') {
+    if (!(Test-Path -path $TargetMachineCSVList)) {
+        Write-Log -Message "CSV Path: $($TargetMachineCSVList) not found. Please check the path. Exit Script" -Level Warn
+        StopIteration
+        Exit 1
+    }
+    else {
         Write-Log -Message "Importing VMS from CSV List $($TargetMachineCSVList)" -Level Info
-        $VMList = Import-Csv -Path $TargetMachineCSVList -ErrorAction Stop ##// Need to handle headers for multi Value CSV - maybe an export?
-        ##// Need to get machines now
-        $VMs = try {
-            Get-BrokerMachine -CatalogName $SourceCatalog -AdminAddress $Controller | Where-Object { $_.MachineName -in $VMList } ##//Looking for a match...only get machines in $VMList
+        try {
+            $CSVList = Import-Csv -Path $TargetMachineCSVList -ErrorAction Stop 
+            $VMS = Get-BrokerMachine -CatalogName $SourceCatalog -AdminAddress $Controller -MaxRecordCount $MaxRecordCount | Where-Object { $_.HostedMachineName -in $CSVList.HostedMachineName } ##//Looking for a match...only get machines in $CSVList
         }
         catch {
             Write-Log -Message $_ -level Warn
+            Write-Log -Message "Failed to Import CSV File. Exit Script" -level Warn
             StopIteration
             Exit 1
         }
-    }
-    catch {
-        Write-Log -Message $_ -level Warn
-        Write-Log -Message "Failed to Import CSV File. Exit Script" -level Warn
-        StopIteration
-        Exit 1
     }
 } 
 #endregion
@@ -633,7 +669,15 @@ $Count = ($VMs | Measure-Object).Count
 $StartCount = 1
 $ErrorCount = 0
 
-Write-Log -Message "There are $Count machines to process" -Level Info
+
+if ($Count -lt 1) {
+    Write-Log -Message "There are no machines to process. Please check parameter entries. Exit Script" -Level Info
+    StopIteration
+    Exit 0
+}
+else {
+    Write-Log -Message "There are $Count machines to process" -Level Info
+}
 
 foreach ($VM in $VMs) {
     if ($VM.ProvisioningType -eq "MCS") {
@@ -644,15 +688,15 @@ foreach ($VM in $VMs) {
         AddUsertoVM
         if ($OverridePublishedName.IsPresent) {
             $PublishedName = $PublishedName
-            SetVMDisplayName
+            SetVMDisplayName -PublishedName $PublishedName
         }
         if ($SetPublishedNameToMachineName.IsPresent) {
             $PublishedName = ($VM.MachineName | Split-Path -leaf)
-            SetVMDisplayName
+            SetVMDisplayName -PublishedName $PublishedName
         }
         else {
             $PublishedName = $VM.PublishedName
-            SetVMDisplayName
+            SetVMDisplayName -PublishedName $PublishedName
         }
         $StartCount += 1
     }
