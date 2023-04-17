@@ -25,6 +25,15 @@
     Value for the new published name
 .PARAMETER Controller
     Value for the Delivery Controller to Target, Eg, DDC1
+.PARAMETER TargetMachineScope
+    Specifies how machines are handled, either All, MachineList or CSV. Defaults to All.
+        'All', then all machines in source catalog will be targeted
+        'MachineList", an array of defined machines to target
+        'CSV" a CSV input of machines to target. Used in conjunction with TargetMachineCSVList Param
+.PARAMETER TargetMachines
+    An array of machines to target
+.PARAMETER TargetMachineCSVList
+    Target CSV File for machine targets. Used in conjunction with the TargetMachineScope Param when using the CSV value
 .EXAMPLE
     .\MigrateMCSToManual -SourceCatalog "Kindon-Azure-SouthEastAsia-Dedicated-MCS" -TargetCatalog "Kindon-Azure-SouthEastAsia-Dedicated" -TargetDeliveryGroup ""Kindon-Azure-ASR-Failover" -SetPublishedNameToMachineName -Controller DDC1
     Migrates vm's from source catalog, moves to target catalog and target delivery group and sets the published name to the VM name using the Controller DDC1
@@ -38,8 +47,8 @@
     Script has been designed for Citrix Cloud, but should work fine for On-Prem deployments if run on a delivery controller 
 .NOTES
     ChangeLog: Nutanix
-        [17.04.23, James Kindon] Add Admin Adress Parameter (localhost by default)
-        [17.04.23, James Kindon]
+        [17.04.23, James Kindon] Add Controller Parameter (localhost by default)
+        [17.04.23, James Kindon] Add TargetMachineScope, TargetMachines and TargetMachineCSVList Parameters and altered filtering logic for Get VM's
 #>
 
 #region Params
@@ -61,6 +70,15 @@ Param(
 
     [Parameter(Mandatory = $true, ParameterSetName = 'JSON')]
     [String]$JSONInputPath,
+
+    [Parameter(Mandatory = $false)] [ValidateSet('All', 'MachineList', 'CSV')]
+    [String]$TargetMachineScope = "All", # Target Machine Scopes for Migration
+
+    [Parameter(Mandatory = $false)]
+    [Array]$TargetMachines, # Array of machines to target
+
+    [Parameter(Mandatory = $false)]
+    [String]$TargetMachineCSVList, # Target CSV File for TargetMachineScope
 
     [Parameter(Mandatory = $false, ParameterSetName = 'NoJSON')]
     [String]$SourceCatalog,
@@ -450,6 +468,7 @@ function GetUpdatedCatalogAccountIdentityPool  {
 # ============================================================================
 StartIteration
 
+#Region JSON
 # ============================================================================
 # Handle JSON input
 # ============================================================================
@@ -475,7 +494,9 @@ if ($JSON.IsPresent) {
     $TargetDeliveryGroup = $EnvironmentDetails.TargetDeliveryGroup
     $PublishedName = $EnvironmentDetails.PublishedName
 }
+#endregion
 
+#Region Connection
 # ============================================================================
 # Connect to Environment
 # ============================================================================
@@ -483,6 +504,7 @@ if ($JSON.IsPresent) {
 LoadCitrixSnapins
 
 TryForAuthentication
+#endregion
 
 # ============================================================================
 # Get Environment Details
@@ -491,6 +513,7 @@ Write-Log -Message "Working with Source Catalog: $($SourceCatalog)" -Level Info
 Write-Log -Message "Working with Target Catalog: $($TargetCatalog)" -Level Info
 Write-Log -Message "Working with Target Delivery Group: $($TargetDeliveryGroup)" -Level Info
 
+#Region Catalog Handling
 #GetSourceCatalog
 $Catalog = try {
     Write-Log -Message "Source Catalog: Getting details for $SourceCatalog" -Level Info
@@ -519,6 +542,9 @@ catch {
 
 CheckCatalogisManual
 
+#endregion
+
+#Region Delivery Group Handling
 #GetTargetDeliveryGroup
 $DeliveryGroup = try {
     Write-Log -Message "Target Delivery Group: Getting Detail for $TargetDeliveryGroup" -Level Info
@@ -529,17 +555,63 @@ catch {
     StopIteration
     Exit 1
 }  
+#endregion
 
+#Region VM Handling
 #GetVMs
-$VMS = try {
-    Write-Log -Message "Source Catalog: Getting VMs from: $SourceCatalog" -Level Info
-    Get-BrokerMachine -CatalogName $SourceCatalog -AdminAddress $Controller -ErrorAction Stop
+##// Working Section for filtered VMs
+if ($TargetMachineScope -eq "All") {
+    $VMS = try {
+        Write-Log -Message "Source Catalog: Getting VMs from: $SourceCatalog" -Level Info
+        Get-BrokerMachine -CatalogName $SourceCatalog -AdminAddress $Controller -ErrorAction Stop
+    }
+    catch {
+        Write-Log -Message $_ -level Warn
+        StopIteration
+        Exit 1
+    } 
 }
-catch {
-    Write-Log -Message $_ -level Warn
-    StopIteration
-    Exit 1
-}  
+elseif ($TargetMachineScope -eq "MachineList") {
+    if ($null -ne $MachineList) {
+        $VMList = $MachineList ##// Need to get machines now
+        Write-Log -Message "Source Machine List: Getting VMs from specified list" -Level Info
+        $VMS = try {
+            Get-BrokerMachine -CatalogName $SourceCatalog -AdminAddress $Controller | Where-Object { $_.MachineName -in $VMList } ##//Looking for a match...only get machines in $VMList
+        }
+        catch {
+            Write-Log -Message $_ -level Warn
+            StopIteration
+            Exit 1
+        }
+    }
+    else {
+        Write-Log -Message "No Machine Specified in Machine List. Exit Script" -Level Warn
+        StopIteration
+        Exit 1
+    }
+}
+elseif ($TargetMachineList -eq 'CSV') {
+    try {
+        Write-Log -Message "Importing VMS from CSV List $($TargetMachineCSVList)" -Level Info
+        $VMList = Import-Csv -Path $TargetMachineCSVList -ErrorAction Stop ##// Need to handle headers for multi Value CSV - maybe an export?
+        ##// Need to get machines now
+        $VMs = try {
+            Get-BrokerMachine -CatalogName $SourceCatalog -AdminAddress $Controller | Where-Object { $_.MachineName -in $VMList } ##//Looking for a match...only get machines in $VMList
+        }
+        catch {
+            Write-Log -Message $_ -level Warn
+            StopIteration
+            Exit 1
+        }
+    }
+    catch {
+        Write-Log -Message $_ -level Warn
+        Write-Log -Message "Failed to Import CSV File. Exit Script" -level Warn
+        StopIteration
+        Exit 1
+    }
+} 
+#endregion
 
 # ============================================================================
 # Execute the migration
