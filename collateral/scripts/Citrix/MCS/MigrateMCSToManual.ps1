@@ -27,9 +27,9 @@
     Value for the Delivery Controller to Target, Eg, DDC1
 .PARAMETER TargetMachineScope
     Specifies how machines are handled, either All, MachineList or CSV. Defaults to All.
-        'All', then all machines in source catalog will be targeted
-        'MachineList", an array of defined machines to target
-        'CSV" a CSV input of machines to target. Used in conjunction with TargetMachineCSVList Param
+        'All': All machines in source catalog will be targeted
+        'MachineList': An array of defined machines to target
+        'CSV': a CSV input of machines to target. Used in conjunction with TargetMachineCSVList Param
 .PARAMETER TargetMachineList
     An array of machines to target "VM01","VM02
 .PARAMETER TargetMachineCSVList
@@ -51,8 +51,8 @@
     ChangeLog: Nutanix
         [17.04.23, James Kindon] Add Controller Parameter (localhost by default)
         [17.04.23, James Kindon] Add TargetMachineScope, TargetMachines and TargetMachineCSVList Parameters and altered filtering logic for Get VM's
-        [17.04.23, James Kindon] Add CreateManualCatalog Function and alter validation logic - create on failure to find
-        [17.04.23, James Kindon] Add CreateTargetDeliveryGroup Function and alter validation logic - create on failure to find
+        [17.04.23, James Kindon] Add CreateManualCatalog Function and alter validation logic - create on failure to locate
+        [17.04.23, James Kindon] Add CreateTargetDeliveryGroup Function and alter validation logic - create on failure to locate
         [17.04.23, James Kindon] Add MaxRecordCount Paramter with default of 10000 objects
         [17.04.23, James Kindon] Fix DisplayName handling of $null values
     To do:
