@@ -49,6 +49,19 @@
     ChangeLog: Nutanix
         [17.04.23, James Kindon] Add Controller Parameter (localhost by default)
         [17.04.23, James Kindon] Add TargetMachineScope, TargetMachines and TargetMachineCSVList Parameters and altered filtering logic for Get VM's
+    To do:
+        - Add creation of Machine Catalog and Desktop Group
+        - Investigate the need for the GetUpdatedCatalogAccountIdentityPool Function. Might not be needed anymore
+        - Validate the Published Desktop Name Logic
+            - What happens if the PublishedName attribute is blank on the VM (takes it from the DG) and the new DG name is different
+            - Should I kill the Switch Param for OverridePublishedName - seems to be silly looking at it now - just use -PublishedName
+            - Should we add a parameter to
+                - Update the target delivery group published name with the old delivery group (switch) -UpdateDGPublishednameWithSourceDGPublishedName
+                - Report in Verbose Fashion that this is going to be a problem if the above switch is not specified
+                - Set PublishedName on each Migrated VM to that of the Source Desktop Group - Verbosely yell that new machines are going to be impacted?
+        - Validate Catalog Types - We check for manual catalog, but need to validate hosting connection is going to the same cluster as the same as that used on the Source Catalog maybe? What happens if one use IP and one uses name or HTTPS vs HTTP etc? 
+            - Maybe an override switch -IgnoreCatalogHostingConnectionDiscrepency? Does this even matter given you could have two hosting connections to the same place and things would work - thoughts....
+            - Need to check for "CatalogKind" = PowerManaged
 #>
 
 #region Params
