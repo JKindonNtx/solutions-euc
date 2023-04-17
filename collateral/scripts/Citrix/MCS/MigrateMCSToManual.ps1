@@ -23,20 +23,23 @@
     Switch to force set the published name to the VM name
 .PARAMETER PublishedName
     Value for the new published name
+.PARAMETER Controller
+    Value for the Delivery Controller to Target, Eg, DDC1
 .EXAMPLE
-    .\MigrateMCSToManual -SourceCatalog "Kindon-Azure-SouthEastAsia-Dedicated-MCS" -TargetCatalog "Kindon-Azure-SouthEastAsia-Dedicated" -TargetDeliveryGroup ""Kindon-Azure-ASR-Failover" -SetPublishedNameToMachineName
-    Migrates vm's from source catalog, moves to target catalog and target delivery group and sets the published name to the VM name
+    .\MigrateMCSToManual -SourceCatalog "Kindon-Azure-SouthEastAsia-Dedicated-MCS" -TargetCatalog "Kindon-Azure-SouthEastAsia-Dedicated" -TargetDeliveryGroup ""Kindon-Azure-ASR-Failover" -SetPublishedNameToMachineName -Controller DDC1
+    Migrates vm's from source catalog, moves to target catalog and target delivery group and sets the published name to the VM name using the Controller DDC1
 .EXAMPLE
-    .\MigrateMCSToManual -JSON -JSONInputPath 'C:\Temp\ASE-MCS.json'
-    Migrates vm's based on JSON input
+    .\MigrateMCSToManual -JSON -JSONInputPath 'C:\Temp\ASE-MCS.json' -Controller DDC1
+    Migrates vm's based on JSON input using the Controller DDC1
 .EXAMPLE
-    .\MigrateMCSToManual -SourceCatalog "Kindon-Azure-SouthEastAsia-Dedicated-MCS" -TargetCatalog "Kindon-Azure-SouthEastAsia-Dedicated" -TargetDeliveryGroup ""Kindon-Azure-ASR-Failover" -OverridePublishedName -PublishedName "MyVM"
-    Migrates vm's from source catalog, moves to target catalog and target delivery group and sets the published name to MyVM
+    .\MigrateMCSToManual -SourceCatalog "Kindon-Azure-SouthEastAsia-Dedicated-MCS" -TargetCatalog "Kindon-Azure-SouthEastAsia-Dedicated" -TargetDeliveryGroup ""Kindon-Azure-ASR-Failover" -OverridePublishedName -PublishedName "MyVM" -Controller DDC1
+    Migrates vm's from source catalog, moves to target catalog and target delivery group and sets the published name to MyVM using the Controller DDC1
 .NOTES
-    Script has been designed for Citrix Cloud, but should work fine for On-Prem deployments if run on a delivery controller
+    Script has been designed for Citrix Cloud, but should work fine for On-Prem deployments if run on a delivery controller 
 .NOTES
     ChangeLog: Nutanix
-        Add Admin Adress Parameter (localhost by default)
+        [17.04.23, James Kindon] Add Admin Adress Parameter (localhost by default)
+        [17.04.23, James Kindon]
 #>
 
 #region Params
