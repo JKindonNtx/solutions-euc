@@ -700,7 +700,6 @@ catch {
 
 #Region VM Handling
 #GetVMs
-##// Working Section for filtered VMs
 if ($TargetMachineScope -eq "All") {
     Write-Log -Message "Source Catalog: Getting VMs from: $SourceCatalog" -Level Info
     $VMS = Get-BrokerMachine -CatalogName $SourceCatalog -AdminAddress $Controller -MaxRecordCount $MaxRecordCount -ErrorAction Stop       
