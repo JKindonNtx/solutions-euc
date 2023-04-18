@@ -5,12 +5,6 @@ function Start-NTNXInfluxUpload {
         [Parameter(Mandatory = $true)] [string]$Token
     )
 
-
-    # Variables Passed in via Function
-    # $influxDbUrl = 'http://localhost:8086/api/v2/write?org=Nutanix&precision=s'
-    # $ResultsPath = "C:\Temp\Influx"
-    # $Token = "oWr4XQ_hzcAkcDMA1_rF75NUGhbKteUiTZavN5XOc1lwBYI0w1EZ38s-009DQNTlBdGMQgiEK2QoXBTsbLHQOg=="
-
     # Read in JSON File
     $JSONFile = Join-Path $ResultsPath "TestConfig.json"
     $JSON = Get-Content -Path $JSONFile -Raw | ConvertFrom-Json
@@ -43,12 +37,17 @@ function Start-NTNXInfluxUpload {
     $NewStarted = $UnixStarted.Split(".")
     $FormattedStarted = $NewStarted[0]
     $DeltaTime = $FormattedStarted - $FormattedStartDate
+    
+    $CurrentYear = get-date -Format yyyy
+    $CurrentMonth = get-date -Format MM
 
     foreach($File in $Files){
         if(($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*")){
             $TopLevelTag = $File.BaseName
             $Tag = ("Run=$($Run)," +
                     "DataType=$($TopLevelTag)," +
+                    "Year=$($CurrentYear)," +
+                    "Month=$($CurrentMonth)," +
                     "DeliveryType=$($JSON.Target.DeliveryType)," +
                     "DesktopBrokerVersion=$($JSON.Target.DesktopBrokerVersion)," +
                     "DesktopBrokerAgentVersion=$($JSON.Target.DesktopBrokerAgentVersion)," +
