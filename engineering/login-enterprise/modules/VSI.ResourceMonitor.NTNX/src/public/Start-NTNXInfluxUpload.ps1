@@ -31,7 +31,6 @@ function Start-NTNXInfluxUpload {
     $vsiresult = Import-CSV "$($ResultsPath)\VSI-results.csv"
     $Files = Get-ChildItem "$($ResultsPath)\*.csv" 
 
-
     ## set fixed start date
     ## calc time diff with measurement start date
     ## distract time diff from timestamp
