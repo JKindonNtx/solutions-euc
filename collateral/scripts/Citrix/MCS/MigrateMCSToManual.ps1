@@ -15,14 +15,16 @@
     Specifies the source catalog for MCS machines
 .PARAMETER TargetCatalog
     Specifies the target catalog for machines migrated from MCS
+.PARAMETER SourceDeliveryGroup
+    Specifies the source Delivery Group to mirror Published Name, Access Policy Rules and Functional Levels from. Used in conjunction with AlignTargetDeliveryGroupToSource Parameter
 .PARAMETER TargetDeliveryGroup
     Specifies the target Delivery Group for migrated machines
+.PARAMETER AlignTargetDeliveryGroupToSource
+    Switch to enable mirroring of settings from Source Delivery Group. Used in conjunction with SourceDeliveryGroup Parameter
 .PARAMETER OverridePublishedName
-    Switch to allow overriding the published desktop name with a new value (-PublishedName) else will consume existing published name
+    Value to override the published desktop name with a new value else will consume existing published name
 .PARAMETER SetPublishedNameToMachineName
     Switch to force set the published name to the VM name
-.PARAMETER PublishedName
-    Value for the new published name
 .PARAMETER Controller
     Value for the Delivery Controller to Target, Eg, DDC1
 .PARAMETER TargetMachineScope
@@ -33,20 +35,23 @@
 .PARAMETER TargetMachineList
     An array of machines to target "VM01","VM02
 .PARAMETER TargetMachineCSVList
-    Target CSV File for machine targets. Used in conjunction with the TargetMachineScope Param when using the CSV value
+    Target CSV File for machine targets. Used in conjunction with the TargetMachineScope Param when using the CSV value. CSV must use the HostedMachineName Header. Suggest exporting via Get-BrokerMachine
+    For Exameple: Get-BrokerMachine -CatalogName "W10 MCS Migration Test" | Export-CSV -NoTypeInformation c:\temp\VMList.csv
 .PARAMETER MaxRecordCount
     Overrides the query max for VM lookups - defaults to 10000
 .EXAMPLE
-    .\MigrateMCSToManual -SourceCatalog "Kindon-Azure-SouthEastAsia-Dedicated-MCS" -TargetCatalog "Kindon-Azure-SouthEastAsia-Dedicated" -TargetDeliveryGroup ""Kindon-Azure-ASR-Failover" -SetPublishedNameToMachineName -Controller DDC1
-    Migrates vm's from source catalog, moves to target catalog and target delivery group and sets the published name to the VM name using the Controller DDC1
+    .\MigrateMCSToManual -SourceCatalog "W10 MCS Migration Test" -TargetCatalog "W10 MCS Migrated Test" -TargetDeliveryGroup "W10 MCS Migrated Test" -SetPublishedNameToMachineName -Controller DDC1
+    Migrates vm's from source catalog, moves to target catalog and target delivery group and sets the published name to the VM name using the Controller DDC1. If no Catalog or Delivery group matching the specified values are found, they will be created.
 .EXAMPLE
-    .\MigrateMCSToManual -JSON -JSONInputPath 'C:\Temp\ASE-MCS.json' -Controller DDC1
-    Migrates vm's based on JSON input using the Controller DDC1
+    .\MigrateMCSToManual -JSON -JSONInputPath 'C:\Temp\MigrationConfiguration.json' -AlignTargetDeliveryGroupToSource
+    Migrates vm's based on JSON input. If no Catalog or Delivery group matching the specified values are found, they will be created. The Target Delivery Group will be created based on the specified Source Delivery Group if found, else defaults will apply.
 .EXAMPLE
-    .\MigrateMCSToManual -SourceCatalog "Kindon-Azure-SouthEastAsia-Dedicated-MCS" -TargetCatalog "Kindon-Azure-SouthEastAsia-Dedicated" -TargetDeliveryGroup ""Kindon-Azure-ASR-Failover" -OverridePublishedName -PublishedName "MyVM" -Controller DDC1
-    Migrates vm's from source catalog, moves to target catalog and target delivery group and sets the published name to MyVM using the Controller DDC1
+    .\MigrateMCSToManual -SourceCatalog "W10 MCS Migration Test" -TargetCatalog "W10 MCS Migrated Test" -SourceDeliveryGroup "W10 MCS Migration Test" -TargetDeliveryGroup "W10 MCS Migrated Test" -OverridePublishedName "MyVM" -Controller DDC1 -AlignTargetDeliveryGroupToSource
+    Migrates vm's from source catalog, moves to target catalog and target delivery group and sets the published name to MyVM using the Controller DDC1. If no Catalog or Delivery group matching the specified values are found, they will be created. The Target Delivery Group will be created based on the specified Source Delivery Group if found, else defaults will apply.
+.EXAMPLE
+    .\TestVMMig.ps1 -SourceCatalog "W10 MCS Migration Test" -TargetCatalog "W10 MCS Migrated Test" -SourceDeliveryGroup "W10 MCS Migration Test" -TargetDeliveryGroup "W10 MCS Migrated Test" -Controller DDC1 -TargetMachineScope MachineList -TargetMachineList "VM01" -AlignTargetDeliveryGroupToSource
 .NOTES
-    Script has been designed for Citrix Cloud, but should work fine for On-Prem deployments if run on a delivery controller 
+    Script has been designed to work with both Citrix Cloud and On-Prem deployments
 .NOTES
     ChangeLog: Nutanix
         [17.04.23, James Kindon] Add Controller Parameter (localhost by default)
@@ -55,27 +60,13 @@
         [17.04.23, James Kindon] Add CreateTargetDeliveryGroup Function and alter validation logic - create on failure to locate
         [17.04.23, James Kindon] Add MaxRecordCount Paramter with default of 10000 objects
         [17.04.23, James Kindon] Fix DisplayName handling of $null values
-    To do:
-        - Add Desktop Assignment Rules from Source DG? -> Going to need to include a Source Delivery Group lookup I think - will need to mandatory - can't think how to pull from VM in an efficient manner
-        - Add default Users from Source DG?
-        - Investigate the need for the GetUpdatedCatalogAccountIdentityPool Function. Might not be needed anymore - no longer required
-        - Validate the Published Desktop Name Logic
-            - What happens if the PublishedName attribute is blank on the VM (takes it from the DG) and the new DG name is different - could be solved by taking the published Name from Source DG with a switch?
-            - Should I kill the Switch Param for OverridePublishedName - seems to be silly looking at it now - just use -PublishedName
-            - Should we add a parameter to
-                - Update the target delivery group published name with the old delivery group (switch) -UpdateDGPublishednameWithSourceDGPublishedName
-                - Report in Verbose Fashion that this is going to be a problem if the above switch is not specified
-                - Set PublishedName on each Migrated VM to that of the Source Desktop Group - Verbosely yell that new machines are going to be impacted?
-        - Validate Catalog Types - We check for manual catalog, but need to validate hosting connection is going to the same cluster as the same as that used on the Source Catalog maybe? What happens if one use IP and one uses name or HTTPS vs HTTP etc? 
-            - Maybe an override switch -IgnoreCatalogHostingConnectionDiscrepency? Does this even matter given you could have two hosting connections to the same place and things would work - thoughts....
-        - How to protect from TargetMachineList and TargetMachine being used at the same time - should be only one
-        - Add appropriate Param sets for JSON input
-            - SourceCatalog
-            - TargetCatalog
-            - SourceDeliveryGroup (TBD)
-            - TargetDeliveryGroup
-            - CSV Input? VM List input?
-
+        [18.04.23, James Kindon] Add SourceDeliveryGroup Parameter and AlignTargetDeliveryGroupToSource Parameter. Alter Delivery Group creation function to create with source DG settings if specified
+        [18.04.23, James Kindon] Moved OverridePublishedName to string from switch. Removed PublishedName Param
+        [18.04.23, James Kindon] Altered JSON inputs to capture SourceDeliveryGroup, Controller, OverridePublishedName, TargetMachineScope, TargetMachineList, TargetMachineCSVList
+        [18.04.23, James Kindon] Updated Parameter Sets and added code logic to deal with awkward param combinations failing on sets (region Error Handling)
+    Todo:
+        - Potentially deal with orphaned SIDs
+        - Planning mode? but could be a monster
 #>
 
 #region Params
@@ -84,51 +75,51 @@
 # ============================================================================
 Param(
     [Parameter(Mandatory = $false)]
-    [string]$LogPath = "C:\Logs\MCSMigration.log", 
+    [string]$LogPath = "C:\Logs\MCSMigration.log", # Where we log to
 
     [Parameter(Mandatory = $false)]
     [int]$LogRollover = 5, # number of days before logfile rollover occurs
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, ParameterSetName = 'NoJSON')]
     [String]$Controller = "localhost", # AdminAddress for the Controller
 
     [Parameter(Mandatory = $false, ParameterSetName = 'JSON')]
-    [Switch]$JSON,
+    [Switch]$JSON, # We are going to use JSON input
 
     [Parameter(Mandatory = $true, ParameterSetName = 'JSON')]
-    [String]$JSONInputPath,
+    [String]$JSONInputPath, # And here is the JSON file
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, ParameterSetName = 'NoJSON')]
     [ValidateSet('All', 'MachineList', 'CSV')]
     [String]$TargetMachineScope = "All", # Target Machine Scopes for Migration
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, ParameterSetName = 'NoJSON')]
     [Array]$TargetMachineList, # Array of machines to target
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $false, ParameterSetName = 'NoJSON')]
     [String]$TargetMachineCSVList, # Target CSV File for TargetMachineScope
 
     [Parameter(Mandatory = $false, ParameterSetName = 'NoJSON')]
-    [String]$SourceCatalog,
+    [String]$SourceCatalog, # Where the machines are coming from (and MCS catalog)
 
     [Parameter(Mandatory = $false, ParameterSetName = 'NoJSON')]
-    [String]$TargetCatalog,
+    [String]$TargetCatalog, # Where the machines are going to - either existing or new manual power managed catalog
 
     [Parameter(Mandatory = $false, ParameterSetName = 'NoJSON')]
-    [String]$TargetDeliveryGroup,
+    [String]$SourceDeliveryGroup, # Specify Source Delivery Group to reference
+
+    [Parameter(Mandatory = $false, ParameterSetName = 'NoJSON')]
+    [String]$TargetDeliveryGroup, # Where the machines are going to - either existing or new
+
+    [Parameter(Mandatory = $false)]
+    [Switch]$AlignTargetDeliveryGroupToSource, # Build Target Delivery Group with Attributes from Source Delivery Group
 
     [Parameter(Mandatory = $false, ParameterSetName = 'NoJSON')]
     [Parameter(ParameterSetName = 'JSON')]
-    [Parameter(ParameterSetName = 'ReplacePublishedName')]
-    [Switch]$SetPublishedNameToMachineName,
+    [Switch]$SetPublishedNameToMachineName, # sets the published name on the VM to the machine name
 
     [Parameter(Mandatory = $false, ParameterSetName = 'NoJSON')]
-    [Parameter(ParameterSetName = 'ManualPublishedName')]
-    [Switch]$OverridePublishedName,
-
-    [Parameter(Mandatory = $false, ParameterSetName = 'NoJSON')]
-    [Parameter(ParameterSetName = 'ManualPublishedName')]
-    [String]$PublishedName,
+    [String]$OverridePublishedName, # Overrides the Published Name on the VM to the specified value
 
     [Parameter(Mandatory = $false)]
     [int]$MaxRecordCount = 10000 # Max Record Count Override
@@ -313,11 +304,8 @@ function AddUsertoVM {
 }
 
 function SetVMDisplayName {
-    [Parameter(Mandatory = $true)]
-    [String]$PublishedName
-    #Need to think about this more and compare with Delivery GroupName
-    if ($PublishedName -ne "") {
-        Write-Log -Message "$($VM.MachineName): Setting Published Name to $PublishedName" -Level Info
+    if ($null -ne $PublishedName) {
+        Write-Log -Message "$($VM.MachineName): Setting Published Name to: $PublishedName" -Level Info
         try {
             Set-BrokerMachine -MachineName $VM.MachineName -PublishedName $PublishedName -AdminAddress $Controller -Verbose -ErrorAction Stop
         }
@@ -404,15 +392,58 @@ function CreateManualCatalog {
 
 function CreateTargetDeliveryGroup {
     try {
-        $SourceCatFunc = (Get-BrokerCatalog -name $SourceCatalog -AdminAddress $Controller).MinimumFunctionalLevel
-        New-BrokerDesktopGroup -Name $TargetDeliveryGroup -DesktopKind Private -MinimumFunctionalLevel $SourceCatFunc -AdminAddress $Controller -ErrorAction Stop
-        Write-Log -Message "Target Delivery Group: $($TargetDeliveryGroup) created successfully" -Level Info
-        
-        Write-Log -Message "Target Delivery Group: $($TargetDeliveryGroup) creating Access Policies" -Level Info
-        $DesktopGroupUid = Get-BrokerDesktopGroup -Name $TargetDeliveryGroup | Select-Object -ExpandProperty Uid
-        New-BrokerAccessPolicyRule -Name $($TargetDeliveryGroup+"_ViaAG") -Enabled $true -AllowedProtocols @("HDX","RDP") -AllowedUsers Filtered -AllowRestart $true -AllowedConnections ViaAG -IncludedSmartAccessFilterEnabled $true -IncludedUserFilterEnabled $true -DesktopGroupUid $DesktopGroupUid
-        New-BrokerAccessPolicyRule -Name $($TargetDeliveryGroup+"_NotViaAG") -Enabled $true -AllowedProtocols @("HDX","RDP") -AllowedUsers Filtered -AllowRestart $true -AllowedConnections NotViaAG -IncludedSmartAccessFilterEnabled $true -IncludedUserFilterEnabled $true -DesktopGroupUid $DesktopGroupUid
-        Write-Log -Message "Target Delivery Group: $($TargetDeliveryGroup) Access Policies created successfuly" -Level Info    
+        if ($AlignTargetDeliveryGroupToSource.IsPresent -and $SourceDeliveryGroup -ne "") {
+            # Build Delivery Group Configuration based on Source Delivery Group
+            Write-Log -Message "Target Delivery Group: $($TargetDeliveryGroup): Align Target Delivery Group To Source specified. Referencing Source DG: $($SourceDeliveryGroup)" -Level Info
+            try {
+                $SourceDG = Get-BrokerDesktopGroup -name $SourceDeliveryGroup -AdminAddress $Controller -ErrorAction Stop
+                $NewDG = New-BrokerDesktopGroup -Name $TargetDeliveryGroup -DesktopKind Private -MinimumFunctionalLevel $SourceDG.MinimumFunctionalLevel -AdminAddress $Controller -ErrorAction Stop
+                # Published Name
+                Write-Log -Message "Target Delivery Group: $($TargetDeliveryGroup): Setting Published Name. Referencing Source Delivery Group: $($SourceDeliveryGroup)" -Level Info
+                Set-BrokerDesktopGroup -Name $NewDG.Name -PublishedName $SourceDG.PublishedName -AdminAddress $Controller -ErrorAction Stop
+                # Access Policy Rules
+                Write-Log -Message "Target Delivery Group: $($TargetDeliveryGroup): Creating Default Access Policy Rules. Referencing Source Delivery Group: $($SourceDeliveryGroup)" -Level Info
+                $BrokerAccessPolicyRules = Get-BrokerAccessPolicyRule -DesktopGroupUid $SourceDG.Uid -AdminAddress $Controller -ErrorAction Stop
+                # Access Policy Rule Assignments
+                $SourceRuleAG = $BrokerAccessPolicyRules | Where-Object {$_.AllowedConnections -eq "ViaAG" -and $_.Name -like "$SourceDeliveryGroup*"}
+                $NewRuleAG = New-BrokerAccessPolicyRule -Name $($TargetDeliveryGroup+"_AG") -Enabled $true -AllowedProtocols @("HDX","RDP") -AllowedUsers $SourceRuleAG.AllowedUsers -AllowRestart $true -AllowedConnections ViaAG -IncludedSmartAccessFilterEnabled $true -IncludedUserFilterEnabled $true -DesktopGroupUid $NewDG.Uid -AdminAddress $Controller
+                $SourceRuleAGIncludedUsers = $SourceRuleAG.IncludedUsers
+                foreach ($Inclusion in $SourceRuleAGIncludedUsers) {
+                    Write-Log -Message "Target Delivery Group: $($TargetDeliveryGroup): Adding $($Inclusion.Name) to Access Policy Rule: $($NewRuleAG.Name) " -Level Info
+                    Set-BrokerAccessPolicyRule -Name $NewRuleAG.Name -AddIncludedUsers $Inclusion.Name -AdminAddress $Controller
+                }
+                
+                $SourceRuleDirect = $BrokerAccessPolicyRules | Where-Object {$_.AllowedConnections -eq "NotViaAG" -and $_.Name -like "$SourceDeliveryGroup*"}
+                $NewRuleDirect = New-BrokerAccessPolicyRule -Name $($TargetDeliveryGroup+"_Direct") -Enabled $true -AllowedProtocols @("HDX","RDP") -AllowedUsers $SourceRuleDirect.AllowedUsers -AllowRestart $true -AllowedConnections NotViaAG -IncludedSmartAccessFilterEnabled $true -IncludedUserFilterEnabled $true -DesktopGroupUid $NewDG.Uid -AdminAddress $Controller
+                $SourceRuleDirectIncludedUsers = $SourceRuleDirect.IncludedUsers
+                foreach ($Inclusion in $SourceRuleDirectIncludedUsers) {
+                    Write-Log -Message "Target Delivery Group: $($TargetDeliveryGroup): Adding $($Inclusion.Name) to Access Policy Rule: $($NewRuleDirect.Name) " -Level Info
+                    Set-BrokerAccessPolicyRule -Name $NewRuleDirect.Name -AddIncludedUsers $Inclusion.Name -AdminAddress $Controller
+                }
+                Write-Log -Message "Target Delivery Group: $($TargetDeliveryGroup) Published Name, Default Access Policy Rules and User Filters have been mirrored from Source Delivery Group: $($SourceDeliveryGroup). Additional more advanced configuration may be required depending on the environment " -Level Warn
+            }
+            catch {
+                Write-Log -Message $_ -level Warn
+                StopIteration
+                Exit 1 
+            }
+        }
+        else {
+            Write-Log -Message "Either the Parameter: AlignTargetDeliveryGroupToSource is not specified or the Parameter: SourceDeliveryGroup value is blank. Creating Default Delivery Group configuration" -level Info
+            $SourceCatFunc = (Get-BrokerCatalog -name $SourceCatalog -AdminAddress $Controller).MinimumFunctionalLevel
+            New-BrokerDesktopGroup -Name $TargetDeliveryGroup -DesktopKind Private -MinimumFunctionalLevel $SourceCatFunc -AdminAddress $Controller -ErrorAction Stop
+            Write-Log -Message "Target Delivery Group: $($TargetDeliveryGroup): Created successfully" -Level Info
+
+            Write-Log -Message "Target Delivery Group: $($TargetDeliveryGroup): Creating default Access Policy Rules" -Level Info
+            $DesktopGroupUid = Get-BrokerDesktopGroup -Name $TargetDeliveryGroup | Select-Object -ExpandProperty Uid
+            New-BrokerAccessPolicyRule -Name $($TargetDeliveryGroup+"_AG") -Enabled $true -AllowedProtocols @("HDX","RDP") -AllowedUsers Filtered -AllowRestart $true -AllowedConnections ViaAG -IncludedSmartAccessFilterEnabled $true -IncludedUserFilterEnabled $true -DesktopGroupUid $DesktopGroupUid -AdminAddress $Controller
+            #New-BrokerAccessPolicyRule -Name $($TargetDeliveryGroup+"_ViaAG") -Enabled $true -AllowedProtocols @("HDX","RDP") -AllowedUsers Filtered -AllowRestart $true -AllowedConnections ViaAG -IncludedSmartAccessFilterEnabled $true -IncludedUserFilterEnabled $true -DesktopGroupUid $DesktopGroupUid -AdminAddress $Controller
+            New-BrokerAccessPolicyRule -Name $($TargetDeliveryGroup+"_Direct") -Enabled $true -AllowedProtocols @("HDX","RDP") -AllowedUsers Filtered -AllowRestart $true -AllowedConnections NotViaAG -IncludedSmartAccessFilterEnabled $true -IncludedUserFilterEnabled $true -DesktopGroupUid $DesktopGroupUid -AdminAddress $Controller
+            #New-BrokerAccessPolicyRule -Name $($TargetDeliveryGroup+"_NotViaAG") -Enabled $true -AllowedProtocols @("HDX","RDP") -AllowedUsers Filtered -AllowRestart $true -AllowedConnections NotViaAG -IncludedSmartAccessFilterEnabled $true -IncludedUserFilterEnabled $true -DesktopGroupUid $DesktopGroupUid -AdminAddress $Controller
+            Write-Log -Message "Target Delivery Group: $($TargetDeliveryGroup): Default Access Policy Rules created successfuly" -Level Info 
+            Write-Log -Message "!!------- Target Delivery Group: $($TargetDeliveryGroup): Does not contain any allowed users or desktop assignment rules. Manually add these as required" -Level Warn
+            Write-Log -Message "!!------- Target Delivery Group: $($TargetDeliveryGroup): Contains a default Published Name value. This may impact the user experience. Manually alter this as required" -Level Warn
+        }
     }
     catch {
         Write-Log -Message $_ -level Warn
@@ -482,7 +513,7 @@ function RemoveMCSProvisionedMachine {
         $ErrorCount += 1
         Break
     }
-    GetUpdatedCatalogAccountIdentityPool    
+    GetUpdatedCatalogAccountIdentityPool 
 }
 
 function GetCatalogAccountIdentityPool {
@@ -532,6 +563,46 @@ function GetUpdatedCatalogAccountIdentityPool  {
 # ============================================================================
 StartIteration
 
+#Region Error Handling where to complex for Param Sets
+# Handle TargetMachineScope
+if ($TargetMachineScope -eq "CSV" -and $TargetMachineCSVList -eq "") {
+    Write-Log -Message "PARAMETER ERROR: You cannot use a CSV input for TargetMachineScope and not include a TargetMachineCSVList. Please use the TargetMachineCSVList Parameter" -Level Warn
+    StopIteration
+    Exit 1
+}
+if ($TargetMachineScope -eq "CSV" -and $null -ne $TargetMachineList) {
+    Write-Log -Message "PARAMETER ERROR: You cannot use a CSV input for TargetMachineScope and specify a Manual TargetMachineList. Please use the TargetMachineCSVList Parameter" -Level Warn
+    StopIteration
+    Exit 1
+}
+if ($TargetMachineScope -eq "MachineList" -and $TargetMachineList -eq "") {
+    Write-Log -Message "PARAMETER ERROR: You cannot use a MachineList input for TargetMachineScope and not include a Machine List. Please use the TargetMachineList Parameter" -Level Warn
+    StopIteration
+    Exit 1
+}
+if ($TargetMachineScope -eq "MachineList" -and $TargetMachineCSVList -ne "") {
+    Write-Log -Message "PARAMETER ERROR: You cannot use a MachineList input for TargetMachineScope and specify a TargetMachineCSVList. Please use the TargetMachineList Parameter" -Level Warn
+    StopIteration
+    Exit 1
+}
+if ($TargetMachineScope -eq "All" -and $TargetMachineCSVList -ne "") {
+    Write-Log -Message "ERROR: You cannot use a TargetMachineScope of All and specify a TargetMachineCSVList. Please remove the TargetMachineCSVList Parameter" -Level Warn
+    StopIteration
+    Exit 1
+}
+if ($TargetMachineScope -eq "All" -and $null -ne $TargetMachineList) {
+    Write-Log -Message "PARAMETER ERROR: You cannot use a TargetMachineScope of All and specify a TargetMachineList. Please remove the TargetMachineList Parameter" -Level Warn
+    StopIteration
+    Exit 1
+}
+# Handle PublishedName
+if ($SetPublishedNameToMachineName.IsPresent -and $OverridePublishedName -ne "") {
+    Write-Log -Message "PARAMETER ERROR: You cannot use SetPublishedNameToMachineName and OverridePublishedName variables together" -Level Warn
+    StopIteration
+    Exit 1
+}
+#endregion
+
 #Region JSON
 # ============================================================================
 # Handle JSON input
@@ -553,10 +624,15 @@ if ($JSON.IsPresent) {
         Exit 1
     }
 
+    $Controller = $EnvironmentDetails.Controller
     $SourceCatalog = $EnvironmentDetails.SourceCatalog
     $TargetCatalog = $EnvironmentDetails.TargetCatalog
+    $SourceDeliveryGroup = $EnvironmentDetails.SourceDeliveryGroup
     $TargetDeliveryGroup = $EnvironmentDetails.TargetDeliveryGroup
-    $PublishedName = $EnvironmentDetails.PublishedName
+    $OverridePublishedName = $EnvironmentDetails.OverridePublishedName
+    $TargetMachineScope = $EnvironmentDetails.TargetMachineScope
+    $TargetMachineList = $EnvironmentDetails.TargetMachineList
+    $TargetMachineCSVList = $EnvironmentDetails.TargetMachineCSVList
 }
 #endregion
 
@@ -575,10 +651,12 @@ TryForAuthentication
 # ============================================================================
 Write-Log -Message "Working with Source Catalog: $($SourceCatalog)" -Level Info
 Write-Log -Message "Working with Target Catalog: $($TargetCatalog)" -Level Info
+if ($AlignTargetDeliveryGroupToSource.IsPresent -and $SourceDeliveryGroup -ne "") {
+    Write-Log -Message "Working with Source Delivery Group: $($SourceDeliveryGroup)" -Level Info
+}
 Write-Log -Message "Working with Target Delivery Group: $($TargetDeliveryGroup)" -Level Info
 Write-Log -Message "Working with Delivery Controller: $($Controller)" -Level Info
 Write-Log -Message "Working with Target Machine Scope: $($TargetMachineScope)" -Level Info
-
 
 #Region Catalog Handling
 #GetSourceCatalog
@@ -669,7 +747,6 @@ $Count = ($VMs | Measure-Object).Count
 $StartCount = 1
 $ErrorCount = 0
 
-
 if ($Count -lt 1) {
     Write-Log -Message "There are no machines to process. Please check parameter entries. Exit Script" -Level Info
     StopIteration
@@ -686,17 +763,17 @@ foreach ($VM in $VMs) {
         AddVMToCatalog
         AddVMtoDeliveryGroup
         AddUsertoVM
-        if ($OverridePublishedName.IsPresent) {
-            $PublishedName = $PublishedName
-            SetVMDisplayName -PublishedName $PublishedName
+        if ($OverridePublishedName) {
+            $PublishedName = $OverridePublishedName
+            SetVMDisplayName
         }
-        if ($SetPublishedNameToMachineName.IsPresent) {
+        elseif ($SetPublishedNameToMachineName.IsPresent) {
             $PublishedName = ($VM.MachineName | Split-Path -leaf)
-            SetVMDisplayName -PublishedName $PublishedName
+            SetVMDisplayName
         }
         else {
             $PublishedName = $VM.PublishedName
-            SetVMDisplayName -PublishedName $PublishedName
+            SetVMDisplayName
         }
         $StartCount += 1
     }
