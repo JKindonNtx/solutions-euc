@@ -529,7 +529,7 @@ function GetCatalogAccountIdentityPool {
 
 function GetUpdatedCatalogAccountIdentityPool  {
     $UpdatedIdentityPool = try { #get details about the Identity Pool
-        Get-AcctIdentityPool -IdentityPoolName $SourceCatalog -AdminAddress $Controller-ErrorAction Stop
+        Get-AcctIdentityPool -IdentityPoolName $SourceCatalog -AdminAddress $Controller -ErrorAction Stop
     }
     catch {
         Write-Log -Message $_ -Level Warn
@@ -631,6 +631,12 @@ if ($JSON.IsPresent) {
     $TargetMachineScope = $EnvironmentDetails.TargetMachineScope
     $TargetMachineList = $EnvironmentDetails.TargetMachineList
     $TargetMachineCSVList = $EnvironmentDetails.TargetMachineCSVList
+
+    # Handle Machine List Array in JSON Input
+    if ($EnvironmentDetails.TargetMachineList -like "*,*") {
+        $EnvironmentDetails.TargetMachineList = [array]$EnvironmentDetails.TargetMachineList.Split(",")
+        $TargetMachineList = $EnvironmentDetails.TargetMachineList
+    }
 }
 #endregion
 
