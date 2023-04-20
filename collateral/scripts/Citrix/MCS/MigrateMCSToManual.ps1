@@ -269,11 +269,11 @@ function AddVMtoCatalog {
 }
 
 function AddVMtoDeliveryGroup {
-    $DG = (Get-BrokerMachine -MachineName $VM.MachineName -AdminAddress $Controller ).DesktopGroupName
+    $DG = (Get-BrokerMachine -MachineName $VM.MachineName -AdminAddress $Controller).DesktopGroupName
     if ($null -eq $DG) {
-        Write-Log -Message "$($VM.MachineName): Adding to Delivery Group $($DeliveryGroup.Name)" -Level Info
+        Write-Log -Message "$($VM.MachineName): Adding to Delivery Group $($TargetDeliveryGroup)" -Level Info
         try {
-            Add-BrokerMachine -MachineName $VM.MachineName -DesktopGroup $DeliveryGroup.Name -AdminAddress $Controller -Verbose -ErrorAction Stop
+            Add-BrokerMachine -MachineName $VM.MachineName -DesktopGroup $TargetDeliveryGroup -AdminAddress $Controller -Verbose -ErrorAction Stop
         }
         catch {
             Write-Log -Message $_ -Level Warn
