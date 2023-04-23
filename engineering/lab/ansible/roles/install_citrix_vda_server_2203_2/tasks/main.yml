@@ -1,0 +1,35 @@
+---
+# Install Citrix VDA server
+#- name: Create Log Folder
+#  win_file:
+#    path: C:\Logs
+#    state: directory
+
+- name: Install VDA server
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Citrix\\Server\\VDA 2203_2\\VDAServerSetup_2203_2000.exe"
+    arguments: /quiet /noreboot /enable_remote_assistance /controllers "{{ citrix_delivery_controllers }}" /components VDA /masterimage /virtualmachine /optimize /installdir "c:\program files\citrix" /enable_hdx_ports /enable_hdx_udp_ports /includeadditional "Citrix User Profile Manager","Citrix User Profile Manager WMI Plugin" /exclude "Citrix Supportability Tools","Citrix PDF Printer Driver","Citrix Telemetry Service","Citrix Personalization for App-V - VDA","Citrix Universal Print Client" /disableexperiencemetrics
+    state: present
+    expected_return_code: [0, 3, 3010]
+    product_id: '{6724AB8D-7FB4-4BBD-B763-65163031F59B}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  register: citrix_vda_install
+
+- name: Reboot after VDA
+  ansible.windows.win_reboot:
+  when: citrix_vda_install.changed
+
+#- name: Resume VDA Install
+#  win_package:
+#    path: C:\ProgramData\Citrix\XenDesktopSetup\XenDesktopVdaSetup.exe
+#    state: present
+#    expected_return_code: [0, 3, 3010]
+#    creates_service: BrokerAgent
+#  when: citrix_vda_install.changed
+#  register: citrix_vda_resume
+#
+#- name: Reboot after vda install
+#  ansible.windows.win_reboot:
+#  when: citrix_vda_resume.changed

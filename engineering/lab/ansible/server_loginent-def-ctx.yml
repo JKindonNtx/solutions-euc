@@ -5,7 +5,7 @@
   - install_ms_net_framework_core_3.5
   - install_ms_visual_c_2013u5
   - install_ms_rds_role
-  - install_citrix_vda_server_2203_1
+  - install_citrix_vda_server_2203_2
   - install_ms_office_2019_x64
   - run_ms_file_types
   - run_optimize 
