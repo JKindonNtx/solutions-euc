@@ -92,6 +92,7 @@ function Start-NTNXInfluxUpload {
                     "InfraCPUSocketCount=$($JSON.TestInfra.CPUSocketCount)," +
                     "InfraCPUSpeed=$($JSON.TestInfra.CPUSpeed)," +
                     "InfraMemoryGB=$($JSON.TestInfra.MemoryGB)," +
+                    "BootTime=$($JSON.TestInfra.Boottime)," +
                     "VSIproductVersion=$($vsiresult.productVersion)," +
                     "VSIEUXversion=$($vsiresult."EUX version")," +
                     "VSIactivesessionCount=$($vsiresult.activesessionCount)," +

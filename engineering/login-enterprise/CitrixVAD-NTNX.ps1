@@ -196,7 +196,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             -FunctionalLevel $VSI_Target_FunctionalLevel `
             -DDC $VSI_Target_DDC
 
-        Enable-VSICTXDesktopPool -DesktopPoolName $VSI_Target_DesktopPoolName `
+        $Boot = Enable-VSICTXDesktopPool -DesktopPoolName $VSI_Target_DesktopPoolName `
             -NumberofVMs $VSI_Target_NumberOfVMS `
             -PowerOnVMs $VSI_Target_PowerOnVMs `
             -DDC $VSI_Target_DDC `
@@ -206,6 +206,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword `
             -VMnameprefix $NTNXInfra.Target.NamingPattern `
             -Hosts $NTNXInfra.Testinfra.Hostip
+
+        $NTNXInfra.Testinfra.Boottime = $Boot
 
         # Set number of sessions per launcher
         if ($($VSI_Target_SessionCfg.ToLower()) -eq "ica") {

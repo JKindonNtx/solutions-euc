@@ -110,6 +110,7 @@ Function Enable-VSICTXDesktopPool {
     }
     
     # End set affinity to hosts
+    $Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
     Write-Log "Powering on $PowerOnVMs machines"
     $PoweredOnVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount 2500 -SortBy MachineName | Select-Object -Last $PowerOnVMs
     $SetPowerOnVMs = $PoweredOnVMs | New-BrokerHostingPowerAction -Action TurnOn
@@ -138,4 +139,7 @@ Function Enable-VSICTXDesktopPool {
             }
         }
     }
+    $Stopwatch.stop()
+    $Boottime = $Stopwatch.elapsed.totalseconds
+    $Boottime
 }
