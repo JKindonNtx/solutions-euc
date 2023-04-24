@@ -196,6 +196,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             -FunctionalLevel $VSI_Target_FunctionalLevel `
             -DDC $VSI_Target_DDC
 
+        ## Edit foldername to use new Testname and Run #
+        $FolderName = "$($NTNXTestname)_Run$($i)"
+        $OutputFolder = "$ScriptRoot\results\$FolderName"
+
+        # Start monitoring Boot phase
+        $monitoringJob = Start-VSINTNXMonitoring -OutputFolder $OutputFolder -DurationInMinutes "Boot" -RampupInMinutes $VSI_Target_RampupInMinutes -Hostuuid $Hostuuid -IPMI_ip $IPMI_ip -Path $Scriptroot -NTNXCounterConfigurationFile $ReportConfigFile -AsJob
+
         $Boot = Enable-VSICTXDesktopPool -DesktopPoolName $VSI_Target_DesktopPoolName `
             -NumberofVMs $VSI_Target_NumberOfVMS `
             -PowerOnVMs $VSI_Target_PowerOnVMs `
@@ -207,7 +214,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             -VMnameprefix $NTNXInfra.Target.NamingPattern `
             -Hosts $NTNXInfra.Testinfra.Hostip
 
-        $NTNXInfra.Testinfra.Boottime = $Boot
+        $NTNXInfra.Testinfra.BootStart = $Boot.bootstart
+        $NTNXInfra.Testinfra.Boottime = $Boot.boottime
 
         # Set number of sessions per launcher
         if ($($VSI_Target_SessionCfg.ToLower()) -eq "ica") {
@@ -241,11 +249,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             Write-Host (Get-Date) "Wait for VMs to become idle"
             Start-Sleep -Seconds 60
         }
+
+        #Stop and cleanup monitoring job Boot phase
+        $monitoringJob | Stop-Job | Remove-Job
+
         Write-Host (Get-Date) "Waiting for $VSI_Target_MinutesToWaitAfterIdleVMs minutes before starting test"
         Start-sleep -Seconds $($VSI_Target_MinutesToWaitAfterIdleVMs * 60)
-        ## Edit foldername to use new Testname and Run #
-        $FolderName = "$($NTNXTestname)_Run$($i)"
-        $OutputFolder = "$ScriptRoot\results\$FolderName"
+        
         # Start the test
         Start-LETest -testId $testId -Comment "$FolderName-$VSI_Target_Comment"
         $TestRun = Get-LETestRuns -testId $testId | Select-Object -Last 1
@@ -282,7 +292,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Upload Config to Influx
         if($NTNXInfra.Test.UploadResults) {
-            Start-NTNXInfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken
+            Start-NTNXInfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -Boot $true
+            Start-NTNXInfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -Boot $false
         }
 
         $Testresult = import-csv "$OutputFolder\VSI-results.csv"

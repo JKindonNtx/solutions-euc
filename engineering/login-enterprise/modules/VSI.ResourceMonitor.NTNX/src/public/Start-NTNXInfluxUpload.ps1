@@ -2,7 +2,8 @@ function Start-NTNXInfluxUpload {
     param(
         [Parameter(Mandatory = $true)] [string]$influxDbUrl,
         [Parameter(Mandatory = $true)] [string]$ResultsPath,
-        [Parameter(Mandatory = $true)] [string]$Token
+        [Parameter(Mandatory = $true)] [string]$Token,
+        [Parameter(Mandatory = $true)] [Bool]$Boot
     )
 
     # Read in JSON File
@@ -15,28 +16,37 @@ function Start-NTNXInfluxUpload {
 
     $Run = $MeasurementDetail[1]
 
-    $BucketName = $($JSON.Test.BucketName)
-    $influxDbUrl = $influxDbUrl + "&bucket=$($BucketName)"
-
     $WebHeaders = @{
                         Authorization = "Token $Token"
                 }
 
     $vsiresult = Import-CSV "$($ResultsPath)\VSI-results.csv"
-    $Files = Get-ChildItem "$($ResultsPath)\*.csv" 
-
     ## set fixed start date
     ## calc time diff with measurement start date
-    ## distract time diff from timestamp
+    ## Subtract time diff from timestamp
     $StartDate = [DateTime] "01/01/2023 1:00 AM"
     $UnixStartedDate = Get-Date -Date $StartDate -UFormat %s
     $NewStartDate = $UnixStartedDate.Split(".")
     $FormattedStartDate = $NewStartDate[0]
-    $Started = $vsiresult.started
+
+
+    If ($Boot -eq $true){
+        $Files = Get-ChildItem "$($ResultsPath)\Boot\*.csv"
+        $BucketName = "BootBucket"
+        $Started = $($JSON.TestInfra.Bootstart)
+    }
+    Else {
+        $Files = Get-ChildItem "$($ResultsPath)\*.csv"
+        $BucketName = $($JSON.Test.BucketName)
+        $Started = $vsiresult.started
+    }
+
     $UnixStarted = Get-Date -Date $Started -UFormat %s
     $NewStarted = $UnixStarted.Split(".")
     $FormattedStarted = $NewStarted[0]
     $DeltaTime = $FormattedStarted - $FormattedStartDate
+    
+    $influxDbUrl = $influxDbUrl + "&bucket=$($BucketName)"
     
     $CurrentYear = get-date -Format yyyy
     $CurrentMonth = get-date -Format MM
@@ -92,7 +102,11 @@ function Start-NTNXInfluxUpload {
                     "InfraCPUSocketCount=$($JSON.TestInfra.CPUSocketCount)," +
                     "InfraCPUSpeed=$($JSON.TestInfra.CPUSpeed)," +
                     "InfraMemoryGB=$($JSON.TestInfra.MemoryGB)," +
+                    "BootStart=$($JSON.TestInfra.BootStart)," +
                     "BootTime=$($JSON.TestInfra.Boottime)," +
+                    "MaxAbsoluteActiveActions=$($JSON.TestInfra.MaxAbsoluteActiveActions)," +
+                    "MaxAbsoluteNewActionsPerMinute=$($JSON.TestInfra.MaxAbsoluteNewActionsPerMinute)," +
+                    "MaxPercentageActiveActions=$($JSON.TestInfra.MaxPercentageActiveActions)," +
                     "VSIproductVersion=$($vsiresult.productVersion)," +
                     "VSIEUXversion=$($vsiresult."EUX version")," +
                     "VSIactivesessionCount=$($vsiresult.activesessionCount)," +

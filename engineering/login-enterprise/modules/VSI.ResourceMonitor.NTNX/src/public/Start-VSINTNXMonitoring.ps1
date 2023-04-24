@@ -1,6 +1,6 @@
 function Start-VSINTNXMonitoring {
     param(
-        [Parameter(Mandatory = $true)] [Int32]$DurationInMinutes,
+        [Parameter(Mandatory = $true)] $DurationInMinutes,
         [Parameter(Mandatory = $true)] [Int32]$RampupInMinutes,
         [Parameter(Mandatory = $true)] [string]$Hostuuid,
         [Parameter(Mandatory = $false)] [switch]$AsJob,
@@ -33,7 +33,13 @@ function Start-VSINTNXMonitoring {
         Import-Module "$Path\modules\VSI.ResourceMonitor.NTNX\src\internal\Invoke-PublicApiMethodRedfish.ps1" -Force
 
         if (-not (Test-Path $OutputFolder)) { New-Item -ItemType Directory -Path $OutputFolder | Out-Null }
+        If ($DurationInMinutes -eq "Boot") {
+            $OutputFolder = "$OutputFolder\Boot"
+            if (-not (Test-Path $OutputFolder)) { New-Item -ItemType Directory -Path $OutputFolder | Out-Null }
+            $DurationInMinutes = 100
+        }
 
+        $DurationInMinutes = [Int32]$DurationInMinutes
         $Started = Get-Date
         $StartTimeStamp = Get-Date
         $StartTimeStamp = [DateTime]::new($StartTimeStamp.Year, $StartTimeStamp.Month, $StartTimeStamp.Day, $StartTimeStamp.Hour, $StartTimeStamp.Minute, 0)
