@@ -713,7 +713,7 @@ if ($TargetMachineScope -eq "All") {
 elseif ($TargetMachineScope -eq "MachineList") {
     if ($null -ne $TargetMachineList) {
         Write-Log -Message "Source Machine List: Getting VMs from specified list $($TargetMachineList)" -Level Info
-        $VMS = Get-BrokerMachine -CatalogName $SourceCatalog -AdminAddress $Controller -MaxRecordCount $MaxRecordCount | Where-Object { $_.HostedMachineName -in $TargetMachineList } ##//Looking for a match...only get machines in $TargetMachineList //MaxRecordCount
+        $VMS = Get-BrokerMachine -CatalogName $SourceCatalog -AdminAddress $Controller -MaxRecordCount $MaxRecordCount | Where-Object { $_.HostedMachineName -in $TargetMachineList }
     }
     else {
         Write-Log -Message "No Machine Specified in Machine List. Exit Script" -Level Warn
@@ -731,7 +731,7 @@ elseif ($TargetMachineScope -eq 'CSV') {
         Write-Log -Message "Importing VMS from CSV List $($TargetMachineCSVList)" -Level Info
         try {
             $CSVList = Import-Csv -Path $TargetMachineCSVList -ErrorAction Stop 
-            $VMS = Get-BrokerMachine -CatalogName $SourceCatalog -AdminAddress $Controller -MaxRecordCount $MaxRecordCount | Where-Object { $_.HostedMachineName -in $CSVList.HostedMachineName } ##//Looking for a match...only get machines in $CSVList
+            $VMS = Get-BrokerMachine -CatalogName $SourceCatalog -AdminAddress $Controller -MaxRecordCount $MaxRecordCount | Where-Object { $_.HostedMachineName -in $CSVList.HostedMachineName }
         }
         catch {
             Write-Log -Message $_ -level Warn
