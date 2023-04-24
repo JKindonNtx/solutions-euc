@@ -125,9 +125,9 @@
         "CPUSocketCount":  null, // Autofilled
         "CPUSpeed":  null, // Autofilled
         "MemoryGB":  null, // Autofilled
-        "MaxAbsoluteActiveActions": "100",
-        "MaxAbsoluteNewActionsPerMinute": "60",
-        "MaxPercentageActiveActions": "50",
+        "MaxAbsoluteActiveActions": null, // Autofilled
+        "MaxAbsoluteNewActionsPerMinute": null, // Autofilled
+        "MaxPercentageActiveActions": null, // Autofilled
         "BootStart":   null, // Autofilled
         "Boottime":   null, // Autofilled
         "Slack":  "https://hooks.slack.com/services/xxxxxxxxx", // Enter the Slack hook for reporting purposes.

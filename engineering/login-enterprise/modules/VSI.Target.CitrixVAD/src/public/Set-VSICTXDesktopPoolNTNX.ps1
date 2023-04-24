@@ -25,7 +25,7 @@ function Set-VSICTXDesktopPoolNTNX {
     #Add-PSSnapin Citrix*
     #Get-XDAuthentication -BearerToken $global:VSICTX_BearerToken
     $CreatePool = $true
-    
+
     Write-Log "Checking if desktoppool $DesktopPoolName exists..."
     $DG = Get-BrokerDesktopGroup -AdminAddress $DDC -Name $DesktopPoolName -erroraction SilentlyContinue
     if ($null -ne $DG) {
@@ -173,6 +173,8 @@ function Set-VSICTXDesktopPoolNTNX {
     Get-BrokerAccessPolicyRule -AdminAddress $DDC -Name "$($DesktopPoolName)*" -ea SilentlyContinue | Remove-BrokerAccessPolicyRule
     $AccessPolicyViaAG = New-BrokerAccessPolicyRule -AdminAddress $DDC -AllowedUsers Filtered -AllowedConnections ViaAG -AllowRestart $true -AllowedProtocol @("HDX", "RDP") -DesktopGroupUid $DG.Uid -Name "$($DesktopPoolName)_AG" -IncludedUserFilterEnabled $true -IncludedSmartAccessFilterEnabled $true  -IncludedUsers "$EntitledGroup" 
     $AccessPolicyNotViaAG = New-BrokerAccessPolicyRule -AdminAddress $DDC -AllowedUsers Filtered -AllowedConnections NotViaAG -AllowRestart $true -AllowedProtocol @("HDX", "RDP") -DesktopGroupUid $DG.Uid -Name "$($DesktopPoolName)_Direct" -IncludedUserFilterEnabled $true -IncludedSmartAccessFilterEnabled $true  -IncludedUsers "$EntitledGroup"
-        
-
+    
+    $HypConnectionName = (Get-Item -adminaddress "ws-cdc1.wsperf.nutanix.com" XDHyp:\HostingUnits\$HypervisorConnection).HypervisorConnection.HypervisorConnectionName
+    $PowerActions = Get-BrokerHypervisorConnection -Name $HypConnectionName | Select-Object *Actions*
+    Return $PowerActions
 }

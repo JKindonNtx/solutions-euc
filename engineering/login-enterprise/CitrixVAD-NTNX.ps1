@@ -176,7 +176,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
         
         # refactor to: Set-VSIHVDesktopPool, will create/update desktop pool, no need to worry about remove/create
-        Set-VSICTXDesktopPoolNTNX -ParentVM $ParentVM `
+        $CreatePool = Set-VSICTXDesktopPoolNTNX -ParentVM $ParentVM `
             -HypervisorConnection $VSI_Target_HypervisorConnection `
             -HypervisorType $NTNXInfra.Testinfra.HypervisorType `
             -Networkmap $networkMap `
@@ -196,6 +196,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             -FunctionalLevel $VSI_Target_FunctionalLevel `
             -DDC $VSI_Target_DDC
 
+        $NTNXInfra.Testinfra.MaxAbsoluteActiveActions = $CreatePool.MaxAbsoluteActiveActions
+        $NTNXInfra.Testinfra.MaxAbsoluteNewActionsPerMinute = $CreatePool.MaxAbsoluteNewActionsPerMinute
+        $NTNXInfra.Testinfra.MaxPercentageActiveActions = $CreatePool.MaxPercentageActiveActions
+        
         ## Edit foldername to use new Testname and Run #
         $FolderName = "$($NTNXTestname)_Run$($i)"
         $OutputFolder = "$ScriptRoot\results\$FolderName"
