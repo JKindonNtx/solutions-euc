@@ -42,10 +42,14 @@ function Get-NTNXinfo {
     $Config.Testinfra.HostCVMip = $Hostitem.service_vmexternal_ip
     $Config.Testinfra.NodeSerial = $Hostitem.serial
     $Config.Testinfra.BlockSerial = $Hostitem.block_serial
-    $Config.Testinfra.BIOS = $Hostitem.bios_version -Replace ("$null",'"Unknown"')
+    if ($Hostitem.bios_version -eq "") {
+        $Config.Testinfra.BIOS = "Unknown"
+    } Else {
+        $Config.Testinfra.BIOS = $Hostitem.bios_version
+    }
     $Config.Testinfra.FullVersion = $Clusterinfo.full_version
     $Config.Testinfra.HostGPUs = $Hostitem.host_gpus
-    $Config.Testinfra.GPUDriver = $Hostitem.gpu_driver_version -Replace ("$null",'"None"')
+    $Config.Testinfra.GPUDriver = $Hostitem.gpu_driver_version
     if ($($Config.Target.NodeCount) -eq 1) {
         $Config.Testinfra.SingleNodeTest = 'true'
         $Config.Testinfra.SetAffinity = 'true'
