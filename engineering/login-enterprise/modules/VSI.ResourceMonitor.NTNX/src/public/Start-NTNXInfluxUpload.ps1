@@ -102,7 +102,7 @@ function Start-NTNXInfluxUpload {
                     "InfraCPUSocketCount=$($JSON.TestInfra.CPUSocketCount)," +
                     "InfraCPUSpeed=$($JSON.TestInfra.CPUSpeed)," +
                     "InfraMemoryGB=$($JSON.TestInfra.MemoryGB)," +
-                    "BootStart=$($JSON.TestInfra.BootStart)," +
+                    "BootStart=$($JSON.TestInfra.BootStart)," +                    
                     "BootTime=$($JSON.TestInfra.Boottime)," +
                     "MaxAbsoluteActiveActions=$($JSON.TestInfra.MaxAbsoluteActiveActions)," +
                     "MaxAbsoluteNewActionsPerMinute=$($JSON.TestInfra.MaxAbsoluteNewActionsPerMinute)," +
