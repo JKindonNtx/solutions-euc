@@ -32,13 +32,17 @@ function Start-NTNXInfluxUpload {
 
     If ($Boot -eq $true){
         $Files = Get-ChildItem "$($ResultsPath)\Boot\*.csv"
-        $BucketName = "BootBucket"
         $Started = $($JSON.TestInfra.Bootstart)
+        If ($($JSON.Test.BucketName) -eq "LoginDocuments") {
+            $BucketName = "BootBucket"
+        } Else {
+            $BucketName = "BootBucketRegression"
+        }
     }
     Else {
         $Files = Get-ChildItem "$($ResultsPath)\*.csv"
-        $BucketName = $($JSON.Test.BucketName)
         $Started = $vsiresult.started
+        $BucketName = $($JSON.Test.BucketName)
     }
 
     $UnixStarted = Get-Date -Date $Started -UFormat %s

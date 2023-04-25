@@ -114,6 +114,7 @@ Function Enable-VSICTXDesktopPool {
 
     # End set affinity to hosts
     $Boot.bootstart = get-date -format o
+    Start-Sleep -Seconds 10
     $BootStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
     Write-Log "Powering on $PowerOnVMs machines"
     $PoweredOnVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount 2500 -SortBy MachineName | Select-Object -Last $PowerOnVMs
