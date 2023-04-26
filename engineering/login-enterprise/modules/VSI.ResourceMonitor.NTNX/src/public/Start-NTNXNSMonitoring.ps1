@@ -45,6 +45,10 @@ function Start-NTNXNSMonitoring {
             $item | Add-Member -MemberType NoteProperty -Name "PacketEngineCPU" -Value $NetScalerStats.PacketEngineCPU -Force
             $item | Add-Member -MemberType NoteProperty -Name "ManagementEngineCPU" -Value $NetScalerStats.ManagementEngineCPU -Force
             $item | Add-Member -MemberType NoteProperty -Name "MemoryUsage" -Value $NetScalerStats.MemoryUsage -Force
+            $item | Add-Member -MemberType NoteProperty -Name "TotalReceivedmbits" -Value $NetScalerStats.TotalReceivedmbits -Force
+            $item | Add-Member -MemberType NoteProperty -Name "RateReceived" -Value $NetScalerStats.RateReceived -Force
+            $item | Add-Member -MemberType NoteProperty -Name "TotalTransmitmbits" -Value $NetScalerStats.TotalTransmitmbits -Force
+            $item | Add-Member -MemberType NoteProperty -Name "RateTransmit" -Value $NetScalerStats.RateTransmit -Force
             $item | Export-Csv -Path $NSStats -NoTypeInformation -Append
 
             $StartTimeStamp = $StartTimeStamp.AddSeconds($SampleSize)

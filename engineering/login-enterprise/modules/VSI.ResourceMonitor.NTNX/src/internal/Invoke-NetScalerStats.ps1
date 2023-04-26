@@ -29,6 +29,10 @@ function Invoke-NetScalerStats {
     $NSDetails | Add-Member -MemberType NoteProperty -Name "PacketEngineCPU" -Value $Stats.ns.pktcpuusagepcnt
     $NSDetails | Add-Member -MemberType NoteProperty -Name "ManagementEngineCPU" -Value $Stats.ns.mgmtcpuusagepcnt
     $NSDetails | Add-Member -MemberType NoteProperty -Name "MemoryUsage" -Value $Stats.ns.memusagepcnt
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "TotalReceivedmbits" -Value $Stats.ns.totrxmbits
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "RateReceived" -Value $Stats.ns.rxmbitsrate
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "TotalTransmitmbits" -Value $Stats.ns.tottxmbits
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "RateTransmit" -Value $Stats.ns.txmbitsrate
 
     # Logout of NetScaler
     $logout = @{
