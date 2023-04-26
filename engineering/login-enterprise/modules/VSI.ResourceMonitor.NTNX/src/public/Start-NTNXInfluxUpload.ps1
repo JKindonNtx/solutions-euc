@@ -62,6 +62,7 @@ function Start-NTNXInfluxUpload {
                     "DataType=$($TopLevelTag)," +
                     "Year=$($CurrentYear)," +
                     "Month=$($CurrentMonth)," +
+                    "DocumentName=$($JSON.Test.DocumentName)," +
                     "DeliveryType=$($JSON.Target.DeliveryType)," +
                     "DesktopBrokerVersion=$($JSON.Target.DesktopBrokerVersion)," +
                     "DesktopBrokerAgentVersion=$($JSON.Target.DesktopBrokerAgentVersion)," +

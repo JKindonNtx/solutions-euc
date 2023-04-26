@@ -89,7 +89,8 @@
     "Test": {
         "Name": "LE-SH", // Test name in Login Enterprise. Use your own initials. LE-SH
         "Uploadresults":  false, // Upload results to the Nutanix database
-        "BucketName": "LoginRegression" // Specify the Bucket Name in Influx to upload to. Can be either 'LoginRegression' or 'LoginDocuments'
+        "BucketName": "LoginRegression", // Specify the Bucket Name in Influx to upload to. Can be either 'LoginRegression' or 'LoginDocuments'
+        "DocumentName": "None" // If using LoginDocuments please enter a Document Name starting ENG-, BLOG-, BP-, TN-, RA-.
     },
     "TestInfra": {
         "Datacenter":  "Durham", // Datacenter of this Login Enterprise installation
