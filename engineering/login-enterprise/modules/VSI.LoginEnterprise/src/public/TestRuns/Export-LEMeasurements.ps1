@@ -92,14 +92,13 @@ function Export-LEMeasurements {
         
         if($AppMeasurements.count -eq 10000){
             $FileEnded = $false
-            while($FileEnded -eq $false){
+            while(-not $FileEnded){
                 [int]$OffSet = $AppMeasurements.count + 1
-                $AppMeasurementsAdditional = $null
                 $AppMeasurementsAdditional = Get-LEMeasurements -testRunId $testRun.Id -include "applicationMeasurements" -OffSet $OffSet
                 $AppMeasurementsAdditional = $AppMeasurementsAdditional | Select-Object measurementId, timestamp, @{Name = "offSetInSeconds"; Expression = { ((New-TimeSpan -Start (Get-Date $TestRun.started) -End (Get-Date $_.timestamp)).TotalSeconds) } }, userSessionId, @{Name = "result"; Expression = { $_.duration } }, appexecutionId, @{Name = "applicationName"; Expression = { Foreach ($App in $Applications) { if ($App.id -eq $_.applicationId) { $app.Name } } } }
                 $AppMeasurements = $AppMeasurements + $AppMeasurementsAdditional
                 if($AppMeasurementsAdditional.count -lt 10000){
-                    $FileEnded -eq $true
+                    $FileEnded = $true
                 } 
             }
         }
