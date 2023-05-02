@@ -1,7 +1,7 @@
 function Get-LERawEUX {
     Param (
         [Parameter(Mandatory)] [string] $testRunId,
-        [string]$count = 10000
+        [string]$count = 100000
     )
 
     $Body = @{

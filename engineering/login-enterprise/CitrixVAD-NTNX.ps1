@@ -111,7 +111,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
     # Setup testname
     $NTNXid = (New-Guid).Guid.SubString(1,6)
-    $NTNXTestname = "$($NTNXid)_1n_A$($NTNXInfra.Testinfra.AOSversion)_$($NTNXInfra.Testinfra.HypervisorType)_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
+    $NTNXTestname = "$($NTNXid)_$($VSI_Target_NodeCount)n_A$($NTNXInfra.Testinfra.AOSversion)_$($NTNXInfra.Testinfra.HypervisorType)_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
     # End Setup testname
    
     # Slack update
