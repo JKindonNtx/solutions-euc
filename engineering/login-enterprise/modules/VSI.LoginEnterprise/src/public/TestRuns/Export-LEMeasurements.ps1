@@ -89,6 +89,20 @@ function Export-LEMeasurements {
         $AppMeasurements = Get-LEMeasurements -testRunId $testRun.Id -include "applicationMeasurements"
         #id, offsetInSeconds, result, userSessionId, appexecutionId, applicationName
         $AppMeasurements = $AppMeasurements | Select-Object measurementId, timestamp, @{Name = "offSetInSeconds"; Expression = { ((New-TimeSpan -Start (Get-Date $TestRun.started) -End (Get-Date $_.timestamp)).TotalSeconds) } }, userSessionId, @{Name = "result"; Expression = { $_.duration } }, appexecutionId, @{Name = "applicationName"; Expression = { Foreach ($App in $Applications) { if ($App.id -eq $_.applicationId) { $app.Name } } } }
+        
+        if($AppMeasurements.count -eq 10000){
+            $FileEnded = $false
+            while($FileEnded -eq $false){
+                [int]$OffSet = $AppMeasurements.count + 1
+                $AppMeasurementsAdditional = $null
+                $AppMeasurementsAdditional = Get-LEMeasurements -testRunId $testRun.Id -include "applicationMeasurements" -OffSet $OffSet
+                $AppMeasurementsAdditional = $AppMeasurementsAdditional | Select-Object measurementId, timestamp, @{Name = "offSetInSeconds"; Expression = { ((New-TimeSpan -Start (Get-Date $TestRun.started) -End (Get-Date $_.timestamp)).TotalSeconds) } }, userSessionId, @{Name = "result"; Expression = { $_.duration } }, appexecutionId, @{Name = "applicationName"; Expression = { Foreach ($App in $Applications) { if ($App.id -eq $_.applicationId) { $app.Name } } } }
+                $AppMeasurements = $AppMeasurements + $AppMeasurementsAdditional
+                if($AppMeasurementsAdditional.count -lt 10000){
+                    $FileEnded -eq $true
+                } 
+            }
+        }
         $AppMeasurements | Export-Csv -Path "$($Folder)\Raw AppMeasurements.csv" -NoTypeInformation
    
         $AppExecutions = @()
