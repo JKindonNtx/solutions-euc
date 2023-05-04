@@ -65,7 +65,7 @@ function Start-NTNXInfluxUpload {
                     "DocumentName=$($JSON.Test.DocumentName)," +
                     "DeliveryType=$($JSON.Target.DeliveryType)," +
                     "DesktopBrokerVersion=$($JSON.Target.DesktopBrokerVersion)," +
-                    "DesktopBrokerAgentVersion=$($JSON.Target.DesktopBrokerAgentVersion)," +
+                    "DesktopBrokerAgentVersion=$($JSON.Target.ImagesToTest.DesktopBrokerAgentVersion)," +
                     "CloneType=$($JSON.Target.CloneType)," +
                     "SessionCfg=$($JSON.Target.SessionCfg)," +
                     "SessionsSupport=$($JSON.Target.SessionsSupport)," +

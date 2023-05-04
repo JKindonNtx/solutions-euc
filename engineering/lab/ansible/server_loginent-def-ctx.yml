@@ -2,6 +2,7 @@
 - name: Install Windows Server Gold with Office 2019 x64 - LoginVSI - CTX
   hosts: all
   roles:
+  - run_ms_deployment_scripts
   - install_ms_net_framework_core_3.5
   - install_ms_visual_c_2013u5
   - install_ms_rds_role
@@ -9,3 +10,4 @@
   - install_ms_office_2019_x64
   - run_ms_file_types
   - run_optimize 
+  - run_image_tattoo

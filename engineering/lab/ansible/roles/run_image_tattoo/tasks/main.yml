@@ -1,0 +1,12 @@
+---
+# Run Citrix Optimizer
+- name: Tattoo Image
+  ansible.windows.win_powershell:
+    script: |
+      $Script = "cust-image-tattoo.ps1"
+      
+      $BuildSource = "C:\deployment"
+      $ScriptSource = "$BuildSource\scripts"
+
+      & "$ScriptSource\$Script"
+      
