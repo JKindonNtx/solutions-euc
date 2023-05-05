@@ -27,7 +27,6 @@
     "Target": {
         "DeliveryType":  "Citrix", // Citrix or VMware (currently only Citrix is functional)
         "DesktopBrokerVersion":  "7.2203_2", // Broker version
-        "DesktopBrokerAgentVersion":  "7.2203_2", // Brokeragent version installed on the target
         "CloneType":  "MCS", // Used for reporting database. MCS or Instant Clones
         "DDC": "WS-CDC1.wsperf.nutanix.com", // Citrix Delivery controller
         "ZoneName": "Primary", // Zonename in Citrix
@@ -74,13 +73,14 @@
                 "NumberOfSessions": 220, // This is ignored when Autocalc is set to true
                 "NumberOfVMs": 220, // This is ignored when Autocalc is set to true
                 "PowerOnVMs": 220, // Amount of VMs to poweron initially, set to same value as amount of VM's by default. This is ignored when Autocalc is set to true
-                "TargetOS":  "Windows 10", // Windows 10, Windows 11, Windows Server 2022
-                "TargetOSVersion":  "22H2-20348.1129",
-                "OfficeVersion":  "2019-x64", // 2019-x64, 365-x64
-                "ToolsGuestVersion":  "", // VMware Tools 11.2.5
-                "OptimizerVendor":  "Citrix", // Which tool is used to optimize the image? Citrix, VMware
-                "OptimizationsVersion":  "3.1.0.3", // Optimizer version used
-                "GPUProfile":  "", // GPU profile. T4-B1, A16-B2 for example
+                "TargetOS":  "", // Autofilled
+                "TargetOSVersion":  "", // Autofilled
+                "DesktopBrokerAgentVersion":  "", // Autofilled
+                "OfficeVersion":  "", // Autofilled
+                "ToolsGuestVersion":  "", // Autofilled
+                "OptimizerVendor":  "", // Autofilled
+                "OptimizationsVersion":  "", // Autofilled
+                "GPUProfile":  "None", // GPU profile. T4-B1, A16-B2 for example
                 "Comment": "BL-W10" // A short comment about this test. Will be added to the Login Enterprise database.
             }
         ],

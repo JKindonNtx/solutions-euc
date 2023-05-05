@@ -2,6 +2,7 @@
 - name: Install Windows 10/11 Gold with Office 2019 x64 - LoginVSI - CTX
   hosts: all
   roles:
+  - run_ms_deployment_scripts
   - install_ms_net_framework_3.5
   - install_ms_visual_c_2013u5
   - install_citrix_vda_client_2203_2
@@ -9,3 +10,4 @@
   - install_ms_office_2019_x64
   - run_ms_file_types
   - run_optimize
+  - run_image_tattoo
