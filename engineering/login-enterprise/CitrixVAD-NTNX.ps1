@@ -265,11 +265,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $TestRun = Get-LETestRuns -testId $testId | Select-Object -Last 1
         # Start monitoring
         $monitoringJob = Start-VSINTNXMonitoring -OutputFolder $OutputFolder -DurationInMinutes $VSI_Target_DurationInMinutes -RampupInMinutes $VSI_Target_RampupInMinutes -Hostuuid $Hostuuid -IPMI_ip $IPMI_ip -Path $Scriptroot -NTNXCounterConfigurationFile $ReportConfigFile -AsJob
-        if ($VSI_Target_Files -ne "") {
-            $monitoringFilesJob = Start-NTNXFilesMonitoring -OutputFolder $OutputFolder -DurationInMinutes $VSI_Target_DurationInMinutes -RampupInMinutes $VSI_Target_RampupInMinutes -Path $Scriptroot -NTNXCounterConfigurationFile $ReportConfigFile -AsJob
-        }
+        
         if ($VSI_Target_NetScaler -ne "") {
             $monitoringNSJob = Start-NTNXNSMonitoring -OutputFolder $OutputFolder -DurationInMinutes $VSI_Target_DurationInMinutes -RampupInMinutes $VSI_Target_RampupInMinutes -Path $Scriptroot -AsJob
+        }
+        Start-Sleep -Seconds 60
+        if ($VSI_Target_Files -ne "") {
+            $monitoringFilesJob = Start-NTNXFilesMonitoring -OutputFolder $OutputFolder -DurationInMinutes $VSI_Target_DurationInMinutes -RampupInMinutes $VSI_Target_RampupInMinutes -Path $Scriptroot -NTNXCounterConfigurationFile $ReportConfigFile -AsJob
         }
         # Get-NTNXHostinfo -NTNXHost $VSI_Target_NTNXHost -OutputFolder $OutputFolder
         # Wait for test to finish
