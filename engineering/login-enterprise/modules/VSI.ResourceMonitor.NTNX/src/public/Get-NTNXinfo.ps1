@@ -42,7 +42,7 @@ function Get-NTNXinfo {
     $Config.Testinfra.HostCVMip = $Hostitem.service_vmexternal_ip
     $Config.Testinfra.NodeSerial = $Hostitem.serial
     $Config.Testinfra.BlockSerial = $Hostitem.block_serial
-    if ($Hostitem.bios_version -eq "") {
+    if ($Hostitem.bios_version -eq $null) {
         $Config.Testinfra.BIOS = "Unknown"
     } Else {
         $Config.Testinfra.BIOS = $Hostitem.bios_version
