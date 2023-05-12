@@ -56,7 +56,7 @@ function Start-NTNXInfluxUpload {
     $CurrentMonth = get-date -Format MM
 
     foreach($File in $Files){
-        if(($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*")){
+        if(($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*")){
             $TopLevelTag = $File.BaseName
             $Tag = ("Run=$($Run)," +
                     "DataType=$($TopLevelTag)," +
@@ -74,6 +74,7 @@ function Start-NTNXInfluxUpload {
                     "NumCPUs=$($JSON.Target.ImagesToTest.NumCpus)," +
                     "NumCores=$($JSON.Target.ImagesToTest.NumCores)," +
                     "MemoryGB=$($JSON.Target.ImagesToTest.MemoryGB)," +
+                    "HostGPUs=$($JSON.TestInfra.HostGPUs)," +
                     "SecureBoot=$($JSON.Target.ImagesToTest.SecureBoot)," +
                     "vTPM=$($JSON.Target.ImagesToTest.vTPM)," +
                     "CredentialGuard=$($JSON.Target.ImagesToTest.CredentialGuard)," +

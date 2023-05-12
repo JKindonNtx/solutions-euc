@@ -48,7 +48,11 @@ function Get-NTNXinfo {
         $Config.Testinfra.BIOS = $Hostitem.bios_version
     }
     $Config.Testinfra.FullVersion = $Clusterinfo.full_version
-    $Config.Testinfra.HostGPUs = $Hostitem.host_gpus
+    if ($Hostitem.host_gpus -eq $null) {
+        $Config.Testinfra.HostGPUs = "None"
+    } Else {
+        $Config.Testinfra.HostGPUs = $Hostitem.host_gpus
+    }
     $Config.Testinfra.GPUDriver = $Hostitem.gpu_driver_version
     if ($($Config.Target.NodeCount) -eq 1) {
         $Config.Testinfra.SingleNodeTest = 'true'

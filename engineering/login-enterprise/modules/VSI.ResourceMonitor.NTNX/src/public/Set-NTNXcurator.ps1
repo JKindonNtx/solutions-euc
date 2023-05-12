@@ -1,10 +1,10 @@
-function Set-NTNXHostAffinity {
+function Set-NTNXcurator {
     <#
         .SYNOPSIS
-        Set affinity for the VMs.
+        start or stop curator on the cluster.
     
         .DESCRIPTION
-        This function will set the affinity on the Virtual Machines.
+        This function will start or stop curator on the cluster.
         
         .PARAMETER ClusterIP
         The Nutanix Cluster IP
@@ -12,14 +12,11 @@ function Set-NTNXHostAffinity {
         .PARAMETER CVMSSHPassword
         The user name to use for connection
     
-        .PARAMETER VMname
-        The VMname
-
-        .PARAMETER hosts
-        The hosts for the affinity
+        .PARAMETER action
+        Start or Stop
     
         .EXAMPLE
-        PS> Set-NutanixVMaff -ClusterIP "10.10.10.10" -CVMSSHPassword "password" -VMname "VM" -Hosts "10.56.69.1,10.56.69.2"
+        PS> Set-NTNXcurator -ClusterIP "10.10.10.10" -CVMSSHPassword "password" -action "stop"
     
         .INPUTS
         This function will take inputs via pipeline by property
@@ -28,7 +25,7 @@ function Set-NTNXHostAffinity {
         Task variable containing the output of the Invoke-RestMethod command run
     
         .LINK
-        https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/help/Set-NutanixVMaff.md
+        https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/help/Set-NTNXcurator.md
     
         .NOTES
         Author          Version         Date            Detail
@@ -60,20 +57,13 @@ function Set-NTNXHostAffinity {
                 ValueFromPipeline=$true,
                 ValueFromPipelineByPropertyName=$true
                 )]
-            [system.string[]]$VMname,
-    
-            [Parameter(
-                Mandatory=$true, 
-                ValueFromPipeline=$true,
-                ValueFromPipelineByPropertyName=$true
-                )]
-            [system.string[]]$Hosts
+            [system.string[]]$Action
         )
     
         Begin
         {
             Set-StrictMode -Version Latest
-            Write-Host (Get-Date)": Starting $($PSCmdlet.MyInvocation.MyCommand.Name)"
+            Write-Log "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)"
         } # Begin
     
         Process
@@ -85,19 +75,33 @@ function Set-NTNXHostAffinity {
                 Install-Module -Name Posh-SSH -RequiredVersion 2.3.0 -Confirm:$false -Force
         
             }
-            # Build the command and set the affinity using SSH
-            $VMs = $VMname -Replace '#','?'
-            $command = "~/bin/acli vm.affinity_set $VMs host_list=$($hosts)"
+            # Build the command and set the curator status using SSH
+            if ($Action -eq "stop"){
+                $command = "allssh genesis stop curator"
+            } else {
+                $command = "allssh genesis restart"
+            }
             $password = ConvertTo-SecureString "$CVMsshpassword" -AsPlainText -Force
             $HostCredential = New-Object System.Management.Automation.PSCredential ("nutanix", $password)
             $session = New-SSHSession -ComputerName $ClusterIP -Credential $HostCredential -AcceptKey -KeepAliveInterval 5
-            $SSHOutput = (Invoke-SSHCommand -Index $session.SessionId -Command $command -Timeout 7200).output
+            $sshStream = New-SSHShellStream -SessionId $session.SessionId
+            $sshStream.WriteLine($command)
+            Start-sleep -Seconds 10
+            $JobFinished = $false
+            while($JobFinished -eq $false){
+                $JobOutput = $sshStream.Read()
+                if($JobOutput -like "*nutanix@*"){
+                    $JobFinished = $true
+                } 
+                Start-sleep -Seconds 10
+            }
+
             Remove-SSHSession -Name $Session | Out-Null
         } # Process
         
         End
         {
-            Write-Host (Get-Date)": Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" 
+            Write-Log "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" 
         } # End
     
     } # Set-NutanixAffinity

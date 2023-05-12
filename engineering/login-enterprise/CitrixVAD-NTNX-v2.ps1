@@ -272,7 +272,9 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         Write-Host (Get-Date) "Waiting for $VSI_Target_MinutesToWaitAfterIdleVMs minutes before starting test"
         Start-sleep -Seconds $($VSI_Target_MinutesToWaitAfterIdleVMs * 60)
-        
+        # Stop Curator
+        Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "stop"
+
         # Start the test
         Start-LETest -testId $testId -Comment "$FolderName-$VSI_Target_Comment"
         $TestRun = Get-LETestRuns -testId $testId | Select-Object -Last 1
@@ -295,6 +297,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if ($VSI_Target_NetScaler -ne "") {
             $monitoringNSJob | Wait-Job | Remove-Job
         }
+        # Start curator
+        Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "start"
 
         #Write config to OutputFolder
         $NTNXInfra.Testinfra.VMCPUCount = [Int]$VSI_Target_NumCPUs * [Int]$VSI_Target_NumCores

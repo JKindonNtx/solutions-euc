@@ -101,7 +101,7 @@ Function Enable-VSICTXDesktopPool {
             Write-Log "SSH module not found, installing missing module."
             Install-Module -Name Posh-SSH -RequiredVersion 2.3.0 -Confirm:$false -Force -Scope CurrentUser
         }
-        # Build the command and add the vTPM using SSH
+        # Build the command and set affinity using SSH
         $VMs = $VMnameprefix -Replace '#','?'
         $command = "~/bin/acli vm.affinity_set $VMs host_list=$($hosts)"
         $password = ConvertTo-SecureString "$CVMsshpassword" -AsPlainText -Force

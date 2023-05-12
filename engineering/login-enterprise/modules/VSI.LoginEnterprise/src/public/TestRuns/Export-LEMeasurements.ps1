@@ -113,7 +113,7 @@ function Export-LEMeasurements {
         }
         $AppExecutions | Export-Csv -Path "$($Folder)\Raw AppExecutions.csv" -NoTypeInformation
 
-        $EUXMeasurements = $VSIresults = Get-LEtestrunResults -testRunId $testRun.Id -path "/eux-results"
+        $EUXMeasurements = Get-LEtestrunResults -testRunId $testRun.Id -path "/eux-results"
         $EUXCollection = @()
         foreach ($Measurement in $EUXMeasurements) {
             $EUXscore = New-Object PSObject
@@ -122,6 +122,20 @@ function Export-LEMeasurements {
             $EUXCollection += $EUXscore
         }
         $EUXCollection | Export-Csv -Path "$($Folder)\EUX-score.csv" -NoTypeInformation
+
+        ## EUX timer results
+        $EUXtimerMeasurements = Get-LEtestrunResults -testRunId $testRun.Id -path "/eux-timer-results?euxTimer=diskMyDocs&euxTimer=diskMyDocsLatency&euxTimer=diskAppData&euxTimer=diskAppDataLatency&euxTimer=cpuSpeed&euxTimer=highCompression&euxTimer=fastCompression&euxTimer=appSpeed&euxTimer=appSpeedUserInput"
+        $EUXtimerCollection = @()
+        foreach ($timerMeasurement in $EUXtimerMeasurements) {
+            $EUXtimerscore = New-Object PSObject
+            $EUXtimerscore | Add-Member -MemberType NoteProperty -Name "TimeStamp" -Value $timerMeasurement.timestamp
+            $EUXtimerscore | Add-Member -MemberType NoteProperty -Name "EUXTimer" -Value $timerMeasurement.euxTimer
+            $EUXtimerscore | Add-Member -MemberType NoteProperty -Name "Score" -Value $timerMeasurement.score
+            $EUXtimerCollection += $EUXtimerscore
+        }
+        $EUXtimerCollection | Export-Csv -Path "$($Folder)\EUX-timer-score.csv" -NoTypeInformation
+
+        
 
         $VSIresults = Get-LEtestrunResults -testRunId $testRun.Id
         $VSICollection = @()
@@ -140,7 +154,11 @@ function Export-LEMeasurements {
             $VSIresult | Add-Member -MemberType NoteProperty -Name "EUX score" -Value $result.euxScore.score
             $VSIresult | Add-Member -MemberType NoteProperty -Name "EUX version" -Value $result.euxScore.version
             $VSIresult | Add-Member -MemberType NoteProperty -Name "EUX state" -Value $result.euxScore.state
-            $VSIresult | Add-Member -MemberType NoteProperty -Name "vsiMax" -Value $result.vsiMax.maxSessions
+            if ($result.vsiMax.maxSessions -eq "") {
+                $VSIresult | Add-Member -MemberType NoteProperty -Name "vsiMax" -Value $result.loginCounts.totalCount
+            } Else {
+                $VSIresult | Add-Member -MemberType NoteProperty -Name "vsiMax" -Value $result.vsiMax.maxSessions
+            }
             $VSIresult | Add-Member -MemberType NoteProperty -Name "vsiMax version" -Value $result.vsiMax.version
             $VSIresult | Add-Member -MemberType NoteProperty -Name "vsiMax state" -Value $result.vsiMax.state
             $VSIresult | Add-Member -MemberType NoteProperty -Name "Comment" -Value $result.comment
