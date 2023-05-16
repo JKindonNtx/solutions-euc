@@ -30,6 +30,7 @@
 .PARAMETER CredPath
     Optional. Used if using the UseCustomCredentialFile parameter. Defines the location of the credential file. The default is "$Env:USERPROFILE\Documents\WindowsPowerShell\CustomCredentials"
 .PARAMETER ExcludeSourceClusterFromProcessing
+    Optional. By default the Source Cluster is also processed to ensure consistency of snapshots available to Citrix. This switch allows to the Source Cluster to be ignored incase the VM snaps have already been handled and snap naming consistency doesn't matter.
 .EXAMPLE
     .\ReplicateCitrixBaseVM.ps1 -SourceCluster 10.68.68.40 -pd "W10_Migration_Test" -BaseVM "JK-Test-030" -SnapshotID 353902
 .EXAMPLE
@@ -39,9 +40,8 @@
 .NOTES
     The script is built on the lowest common version of Nutanix PowerShell capability and doesn't use task validation checks etc available in new PowerShell cmdlets
     The script assumes the same username and password on all PE instances
-TODO
-- Add snaphost of master VM on the source cluster to ensure alignment of names - make this selectable?
-- Add accurate counts including source and interations over source
+To Do
+- Whatif Mode
 #>
 
 #region Params
@@ -358,6 +358,8 @@ function Get-CustomCredentials {
 # ============================================================================
 # Variables
 # ============================================================================
+$RunDate = Get-Date -Format "yyyy-MM-dd HH:mm:ss" # we want all snapshots across all clusters to have the same timestamp
+
 #endregion
 
 #Region Execute
@@ -369,7 +371,6 @@ StartIteration
 #------------------------------------------------------------
 # Import Nutanix PowerShell Modules
 #------------------------------------------------------------
-
 try {
     Write-Log -Message "[Nutanix PowerShell] Attempting to import Nutanix PowerShell Module" -Level Info
     & 'C:\Program Files (x86)\Nutanix Inc\NutanixCmdlets\powershell\import_modules\ImportModules.PS1' -ErrorAction Stop
@@ -502,7 +503,6 @@ Write-Log -Message "[Remote Sites] Remote Clusters to process: $($TotalRemoteClu
 $CurrentClusterCount = 1
 $TotalErrorCount = 0 # start the error count
 $TotalSuccessCount = 0 # start the succes count
-$RunDate = Get-Date -Format "yyyy-MM-dd HH:mm:ss" # we want all snapshots across all clusters to have the same timestamp
 
 #region process local cluster
 #------------------------------------------------------------
