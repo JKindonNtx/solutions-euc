@@ -475,7 +475,7 @@ if ($SnapshotID) {
 #------------------------------------------------------------
 # Find the remote sites
 #------------------------------------------------------------
-$RemoteSites = Get-NTNXRemoteSite -Server $SourceCluster | Where-Object {$_.name -eq ($ProtectionDomain).remoteSiteNames}
+$RemoteSites = Get-NTNXRemoteSite -Server $SourceCluster | Where-Object {$_.name -in ($ProtectionDomain).remoteSiteNames}
 
 if (!$RemoteSites) {
     Write-Log -Message "[Remote Sites] There are no Remote Sites defined for: $($pd) in the source Cluster: $($SourceCluster)" -Level Warn
