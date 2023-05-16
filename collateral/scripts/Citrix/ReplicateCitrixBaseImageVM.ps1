@@ -29,6 +29,7 @@
     Optional. Will call the Get-CustomCredentials function which keeps outputs and inputs a secure credential file base on Stephane Bourdeaud from Nutanix functions
 .PARAMETER CredPath
     Optional. Used if using the UseCustomCredentialFile parameter. Defines the location of the credential file. The default is "$Env:USERPROFILE\Documents\WindowsPowerShell\CustomCredentials"
+.PARAMETER ExcludeSourceClusterFromProcessing
 .EXAMPLE
     .\ReplicateCitrixBaseVM.ps1 -SourceCluster 10.68.68.40 -pd "W10_Migration_Test" -BaseVM "JK-Test-030" -SnapshotID 353902
 .EXAMPLE
@@ -38,6 +39,9 @@
 .NOTES
     The script is built on the lowest common version of Nutanix PowerShell capability and doesn't use task validation checks etc available in new PowerShell cmdlets
     The script assumes the same username and password on all PE instances
+TODO
+- Add snaphost of master VM on the source cluster to ensure alignment of names - make this selectable?
+- Add accurate counts including source and interations over source
 #>
 
 #region Params
@@ -76,7 +80,10 @@ Param(
     [switch]$UseCustomCredentialFile, # specifies that a credential file should be used
 
     [Parameter(Mandatory = $false)]
-    [String]$CredPath = "$Env:USERPROFILE\Documents\WindowsPowerShell\CustomCredentials" # Default path for custom credential file
+    [String]$CredPath = "$Env:USERPROFILE\Documents\WindowsPowerShell\CustomCredentials", # Default path for custom credential file
+    
+    [Parameter(Mandatory = $false)]
+    [switch]$ExcludeSourceClusterFromProcessing # do not process the source cluster
 )
 #endregion
 
@@ -403,12 +410,12 @@ else {
 # Connect to the Source Cluster
 #------------------------------------------------------------
 try {
-    Write-Log -Message "[Cluster] Connecting to the source Cluster: $($SourceCluster)" -Level Info
+    Write-Log -Message "[Source Cluster] Connecting to the source Cluster: $($SourceCluster)" -Level Info
     Connect-NTNXCluster -Server $SourceCluster -UserName $PrismCredentials.Username -Password $PrismCredentials.Password -AcceptInvalidSSLCerts -ErrorAction Stop | Out-null
-    Write-Log -Message "[Cluster] Successfully connected to the source Cluser: $($SourceCluster)" -Level Info
+    Write-Log -Message "[Source Cluster] Successfully connected to the source Cluser: $($SourceCluster)" -Level Info
 }
 catch {
-    Write-Log -Message "[Cluster] Could not connect to the source Cluster: $($SourceCluster) " -Level Warn
+    Write-Log -Message "[Source Cluster] Could not connect to the source Cluster: $($SourceCluster) " -Level Warn
     Write-Log -Message $_ -Level Warn
     StopIteration
     Exit 1
@@ -486,8 +493,8 @@ if (!$RemoteSites) {
 # get a list of the IP addresses
 $RemoteSiteIPS = ($remoteSites.remoteIpPorts).Keys
 
-$TotalClusterCount = $RemoteSiteIPS.Count
-Write-Log -Message "[Remote Sites] Remote Clusters to process: $($TotalClusterCount)" -Level Info
+$TotalRemoteClusterCount = $RemoteSiteIPS.Count
+Write-Log -Message "[Remote Sites] Remote Clusters to process: $($TotalRemoteClusterCount)" -Level Info
 
 #------------------------------------------------------------
 # Initialise counts and variables
@@ -497,8 +504,130 @@ $TotalErrorCount = 0 # start the error count
 $TotalSuccessCount = 0 # start the succes count
 $RunDate = Get-Date -Format "yyyy-MM-dd HH:mm:ss" # we want all snapshots across all clusters to have the same timestamp
 
+#region process local cluster
 #------------------------------------------------------------
-# Process each Cluster
+# Process the local cluster
+#------------------------------------------------------------
+if (!$ExcludeSourceClusterFromProcessing) {
+    Write-Log -Message "[Source Cluster: Start] Processing source Cluster: $($SourceCluster)" -Level Info
+    #------------------------------------------------------------
+    # Find the local VM
+    #------------------------------------------------------------
+    $vm = Get-NTNXVM -SearchString ($BaseVM) -Server $SourceCluster
+    if (!$vm) {
+        #couldn't find the VM
+        Write-Log -Message "[VM] Could not find the VM: $($BaseVM) on the source Cluster: $($SourceCluster)" -Level Warn
+        $IterationErrorCount += 1
+        $TotalErrorCount += 1
+    }
+
+    # handle multiple vm match
+    if ($vm.count -gt 1) {
+        Write-Log -Message "[VM] There are $($vm.Count) vm entities found. Doing a direct name match to identify VM" -Level Info
+        $vm = $vm | where-Object { $_.vmName -eq $BaseVM }
+    }
+
+    #------------------------------------------------------------
+    # Take a snapshot
+    #------------------------------------------------------------
+    $IterationErrorCount = 0 # start the iteration error count
+    # start count for snapshots (how many currently exist)
+    Write-Log -Message "[VM Snapshot] There are $((Get-NTNXSnapshot -Server $SourceCluster | Where-Object {$_.snapshotName -like ($VMPrefix + "$BaseVM*")}).Count) Snapshots matching: $($VMPrefix + $BaseVM) on the source Cluster: $($SourceCluster)" -Level Info
+
+    if ($vm) {
+        # create snapshot config
+        Write-Log -Message "[VM Snapshot] Creating Snapshot spec and creating Snapshot on the source Cluster: $($SourceCluster)" -Level Info
+        $snapshotName = $VMPrefix + $vm.vmName + "_" + $RunDate
+        $newSnapshot = New-NTNXObject -Name SnapshotSpecDTO
+        $newSnapshot.vmuuid = $vm.uuid
+        $newSnapshot.snapshotname = $snapshotName
+        # take the snapshot
+        try {
+            New-NTNXSnapshot -SnapshotSpecs $newSnapshot -Server $SourceCluster -ErrorAction Stop | Out-Null
+            Write-Log -Message "[VM Snapshot] Waiting $($SleepTime) seconds for Snapshot creation of: $($snapshotName) to finalise on the source Cluster: $($SourceCluster)" -Level Info
+            Start-Sleep $SleepTime
+            Write-Log -Message "[VM Snapshot] Sucessfully created Snapshot: $($snapshotName) on the source Cluster: $($SourceCluster)" -Level Info
+        }
+        catch {
+            Write-Log -Message "[VM Snapshot] Failed to create Snapshot: $($snapshotName) on the source Cluster: $($SourceCluster) " -Level Warn
+            Write-Log -Message $_ -level Warn
+            $IterationErrorCount += 1
+            $TotalErrorCount += 1
+        }
+    }
+
+    # end count for snapshots (how many currently exist)
+    Write-Log -Message "[VM Snapshot] There are now: $((Get-NTNXSnapshot -Server $SourceCluster | Where-Object {$_.snapshotName -like ($VMPrefix + "$BaseVM*")}).Count) Snapshots matching $($VMPrefix + $BaseVM) on the source cluster $($SourceCluster)" -Level Info
+
+    #------------------------------------------------------------
+    # Handle the deletion of snapshot retention if set
+    #------------------------------------------------------------
+    if ($ImageSnapsToRetain) {
+        Write-Log -Message "[VM Snapshot] Removing Snapshots that do not meet the retention value: $($ImageSnapsToRetain) on the source Cluster: $($SourceCluster)" -Level Info
+
+        $ImageSnapsOnSource = Get-NTNXSnapshot -Server $SourceCluster | Where-Object { $_.snapshotName -like ($VMPrefix + "$BaseVM*") }
+        $ImageSnapsOnSourceToRetain = $ImageSnapsOnSource | Sort-Object -Property createdTime -Descending | Select-Object -First $ImageSnapsToRetain
+
+        $ImageSnapsOnSourceToDelete = @() #Initialise the delete array
+        foreach ($snap in $ImageSnapsOnSource) {
+            # loop through each snapshot and add to delete array if not in the ImageSnapsOnTargetToRetain array
+            if ($snap -notin $ImageSnapsOnSourceToRetain) {
+                Write-Log -Message "[VM Snapshot] Adding Snapshot: $($snap.snapshotName) to the delete list" -Level Info
+                $ImageSnapsOnSourceToDelete += $snap
+            }
+        }
+
+        $SnapShotsDeletedOnSource = 0
+        $SnapShotsFailedToDeleteOnSource = 0
+        if ($ImageSnapsOnSourceToDelete.Count -gt 0) {
+            Write-Log -Message "[VM Snapshot] There are $($ImageSnapsOnSourceToDelete.Count) Snapshots to delete based on a retention value of $($ImageSnapsToRetain) on the source Cluster: $($SourceCluster)" -Level Info
+            foreach ($Snap in $ImageSnapsOnSourceToDelete) {
+                # process the snapshot deletion
+                Write-Log -Message "[VM Snapshot] Processing deletion of Snapshot: $($snap.snapshotName) on the source Cluster: $($SourceCluster)" -Level Info
+                try {
+                    Remove-NTNXSnapshot -Uuid $snap.uuid -Server $SourceCluster -ErrorAction Stop | Out-Null
+                    Write-Log -Message "[VM Snapshot] Successfully deleted Snapshot: $($snap.snapshotName) on the source Cluster: $($SourceCluster)" -Level Info
+                    $SnapShotsDeletedOnSource += 1
+                }
+                catch {
+                    Write-Log -Message "[VM Snapshot] Failed to delete vm Snapshot: $($snap.snapshotName) on the source Cluster: $($SourceCluster)" -Level Warn
+                    Write-Log -Message $_ -level Warn
+                    $SnapShotsFailedToDeleteOnSource += 1
+                    Break
+                }
+            }
+        }
+        else {
+            Write-Log -Message "[VM Snapshot] There are no Snapshots to delete based on the retention value of: $($ImageSnapsToRetain) on the source Cluster: $($SourceCluster)" -Level Info
+        }
+
+        Write-Log "[Data] Successfully deleted: $($SnapShotsDeletedOnSource) Snapshots on the source Cluster: $($SourceCluster)" -Level Info
+        if ($SnapShotsFailedToDeleteOnSource -gt 0) {
+            Write-Log -Message "[Data] Encountered $($SnapShotsFailedToDeleteOnSource.Count) VM Snapshot deletion errors. Please review log file $($LogPath) for failures" -Level Info
+        }
+    }
+    else {
+        Write-Log -Message "[VM Snapshot] Cleanup (ImageSnapsToRetain) not specified. Nothing to process." -Level Info
+    }
+
+    #------------------------------------------------------------
+    # Update the processed cluster counts
+    #------------------------------------------------------------
+    if ($IterationErrorCount -eq 0) {
+        $ProcessedSourceCluster = $True #identify that we procesed the source cluster
+    }
+
+    Write-Log -Message "[Source Cluster: Complete] Finished processing source Cluster: $($SourceCluster)" -Level Info
+}
+else {
+    Write-Log -Message "[Source Cluster] Source cluster: $($SourceCluster) is excluded from processing" -Level Info
+}
+
+#endregion process local cluster
+
+#region process remote clusters
+#------------------------------------------------------------
+# Process each Target Cluster
 #------------------------------------------------------------
 foreach ($Site in $RemoteSiteIPS){
     $IterationErrorCount = 0 # start the iteration error count
@@ -506,14 +635,14 @@ foreach ($Site in $RemoteSiteIPS){
     #------------------------------------------------------------
     # Process the cluster
     #------------------------------------------------------------
-    Write-Log -Message "[Cluster] Processing Cluster $($CurrentClusterCount) of $($TotalClusterCount)" -Level Info
+    Write-Log -Message "[Target Cluster: Start] Processing Cluster $($CurrentClusterCount) of $($TotalRemoteClusterCount)" -Level Info
     $TargetCluster = $Site
-    Write-Log -Message "[Cluster] Connecting to the target Cluster: $($TargetCluster)" -Level Info
+    Write-Log -Message "[Target Cluster] Connecting to the target Cluster: $($TargetCluster)" -Level Info
     try {
         Connect-NTNXCluster -Server $TargetCluster -UserName $PrismCredentials.Username -Password $PrismCredentials.Password -AcceptInvalidSSLCerts -ErrorAction Stop | Out-Null
     }
     catch {
-        Write-Log -Message "[Cluster] Could not connect to the target Cluster: $($TargetCluster) " -Level Warn
+        Write-Log -Message "[Target Cluster] Could not connect to the target Cluster: $($TargetCluster) " -Level Warn
         Write-Log -Message $_ -Level Warn
         $IterationErrorCount += 1
         $TotalErrorCount += 1
@@ -680,10 +809,10 @@ foreach ($Site in $RemoteSiteIPS){
             }
         }
 
-        Write-Log -Message "[VM Snapshot] There are $($ImageSnapsOnTargetToDelete.Count) Snapshots to delete based on a retention value of $($ImageSnapsToRetain) on the target Cluster: $($TargetCluster)" -Level Info
         $SnapShotsDeletedOnTarget = 0
         $SnapShotsFailedToDeleteOnTarget = 0
         if ($ImageSnapsOnTargetToDelete.Count -gt 0) {
+            Write-Log -Message "[VM Snapshot] There are $($ImageSnapsOnTargetToDelete.Count) Snapshots to delete based on a retention value of $($ImageSnapsToRetain) on the target Cluster: $($TargetCluster)" -Level Info
             foreach ($Snap in $ImageSnapsOnTargetToDelete) {
                 # process the snapshot deletion
                 Write-Log -Message "[VM Snapshot] Processing deletion of Snapshot: $($snap.snapshotName) on the target Cluster: $($TargetCluster)" -Level Info
@@ -716,7 +845,7 @@ foreach ($Site in $RemoteSiteIPS){
     #------------------------------------------------------------
     # Disconnect from the cluster
     #------------------------------------------------------------
-    Write-Log -Message "[Cluster] Disconnecting from the target Cluster: $($TargetCluster)" -Level Info
+    Write-Log -Message "[Target Cluster] Disconnecting from the target Cluster: $($TargetCluster)" -Level Info
     Disconnect-NTNXCluster -Server $TargetCluster
 
     #------------------------------------------------------------
@@ -726,9 +855,17 @@ foreach ($Site in $RemoteSiteIPS){
         $TotalSuccessCount += 1
     }
     $CurrentClusterCount += 1
+
+    Write-Log -Message "[Target Cluster: Complete] Finished processing target Cluster: $($TargetCluster)" -Level Info
+}
+#endregion process remote clusters
+
+Write-Log -Message "[Data] Successfully processed $($TotalSuccessCount) remote Clusters" -Level Info
+if ($ProcessedSourceCluster) {
+    $TotalSuccessCount += 1
+    Write-Log -Message "[Data] Successfully processed $($TotalSuccessCount) total Clusters" -Level Info
 }
 
-Write-Log -Message "[Data] Successfully processed $($TotalSuccessCount) Clusters" -Level Info
 Write-Log -Message "[Data] Encountered $($TotalErrorCount) errors. Please review log file $($LogPath) for failures" -Level Info
 
 StopIteration
