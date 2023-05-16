@@ -5,8 +5,8 @@
     The script will query a single Source Cluster and Protection Domain of which your Citrix Base Image should be a member of. 
     It will figure out all target clusters based on protection Domain remote sites and attempt to restore, snapshot, and delete the protected VM instance leaving a Citrix ready snapshot for MCS provisioning.
     The script will handle deletion of existing snapshots based on a retention period (effectively a cleanup mode). This is a destructive operation.
-    The script assumes that your Protection Domain configurations are setup correctly. It does not alter, moddify, create or delete any form of PD.
-    The script by default attempts to use the latest snapshot on the PD. It compares both source and target to ensure these are inline. You can overrid ethis behaviour with SnapShotID parameter.
+    The script assumes that your Protection Domain configurations are setup correctly. It does not alter, modify, create or delete any form of PD.
+    The script by default attempts to use the latest snapshot on the PD. It compares both source and target to ensure these are inline. You can override this behaviour with SnapShotID parameter.
 .PARAMETER LogPath
     Logpath output for all operations
 .PARAMETER LogRollover
