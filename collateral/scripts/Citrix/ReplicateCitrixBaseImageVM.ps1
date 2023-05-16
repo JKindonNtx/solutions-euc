@@ -660,7 +660,7 @@ foreach ($Site in $RemoteSiteIPS){
     }
 
     # end count for snapshots (how many currently exist)
-    Write-Log -Message "[VM Snapshot] There are now: $((Get-NTNXSnapshot -Server $TargetCluster | Where-Object {$_.snapshotName -like ($VMPrefix + "$BaseVM*")}).Count) Snapshots matching $($VMPrefix + $BaseVM) on cluster $($TargetCluster)" -Level Info
+    Write-Log -Message "[VM Snapshot] There are now: $((Get-NTNXSnapshot -Server $TargetCluster | Where-Object {$_.snapshotName -like ($VMPrefix + "$BaseVM*")}).Count) Snapshots matching $($VMPrefix + $BaseVM) on the target cluster $($TargetCluster)" -Level Info
     
     #------------------------------------------------------------
     # Handle the deletion of snapshot retention if set
@@ -704,7 +704,7 @@ foreach ($Site in $RemoteSiteIPS){
             Write-Log -Message "[VM Snapshot] There are no Snapshots to delete based on the retention value of: $($ImageSnapsToRetain) on the target Cluster: $($TargetCluster)" -Level Info
         }
 
-        Write-Log "[Data] Sucessfully deleted: $($SnapShotsDeletedOnTarget) Snapshots on the target Cluster: $($TargetCluster)" -Level Info
+        Write-Log "[Data] Successfully deleted: $($SnapShotsDeletedOnTarget) Snapshots on the target Cluster: $($TargetCluster)" -Level Info
         if ($SnapShotsFailedToDeleteOnTarget -gt 0) {
             Write-Log -Message "[Data] Encountered $($SnapShotsFailedToDeleteOnTarget.Count) VM Snapshot deletion errors. Please review log file $($LogPath) for failures" -Level Info
         }
