@@ -31,7 +31,7 @@ function Get-NTNXinfo {
         $Config.Testinfra.HypervisorBrand = "Nutanix"
         $Config.Testinfra.HypervisorType = "AHV"
     }
-    $Config.Testinfra.HypervisorVersion = $Hostitem.hypervisor_full_name -Replace ("Nutanix ","") -Replace ("VMware ESXi ","")
+    $Config.Testinfra.HypervisorVersion = $Hostitem.hypervisor_full_name -Replace ("Nutanix ","") -Replace ("VMware ESXi ","") -Replace ("  ","")
     $Config.Testinfra.CPUSocketCount = $Hostitem.num_cpu_sockets
     $Config.Testinfra.CPUcores = $Hostitem.num_cpu_cores
     $Config.Testinfra.CPUThreadCount = $Hostitem.num_cpu_threads

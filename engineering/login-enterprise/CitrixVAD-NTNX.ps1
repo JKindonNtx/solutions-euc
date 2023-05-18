@@ -194,6 +194,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             -EntitledGroup $VSI_Users_BaseName `
             -SkipImagePrep $VSI_Target_SkipImagePrep `
             -FunctionalLevel $VSI_Target_FunctionalLevel `
+            -CloneType $VSI_Target_CloneType `
             -DDC $VSI_Target_DDC
 
         $NTNXInfra.Testinfra.MaxAbsoluteActiveActions = $CreatePool.MaxAbsoluteActiveActions
@@ -216,6 +217,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             -ClusterIP $NTNXInfra.Target.CVM `
             -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword `
             -VMnameprefix $NTNXInfra.Target.NamingPattern `
+            -CloneType $VSI_Target_CloneType `
             -Hosts $NTNXInfra.Testinfra.Hostip
 
         $NTNXInfra.Testinfra.BootStart = $Boot.bootstart

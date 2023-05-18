@@ -18,6 +18,7 @@ function Set-VSICTXDesktopPoolNTNX {
         $EntitledGroup,
         [boolean]$SkipImagePrep,
         $FunctionalLevel,
+        $CloneType,
         $DDC
     )
     $DesktopKind = "Shared"
@@ -29,17 +30,21 @@ function Set-VSICTXDesktopPoolNTNX {
     Write-Log "Checking if desktoppool $DesktopPoolName exists..."
     $DG = Get-BrokerDesktopGroup -AdminAddress $DDC -Name $DesktopPoolName -erroraction SilentlyContinue
     if ($null -ne $DG) {
-        Write-Log "Checking the catalog to see if image configuration is same as requested"
-        
-        $Catalog = Get-BrokerCatalog -AdminAddress $DDC -Name $DesktopPoolName -ErrorAction SilentlyContinue
-        if ($null -ne $Catalog) {
-            $ProvisioningScheme = Get-ProvScheme -AdminAddress $DDC -ProvisioningSchemeUid $Catalog.ProvisioningSchemeId
-            if ($ProvisioningScheme.MasterImageVM -eq $ParentVM) {
-                Write-Log "Catalog $DesktopPoolName already configured to use $ParentVM"
-                $CreatePool = $false
-            }
-            else {
-                Write-Log "Catalog $DesktopPoolName is currently configured to use: $($ProvisioningScheme.MasterImageVM), requested: $ParentVM, recreating"
+        if ($CloneType -eq "PVS"){
+            $CreatePool = $false
+        }
+        if ($CloneType -eq "MCS"){
+            Write-Log "Checking the catalog to see if image configuration is same as requested"
+            $Catalog = Get-BrokerCatalog -AdminAddress $DDC -Name $DesktopPoolName -ErrorAction SilentlyContinue
+            if ($null -ne $Catalog) {
+                $ProvisioningScheme = Get-ProvScheme -AdminAddress $DDC -ProvisioningSchemeUid $Catalog.ProvisioningSchemeId
+                if ($ProvisioningScheme.MasterImageVM -eq $ParentVM) {
+                    Write-Log "Catalog $DesktopPoolName already configured to use $ParentVM"
+                    $CreatePool = $false
+                }
+                else {
+                    Write-Log "Catalog $DesktopPoolName is currently configured to use: $($ProvisioningScheme.MasterImageVM), requested: $ParentVM, recreating"
+                }
             }
         }
         else {
@@ -47,7 +52,7 @@ function Set-VSICTXDesktopPoolNTNX {
         }
     }
     if ($Force) { Write-Log "Force specified, removing existing configuration and recreating..." }
-    if ($CreatePool -eq $true -or $Force) {
+    if (($CreatePool -eq $true -or $Force) -And ($CloneType -eq "MCS")) {
         
         if ($null -ne $DG) {
             Write-Log "Removing existing desktopgroup $DesktopPoolName"
@@ -156,8 +161,10 @@ function Set-VSICTXDesktopPoolNTNX {
             -ProvisioningSchemeId $Task.ProvisioningSchemeUid `
             -ZoneUid $Zone.Uid
         
+    }
+    if ($CreatePool -eq $true -or $Force) {
         Write-Log "Creating desktopgroup $DesktopPoolName"
-        $DG = New-BrokerDesktopGroup -AdminAddress $DDC -DeliveryType DesktopsOnly -DesktopKind $DesktopKind -Description "Created by LoginVSI" -ColorDepth TwentyFourBit -Name $DesktopPoolName -PublishedName $DesktopPoolName -SessionSupport $SessionsSupport -MachineLogonType ActiveDirectory -ShutdownDesktopsAfterUse $true -ErrorAction Stop
+        $DG = New-BrokerDesktopGroup -AdminAddress $DDC -DeliveryType DesktopsOnly -DesktopKind $DesktopKind -Description "Created by EUC Performance Engineering" -ColorDepth TwentyFourBit -Name $DesktopPoolName -PublishedName $DesktopPoolName -SessionSupport $SessionsSupport -MachineLogonType ActiveDirectory -ShutdownDesktopsAfterUse $true -ErrorAction Stop
         Start-Sleep -Seconds 30
     }
 

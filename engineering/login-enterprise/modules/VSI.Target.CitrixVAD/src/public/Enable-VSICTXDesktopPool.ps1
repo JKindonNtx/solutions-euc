@@ -12,6 +12,7 @@ Function Enable-VSICTXDesktopPool {
         $ClusterIP,
         $CVMSSHPassword,
         $VMnameprefix,
+        $CloneType, `
         $Hosts
     )
 
@@ -46,8 +47,13 @@ Function Enable-VSICTXDesktopPool {
     Write-Log "All VMs are down."
 
     # End Power off VMs
-
-    $ExistingVMCount = (Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -MaxRecordCount 2500 | Measure-Object).Count
+    if ($CloneType -eq "MCS"){
+        $ExistingVMCount = (Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -MaxRecordCount 2500 | Measure-Object).Count
+    } else {
+        $ExistingVMCount = $NumberOfVMs
+    }
+    #
+    
     $NumberOfVMsToProvision = $NumberOfVMs - $ExistingVMCount
     Write-Log "Already $ExistingVMCount VM(s) in $DesktopPoolName"
     if ($NumberOfVMsToProvision -gt 0) {
@@ -87,10 +93,13 @@ Function Enable-VSICTXDesktopPool {
             $VMName = $VM.VMName
             Write-Log -Update "Adding vm $VMName ($count of $NumberOfVMsToProvision) to Catalog and DesktopPool              "            
             Lock-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -Tag "Brokered" -VMID @($VM.VMId) -ErrorAction Stop
-            New-BrokerMachine -AdminAddress $DDC -Cataloguid $Uid -MachineName $VM.ADAccountSid -ErrorAction Stop | Add-BrokerMachine -DesktopGroup $DesktopPoolName -ErrorAction Stop            
-            #New-BrokerMachine -Cataloguid $Uid -MachineName "LGNV\az-henk006$" -ErrorAction Stop | Add-BrokerMachine -DesktopGroup $DesktopPoolName -ErrorAction Stop
+            New-BrokerMachine -AdminAddress $DDC -Cataloguid $Uid -MachineName $VM.ADAccountSid -ErrorAction Stop | Add-BrokerMachine -DesktopGroup $DesktopPoolName -ErrorAction Stop
         }
         Write-Log ""
+    }
+    if ($CloneType -eq "PVS"){
+        # add VMs from PVS catalog to delivery group
+        Get-BrokerMachine -Filter {CatalogName -eq $DesktopPoolName -and DesktopGroupName -eq $null} -MaxRecordCount 2500 | Select-Object -Property MachineName | Add-BrokerMachine -DesktopGroup $DesktopPoolName
     } 
     # Set affinity to hosts
     Write-Log "Hypervisortype = $HypervisorType and Affinity is set to $Affinity"
