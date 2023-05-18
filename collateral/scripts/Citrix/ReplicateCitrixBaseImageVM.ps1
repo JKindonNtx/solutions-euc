@@ -5,7 +5,7 @@
     The script will query a single Source Cluster and Protection Domain of which your Citrix Base Image should be a member of. 
     It will figure out all target clusters based on protection Domain remote sites and attempt to restore, snapshot, and delete the protected VM instance leaving a Citrix ready snapshot for MCS provisioning.
     The script will handle deletion of existing snapshots based on a retention period (effectively a cleanup mode). This is a destructive operation.
-    The script assumes that your Protection Domain configurations are setup correctly. It does not alter, modify, create or delete any form of PD.
+    The script assumes that your Protection Domain configurations are setup correctly. It does not alter, modify, create or delete any form of PD outside of triggering an out of band replication
     The script by default attempts to use the latest snapshot on the PD. It compares both source and target to ensure these are inline. You can override this behaviour with SnapShotID parameter.
 .PARAMETER LogPath
     Logpath output for all operations
@@ -31,17 +31,47 @@
     Optional. Used if using the UseCustomCredentialFile parameter. Defines the location of the credential file. The default is "$Env:USERPROFILE\Documents\WindowsPowerShell\CustomCredentials"
 .PARAMETER ExcludeSourceClusterFromProcessing
     Optional. By default the Source Cluster is also processed to ensure consistency of snapshots available to Citrix. This switch allows to the Source Cluster to be ignored incase the VM snaps have already been handled and snap naming consistency doesn't matter.
+.PARAMETER TriggerPDReplication
+    Optional. Will trigger an out of band replication for the Protection Domain and query the PD events for success. Snapshot will expire after 1 hour (3600 seconds)
+.PARAMETER MaxReplicationSuccessQueryAttempts
+    Optional. An advanced parameter to alter the number of successful PD query events. Defaults to 10. Time between those queries is an advanced variable in the script which you should be careful with (10 seconds).
 .EXAMPLE
     .\ReplicateCitrixBaseVM.ps1 -SourceCluster 10.68.68.40 -pd "W10_Migration_Test" -BaseVM "JK-Test-030" -SnapshotID 353902
+    This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, and attempt to use the specified Protection Domain snapshotID for all operations. 
+    Credentials will be prompted for.
 .EXAMPLE
     .\ReplicateCitrixBaseVM.ps1 -SourceCluster 10.68.68.40 -pd "W10_Migration_Test" -BaseVM "JK-Test-030" -ImageSnapsToRetain 10
+    This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
+    Any target snapshots outside of the last 10 will be deleted on the target clusters.
+    Credentials will be prompted for.
 .EXAMPLE
     .\ReplicateCitrixBaseVM.ps1 -SourceCluster 10.68.68.40 -pd "W10_Migration_Test" -BaseVM "JK-Test-030" -ImageSnapsToRetain 10 -UseCustomCredentialFile
+    This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
+    Any target snapshots outside of the last 10 will be deleted on the target clusters.
+    A custom credential file will be created and consumed.
+.EXAMPLE
+    .\ReplicateCitrixBaseVM.ps1 -SourceCluster 10.68.68.40 -pd "W10_Migration_Test" -BaseVM "JK-Test-030" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication.
+    This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
+    Any target snapshots outside of the last 10 will be deleted on the target clusters.
+    A custom credential file will be created and consumed. 
+    a Protection Domain Out of Band replicate will be triggered.
+.EXAMPLE
+    .\ReplicateCitrixBaseVM.ps1 -SourceCluster 10.68.68.40 -pd "W10_Migration_Test" -BaseVM "JK-Test-030" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication -MaxReplicationSuccessQueryAttempts 20
+    This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
+    Any target snapshots outside of the last 10 will be deleted on the target clusters.
+    A custom credential file will be created and consumed. 
+    a Protection Domain Out of Band replicate will be triggered.
+    The Maximum number of attempts to query the Source PD for replication success will be doubled to 20.
+.EXAMPLE
+    .\ReplicateCitrixBaseVM.ps1 -SourceCluster 10.68.68.40 -pd "W10_Migration_Test" -BaseVM "JK-Test-030" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication -ExcludeSourceClusterFromProcessing
+    This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
+    Any target snapshots outside of the last 10 will be deleted on the target clusters   . 
+    A custom credential file will be created and consumed. 
+    a Protection Domain Out of Band replicate will be triggered.
+    The Source cluster will be exlcuded from having a snapshot created of the base VM.
 .NOTES
     The script is built on the lowest common version of Nutanix PowerShell capability and doesn't use task validation checks etc available in new PowerShell cmdlets
     The script assumes the same username and password on all PE instances
-To Do
-- Whatif Mode
 #>
 
 #region Params
@@ -83,7 +113,13 @@ Param(
     [String]$CredPath = "$Env:USERPROFILE\Documents\WindowsPowerShell\CustomCredentials", # Default path for custom credential file
     
     [Parameter(Mandatory = $false)]
-    [switch]$ExcludeSourceClusterFromProcessing # do not process the source cluster
+    [switch]$ExcludeSourceClusterFromProcessing, # do not process the source cluster
+
+    [Parameter(Mandatory = $false)]
+    [switch]$TriggerPDReplication, # Triggers an out of band protection domain replication
+
+    [Parameter(Mandatory = $false)]
+    [int]$MaxReplicationSuccessQueryAttempts = 10 # configured the number of attempts to query the PD for replication success to all remote clusters
 )
 #endregion
 
@@ -358,7 +394,9 @@ function Get-CustomCredentials {
 # ============================================================================
 # Variables
 # ============================================================================
-$RunDate = Get-Date -Format "yyyy-MM-dd HH:mm:ss" # we want all snapshots across all clusters to have the same timestamp
+$RunDate = Get-Date -Format "yyyy-MM-dd HH:mm:ss" # We want all snapshots across all clusters to have the same timestamp
+$EventCheckInterval = 10 # Controls the interval between checking for success query on Protection Domain replication
+$TimeBeforeEventSearch = 5 # Time to wait between triggering the PD replication and searching for events
 
 #endregion
 
@@ -368,6 +406,7 @@ $RunDate = Get-Date -Format "yyyy-MM-dd HH:mm:ss" # we want all snapshots across
 # ============================================================================
 StartIteration
 
+#region Modules
 #------------------------------------------------------------
 # Import Nutanix PowerShell Modules
 #------------------------------------------------------------
@@ -382,7 +421,9 @@ catch {
     StopIteration
     Exit 1
 }
+#endregion Modules
 
+#region Authentication
 #------------------------------------------------------------
 # Handle Authentication
 #------------------------------------------------------------
@@ -406,7 +447,9 @@ else {
         Exit 1
     }
 }
+#endregion Authentication
 
+#region Connect to Source Cluster
 #------------------------------------------------------------
 # Connect to the Source Cluster
 #------------------------------------------------------------
@@ -421,7 +464,9 @@ catch {
     StopIteration
     Exit 1
 }
+#endregion Connect to Source Cluster
 
+#region Get Protection Domain
 #------------------------------------------------------------
 # Get the protection domain
 #------------------------------------------------------------
@@ -445,7 +490,101 @@ catch {
     StopIteration
     Exit 1
 }
+#endregion Get Protection Domain
 
+#region Find Remote Sites
+#------------------------------------------------------------
+# Find the remote sites
+#------------------------------------------------------------
+$RemoteSites = Get-NTNXRemoteSite -Server $SourceCluster | Where-Object {$_.name -in ($ProtectionDomain).remoteSiteNames}
+
+if (!$RemoteSites) {
+    Write-Log -Message "[Remote Sites] There are no Remote Sites defined for: $($pd) in the source Cluster: $($SourceCluster)" -Level Warn
+    StopIteration
+    Exit 1
+}
+
+# get a list of the IP addresses
+$RemoteSiteIPS = ($remoteSites.remoteIpPorts).Keys
+
+$TotalRemoteClusterCount = $RemoteSiteIPS.Count
+Write-Log -Message "[Remote Sites] Remote Clusters to process: $($TotalRemoteClusterCount)" -Level Info
+#endregion Find Remote Sites
+
+#region Protection Domain Replication
+#------------------------------------------------------------
+# Trigger Protection Domain Replication
+#------------------------------------------------------------
+if ($TriggerPDReplication.IsPresent) {
+    # Kick off the replication
+    Write-Log -Message "[PD Replication] Protection Domain replication has been selected. Attempting to initiate an out of band Protection Domain replication to all remote clusters from the source Cluster: $($SourceCluster)" -Level Info
+    try {
+        $NewOOBReplication = Add-NTNXOutOfBandSchedule -PdName $pd -RemoteSiteNames $RemoteSites.name -SnapshotRetentionTimeSecs 3600 -Server $SourceCluster -ErrorAction Stop
+        if ($NewOOBReplication) {
+            Write-Log -Message "[PD Replication] Initiated a replication with scheduleId: $($NewOOBReplication.scheduleId) from the source Cluster: $($SourceCluster)" -Level Info
+        }
+        else {
+            Write-Log -Message "[PD Replication] Failed to initiate an out of band replication for Protection Domain: $($pd) from the source Cluster: $($SourceCluster)" -Level Warn
+            StopIteration
+            Exit 1
+        }
+    }
+    catch {
+        Write-Log -Message "[PD Replication] Failed to initiate out of band replication for Protection Domain: $($pd) from the source Cluster: $($SourceCluster)" -Level Warn
+        StopIteration
+        Exit 1
+    }
+
+    ## Get Snapshot ID based on Protection Domain Events
+    Write-Log -Message "[PD Replication] Waiting $($TimeBeforeEventSearch) seconds for Events to be logged on the source Cluster: $($SourceCluster)" -Level Info
+    Start-Sleep $TimeBeforeEventSearch
+    $MessageMatchString = "*created for protection domain $($pd)*"
+    $SnapshotIDOfOOBReplication = Get-NTNXProtectionDomainEvent -Server $SourceCluster -PdName $pd | Where-Object {$_.message -like $MessageMatchString} | Sort-Object createdTimeStampInUsecs -Descending | Select-Object -First 1
+
+    if (!$SnapshotIDOfOOBReplication) {
+        # report on fail and quit
+        Write-Log -Message "[PD Replication] Cannot find any events indicating the snapshot ID on the source Cluster: $($SourceCluster)" -Level Warn
+        StopIteration
+        Exit 1
+    }
+    else {
+        # report on success and set variables
+        $Pattern = "\d+" # finds numerical value of the snapshot in the message
+        $SnapID = $SnapshotIDOfOOBReplication.message | Select-String -Pattern $pattern -AllMatches | ForEach-Object { $_.matches }
+        Write-Log -Message "[PD Replication] Got snapshot ID reference: $($SnapID). Checking for replication finish events on the source Cluster: $($SourceCluster)" -Level Info
+    }
+
+    # Check replication status based on event messages
+    $MessageMatchString = "*Replication completed for Protection Domain $($pd) to remote* *$($SnapID.Value)*"
+    $ReplicationSuccessQueryAttempts = 1  # Initialise the attempt count
+
+    $CompletionMessageofOOBReplication = Get-NTNXProtectionDomainEvent -Server $SourceCluster -PdName $pd | Where-Object {$_.Message -like $MessageMatchString} | Sort-Object createdTimeStampInUsecs -Descending
+    if ($CompletionMessageofOOBReplication.Count -eq $RemoteSites.count) {
+        Write-Log -Message "[PD Replication] Cluster replication complete. Found replication finished events for $($CompletionMessageofOOBReplication.Count) out of $($RemoteSites.count)." -Level Info
+    }
+    else {
+        while ($CompletionMessageofOOBReplication.Count -ne $RemoteSites.count) {
+            if ($ReplicationSuccessQueryAttempts -eq $MaxReplicationSuccessQueryAttempts) {
+                Write-Log -Message "[PD Replication] Max Replication Query for Success ($($MaxReplicationSuccessQueryAttempts)) has been reached. Assuming failed replication on the source Cluster: $($SourceCluster)" -Level Warn
+                StopIteration
+                Exit 1
+            }
+            else {
+                if ($ReplicationSuccessQueryAttempts -ne 1) {
+                    Write-Log -Message "[PD Replication] Attempting to retrieve replication complete events. Attempt $($ReplicationSuccessQueryAttempts) of a maximum $($MaxReplicationSuccessQueryAttempts)" -Level Info
+                }
+                $CompletionMessageofOOBReplication = Get-NTNXProtectionDomainEvent -Server $SourceCluster -PdName $pd | Where-Object {$_.Message -like $MessageMatchString} | Sort-Object createdTimeStampInUsecs -Descending
+                Write-Log -Message "[PD Replication] Found replication finished events for $($CompletionMessageofOOBReplication.Count) out of $($RemoteSites.count). Checking again in $($EventCheckInterval) seconds." -Level Info
+                $ReplicationSuccessQueryAttempts += 1
+                Start-Sleep $EventCheckInterval
+            }
+        }
+        Write-Log -Message "[PD Replication] Cluster replication complete. Found replication finished events for $($CompletionMessageofOOBReplication.Count) clusters" -Level Info
+    }
+}
+#endregion Protection Domain Replication
+
+#region Get PD Snapshots
 #------------------------------------------------------------
 # Get a list of snapshots from the Source
 #------------------------------------------------------------
@@ -479,23 +618,7 @@ if ($SnapshotID) {
         Write-Log -Message "[PD Snapshot] Could not find the defined Snapshot on the source Cluster: $($SourceCluster). Terminating" -Level Warn
     }
 }
-
-#------------------------------------------------------------
-# Find the remote sites
-#------------------------------------------------------------
-$RemoteSites = Get-NTNXRemoteSite -Server $SourceCluster | Where-Object {$_.name -in ($ProtectionDomain).remoteSiteNames}
-
-if (!$RemoteSites) {
-    Write-Log -Message "[Remote Sites] There are no Remote Sites defined for: $($pd) in the source Cluster: $($SourceCluster)" -Level Warn
-    StopIteration
-    Exit 1
-}
-
-# get a list of the IP addresses
-$RemoteSiteIPS = ($remoteSites.remoteIpPorts).Keys
-
-$TotalRemoteClusterCount = $RemoteSiteIPS.Count
-Write-Log -Message "[Remote Sites] Remote Clusters to process: $($TotalRemoteClusterCount)" -Level Info
+#endregion Get PD Snapshots
 
 #------------------------------------------------------------
 # Initialise counts and variables
@@ -632,8 +755,9 @@ else {
 foreach ($Site in $RemoteSiteIPS){
     $IterationErrorCount = 0 # start the iteration error count
 
+    #region Connect to the Target Cluster
     #------------------------------------------------------------
-    # Process the cluster
+    # Process the target cluster
     #------------------------------------------------------------
     Write-Log -Message "[Target Cluster: Start] Processing Cluster $($CurrentClusterCount) of $($TotalRemoteClusterCount)" -Level Info
     $TargetCluster = $Site
@@ -648,10 +772,12 @@ foreach ($Site in $RemoteSiteIPS){
         $TotalErrorCount += 1
         Break
     }
+    #endregion Connect to the Target Cluster
     
     # start count for snapshots (how many currently exist)
     Write-Log -Message "[VM Snapshot] There are $((Get-NTNXSnapshot -Server $TargetCluster | Where-Object {$_.snapshotName -like ($VMPrefix + "$BaseVM*")}).Count) Snapshots matching: $($VMPrefix + $BaseVM) on the target Cluster: $($TargetCluster)" -Level Info
     
+    #region Get PD Snapshots on target
     #------------------------------------------------------------
     # Get PD snapshots
     #------------------------------------------------------------
@@ -709,7 +835,9 @@ foreach ($Site in $RemoteSiteIPS){
             Break
         }
     }
+    #endregion Get PD Snapshots on target
 
+    #region Restore the Instance on target
     #------------------------------------------------------------
     # Restore the instance
     #------------------------------------------------------------
@@ -729,7 +857,9 @@ foreach ($Site in $RemoteSiteIPS){
         Disconnect-NTNXCluster -Server $TargetCluster
         Break
     }
+    #endregion Restore the Instance on target
 
+    #region VM Snapshot on target
     #------------------------------------------------------------
     # Take a snaphot
     #------------------------------------------------------------
@@ -770,7 +900,9 @@ foreach ($Site in $RemoteSiteIPS){
         Disconnect-NTNXCluster -Server $TargetCluster
         Break
     }
-    
+    #endregion VM Snapshot on target
+
+    #region VM Removal on target
     #------------------------------------------------------------    
     # Remove the VM
     #------------------------------------------------------------
@@ -787,13 +919,16 @@ foreach ($Site in $RemoteSiteIPS){
         Disconnect-NTNXCluster -Server $TargetCluster
         Break
     }
+    #endregion VM Removal on target
 
     # end count for snapshots (how many currently exist)
     Write-Log -Message "[VM Snapshot] There are now: $((Get-NTNXSnapshot -Server $TargetCluster | Where-Object {$_.snapshotName -like ($VMPrefix + "$BaseVM*")}).Count) Snapshots matching $($VMPrefix + $BaseVM) on the target cluster $($TargetCluster)" -Level Info
-    
+
+    #region Snapshot Deletion on target
     #------------------------------------------------------------
     # Handle the deletion of snapshot retention if set
     #------------------------------------------------------------
+
     if ($ImageSnapsToRetain) {
         Write-Log -Message "[VM Snapshot] Removing Snapshots that do not meet the retention value: $($ImageSnapsToRetain) on the target Cluster: $($TargetCluster)" -Level Info
 
@@ -842,6 +977,8 @@ foreach ($Site in $RemoteSiteIPS){
         Write-Log -Message "[VM Snapshot] Cleanup (ImageSnapsToRetain) not specified. Nothing to process." -Level Info
     }
     
+    #endregion Snapshot Deletion on target
+
     #------------------------------------------------------------
     # Disconnect from the cluster
     #------------------------------------------------------------
