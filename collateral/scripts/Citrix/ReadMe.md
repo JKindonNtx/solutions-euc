@@ -106,6 +106,8 @@ The script will:
 
 #### Advanced selection of specific PD Snapshot ID, manual auth, Source exclusion and no forced replication. 
 
+This is an advanced scenario just to outline processing capability. Unlikely to be used.
+
 ```
 $params = @{
     SourceCluster                      = "1.1.1.1" # The source Cluster holding the base image vm
