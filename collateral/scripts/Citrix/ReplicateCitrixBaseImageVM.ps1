@@ -36,34 +36,34 @@
 .PARAMETER MaxReplicationSuccessQueryAttempts
     Optional. An advanced parameter to alter the number of successful PD query events. Defaults to 10. Time between those queries is an advanced variable in the script which you should be careful with (10 seconds).
 .EXAMPLE
-    .\ReplicateCitrixBaseVM.ps1 -SourceCluster 10.68.68.40 -pd "W10_Migration_Test" -BaseVM "JK-Test-030" -SnapshotID 353902
+    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -SnapshotID 353902
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, and attempt to use the specified Protection Domain snapshotID for all operations. 
     Credentials will be prompted for.
 .EXAMPLE
-    .\ReplicateCitrixBaseVM.ps1 -SourceCluster 10.68.68.40 -pd "W10_Migration_Test" -BaseVM "JK-Test-030" -ImageSnapsToRetain 10
+    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     Credentials will be prompted for.
 .EXAMPLE
-    .\ReplicateCitrixBaseVM.ps1 -SourceCluster 10.68.68.40 -pd "W10_Migration_Test" -BaseVM "JK-Test-030" -ImageSnapsToRetain 10 -UseCustomCredentialFile
+    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     A custom credential file will be created and consumed.
 .EXAMPLE
-    .\ReplicateCitrixBaseVM.ps1 -SourceCluster 10.68.68.40 -pd "W10_Migration_Test" -BaseVM "JK-Test-030" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication.
+    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication.
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     A custom credential file will be created and consumed. 
     a Protection Domain Out of Band replicate will be triggered.
 .EXAMPLE
-    .\ReplicateCitrixBaseVM.ps1 -SourceCluster 10.68.68.40 -pd "W10_Migration_Test" -BaseVM "JK-Test-030" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication -MaxReplicationSuccessQueryAttempts 20
+    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication -MaxReplicationSuccessQueryAttempts 20
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     A custom credential file will be created and consumed. 
     a Protection Domain Out of Band replicate will be triggered.
     The Maximum number of attempts to query the Source PD for replication success will be doubled to 20.
 .EXAMPLE
-    .\ReplicateCitrixBaseVM.ps1 -SourceCluster 10.68.68.40 -pd "W10_Migration_Test" -BaseVM "JK-Test-030" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication -ExcludeSourceClusterFromProcessing
+    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication -ExcludeSourceClusterFromProcessing
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
     Any target snapshots outside of the last 10 will be deleted on the target clusters   . 
     A custom credential file will be created and consumed. 
