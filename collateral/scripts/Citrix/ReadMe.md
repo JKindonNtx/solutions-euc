@@ -56,6 +56,7 @@ $params = @{
     BaseVM                             = "CTX-Gold-01" # The name of the Base image VM. Case sensitive.
     ImageSnapsToRetain                 = 10 # The number of snapshots to retain in each cluster.
     UseCustomCredentialFile            = $true # Will look for a custom credential file. If not found, will create
+    ExcludeSourceClusterFromProcessing = $false # Excludes the source cluster from being included in snapshot processing
     TriggerPDReplication               = $true # Triggers an out-of-band PD replication for the specified PD
 }
 & ReplicateCitrixBaseImageVM.ps1 @params 
