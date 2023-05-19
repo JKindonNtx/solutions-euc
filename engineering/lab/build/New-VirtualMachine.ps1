@@ -305,7 +305,7 @@ if ($confirmationStart -eq 'n') {
                 try {
                     $CPU = [int]($JSON.VM.CpuSockets) * [int]($JSON.VM.CpuCores)
                     $RAM = [int]($JSON.VM.vRAM) / 1024
-                    $VMTask = New-VM -Name $($OSDetails.Name) -ResourcePool $Cluster -Datastore $JSON.VM.Container -NumCPU $CPU -MemoryGB $RAM -DiskGB $JSON.VM.Disksize -NetworkName $VLANName -Floppy -CD -DiskStorageFormat Thin -GuestID winNetDatacenterGuest -ErrorAction Stop
+                    $VMTask = New-VM -Name $($OSDetails.Name) -ResourcePool $Cluster -Datastore $JSON.VM.Container -NumCPU $CPU -MemoryGB $RAM -DiskGB $JSON.VM.Disksize -NetworkName $VLANName -DiskStorageFormat Thin -ErrorAction Stop
                     ## set VM NIC to VMXNet3
                     Write-Host (Get-Date)":Set NIC to VMXNET3"
                     Get-VM $($OSDetails.Name) | Get-NetworkAdapter | Set-NetworkAdapter -Type Vmxnet3 -Confirm:$false
@@ -341,10 +341,13 @@ if ($confirmationStart -eq 'n') {
                 Update-MDTControl -Name "$($OSDetails.Name)" -TaskSequenceID "$($OSDetails.TaskSequenceID)" -VMMAC $VMMAC
 
                 # Connect CD Rom to VM
+                Write-Host (Get-Date)":Attach MDT CD ROM"
+                $CD = New-CDDrive -VM $($OSDetails.Name) -ISOPath "[VDI] ISO/LiteTouchPE_x64-NP.iso"
+                Set-CDDrive -CD $CD -StartConnected $true -Confirm:$false
                 
                 # Power on the VM
                 Write-Host (Get-Date)":Power on VM"
-                Set-NutanixVMPower -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "vms/$($VMUUID)/set_power_state" -Action "ON"
+                Start-VM -VM $($OSDetails.Name)
                 
                 # Preparing MDT phase, monitoring the VM to ensure the Task Sequence has finished
                 Write-Host (Get-Date)":Waiting for the VM to PXE boot to the MDT share and start the task sequence"
@@ -353,34 +356,41 @@ if ($confirmationStart -eq 'n') {
                 # Wait for task sequence to finish and VM Shutdown to be completed
                 Write-Host (Get-Date)":Wait for VM to power off" 
                 Do {
-                    Write-Host (Get-Date)":Current Power State: $((Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "vms/$($VMUUID)" -Silent $true).power_state)"
+                    Write-Host (Get-Date)":Current Power State: $((Get-VM $($OSDetails.Name)).PowerState)"
                     start-sleep 30
                 }
-                Until (((Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "vms/$($VMUUID)" -Silent $true).power_state) -eq "off")
+                Until (((Get-VM $($OSDetails.Name)).PowerState) -eq "PoweredOff")
 
                 # Restore the MDT Control File
                 Restore-MDTControl -ControlFile $MDTControlOriginal
 
                 # Slack message to inform that MDT job is finished
                 Write-Host (Get-Date)":Updating Slack Channel" 
-                $MDTmessage = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been created on cluster $($ClusterName) using MDT" 
+                if ($JSON.vm.Hypervisor -eq "AHV"){
+                    $MDTmessage = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been created on AHV Cluster $($ClusterName) using MDT" 
+                } else {
+                    if ($JSON.vm.Hypervisor -eq "VMware"){
+                        $MDTmessage = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been created on VMware Cluster $($JSON.VMwareCluster.ClusterName) using MDT" 
+                    }
+                }
                 Update-Slack -Message $MDTMessage -Slack $($JSON.SlackConfig.Slack)
 
                 # Remove MDT Build CD-Rom
                 Write-Host (Get-Date)":Eject CD-ROM from VM"
-                $CDROM = Remove-NutanixCDROM -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VMUUID $VMUUID
+                $CDROM = get-vm $($OSDetails.Name) | Get-CDDrive | Set-CDDrive -NoMedia -Confirm:$false
+
                 Start-Sleep 5
 
                 # Start the VM Back Up
                 Write-Host (Get-Date)":Power on VM"
-                $NutanixVmPowerstate = Set-NutanixVMPower -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "vms/$($VMUUID)/set_power_state" -Action "ON"
+                Start-VM -VM $($OSDetails.Name)
                 
                 # Wait for the VM to get an IP Address
                 Write-Host (Get-Date)":Wait for IP-address"
                 Start-Sleep 10
                 Do {
-                    $VMNIC = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "vms/$($VMUUID)/nics" -Silent $true
-                    $VMip = ($VMNIC.entities | Where-Object {$_.is_connected -eq "True"}).ip_address
+                    $vm = get-vm $($OSDetails.Name)
+                    $VMip = $vm.extensiondata.guest.IPAddress
                     If ([string]::IsNullOrEmpty($VMip) -Or $VMip.StartsWith("169.254")) {
                         Start-Sleep -Seconds 5
                     }
@@ -475,13 +485,50 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
 
     # Update Slack Channel
     if ($Ansible -eq "y") {
-        $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has finished running the Ansible Playbook $PlaybookToRun and has been shutdown and snapshotted on cluster $($ClusterName). The following actions/installs have been executed: $($yaml.roles)"
+        $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has finished running the Ansible Playbook $PlaybookToRun and has been shutdown and snapshotted on the AHV Cluster $($ClusterName). The following actions/installs have been executed: $($yaml.roles)"
     } else {
-        $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been shutdown and snapshotted on cluster $($ClusterName) - No post OS Ansible Playbooks have been run"
+        $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been shutdown and snapshotted on the AHV Cluster $($ClusterName) - No post OS Ansible Playbooks have been run"
     }    
     Write-Host (Get-Date)":Updating Slack Channel" 
     Update-Slack -Message $Message -Slack $($JSON.SlackConfig.Slack)
 } else {
-    Write-Host (Get-Date)":Invalid Hypervisor defined, quitting"
-    Exit
+    if ($JSON.vm.Hypervisor -eq "VMware"){
+        # Power off the VM
+        Write-Host (Get-Date)":Power off VM"
+        Stop-VM -VM $($OSDetails.Name) -confirm:$false
+
+        # Finished Build
+        Start-Sleep 5
+        Write-Host (Get-Date)":Finished installation" 
+
+        # Create VM Snapshot
+        Write-Host (Get-Date)":Create snapshot"
+        New-Snapshot -VM $($OSDetails.Name) -Name "$("$($OSDetails.Name)")_Snap_Optimized"
+        Write-Host (Get-Date)":Snapshot created"
+
+        # Grabbing YAML content
+        if ($Ansible -eq "y") {
+            Install-Module powershell-yaml -Force
+            Import-Module powershell-yaml
+            [string[]]$fileContent = Get-Content  "$Playbook"
+            $content = ''
+            foreach ($line in $fileContent) { $content = $content + "`n" + $line }
+            $yaml = ConvertFrom-YAML $content
+        }
+        
+        # Fetching local GitHub user to report owner (This replaces username alterations made for account creation and reports Github UserName value)
+        $GitHub = Get-GitHubInfo
+
+        # Update Slack Channel
+        if ($Ansible -eq "y") {
+            $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has finished running the Ansible Playbook $PlaybookToRun and has been shutdown and snapshotted on the VMware Cluster $($JSON.VMwareCluster.ClusterName). The following actions/installs have been executed: $($yaml.roles)"
+        } else {
+            $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been shutdown and snapshotted on the VMware Cluster $($JSON.VMwareCluster.ClusterName) - No post OS Ansible Playbooks have been run"
+        }    
+        Write-Host (Get-Date)":Updating Slack Channel" 
+        Update-Slack -Message $Message -Slack $($JSON.SlackConfig.Slack)
+    } else {
+        Write-Host (Get-Date)":Invalid Hypervisor defined, quitting"
+        Exit
+    }
 }
