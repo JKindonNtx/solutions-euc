@@ -47,6 +47,8 @@ The following examples use parameter splatting to make reading easier. A corresp
 
 #### General Basic Suggested Use
 
+This scenario is the optimal and most generic use case for this script.
+
 ```
 $params = @{
     SourceCluster                      = "1.1.1.1" # The source Cluster holding the base image vm
@@ -101,7 +103,7 @@ The script will:
 - Delete all snapshots matching the above naming pattern older than `20` based on the `ImageSnapsToRetain` parameter
 - Log all output to the default `LogPath` directory of `C:\Logs\MCSReplicateBaseImage.log` and rollover logs after `5 days` based on the default `LogRollover` value.
 
-#### Advanced Selection of specific PD Snapshot ID, manual Auth, Source Exclusion and no forced replication. 
+#### Advanced selection of specific PD Snapshot ID, manual auth, Source exclusion and no forced replication. 
 
 ```
 $params = @{
