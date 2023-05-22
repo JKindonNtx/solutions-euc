@@ -550,7 +550,7 @@ if ($TriggerPDReplication.IsPresent) {
     else {
         # report on success and set variables
         $Pattern = "\d+" # finds numerical value of the snapshot in the message
-        $SnapID = $SnapshotIDOfOOBReplication.message | Select-String -Pattern $pattern -AllMatches | ForEach-Object { $_.matches }
+        $SnapID = $SnapshotIDOfOOBReplication.message | Select-String -Pattern $pattern -AllMatches | ForEach-Object { $_.matches } | Sort-Object -Descending | Select-Object -First 1
         Write-Log -Message "[PD Replication] Got snapshot ID reference: $($SnapID). Checking for replication finish events on the source Cluster: $($SourceCluster)" -Level Info
     }
 
@@ -560,7 +560,7 @@ if ($TriggerPDReplication.IsPresent) {
 
     $CompletionMessageofOOBReplication = Get-NTNXProtectionDomainEvent -Server $SourceCluster -PdName $pd | Where-Object {$_.Message -like $MessageMatchString} | Sort-Object createdTimeStampInUsecs -Descending
     if ($CompletionMessageofOOBReplication.Count -eq $RemoteSites.count) {
-        Write-Log -Message "[PD Replication] Cluster replication complete. Found replication finished events for $($CompletionMessageofOOBReplication.Count) out of $($RemoteSites.count)." -Level Info
+        Write-Log -Message "[PD Replication] Cluster replication complete. Found replication finished events for $($CompletionMessageofOOBReplication.Count) out of $($RemoteSites.count) remote Clusters" -Level Info
     }
     else {
         while ($CompletionMessageofOOBReplication.Count -ne $RemoteSites.count) {
