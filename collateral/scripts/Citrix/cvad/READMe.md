@@ -52,9 +52,9 @@ The following parameters exist to drive the behaviour of the script:
 
 The following examples use parameter splatting to make reading easier. A corresponding commandline example is also included:
 
-### Scenarios
+## Scenarios
 
-#### General Basic Suggested Use
+### General Basic Suggested Use
 
 This scenario is the optimal and most generic use case for this script.
 
@@ -84,7 +84,7 @@ The script will:
 - Delete all snapshots matching the above naming pattern older than `10` based on the `ImageSnapsToRetain` parameter
 - Log all output to the default `LogPath` directory of `C:\Logs\MCSReplicateBaseImage.log` and rollover logs after `5 days` based on the default `LogRollover` value.
 
-#### General Basic Suggested Use With Citrix Catalog updates across a single CitrixSite
+### General Basic Suggested Use With Citrix Catalog updates across a single CitrixSite
 
 This scenario builds upon the above, by adding an automated Citrix Catalog Update task to a single Citrix Site:
 
@@ -118,7 +118,7 @@ The script will:
 - Log all output to the default `LogPath` directory of `C:\Logs\MCSReplicateBaseImage.log` and rollover logs after `5 days` based on the default `LogRollover` value.
 - If no replication failures have occurred in the Nutanix phase, update each Catalog listed in the `ctx_Catalogs` array.
 
-#### General Basic Suggested Use With Citrix Catalog updates across multiple Citrix Sites
+### General Basic Suggested Use With Citrix Catalog updates across multiple Citrix Sites
 
 This scenario builds upon the above, by allowing a multi Citrix Site update based on a JSON input:
 
@@ -151,7 +151,7 @@ The script will:
 - Log all output to the default `LogPath` directory of `C:\Logs\MCSReplicateBaseImage.log` and rollover logs after `5 days` based on the default `LogRollover` value.
 - If no replication failures have occurred in the Nutanix phase, update each Catalog listed in the `ctx_SiteConfigJSON` file.
 
-#### Advanced Remediation of Citrix Configuration Only
+### Advanced Remediation of Citrix Configuration Only
 
 This scenario assumes that there has been a failure at some point, and that you need to bring the Citrix environment into line based on a defined snapshot, without processing Nutanix tasks.
 ```
@@ -177,7 +177,7 @@ The script will:
 - Validate whether or not each Catalog is currently using the defined `ctx_Snapshot` base image. If not, it will update the Catalog with the image name. This assumes that the snapshot exists on the Nutanix Cluster.
 - Exit as there is nothing else to do in this mode.
 
-#### Change the snapshot name output and exclude source cluster
+### Change the snapshot name output and exclude source cluster
 
 ```
 $params = @{
@@ -206,7 +206,7 @@ The script will:
 - Delete all snapshots matching the above naming pattern older than `20` based on the `ImageSnapsToRetain` parameter
 - Log all output to the default `LogPath` directory of `C:\Logs\MCSReplicateBaseImage.log` and rollover logs after `5 days` based on the default `LogRollover` value.
 
-#### Advanced selection of specific PD Snapshot ID, manual auth, Source exclusion and no forced replication. 
+### Advanced selection of specific PD Snapshot ID, manual auth, Source exclusion and no forced replication. 
 
 This is an advanced scenario just to outline processing capability. Unlikely to be used.
 
