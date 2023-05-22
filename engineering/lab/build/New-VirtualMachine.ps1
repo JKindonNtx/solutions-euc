@@ -303,11 +303,19 @@ if ($confirmationStart -eq 'n') {
                 # Create the VM
                 Write-Host (Get-Date)":Create the VM with name "$($OSDetails.Name)""
                 try {
+                    ## Check sockets etc
                     $CPU = [int]($JSON.VM.CpuSockets) * [int]($JSON.VM.CpuCores)
                     $RAM = [int]($JSON.VM.vRAM) / 1024
-                    $VMTask = New-VM -Name $($OSDetails.Name) -ResourcePool $Cluster -Datastore $JSON.VM.Container -NumCPU $CPU -MemoryGB $RAM -DiskGB $JSON.VM.Disksize -NetworkName $VLANName -DiskStorageFormat Thin -ErrorAction Stop
+                    if($OSversion -eq "SRV"){
+                        $GuestID = "windows2019srv_64Guest"
+                    } else {
+                        $GuestID = "windows9_64Guest"
+                    }
+                    
+                    $VMTask = New-VM -Name $($OSDetails.Name) -ResourcePool $Cluster -Datastore $JSON.VM.Container -NumCPU $CPU -CoresPerSocket $JSON.VM.CpuCores -MemoryGB $RAM -DiskGB $JSON.VM.Disksize -NetworkName $VLANName -DiskStorageFormat Thin -GuestID $GuestID
                     ## set VM NIC to VMXNet3
                     Write-Host (Get-Date)":Set NIC to VMXNET3"
+                    Get-VM $($OSDetails.Name) | Get-ScsiController | Set-ScsiController -Type VirtualLsiLogicSAS -Confirm:$false
                     Get-VM $($OSDetails.Name) | Get-NetworkAdapter | Set-NetworkAdapter -Type Vmxnet3 -Confirm:$false
                 }
                 catch {
@@ -495,10 +503,10 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
     if ($JSON.vm.Hypervisor -eq "VMware"){
         # Power off the VM
         Write-Host (Get-Date)":Power off VM"
-        Stop-VM -VM $($OSDetails.Name) -confirm:$false
+        Stop-VMGuest -VM $($OSDetails.Name) -confirm:$false
 
         # Finished Build
-        Start-Sleep 5
+        Start-Sleep 30
         Write-Host (Get-Date)":Finished installation" 
 
         # Create VM Snapshot
