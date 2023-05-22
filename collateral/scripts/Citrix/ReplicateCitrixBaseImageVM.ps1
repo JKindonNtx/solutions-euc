@@ -36,7 +36,7 @@
 .PARAMETER MaxReplicationSuccessQueryAttempts
     Optional. An advanced parameter to alter the number of successful PD query events. Defaults to 10. Time between those queries is an advanced variable in the script which you should be careful with (10 seconds).
 .PARAMETER ctx_Catalogs
-    Optional. A list of Citrix Catalogs to update after the Snapshot replication has finished. User running the script must have suffient rights on the Citrix Site. Single Citrix Site parameter only. For multi-site, use ctx_siteConfigJSON switch.
+    Optional. A list of Citrix Catalogs to update after the Snapshot replication has finished. User running the script must have sufficient rights on the Citrix Site. Single Citrix Site parameter only. For multi-site, use ctx_siteConfigJSON switch.
 .PARAMETER ctx_AdminAddress
     Optional. The Delivery Controller to target for Citrix Catalog updates. Single Citrix Site parameter only. For multi-site, use ctx_siteConfigJSON switch.
 .PARAMETER ctx_SiteConfigJSON
@@ -52,6 +52,10 @@
         "Controller": "ctxddc002"
         }
     ]
+.PARAMETER ctx_ProcessCitrixEnvironmentOnly
+    Optional. Switch parameter to indicate that we are purely updating Citrix Catalogs and not interacting with Nutanix. Used in a scenario where maybe some remediation work as been undertaken and only Citrix needs updating. Advanced Parameter for specific used cases. 
+.PARAMETER ctx_Snapshot
+    Optional. The name of the snapshot to be used with the ctx_ProcessCitrixEnvironmentOnly switch. This has no validation against Nutanix. Purely used to bring Citrix catalogs into line.
 .EXAMPLE
     .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -SnapshotID 353902
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, and attempt to use the specified Protection Domain snapshotID for all operations. 
@@ -159,7 +163,13 @@ Param(
     [String]$ctx_AdminAddress, # Delivery Controller address on a single Citrix site to process. If needing to update multiple sites, use the JSON input
 
     [Parameter(Mandatory = $false)]
-    [String]$ctx_SiteConfigJSON # JSON input file for multi site (or single site) Citrix site configurations. Catalogs and Delivery Controllers
+    [String]$ctx_SiteConfigJSON, # JSON input file for multi site (or single site) Citrix site configurations. Catalogs and Delivery Controllers
+
+    [Parameter(Mandatory = $false)]
+    [switch]$ctx_ProcessCitrixEnvironmentOnly, # Defines that we are processing ONLY citrix environments and not Nutanix
+
+    [Parameter(Mandatory = $false)]
+    [String]$ctx_Snapshot # the snapshot to be used to update Citrix Catalogs. Used in conjunction with ctx_ProcessCitrixEnvironmentOnly
 )
 #endregion
 
@@ -543,6 +553,71 @@ function ProcessCitrixCatalog {
     $Global:TotalCatalogSuccessCount += 1
 }
 
+function ValidateExclusiveCitrixProcessingCatalog {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Catalog,
+        [Parameter(Mandatory = $true)]
+        [string]$AdminAddress,
+        [Parameter(Mandatory = $true)]
+        [string]$SnapshotName
+    )
+    Write-Log -Message "[Citrix Validation] Validating image for Catalog $($CurrentCatalogCount) of $($CatalogCount)" -Level Info
+    try {
+        $CatalogDetail = Get-BrokerCatalog -Name $Catalog -AdminAddress $AdminAddress -ErrorAction Stop
+        $ProveSchemeID = $CatalogDetail.ProvisioningSchemeId
+        $ProvScheme = Get-ProvScheme -ProvisioningSchemeUid $ProveSchemeID -AdminAddress $AdminAddress -ErrorAction Stop
+        $CurrentImage = $ProvScheme.MasterImageVM
+        if ($CurrentImage -Like "*$ctx_Snapshot*") {
+            Write-Log -Message "[Citrix Validation] Catalog is already using image: $($ctx_Snapshot). No need to process" -Level Info
+            $CurrentCatalogCount += 1
+        }
+        else {
+            Write-Log -Message "[Citrix Validation] Catalog is using $($CurrentImage). Will be processed." -Level Info
+            $pattern = "(?<=\\)([^\\]+)(?=\.template)"
+            $NewImage = $CurrentImage -replace $pattern,$ctx_Snapshot
+            Write-Log -Message "[Citrix Image] Current Catalog Image for Catalog: $($Catalog) is: $($CurrentImage)" -Level Info
+            Write-Log -Message "[Citrix Image] New Catalog Image for Catalog: $($Catalog) will be: $($NewImage)" -Level Info
+
+            #start the update process
+            try {
+                Write-Log -Message "[Citrix Catalog] Starting Catalog update process for Catalog: $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Info
+        
+                $PublishTask = Publish-ProvMasterVMImage -ProvisioningSchemeName $ProvScheme.ProvisioningSchemeName -MasterImageVM $NewImage -AdminAddress $AdminAddress -RunAsynchronously -ErrorAction Stop
+                $ProvTask = Get-ProvTask -TaskId $PublishTask -AdminAddress $AdminAddress -ErrorAction Stop
+        
+                ## Track progress of the image update
+                Write-Log -Message "[Citrix Catalog] Tracking progress of the Catalog update task. Catalog update for: $($Catalog) started at: $($ProvTask.DateStarted) on Delivery Controller: $($AdminAddress)" -Level Info
+                $totalPercent = 0
+                While ( $ProvTask.Active -eq $True ) {
+                    Try { $totalPercent = If ( $ProvTask.TaskProgress ) { $ProvTask.TaskProgress } Else { 0 } } Catch { }
+        
+                    Write-Log -Message "[Citrix Catalog] Provisioning image update current operation: $($ProvTask.CurrentOperation) on Provisioning Scheme: $($ProvScheme.ProvisioningSchemeName) is $($totalPercent)% Complete. Last Update Time is: $($ProvTask.LastUpdateTime) on Delivery Controller: $($AdminAddress)" -Level Info
+                    $ProvTask = Get-ProvTask -TaskId $PublishTask -AdminAddress $AdminAddress -ErrorAction Stop
+                }
+            }
+            catch {
+                Write-Log -Message "[Citrix Catalog] Failed to start the update process on catalog: $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Warn
+                Write-Log -Message $_ -Level Warn
+                $Global:TotalCatalogFailureCount += 1
+                Break
+            }
+        
+            Write-Log -Message "[Citrix Catalog] Catalog Update for catalog: $($Catalog) completed at $($ProvTask.DateFinished) with an Active time of $($ProvTask.ActiveElapsedTime) seconds on Delivery Controller: $($AdminAddress)" -Level Info
+            $Global:CurrentCatalogCount += 1
+            $Global:TotalCatalogSuccessCount += 1
+
+            $CurrentCatalogCount += 1
+        }
+    }
+    catch {
+        Write-Log -Message "[Citrix Validation] Failed to validate Citrix Image for Catalog $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Warn
+        Write-Log -Message $_ -Level Warn
+        $Global:TotalCatalogFailureCount += 1
+    }
+}
+
 #endregion
 
 #region Variables
@@ -595,6 +670,18 @@ if ($ctx_Catalogs -or $ctx_SiteConfigJSON) {
     }
 }
 #endregion Modules
+
+#region Exclusive Citrix Processing Validation
+if ($ctx_ProcessCitrixEnvironmentOnly.IsPresent) {
+    Write-Log -Message "Exclusive Citrix environment processing enabled" -Level Info
+    if (!$ctx_Snapshot) {
+        Write-Log -Message "You must define a snapshot when using exlusive Citrix processing" -Level Warn
+        StopIteration
+        Exit 1
+    }
+    Write-Log -Message "Custom Snapshot defined: $($ctx_Snapshot)" -Level Warn
+}
+#endregion Exclusive Citrix Processing Validation
 
 #region Validate Citrix Environment
 if ($ctx_Catalogs -or $ctx_SiteConfigJSON) {
@@ -665,6 +752,46 @@ if ($ctx_Catalogs -or $ctx_SiteConfigJSON) {
     }
 }
 #endregion Validate Citrix Environment
+
+#region Exclusive Citrix Processing
+if ($ctx_ProcessCitrixEnvironmentOnly) {
+    $Global:CurrentCatalogCount = 1
+    $Global:TotalCatalogSuccessCount = 0
+    $Global:TotalCatalogFailureCount = 0
+
+    if ($ctx_SiteConfigJSON) {
+        #JSON
+        $CatalogCount = $CitrixConfig.Catalog.Count
+        Write-Log -Message "[Citrix Validation] There are $($CitrixConfig.Catalog.Count) Catalogs to Process" -Level Info
+        foreach ($_ in $CitrixConfig) {
+            # Set details
+            $Catalog = $_.Catalog
+            $AdminAddress = $_.Controller
+
+            ValidateExclusiveCitrixProcessingCatalog -Catalog $Catalog -AdminAddress $AdminAddress -SnapshotName $ctx_Snapshot
+        }
+    }
+    else {
+        #NO JSON
+        $Catalogs = $ctx_Catalogs # This was set in the validation phase, but resetting here for ease of reading
+        $AdminAddress = $ctx_AdminAddress # This was set in the validation phase, but resetting here for ease of reading
+        $CatalogCount = $Catalogs.Count
+        Write-Log -Message "[Citrix Validation] There are $($Catalogs.Count) Catalogs to Process" -Level Info
+        foreach ($Catalog in $Catalogs) {
+            ValidateExclusiveCitrixProcessingCatalog -Catalog $Catalog -AdminAddress $AdminAddress -SnapshotName $ctx_Snapshot
+        }
+    }
+
+    Write-Log -Message "[Citrix Validation] Exclusive Citrix processing complete" -Level Info
+    Write-Log -Message "[Citrix Validation] Successfully Processed $($TotalCatalogSuccessCount) Catalogs" -Level Info
+    if ($TotalCatalogFailureCount -gt 0) {
+        Write-Log -Message "[Citrix Validation] Failed to process $($TotalCatalogFailureCount) Catalogs" -Level Warn
+    }
+
+    StopIteration
+    Exit 0
+}
+#endregion Exclusive Citrix Processing
 
 #region Authentication
 #------------------------------------------------------------
