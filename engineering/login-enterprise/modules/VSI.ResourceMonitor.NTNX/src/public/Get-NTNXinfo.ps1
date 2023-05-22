@@ -13,7 +13,7 @@ function Get-NTNXinfo {
     $HostData = Invoke-PublicApiMethodNTNX -Method "GET" -Path "hosts"
     $Hostitem = $Hostdata.entities | Where-Object {$_.name -eq $NTNXHost}
     $Config.Testinfra.HardwareType = $Hostitem.block_model_name
-    $config.Testinfra.CPUType = $Hostitem.cpu_model -Replace ("\(R\)","") -Replace ("Intel ","") -Replace ("AMD ","")
+    $config.Testinfra.CPUType = $Hostitem.cpu_model -Replace ("\(R\)","") -Replace ("Intel ","") -Replace ("AMD ","") -Replace ("  ","")
     if ($Hostitem.cpu_model -Like 'Intel*') {
         $Config.Testinfra.CPUBrand = "Intel"
     }

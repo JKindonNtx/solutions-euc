@@ -32,7 +32,7 @@ $Office = Get-ItemProperty -Path $DisplayVersion.PSPath
 $Office | ForEach-Object {"Product: " + $_.DisplayName + $(if ($_.InstallLocation -eq $x32) {", 32 Bit"} else {", 64 Bit"})  + ", Productversion: " + $_.PSChildName + ", Build: " + $_.DisplayVersion}
 
 $StrippedOfficeName = ($Office.DisplayName).Split("-")
-$DisplayName = $StrippedOfficeName[0] + " " + $Version
+$DisplayName = $StrippedOfficeName[0] + $Version
 
 New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "OfficeVersion" -Value $Office.DisplayVersion -Force
 New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "OfficeName" -Value $DisplayName -Force

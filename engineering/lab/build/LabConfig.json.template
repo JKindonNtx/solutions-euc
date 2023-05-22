@@ -4,6 +4,12 @@
       	"password": "password",
 	  	"CVMsshpassword": "password"
 	},
+	"VMwareCluster": {
+		"ip": "10.10.10.10",
+		"user": "Administrator",
+      	"password": password",
+		"ClusterName": "ClusterName"
+	},
 	"VM": {
 	    "UEFI": true,
 	    "Secureboot": true,

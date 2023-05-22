@@ -12,7 +12,7 @@ Function Enable-VSICTXDesktopPool {
         $ClusterIP,
         $CVMSSHPassword,
         $VMnameprefix,
-        $CloneType, `
+        $CloneType,
         $Hosts
     )
 
