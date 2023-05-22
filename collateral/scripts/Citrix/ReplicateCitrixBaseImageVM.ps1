@@ -394,7 +394,7 @@ function Get-CustomCredentials {
 # ============================================================================
 # Variables
 # ============================================================================
-$RunDate = Get-Date -Format "yyyy-MM-dd HH:mm:ss" # We want all snapshots across all clusters to have the same timestamp
+$RunDate = (Get-Date -Format "yyyy-MM-dd HH:mm:ss") -replace ":","-" -replace " ","-" # We want all snapshots across all clusters to have the same timestamp
 $EventCheckInterval = 10 # Controls the interval between checking for success query on Protection Domain replication
 $TimeBeforeEventSearch = 5 # Time to wait between triggering the PD replication and searching for events
 
