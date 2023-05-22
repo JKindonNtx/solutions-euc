@@ -35,10 +35,41 @@
     Optional. Will trigger an out of band replication for the Protection Domain and query the PD events for success. Snapshot will expire after 1 hour (3600 seconds)
 .PARAMETER MaxReplicationSuccessQueryAttempts
     Optional. An advanced parameter to alter the number of successful PD query events. Defaults to 10. Time between those queries is an advanced variable in the script which you should be careful with (10 seconds).
+.PARAMETER ctx_Catalogs
+    Optional. A list of Citrix Catalogs to update after the Snapshot replication has finished. User running the script must have suffient rights on the Citrix Site. Single Citrix Site parameter only. For multi-site, use ctx_siteConfigJSON switch.
+.PARAMETER ctx_AdminAddress
+    Optional. The Delivery Controller to target for Citrix Catalog updates. Single Citrix Site parameter only. For multi-site, use ctx_siteConfigJSON switch.
+.PARAMETER ctx_SiteConfigJSON
+    Optional. A JSON file containing a list of Catalogs and associated Delivery Controllers for a multi-site environment. This will override the ctx_AdminAddress and ctx_Catalogs parameters
+    JSON file must be defined using the following element layout: 
+    [
+        {
+        "Catalog": "Catalog1",
+        "Controller": "ctxddc001"
+        },
+        }
+        "Catalog": "Catalog2",
+        "Controller": "ctxddc002"
+        }
+    ]
 .EXAMPLE
     .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -SnapshotID 353902
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, and attempt to use the specified Protection Domain snapshotID for all operations. 
     Credentials will be prompted for.
+.EXAMPLE
+    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -ctx_Catalogs "Catalog1","Catalog2" -ctx_adminAddress "ctxddc001" -UseCustomCredentialFile -TriggerPDReplication
+    This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity
+    A Protection Domain Out of Band replicate will be triggered.
+    Any target snapshots outside of the last 10 will be deleted on the target clusters.
+    A custom credential file will be created and consumed.
+    The Citrix Catalogs "Catalog1" and "Catalog2" will be processed on the Citrix Delivery Controller "ctxddc001"
+.EXAMPLE
+    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 ctx_SiteConfigJSON "c:\temp\ctx_catalogs.json" -UseCustomCredentialFile -TriggerPDReplication
+    This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity
+    A Protection Domain Out of Band replicate will be triggered.
+    Any target snapshots outside of the last 10 will be deleted on the target clusters.
+    A custom credential file will be created and consumed.
+    A JSON file including the appropriate Catalogs and Delivery Groups will be processed.
 .EXAMPLE
     .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
@@ -50,7 +81,7 @@
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     A custom credential file will be created and consumed.
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication.
+    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     A custom credential file will be created and consumed. 
@@ -119,7 +150,16 @@ Param(
     [switch]$TriggerPDReplication, # Triggers an out of band protection domain replication
 
     [Parameter(Mandatory = $false)]
-    [int]$MaxReplicationSuccessQueryAttempts = 10 # configured the number of attempts to query the PD for replication success to all remote clusters
+    [int]$MaxReplicationSuccessQueryAttempts = 10, # configures the number of attempts to query the PD for replication success to all remote clusters
+
+    [Parameter(Mandatory = $false)]
+    [Array]$ctx_Catalogs, # Array of catalogs on a single Citrix site to process. If needing to update multiple sites, use the JSON input
+
+    [Parameter(Mandatory = $false)]
+    [String]$ctx_AdminAddress, # Delivery Controller address on a single Citrix site to process. If needing to update multiple sites, use the JSON input
+
+    [Parameter(Mandatory = $false)]
+    [String]$ctx_SiteConfigJSON # JSON input file for multi site (or single site) Citrix site configurations. Catalogs and Delivery Controllers
 )
 #endregion
 
@@ -388,6 +428,121 @@ function Get-CustomCredentials {
     }
 } #this function is used to retrieve saved credentials for the current user
 
+function ValidateCitrixController {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$AdminAddress
+    )
+
+    try {
+        Write-Log -Message "[Citrix Validation] Validating Citrix Site is contactable at Delivery Controller: $($AdminAddress)" -Level Info
+        $Site = Get-BrokerSite -AdminAddress $AdminAddress -ErrorAction Stop
+        Write-Log -Message "[Citrix Validation] Successfully Validated Citrix Site: $($Site.Name) is contactable at Delivery Controller: $($AdminAddress)" -Level Info
+    }
+    catch {
+        Write-Log -Message "[Citrix Validation] Failed to validate Citrix Delivery Controller: $($AdminAddress)" -Level Warn
+        Write-Host $_
+        StopIteration
+        Exit 1
+    }
+}
+
+function ValidateCitrixCatalog {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Catalog,
+        [Parameter(Mandatory = $true)]
+        [string]$AdminAddress
+    )
+
+    Write-Log -Message "[Citrix Validation] Validating Catalog $($CurrentCatalogCount) of $($CatalogCount)" -Level Info
+    Write-Log -Message "[Citrix Validation] Validating Catalog $($Catalog) exists on Delivery Controller: $($AdminAddress)" -Level Info
+    try {
+        $CatalogDetail = Get-BrokerCatalog -Name $Catalog -AdminAddress $AdminAddress -ErrorAction Stop
+        Write-Log -Message "[Citrix Validation] Successfully validated Catalog $($Catalog) exists on Delivery Controller: $($AdminAddress)" -Level Info
+        if ($CatalogDetail.ProvisioningType -ne "MCS") {
+            Write-Log -Message "[Citrix Validation] Catalog is of provisioning type $($CatalogDetail.ProvisioningType) and cannot be used on Delivery Controller: $($AdminAddress)" -Level Warn
+            $Global:TotalCatalogFailureCount += 1
+            Break # update the fail count, but this is validation so we want to know all failures before killing script
+        }
+    }
+    catch {
+        Write-Log -Message "[Citrix Validation] Failed to validate Citrix Catalog $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Warn
+        Write-Log -Message $_ -Level Warn
+        $Global:TotalCatalogFailureCount += 1
+        Break # update the fail count, but this is validation so we want to know all failures before killing script
+    }
+
+    $Global:CurrentCatalogCount += 1
+    $Global:TotalCatalogSuccessCount += 1
+}
+
+function ProcessCitrixCatalog {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Catalog,
+        [Parameter(Mandatory = $true)]
+        [string]$AdminAddress,
+        [Parameter(Mandatory = $true)]
+        [string]$snapshotName
+    )
+    Write-Log -Message "[Citrix Catalog] Processing Catalog $($CurrentCatalogCount) of $($CatalogCount)" -Level Info
+    #Get the ProvScheme for the catalog
+    try {
+        Write-Log -Message "[Citrix Catalog] Getting Catalog and Prov Scheme details for Catalog: $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Info
+        $CatalogDetail = Get-BrokerCatalog -Name $Catalog -AdminAddress $AdminAddress -ErrorAction Stop
+        $ProveSchemeID = $CatalogDetail.ProvisioningSchemeId
+        $ProvScheme = Get-ProvScheme -ProvisioningSchemeUid $ProveSchemeID -AdminAddress $AdminAddress -ErrorAction Stop
+        Write-Log -Message "[Citrix Catalog] Successfully retrieved details for Catalog: $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Info
+    }
+    catch {
+       Write-Log -Message "[Citrix Catalog] Failed to retrieve details for Catalog: $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Warn
+       Write-Host $_
+       $Global:TotalCatalogFailureCount += 1
+       Break
+    }
+    
+    # Prepare the updates Master Image VM reference
+    Write-Log -Message "[Citrix Image] Setting Image details for catalog: $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Info
+    $CurrentImage = $ProvScheme.MasterImageVM
+    $pattern = "(?<=\\)([^\\]+)(?=\.template)"
+    $NewImage = $CurrentImage -replace $pattern,$snapshotName
+    Write-Log -Message "[Citrix Image] Current Catalog Image for Catalog: $($Catalog) is: $($CurrentImage)" -Level Info
+    Write-Log -Message "[Citrix Image] New Catalog Image for Catalog: $($Catalog) will be: $($NewImage)" -Level Info
+
+    #Start the update process
+    try {
+        Write-Log -Message "[Citrix Catalog] Starting Catalog update process for Catalog: $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Info
+
+        $PublishTask = Publish-ProvMasterVMImage -ProvisioningSchemeName $ProvScheme.ProvisioningSchemeName -MasterImageVM $NewImage -AdminAddress $AdminAddress -RunAsynchronously -ErrorAction Stop
+        $ProvTask = Get-ProvTask -TaskId $PublishTask -AdminAddress $AdminAddress -ErrorAction Stop
+
+        ## Track progress of the image update
+        Write-Log -Message "[Citrix Catalog] Tracking progress of the Catalog update task. Catalog update for: $($Catalog) started at: $($ProvTask.DateStarted) on Delivery Controller: $($AdminAddress)" -Level Info
+        $totalPercent = 0
+        While ( $ProvTask.Active -eq $True ) {
+            Try { $totalPercent = If ( $ProvTask.TaskProgress ) { $ProvTask.TaskProgress } Else { 0 } } Catch { }
+
+            Write-Log -Message "[Citrix Catalog] Provisioning image update current operation: $($ProvTask.CurrentOperation) on Provisioning Scheme: $($ProvScheme.ProvisioningSchemeName) is $($totalPercent)% Complete. Last Update Time is: $($ProvTask.LastUpdateTime) on Delivery Controller: $($AdminAddress)" -Level Info
+            Start-Sleep 15
+            $ProvTask = Get-ProvTask -TaskId $PublishTask -AdminAddress $AdminAddress -ErrorAction Stop
+        }
+    }
+    catch {
+        Write-Log -Message "[Citrix Catalog] Failed to start the update process on catalog: $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Warn
+        Write-Log -Message $_ -Level Warn
+        $Global:TotalCatalogFailureCount += 1
+        Break
+    }
+
+    Write-Log -Message "[Citrix Catalog] Catalog Update for catalog: $($Catalog) completed at $($ProvTask.DateFinished) with an Active time of $($ProvTask.ActiveElapsedTime) seconds on Delivery Controller: $($AdminAddress)" -Level Info
+    $Global:CurrentCatalogCount += 1
+    $Global:TotalCatalogSuccessCount += 1
+}
+
 #endregion
 
 #region Variables
@@ -416,12 +571,100 @@ try {
     Write-Log -Message "[Nutanix PowerShell] Successfully imported Nutanix PowerShell Module" -Level Info 
 }
 catch {
-    Write-Log -Message "Failed to import Nutanix PowerShell Module" -Level Warn
+    Write-Log -Message "[Nutanix PowerShell] Failed to import Nutanix PowerShell Module" -Level Warn
     Write-Log -Message $_ -Level Warn
     StopIteration
     Exit 1
 }
+
+#------------------------------------------------------------
+# Import Citrix Snapins
+#------------------------------------------------------------
+if ($ctx_Catalogs -or $ctx_SiteConfigJSON) {
+    try {
+        Write-Log -Message "[Citrix PowerShell] Attempting to import Citrix PowerShell Snapins" -Level Info
+        Add-PSSnapin -Name "Citrix.Broker.Admin.V2","Citrix.Host.Admin.V2" -ErrorAction Stop
+        Get-PSSnapin Citrix* -ErrorAction Stop | out-null
+        Write-Log -Message "[Citrix PowerShell] Successfully imported Citrix PowerShell Snapins" -Level Info
+    }
+    catch {
+        Write-Log -Message "[Citrix PowerShell] Failed to import Citrix PowerShell Module" -Level Warn
+        Write-Log -Message $_ -Level Warn
+        StopIteration
+        Exit 1
+    }
+}
 #endregion Modules
+
+#region Validate Citrix Environment
+if ($ctx_Catalogs -or $ctx_SiteConfigJSON) {
+    # Citrix mode has been enabled by either specifying a list of Catalogs or a JSON input file
+    Write-Log -Message "[Citrix Processing] Citrix Processing Mode is enabled" -Level Info
+    if ($ctx_Catalogs -and !$ctx_AdminAddress) {
+        Write-Log -Message "You must define a Delivery Controller to Process Citrix Catalogs" -Level Warn
+        StopIteration
+        Exit 1
+    }
+    $Global:CurrentCatalogCount = 1
+    $Global:TotalCatalogSuccessCount = 0
+    $Global:TotalCatalogFailureCount = 0
+
+    if ($ctx_SiteConfigJSON) {
+        #JSON
+        Write-Log -Message "[Citrix Validation] Using JSON input file: $($ctx_SiteConfigJSON) for Citrix configuration" -Level Info
+        try {
+            $CitrixConfig = Get-Content $ctx_SiteConfigJSON | ConvertFrom-Json
+        }
+        catch {
+            Write-Log -Message "[Citrix Validation] Failed to import JSON file" -Level Warn
+            Write-Log -Message $_ -Level Warn 
+            StopIteration
+            Exit 1
+        }
+
+        # Grab the unique controllers and test each one
+        $UniqeControllers = $CitrixConfig.Controller | Sort-Object -Unique
+        Write-Log -Message "[Citrix Validation] There are $($UniqeControllers.Count) unique Controllers (sites) to validate" -Level Info
+
+        # Test access to each defined controller
+        foreach ($AdminAddress in $UniqeControllers) {
+            ValidateCitrixController -AdminAddress $AdminAddress
+        }
+
+        # Process the Catalog list from JSON input
+        Write-Log -Message "[Citrix Validation] There are $($CitrixConfig.Catalog.Count) Catalogs to validate" -Level Info
+        $CatalogCount = $CitrixConfig.Catalog.Count
+        foreach ($_ in $CitrixConfig) {
+            # Set details
+            $Catalog = $_.Catalog
+            $AdminAddress = $_.Controller
+
+            ValidateCitrixCatalog -Catalog $Catalog -AdminAddress $AdminAddress
+        }
+    }
+    else {
+        #NO JSON
+        $Catalogs = $ctx_Catalogs
+        $AdminAddress = $ctx_AdminAddress
+
+        # Test access to the defined controller
+        ValidateCitrixController -AdminAddress $AdminAddress
+
+        Write-Log -Message "[Citrix Validation] There are $($Catalogs.Count) Catalogs to Validate" -Level Info
+        $CatalogCount = $Catalogs.Count
+        foreach ($Catalog in $Catalogs) {
+            ValidateCitrixCatalog -Catalog $Catalog -AdminAddress $AdminAddress
+        }
+    }
+
+    Write-Log -Message "[Citrix Validation] Successfully validated $($TotalCatalogSuccessCount) Catalogs" -Level Info
+    if ($TotalCatalogFailureCount -gt 0) {
+        Write-Log -Message "[Citrix Validation] Failed to validate $($TotalCatalogFailureCount) Catalogs" -Level Warn
+        StopIteration
+        Exit 1 # We do not want to proceed with failed validation
+    }
+}
+#endregion Validate Citrix Environment
 
 #region Authentication
 #------------------------------------------------------------
@@ -1005,5 +1248,49 @@ if ($ProcessedSourceCluster) {
 
 Write-Log -Message "[Data] Encountered $($TotalErrorCount) errors. Please review log file $($LogPath) for failures" -Level Info
 
+#region Process Citrix Environment
+if ($ctx_Catalogs -or $ctx_SiteConfigJSON) {
+    # Citrix mode has been enabled by either specifying a list of Catalogs or a JSON input file
+    if ($TotalErrorCount -gt 0) {
+        # We cannot process, way to risky
+        Write-Log -Message "[Citrix Processing] Citrix Environment processing has been enabled, however there are $($TotalErrorCount) errors in the snapshot replication phase. Not processing the Citrix environment" -Level Warn
+        StopIteration
+        Exit 1
+    }
+    $Global:CurrentCatalogCount = 1
+    $Global:TotalCatalogSuccessCount = 0
+    $Global:TotalCatalogFailureCount = 0
+
+    if ($ctx_SiteConfigJSON) {
+        #JSON
+        $CatalogCount = $CitrixConfig.Catalog.Count
+        Write-Log -Message "[Citrix Catalog] There are $($CitrixConfig.Catalog.Count) Catalogs to Process" -Level Info
+        foreach ($_ in $CitrixConfig) {
+            # Set details
+            $Catalog = $_.Catalog
+            $AdminAddress = $_.Controller
+
+            ProcessCitrixCatalog -Catalog $Catalog -AdminAddress $AdminAddress -snapshotName $snapshotName # Snapshot is set in the Nutanix phase
+        }
+    }
+    else {
+        #NO JSON
+        $Catalogs = $ctx_Catalogs # This was set in the validation phase, but resetting here for ease of reading
+        $AdminAddress = $ctx_AdminAddress # This was set in the validation phase, but resetting here for ease of reading
+        $CatalogCount = $Catalogs.Count
+
+        Write-Log -Message "[Citrix Catalog] There are $($Catalogs.Count) Catalogs to Process" -Level Info
+        foreach ($Catalog in $Catalogs) {
+            ProcessCitrixCatalog -Catalog $Catalog -AdminAddress $AdminAddress -snapshotName $snapshotName # Snapshot is set in the Nutanix phase
+        }
+    }
+    Write-Log -Message "[Citrix Catalog] Successfully processed $($TotalCatalogSuccessCount) Catalogs" -Level Info
+    if ($TotalCatalogFailureCount -gt 0) {
+        Write-Log "[Citrix Catalog] Failed to processed $($TotalCatalogFailureCount) Catalogs" -Level Warn
+    }
+}
+#endregion Process Citrix Environment
+
 StopIteration
+Exit 0
 #endregion
