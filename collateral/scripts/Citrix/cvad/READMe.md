@@ -140,6 +140,29 @@ $params = @{
 .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster "1.1.1.1" -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication -ctx_SiteConfigJSON "c:\temp\ctx_catalogs.json"
 ```
 
+Note that the JSON file must be structured as per below:
+
+```
+[
+    {
+        "Catalog": "Catalog1",
+        "Controller": "Controller1"
+    },
+    {
+        "Catalog": "Catalog2",
+        "Controller": "Controller1"
+    },
+    {
+        "Catalog": "Catalog3",
+        "Controller": "Controller2"
+    },
+    {
+        "Catalog": "Catalog4",
+        "Controller": "Controller2"
+    }
+]
+```
+
 The script will:
 
 - Validate the Citrix environment can be reached at each unique Delivery Controller in the JSON file via the `ctx_SiteConfigJSON` parameter. Then validate all Catalogs specified in the JSON file `ctx_SiteConfigJSON` exist and are of the MCS provisioning type.
