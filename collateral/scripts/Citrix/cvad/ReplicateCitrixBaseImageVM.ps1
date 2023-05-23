@@ -1,12 +1,13 @@
 <#
 .SYNOPSIS
-    The script is designed to automate the VM restore and snapshot creation of a Citrix Base Image across multiple Nutanix clusters based on Protection Domain methodology
+    The script is designed to automate the VM restore and snapshot creation of a Citrix Base Image across multiple Nutanix clusters based on Protection Domain methodology and optionally update Citrix Catalogs.
 .DESCRIPTION
     The script will query a single Source Cluster and Protection Domain of which your Citrix Base Image should be a member of. 
     It will figure out all target clusters based on protection Domain remote sites and attempt to restore, snapshot, and delete the protected VM instance leaving a Citrix ready snapshot for MCS provisioning.
     The script will handle deletion of existing snapshots based on a retention period (effectively a cleanup mode). This is a destructive operation.
-    The script assumes that your Protection Domain configurations are setup correctly. It does not alter, modify, create or delete any form of PD outside of triggering an out of band replication
+    The script assumes that your Protection Domain configurations are setup correctly. It does not alter, modify, create or delete any form of PD outside of triggering an out of band replication.
     The script by default attempts to use the latest snapshot on the PD. It compares both source and target to ensure these are inline. You can override this behaviour with SnapShotID parameter.
+    The script has optional processing to allow automated Citrix Catalogs across one or many Citrix sites.
 .PARAMETER LogPath
     Logpath output for all operations
 .PARAMETER LogRollover
@@ -57,9 +58,11 @@
 .PARAMETER ctx_Snapshot
     Optional. The name of the snapshot to be used with the ctx_ProcessCitrixEnvironmentOnly switch. This has no validation against Nutanix. Purely used to bring Citrix catalogs into line.
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -SnapshotID 353902
-    This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, and attempt to use the specified Protection Domain snapshotID for all operations. 
-    Credentials will be prompted for.
+    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication
+    This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity
+    A Protection Domain Out of Band replicate will be triggered.
+    Any target snapshots outside of the last 10 will be deleted on the target clusters.
+    A custom credential file will be created and consumed.
 .EXAMPLE
     .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -ctx_Catalogs "Catalog1","Catalog2" -ctx_adminAddress "ctxddc001" -UseCustomCredentialFile -TriggerPDReplication
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity
@@ -68,12 +71,16 @@
     A custom credential file will be created and consumed.
     The Citrix Catalogs "Catalog1" and "Catalog2" will be processed on the Citrix Delivery Controller "ctxddc001"
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 ctx_SiteConfigJSON "c:\temp\ctx_catalogs.json" -UseCustomCredentialFile -TriggerPDReplication
+    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -ctx_SiteConfigJSON "c:\temp\ctx_catalogs.json" -UseCustomCredentialFile -TriggerPDReplication
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity
     A Protection Domain Out of Band replicate will be triggered.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     A custom credential file will be created and consumed.
     A JSON file including the appropriate Catalogs and Delivery Groups will be processed.
+.EXAMPLE
+    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -SnapshotID 353902
+    This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, and attempt to use the specified Protection Domain snapshotID for all operations. 
+    Credentials will be prompted for.
 .EXAMPLE
     .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
@@ -104,9 +111,23 @@
     A custom credential file will be created and consumed. 
     a Protection Domain Out of Band replicate will be triggered.
     The Source cluster will be exlcuded from having a snapshot created of the base VM.
+.EXAMPLE
+    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ctx_ProcessCitrixEnvironmentOnly -ctx_Snapshot "snapshotname" -ctx_SiteConfigJSON "c:\temp\ctx_catalogs.json"
+    This mode will bring only the Citrix environment into line based ont the provided snapshot and the Catalogs defined in the ctx_catalogs.json file
+    All Nutanix processing will be ignored
+    SourceCluster, pd, BaseVM params required, but ignored.
 .NOTES
-    The script is built on the lowest common version of Nutanix PowerShell capability and doesn't use task validation checks etc available in new PowerShell cmdlets
-    The script assumes the same username and password on all PE instances
+    The script is built on the lowest common version of Nutanix PowerShell capability
+    The script uses Citrix Powershell snapins for Citrix tasks
+    The script assumes the same username and password on all PE instances - This should be a service account
+    The script assumes that the user/account executing the script has the required permissions in Citrix sites
+    #--------------------------------------------------------------------------------------------------------#
+    # Authors and release:
+    #--------------------------------------------------------------------------------------------------------#
+    # This script is provided as-is to outline capability and methodology for achieving the defined goals.
+    # James Kindon - Senior Solutions Architect, EUC - Nutanix
+    # 23.05.2023: Initial release
+    #--------------------------------------------------------------------------------------------------------#
 #>
 
 #region Params
