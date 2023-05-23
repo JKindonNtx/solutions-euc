@@ -112,7 +112,13 @@ The following table shows the linear scalability detail for application performa
 | Microsoft Edge (Logon) | 0.19 | 0.19 | 0.19 | 0.20 | 0.20 |
 | Microsoft Word (Open Doc) | 1.26 | 1.27 | 1.29 | 1.33 | 1.34 |
 | Microsoft Excel (Save File) | 0.64 | 0.63 | 0.62 | 0.62 | 0.61 |
-  
+
+## Power Consumption
+
+![Power Usage Full Run](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image43.png "Power Usage Full Run")
+
+![Power Usage Steady State](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image44.png "Power Usage Steady State")
+
 ## MCS vs PVS
 
 Test Run Detail: 8 nodes with 1120 VMs (140 VMs per node) for both MCS and PVS.
