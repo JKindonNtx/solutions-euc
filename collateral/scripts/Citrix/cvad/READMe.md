@@ -17,8 +17,8 @@ Optionally, Citrix Catalogs should be updated with the created snapshot.
 ## Technical requirements for running the script
 
 - The script is written 100% in PowerShell and uses the NutanixCmdLets to action all Nutanix tasks. These must be installed and available on the machine executing the script.
-- The script assumes the same username and password for all PE instances including the source.
-- The script requires the Citrix PowerShell snapins are available. These can simply be installed by installing Citrix Studio.
+- The script assumes the same username and password for all PE instances including the source. A dedicated service account should be created to action these tasks.
+- The script requires the Citrix PowerShell snapins are available. These can simply be installed by installing Citrix Studio. Alternatively, you can follow [Citrix guidance](https://support.citrix.com/article/CTX222326/how-to-configure-powershell-sdk-and-execute-commands-remotely-in-xenappxendesktop-7x) to install the required snapins manually.
 - The script assumes that the user running the script, has appropriate rights in each Citrix site if Citrix Catalogs are processed.
 
 ## Parameter and Scenario Details
@@ -40,15 +40,15 @@ The following parameters exist to drive the behaviour of the script:
 - `VMPrefix`: Optional **`String`**. The prefix used for both the restored VM (temp) and the associated Snapshot. The default is `ctx_`
 - `SnapshotID`: Optional **`String`**. If you do not want to use the latest snapshot, specify the appropriate Protection Domain Snapshot ID from the Source Cluster.
 - `SleepTime`: Optional **`Integer`**. The amount of time to sleep between VM creation and Snapshot creation tasks. Default is `10 seconds`.
-- `UseCustomCredentialFile`: Optional. Will call the `Get-CustomCredentials` function which keeps outputs and inputs a secure credential file base on `Stephane Bourdeaud` from Nutanix functions.
+- `UseCustomCredentialFile` Optional: **`Switch`**: Will call the `Get-CustomCredentials` function which keeps outputs and inputs a secure credential file base on `Stephane Bourdeaud` from Nutanix functions.
 - `CredPath`: Optional **`String`**. Used if using the `UseCustomCredentialFile` parameter. Defines the location of the credential file. The default is `"$Env:USERPROFILE\Documents\WindowsPowerShell\CustomCredentials"`
-- `ExcludeSourceClusterFromProcessing` **`Switch`**: Optional. By default the Source Cluster is also processed to ensure consistency of snapshots available to Citrix. This switch allows to the Source Cluster to be ignored incase the VM snaps have already been handled and snap naming consistency doesn't matter.
+- `ExcludeSourceClusterFromProcessing` Optional. **`Switch`**: By default the Source Cluster is also processed to ensure consistency of snapshots available to Citrix. This switch allows to the Source Cluster to be ignored incase the VM snaps have already been handled and snap naming consistency doesn't matter.
 - `MaxReplicationSuccessQueryAttempts`: Optional **`Integer`**. An advanced parameter to alter the number of successful PD query events. Defaults to `10`. Time between those queries is an advanced variable in the script which you should be careful with (10 seconds).
 - `ctx_Catalogs`: Optional **`Array`**. A list of Citrix Catalogs to update after the Snapshot replication has finished. User running the script must have sufficient rights on the Citrix Site. Single Citrix Site parameter only. For multi-site, use ctx_siteConfigJSON switch.
-- `ctx_AdminAddress`: Optional **`String`**. The Delivery Controller to target for Citrix Catalog updates. Single Citrix Site parameter only. For multi-site, use ctx_siteConfigJSON switch.
-- `ctx_SiteConfigJSON`: Optional **`String`**. A JSON file containing a list of Catalogs and associated Delivery Controllers for a multi-site environment. This will override the ctx_AdminAddress and ctx_Catalogs parameters
+- `ctx_AdminAddress`: Optional **`String`**. The Delivery Controller to target for Citrix Catalog updates. Single Citrix Site parameter only. For multi-site, use `ctx_siteConfigJSON` switch.
+- `ctx_SiteConfigJSON`: Optional **`String`**. A JSON file containing a list of Catalogs and associated Delivery Controllers for a multi-site environment. This will override the `ctx_AdminAddress` and `ctx_Catalogs` parameters.
 - `ctx_ProcessCitrixEnvironmentOnly`: Optional **`Switch`**. Switch parameter to indicate that we are purely updating Citrix Catalogs and not interacting with Nutanix. Used in a scenario where maybe some remediation work as been undertaken and only Citrix needs updating. Advanced Parameter for specific used cases.
-- `ctx_Snapshot`: Optional **`String`**. The name of the snapshot to be used with the ctx_ProcessCitrixEnvironmentOnly switch. This has no validation against Nutanix. Purely used to bring Citrix catalogs into line.
+- `ctx_Snapshot`: Optional **`String`**. The name of the snapshot to be used with the `ctx_ProcessCitrixEnvironmentOnly` switch. This has no validation against Nutanix. Purely used to bring Citrix catalogs into line.
 
 The following examples use parameter splatting to make reading easier. A corresponding commandline example is also included:
 
