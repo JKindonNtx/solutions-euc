@@ -65,7 +65,7 @@ if(Test-Path -Path "C:\Program Files\CITRIX") {
 # Get Guest Tools Version
 if(Test-Path -Path "C:\Program Files\VMware") {
     New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "HvType" -Value "VMware"
-    $GuestTools = Get-Package | Where-Object {$_.Name -like "VMware*" }
+    $GuestTools = Get-Package | Where-Object {$_.Name -like "VMware Tools*" }
     New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "GuestTools" -Value $GuestTools.Name
     New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "GuestToolsVersion" -Value $GuestTools.Version
 } else {
