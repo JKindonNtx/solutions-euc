@@ -1,0 +1,11 @@
+{
+    "Controller": "localhost",
+    "SourceCatalog": "W10 MCS Migration Test",
+    "TargetCatalog": "W10 MCS Migrated Test",
+    "SourceDeliveryGroup": "W10 MCS Migration Test",
+    "TargetDeliveryGroup": "W10 MCS Migrated Test",
+    "OverridePublishedName": "I did this with JSON",
+    "TargetMachineScope": "MachineList",
+    "TargetMachineList": "JK-TEST-010,JK-TEST-011",
+    "TargetMachineCSVList": ""
+}
