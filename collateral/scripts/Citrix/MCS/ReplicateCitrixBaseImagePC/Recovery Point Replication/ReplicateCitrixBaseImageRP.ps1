@@ -5,11 +5,9 @@
 .EXAMPLE
 .NOTES
 ToDo
- - Fix multi VM detection issue on PE run
- - Add Counts for Scucess and Win
+ - Add Counts for Success and Win
  - Add Citrix Components
  - Confirm validity of entity counts based on PP entity logic - check with J?
- - Add v3 Task Function
  #>
 
 #region Params
@@ -457,11 +455,44 @@ function GetPrismv2Task {
         while ($TaskStatus.progress_status -ne "SUCCEEDED") {
             Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.progress_status). Waiting for Task Completion. Status: $($TaskStatus.percentage_complete)% complete" -Level Info
             Sleep 2
-            #$TaskStatus = Invoke-RestMethod -Uri $RequestUri -Headers $Headers -Method $Method -TimeoutSec 5 -UseBasicParsing -DisableKeepAlive -SkipCertificateCheck
             $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $Credential -ErrorAction Stop
         }
         if ($TaskStatus.progress_status -eq "SUCCEEDED") {
             Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.progress_status). $PhaseSuccessMessage" -Level Info
+        }
+    }
+    catch {
+        Write-Log -Message "$($Phase) Failed to get task status for task ID: $($TaskId)" -Level Warn
+        Break
+    }     
+}
+
+function GetPrismv3Task {
+    param (
+        [parameter(mandatory = $true)]
+        [string]$TaskID, #ID of the task to grab
+
+        [parameter(mandatory = $true)]
+        [string]$Cluster,
+
+        [parameter(mandatory = $true)]
+        [System.Management.Automation.PSCredential]$Credential
+    )
+
+    $Method = "GET"
+    $RequestUri = "https://$($pc_source):9440/api/nutanix/v3/tasks/$($TaskId)"
+    $Payload = $null
+    try {
+        $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $Credential -ErrorAction Stop
+        Write-Log -Message "$($Phase) Monitoring task: $($TaskId)"
+        while ($TaskStatus.Status -ne "SUCCEEDED") {
+            Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.Status). Waiting for Task Completion. Status: $($TaskStatus.percentage_complete)% complete" -Level Info
+            Sleep 2
+            #$TaskStatus = Invoke-RestMethod -Uri $RequestUri -Headers $Headers -Method $Method -TimeoutSec 5 -UseBasicParsing -DisableKeepAlive -SkipCertificateCheck
+            $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $Credential -ErrorAction Stop
+        }
+        if ($TaskStatus.Status -eq "SUCCEEDED") {
+            Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.Status). $PhaseSuccessMessage" -Level Info
         }
     }
     catch {
@@ -825,6 +856,7 @@ $RecoveryPointActionCount = 1 #starting count for our loop operation below
 $TempVMName = $VMPrefix + $BaseVM
 Write-Log -Message "[Recovery Point Clone] Temp virtual machine name is $($TempVMName)"
 
+$TempVMCreationDetails = @() # temp VM created uuid array
 foreach ($_ in $Target_RecoveryPoints) {
     Write-Log -Message "[Recovery Point Clone] Processing Cluster $($RecoveryPointActionCount) of $($RecoveryPointTotalCount) under the Prism Central Instance $($pc_source)" -Level Info
     # Loop through the list of UIDs of the RP clones
@@ -851,19 +883,13 @@ foreach ($_ in $Target_RecoveryPoints) {
         Exit 1
     }
 
-    #------
     #Get the status of the task above
-    #------
     $TaskId = $VMCreated.task_uuid
     $Phase = "[Recovery Point Clone]"
     $PhaseSuccessMessage = "VM has been created"
-    $Method = "GET"
-    $RequestUri = "https://$($pc_source):9440/api/nutanix/v3/tasks/$($TaskId)"
-    $Payload = $null # we are on a GET run
-
+    
     try {
-        Write-Log -Message "[Recovery Point Clone] Retrieving tasks Status for task: $($TaskId) under the Prism Central Instance $($pc_source)" -level Info
-        $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
+        GetPrismv3Task -TaskID $TaskId -Cluster $pc_source -Credential $PrismCentralCredentials
     }
     catch {
         # Fail one fail all. Exit on fail
@@ -872,21 +898,20 @@ foreach ($_ in $Target_RecoveryPoints) {
         Exit 1
     }
 
-    while ($TaskStatus.Status -ne "SUCCEEDED") {
-        Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.Status). Waiting for task completion for task ID: $($TaskId). Status: $($TaskStatus.percentage_complete)% complete" -Level Info
-        Sleep 2
-        try {
-            $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
-        }
-        catch {
-            # Fail one fail all. Exit on fail
-            Write-Log -Message "[Recovery Point Clone] Unable to determine status of task $($TaskId) under the Prism Central Instance $($pc_source)" -Level Warn
-            StopIteration
-            Exit 1
-        }
+    # Get machine creation details which will be matched in the target cluster loops in PE
+    Write-Log -Message "[Recovery Point Clone] Capturing VM creation details from the Prism Central Instance $($pc_source)" -Level Info
+    $RequestUri = "https://$($pc_source):9440/api/nutanix/v3/tasks/$TaskId"
+    $Method = "GET"
+    $Payload = $null # we are on a get run
+    try {
+        $TempVMCreationDetail = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
+        $TempVMCreationDetails += $TempVMCreationDetail.entity_reference_list.uuid # add per run after getting task    
     }
-    if ($TaskStatus.Status -eq "SUCCEEDED") {
-        Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.Status). $($PhaseSuccessMessage)" -Level Info
+    catch {
+        # Fail one fail all. Exit on fail
+        Write-Log -Message "[Recovery Point Clone] Failed to capture virtual machine creation details from the Prism Central Instance $($pc_source)" -Level Warn
+        StopIteration
+        Exit 1
     }
     
     $RecoveryPointActionCount += 1
@@ -927,22 +952,15 @@ foreach ($_ in $Clusters) {
 
     Write-Log -Message "[VM] There are $($VirtualMachines.entities.Count) virtual machines on the target cluster: $($ClusterName)" -Level Info
 
-    $TempVMDetail = $VirtualMachines.entities | where-Object {$_.name -like "$TempVMName*"}
-
-    Write-Log -Message "[VM] There are $($TempVMDetail.name.count) virtual machines matching $($TempVMName) on the target cluster: $($ClusterName)" -Level Info
-    if ($TempVMDetail.name.Count -lt 1) {
-        Write-Log -Message "[VM] Failed to retrieve virtual machines on the target cluster: $($ClusterName)" -Level Warn
-        Break
-    }
-    elseif ($TempVMDetail.name.Count -gt 1) {
-        ##//KINDON - Need to do something here
-        Write-Log -Message "[VM] There are multiple entities matching $($TempVMName) on the target cluster: $($ClusterName). Unsure which to use" -Level Warn
-        Continue
-    }
-    else {
+    $TempVMDetail = $VirtualMachines.entities | where-Object {$_.uuid -in $TempVMCreationDetails}
+    if ($TempVMDetail) {
+        Write-Log -Message "Found virtual machine $($TempVMDetail.name) on the target cluster: $($ClusterName)" -Level Info
         $vm_uuid = $TempVMDetail.uuid
         $vm_name = $TempVMDetail.name
-        Write-Log -Message "[VM] VM uuid of Temporary VM $($vm_name) is: $($vm_uuid) on cluster: $($ClusterName)" -Level Info
+    }
+    else {
+        Write-Log -Message "[VM] Failed to retrieve virtual machines on the target cluster: $($ClusterName)" -Level Warn
+        Continue
     }
 
     #endregion Get VM
@@ -973,9 +991,7 @@ foreach ($_ in $Clusters) {
         Continue
     }
     
-    #------
     #Get the status of the task above
-    #------
     $TaskId = $Snapshot.task_uuid
     $Phase = "[VM Snapshot]"
     $PhaseSuccessMessage = "Snapshot: $($SnapshotName) has been created"
@@ -983,7 +999,7 @@ foreach ($_ in $Clusters) {
 
     #endregion create Snapshot
 
-    #region delete snapshot
+    #region delete Snapshot
     #---------------------------------------------
     # Clean up snapshots based on retention
     #---------------------------------------------
@@ -1011,7 +1027,7 @@ foreach ($_ in $Clusters) {
 
         $SnapsToDelete = @() # Initialise the delete array
         foreach ($Snap in $MatchedSnapshots) {
-            # loop through each snapshot and add to delete array if not in the ImageSnapsOnTargetToRetain array
+            # loop through each snapshot and add to delete array if not in the SnapsToRetain array
             if ($Snap -notin $SnapsToRetain) {
                 Write-Log -Message "[VM Snapshot] Adding Snapshot: $($snap.snapshot_name) to the delete list" -Level Info
                 $SnapsToDelete += $snap
@@ -1035,9 +1051,7 @@ foreach ($_ in $Clusters) {
         
                     $SnapShotDelete = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismElementCredentials -ErrorAction Stop
         
-                    #------
                     #Get the status of the task above
-                    #------
                     $TaskId = $SnapShotDelete.task_uuid
                     $Phase = "[VM Snapshot]"
                     $PhaseSuccessMessage = "Snapshot: $($snap.snapshot_name) has been deleted"
@@ -1058,7 +1072,7 @@ foreach ($_ in $Clusters) {
             Write-Log -Message "[VM Snapshot] There are no Snapshots to delete based on the retention value of: $($ImageSnapsToRetain) on the target cluster: $($ClusterName)" -Level Warn 
         }
     }
-    #endregion delete snapshot
+    #endregion delete Snapshot
 
     #region delete Temp VM
     #---------------------------------------------
@@ -1077,9 +1091,7 @@ foreach ($_ in $Clusters) {
         Continue
     }
     
-    #------
-    #Get the status of the task above
-    #------
+    # Get the status of the task above
     $TaskId = $VMDeleted.task_uuid
     $Phase = "[VM Delete]"
     $PhaseSuccessMessage = "VM $($vm_name) has been deleted"
