@@ -8,8 +8,8 @@ ToDo
  - Fix multi VM detection issue on PE run
  - Add Counts for Scucess and Win
  - Add Citrix Components
- - Add fix SSL Function Formating crud
  - Confirm validity of entity counts based on PP entity logic - check with J?
+ - Add v3 Task Function
  #>
 
 #region Params
@@ -360,7 +360,7 @@ function Set-PoshTls {
     }
 
     process {
-        Write-Log -Message "Adding Tls12 support" -Level Info
+        Write-Log -Message "[SSL] Adding Tls12 support" -Level Info
         [Net.ServicePointManager]::SecurityProtocol = `
         ([Net.ServicePointManager]::SecurityProtocol -bor `
                 [Net.SecurityProtocolType]::Tls12)
@@ -370,54 +370,6 @@ function Set-PoshTls {
 
     }
 } #this function is used to make sure we use the proper Tls version (1.2 only required for connection to Prism)
-
-function Set-PoSHSSLCerts {
-    <#
-    .SYNOPSIS
-    Configures PoSH to ignore invalid SSL certificates when doing Invoke-RestMethod
-    .DESCRIPTION
-    Configures PoSH to ignore invalid SSL certificates when doing Invoke-RestMethod
-    #>
-    begin {
-
-    }#endbegin
-    process {
-        Write-Log -Message "Ignoring invalid certificates" -Level Info
-        if (-not ([System.Management.Automation.PSTypeName]'ServerCertificateValidationCallback').Type) {
-            $certCallback = @"
-using System;
-using System.Net;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
-public class ServerCertificateValidationCallback
-{
-public static void Ignore()
-{
-    if(ServicePointManager.ServerCertificateValidationCallback ==null)
-    {
-        ServicePointManager.ServerCertificateValidationCallback += 
-            delegate
-            (
-                Object obj, 
-                X509Certificate certificate, 
-                X509Chain chain, 
-                SslPolicyErrors errors
-            )
-            {
-                return true;
-            };
-    }
-}
-}
-"@
-            Add-Type $certCallback
-        }#endif
-        [ServerCertificateValidationCallback]::Ignore()
-    }#endprocess
-    end {
-
-    }#endend
-} #this function is used to configure posh to ignore invalid ssl certificates
 
 function InvokePrismAPI {
     param (
@@ -501,15 +453,15 @@ function GetPrismv2Task {
     $Payload = $null
     try {
         $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $Credential -ErrorAction Stop
-        #$TaskStatus = Invoke-RestMethod -Uri $RequestUri -Headers $Headers -Method $Method -TimeoutSec 5 -UseBasicParsing -DisableKeepAlive -SkipCertificateCheck
+        Write-Log -Message "$($Phase) Monitoring task: $($TaskId)"
         while ($TaskStatus.progress_status -ne "SUCCEEDED") {
-            Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.Status). Waiting for Task Completion for task ID: $($TaskId). Status: $($TaskStatus.percentage_complete)% complete" -Level Info
+            Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.progress_status). Waiting for Task Completion. Status: $($TaskStatus.percentage_complete)% complete" -Level Info
             Sleep 2
             #$TaskStatus = Invoke-RestMethod -Uri $RequestUri -Headers $Headers -Method $Method -TimeoutSec 5 -UseBasicParsing -DisableKeepAlive -SkipCertificateCheck
             $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $Credential -ErrorAction Stop
         }
         if ($TaskStatus.progress_status -eq "SUCCEEDED") {
-            Write-Log -Message "$($Phase) Task Status for $($TaskId) is: $($TaskStatus.progress_status). $PhaseSuccessMessage" -Level Info
+            Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.progress_status). $PhaseSuccessMessage" -Level Info
         }
     }
     catch {
@@ -536,8 +488,46 @@ StartIteration
 #check PoSH version
 if ($PSVersionTable.PSVersion.Major -lt 5) { throw "$(get-date) [ERROR] Please upgrade to Powershell v5 or above (https://www.microsoft.com/en-us/download/details.aspx?id=50395)" }
 
-Set-PoSHSSLCerts
+#region SSL Handling
+#------------------------------------------------------------
+# Handle Invalid Certs
+#------------------------------------------------------------
+if ($PSEdition -eq 'Desktop') {
+Write-Log -Message "[SSL] Ignoring invalid certificates" -Level Info
+    if (-not ([System.Management.Automation.PSTypeName]'ServerCertificateValidationCallback').Type) {
+    $certCallback = @"
+using System;
+using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
+public class ServerCertificateValidationCallback
+{
+public static void Ignore()
+{
+    if(ServicePointManager.ServerCertificateValidationCallback ==null)
+    {
+        ServicePointManager.ServerCertificateValidationCallback += 
+            delegate
+            (
+                Object obj, 
+                X509Certificate certificate, 
+                X509Chain chain, 
+                SslPolicyErrors errors
+            )
+            {
+                return true;
+            };
+    }
+}
+}
+"@
+    Add-Type $certCallback
+    }
+    [ServerCertificateValidationCallback]::Ignore()
+}
+
 Set-PoshTls
+#endregion SSL Handling
 
 #region Authentication
 #------------------------------------------------------------
@@ -790,7 +780,7 @@ $RecoveryPointTotalCount = $Target_RecoveryPoints.Count #total count for our loo
 $RecoveryPointActionCount = 1 #starting count for our loop operation below
 
 foreach ($_ in $Target_RecoveryPoints) {
-    Write-Log -Message "[Recovery Point] Processing Recovery Cluster $($RecoveryPointActionCount) of $($RecoveryPointTotalCount)" -Level Info
+    Write-Log -Message "[Recovery Point Validation] Processing Recovery Cluster $($RecoveryPointActionCount) of $($RecoveryPointTotalCount)" -Level Info
     $uuid = $_.metadata.uuid
     $createtime = $_.metadata.creation_time
     #$vm_recovery_point_location_agnostic_uuid = $_.status.resources.vm_recovery_point_location_agnostic_uuid  ##<- this is the same when created with an RP, the same across all clusters
@@ -904,8 +894,6 @@ foreach ($_ in $Target_RecoveryPoints) {
 #endregion clone the recovery points
 
 #endregion Query Prism Central
-#Write-Log -Message "[Prism Central] Allowing for a settle down period after creation tasks. Waiting 60 seconds" -Level Info
-#Start-Sleep 60
 
 #region Prism Element Loops
 #------------------------------------------------------------
@@ -934,34 +922,28 @@ foreach ($_ in $Clusters) {
     }
     catch {
         Write-Log -Message "[Target Cluster] Failed to retrieve virtual machines from the target cluster: $($ClusterName)" -Level Warn
-        #StopIteration
-        #Exit 1
         Continue
     }
 
     Write-Log -Message "[VM] There are $($VirtualMachines.entities.Count) virtual machines on the target cluster: $($ClusterName)" -Level Info
 
     $TempVMDetail = $VirtualMachines.entities | where-Object {$_.name -like "$TempVMName*"}
-    $vm_uuid = $TempVMDetail.uuid
-    $vm_name = $TempVMDetail.name
-    Write-Log -Message "[VM] VM uuid of Temporary VM $($vm_name) is: $($vm_uuid) on cluster: $($ClusterName)" -Level Info
 
-    #$TempVMDetail
-    #Write-Log -Message "[VM] There are $($TempVMDetail.entities.count) virtual machines matching $($TempVMName) on the target cluster: $($ClusterName)" -Level Info
-    #if ($TempVMDetail.entities.Count -lt 1) {
-    #    Write-Log -Message "[VM] Failed to retrieve virtual machines on the target cluster: $($ClusterName)" -Level Warn
-    #    Break
-    #}
-    #elseif ($TempVMDetail.entities.Count -gt 1) {
-    #    ##//KINDON - Need to do something here
-    #    Write-Log -Message "[VM] There are multiple entities matching $($TempVMName) on the target cluster: $($ClusterName). Unsure which to use" -Level Warn
-    #    Continue
-    #}
-    #else {
-    #    $vm_uuid = $TempVMDetail.uuid
-    #    $vm_name = $TempVMDetail.name
-    #    Write-Log -Message "[VM] VM uuid of Temporary VM $($vm_name) is: $($vm_uuid) on cluster: $($ClusterName)" -Level Info
-    #}
+    Write-Log -Message "[VM] There are $($TempVMDetail.name.count) virtual machines matching $($TempVMName) on the target cluster: $($ClusterName)" -Level Info
+    if ($TempVMDetail.name.Count -lt 1) {
+        Write-Log -Message "[VM] Failed to retrieve virtual machines on the target cluster: $($ClusterName)" -Level Warn
+        Break
+    }
+    elseif ($TempVMDetail.name.Count -gt 1) {
+        ##//KINDON - Need to do something here
+        Write-Log -Message "[VM] There are multiple entities matching $($TempVMName) on the target cluster: $($ClusterName). Unsure which to use" -Level Warn
+        Continue
+    }
+    else {
+        $vm_uuid = $TempVMDetail.uuid
+        $vm_name = $TempVMDetail.name
+        Write-Log -Message "[VM] VM uuid of Temporary VM $($vm_name) is: $($vm_uuid) on cluster: $($ClusterName)" -Level Info
+    }
 
     #endregion Get VM
 
@@ -1001,7 +983,7 @@ foreach ($_ in $Clusters) {
 
     #endregion create Snapshot
 
-    #region snapshot deletion
+    #region delete snapshot
     #---------------------------------------------
     # Clean up snapshots based on retention
     #---------------------------------------------
@@ -1076,9 +1058,9 @@ foreach ($_ in $Clusters) {
             Write-Log -Message "[VM Snapshot] There are no Snapshots to delete based on the retention value of: $($ImageSnapsToRetain) on the target cluster: $($ClusterName)" -Level Warn 
         }
     }
-    #endregion snapshot deletion
+    #endregion delete snapshot
 
-    #region Delete Temp VM
+    #region delete Temp VM
     #---------------------------------------------
     # Delete the Temp VM 
     #---------------------------------------------
@@ -1103,7 +1085,7 @@ foreach ($_ in $Clusters) {
     $PhaseSuccessMessage = "VM $($vm_name) has been deleted"
 
     GetPrismv2Task -TaskID $TaskId -Cluster $ClusterIP -Credential $PrismElementCredentials
-    #endregion Delete Temp VM
+    #endregion delete Temp VM
 
     $ClustersActionCount += 1
 }
