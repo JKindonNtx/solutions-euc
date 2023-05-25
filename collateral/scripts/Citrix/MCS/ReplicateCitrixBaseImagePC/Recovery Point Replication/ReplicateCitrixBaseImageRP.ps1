@@ -9,7 +9,9 @@ ToDo
  - Add Counts for Scucess and Win
  - Add Citrix Components
  - Add fix SSL Function Formating crud
-#>
+ - Make API logging switch based - it's noisy otherwise
+ - Confirm validity of entity counts based on PP entity logic - check with J?
+ #>
 
 #region Params
 # ============================================================================
