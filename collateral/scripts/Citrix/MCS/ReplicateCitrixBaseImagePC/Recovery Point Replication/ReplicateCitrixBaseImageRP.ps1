@@ -9,7 +9,6 @@ ToDo
  - Add Counts for Scucess and Win
  - Add Citrix Components
  - Add fix SSL Function Formating crud
- - Make API logging switch based - it's noisy otherwise
  - Confirm validity of entity counts based on PP entity logic - check with J?
  #>
 
@@ -46,7 +45,7 @@ Param(
     [switch]$UseCustomCredentialFile, # specifies that a credential file should be used
 
     [Parameter(Mandatory = $false)]
-    [String]$CredPath = "$Env:USERPROFILE\Documents\WindowsPowerShell\CustomCredentials" # Default path for custom credential file
+    [String]$CredPath = "$Env:USERPROFILE\Documents\WindowsPowerShell\CustomCredentials", # Default path for custom credential file
 
     #[Parameter(Mandatory = $false)]
     #[Array]$ctx_Catalogs, # Array of catalogs on a single Citrix site to process. If needing to update multiple sites, use the JSON input
@@ -62,6 +61,9 @@ Param(
 
     #[Parameter(Mandatory = $false)]
     #[String]$ctx_Snapshot # the snapshot to be used to update Citrix Catalogs. Used in conjunction with ctx_ProcessCitrixEnvironmentOnly
+
+    [Parameter(Mandatory = $false)]
+    [switch]$APICallVerboseLogging # Show the API calls being made
 )
 #endregion
 
@@ -430,14 +432,11 @@ function InvokePrismAPI {
         [string]$Payload,
 
         [parameter(mandatory = $true)]
-        [System.Management.Automation.PSCredential]$Credential,
-
-        [parameter(mandatory = $false)]
-        [switch] $Checking_task_status
+        [System.Management.Automation.PSCredential]$Credential
     )
     BEGIN {}
     PROCESS {
-        if (!$Checking_task_status) { 
+        if ($APICallVerboseLogging) { 
             Write-Log -Message "[Prism API Call] Making a $method call to $url" -Level Info
         }
         try {
@@ -487,24 +486,14 @@ function InvokePrismAPI {
 
 function GetPrismv2Task {
     param (
-        #[parameter(mandatory = $true)]
-        #[ValidateSet("POST", "GET", "DELETE", "PUT")]
-        #[string]$Method,
-
         [parameter(mandatory = $true)]
         [string]$TaskID, #ID of the task to grab
 
         [parameter(mandatory = $true)]
         [string]$Cluster,
 
-        #[parameter(mandatory = $false)]
-        #[string]$Payload,
-
         [parameter(mandatory = $true)]
         [System.Management.Automation.PSCredential]$Credential
-
-        #[parameter(mandatory = $false)]
-        #[switch] $Checking_task_status
     )
 
     $Method = "GET"
