@@ -755,6 +755,7 @@ if ($PSVersionTable.PSVersion.Major -lt 5) { throw "$(get-date) [ERROR] Please u
 # Import Citrix Snapins
 #------------------------------------------------------------
 if ($ctx_Catalogs -or $ctx_SiteConfigJSON) {
+    if ($PSVersionTable.PSedition -eq "Core") { throw "$(get-date) You cannot use snapins with PowerShell Core. You must use PowerShell 5.x" }
     try {
         Write-Log -Message "[Citrix PowerShell] Attempting to import Citrix PowerShell Snapins" -Level Info
         Add-PSSnapin -Name "Citrix.Broker.Admin.V2","Citrix.Host.Admin.V2" -ErrorAction Stop

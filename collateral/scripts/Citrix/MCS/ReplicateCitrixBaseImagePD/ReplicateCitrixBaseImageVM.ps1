@@ -657,6 +657,9 @@ $TimeBeforeEventSearch = 5 # Time to wait between triggering the PD replication 
 # ============================================================================
 StartIteration
 
+if ($PSVersionTable.PSVersion.Major -lt 5) { throw "$(get-date) [ERROR] Please upgrade to Powershell v5 or above (https://www.microsoft.com/en-us/download/details.aspx?id=50395)" }
+
+if ($PSVersionTable.PSedition -eq "Core") { throw "$(get-date) You cannot use snapins with PowerShell Core. You must use PowerShell 5.x" }
 #region Modules
 #------------------------------------------------------------
 # Import Nutanix PowerShell Modules
