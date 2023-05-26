@@ -51,6 +51,8 @@
 ToDo
  - Confirm validity of entity counts based on PP entity logic - check with J?
  - Add Cluster Exclude list - This is required as I can't figure out which clusters are identified in the Protection Policy holding Recovery Points
+ - Restrict to single Availability Zone configurations?
+ - Define a specified Recovery Point?
  #>
 
 #region Params
@@ -547,6 +549,186 @@ function GetPrismv3Task {
     }     
 }
 
+function ValidateCitrixController {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$AdminAddress
+    )
+
+    try {
+        Write-Log -Message "[Citrix Validation] Validating Citrix Site is contactable at Delivery Controller: $($AdminAddress)" -Level Info
+        $Site = Get-BrokerSite -AdminAddress $AdminAddress -ErrorAction Stop
+        Write-Log -Message "[Citrix Validation] Successfully Validated Citrix Site: $($Site.Name) is contactable at Delivery Controller: $($AdminAddress)" -Level Info
+    }
+    catch {
+        Write-Log -Message "[Citrix Validation] Failed to validate Citrix Delivery Controller: $($AdminAddress)" -Level Warn
+        Write-Host $_
+        StopIteration
+        Exit 1
+    }
+}
+
+function ValidateCitrixCatalog {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Catalog,
+        [Parameter(Mandatory = $true)]
+        [string]$AdminAddress
+    )
+
+    Write-Log -Message "[Citrix Validation] Validating Catalog $($CurrentCatalogCount) of $($CatalogCount)" -Level Info
+    Write-Log -Message "[Citrix Validation] Validating Catalog $($Catalog) exists on Delivery Controller: $($AdminAddress)" -Level Info
+    try {
+        $CatalogDetail = Get-BrokerCatalog -Name $Catalog -AdminAddress $AdminAddress -ErrorAction Stop
+        Write-Log -Message "[Citrix Validation] Successfully validated Catalog $($Catalog) exists on Delivery Controller: $($AdminAddress)" -Level Info
+        if ($CatalogDetail.ProvisioningType -ne "MCS") {
+            Write-Log -Message "[Citrix Validation] Catalog is of provisioning type $($CatalogDetail.ProvisioningType) and cannot be used on Delivery Controller: $($AdminAddress)" -Level Warn
+            $Global:TotalCatalogFailureCount += 1
+            Break # update the fail count, but this is validation so we want to know all failures before killing script
+        }
+    }
+    catch {
+        Write-Log -Message "[Citrix Validation] Failed to validate Citrix Catalog $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Warn
+        Write-Log -Message $_ -Level Warn
+        $Global:TotalCatalogFailureCount += 1
+        Break # update the fail count, but this is validation so we want to know all failures before killing script
+    }
+
+    $Global:CurrentCatalogCount += 1
+    $Global:TotalCatalogSuccessCount += 1
+}
+
+function ProcessCitrixCatalog {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Catalog,
+        [Parameter(Mandatory = $true)]
+        [string]$AdminAddress,
+        [Parameter(Mandatory = $true)]
+        [string]$snapshotName
+    )
+    Write-Log -Message "[Citrix Catalog] Processing Catalog $($CurrentCatalogCount) of $($CatalogCount)" -Level Info
+    #Get the ProvScheme for the catalog
+    try {
+        Write-Log -Message "[Citrix Catalog] Getting Catalog and Prov Scheme details for Catalog: $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Info
+        $CatalogDetail = Get-BrokerCatalog -Name $Catalog -AdminAddress $AdminAddress -ErrorAction Stop
+        $ProveSchemeID = $CatalogDetail.ProvisioningSchemeId
+        $ProvScheme = Get-ProvScheme -ProvisioningSchemeUid $ProveSchemeID -AdminAddress $AdminAddress -ErrorAction Stop
+        Write-Log -Message "[Citrix Catalog] Successfully retrieved details for Catalog: $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Info
+    }
+    catch {
+       Write-Log -Message "[Citrix Catalog] Failed to retrieve details for Catalog: $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Warn
+       Write-Host $_
+       $Global:TotalCatalogFailureCount += 1
+       Break
+    }
+    
+    # Prepare the updates Master Image VM reference
+    Write-Log -Message "[Citrix Image] Setting Image details for catalog: $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Info
+    $CurrentImage = $ProvScheme.MasterImageVM
+    $pattern = "(?<=\\)([^\\]+)(?=\.template)"
+    $NewImage = $CurrentImage -replace $pattern,$snapshotName
+    Write-Log -Message "[Citrix Image] Current Catalog Image for Catalog: $($Catalog) is: $($CurrentImage)" -Level Info
+    Write-Log -Message "[Citrix Image] New Catalog Image for Catalog: $($Catalog) will be: $($NewImage)" -Level Info
+
+    #Start the update process
+    try {
+        Write-Log -Message "[Citrix Catalog] Starting Catalog update process for Catalog: $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Info
+
+        $PublishTask = Publish-ProvMasterVMImage -ProvisioningSchemeName $ProvScheme.ProvisioningSchemeName -MasterImageVM $NewImage -AdminAddress $AdminAddress -RunAsynchronously -ErrorAction Stop
+        $ProvTask = Get-ProvTask -TaskId $PublishTask -AdminAddress $AdminAddress -ErrorAction Stop
+
+        ## Track progress of the image update
+        Write-Log -Message "[Citrix Catalog] Tracking progress of the Catalog update task. Catalog update for: $($Catalog) started at: $($ProvTask.DateStarted) on Delivery Controller: $($AdminAddress)" -Level Info
+        $totalPercent = 0
+        While ( $ProvTask.Active -eq $True ) {
+            Try { $totalPercent = If ( $ProvTask.TaskProgress ) { $ProvTask.TaskProgress } Else { 0 } } Catch { }
+
+            Write-Log -Message "[Citrix Catalog] Provisioning image update current operation: $($ProvTask.CurrentOperation) on Provisioning Scheme: $($ProvScheme.ProvisioningSchemeName) is $($totalPercent)% Complete. Last Update Time is: $($ProvTask.LastUpdateTime) on Delivery Controller: $($AdminAddress)" -Level Info
+            Start-Sleep 15
+            $ProvTask = Get-ProvTask -TaskId $PublishTask -AdminAddress $AdminAddress -ErrorAction Stop
+        }
+    }
+    catch {
+        Write-Log -Message "[Citrix Catalog] Failed to start the update process on catalog: $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Warn
+        Write-Log -Message $_ -Level Warn
+        $Global:TotalCatalogFailureCount += 1
+        Break
+    }
+
+    Write-Log -Message "[Citrix Catalog] Catalog Update for catalog: $($Catalog) completed at $($ProvTask.DateFinished) with an Active time of $($ProvTask.ActiveElapsedTime) seconds on Delivery Controller: $($AdminAddress)" -Level Info
+    $Global:CurrentCatalogCount += 1
+    $Global:TotalCatalogSuccessCount += 1
+}
+
+function ValidateExclusiveCitrixProcessingCatalog {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Catalog,
+        [Parameter(Mandatory = $true)]
+        [string]$AdminAddress,
+        [Parameter(Mandatory = $true)]
+        [string]$SnapshotName
+    )
+    Write-Log -Message "[Citrix Validation] Validating image for Catalog $($CurrentCatalogCount) of $($CatalogCount)" -Level Info
+    try {
+        $CatalogDetail = Get-BrokerCatalog -Name $Catalog -AdminAddress $AdminAddress -ErrorAction Stop
+        $ProveSchemeID = $CatalogDetail.ProvisioningSchemeId
+        $ProvScheme = Get-ProvScheme -ProvisioningSchemeUid $ProveSchemeID -AdminAddress $AdminAddress -ErrorAction Stop
+        $CurrentImage = $ProvScheme.MasterImageVM
+        if ($CurrentImage -Like "*$ctx_Snapshot*") {
+            Write-Log -Message "[Citrix Validation] Catalog is already using image: $($ctx_Snapshot). No need to process" -Level Info
+            $CurrentCatalogCount += 1
+        }
+        else {
+            Write-Log -Message "[Citrix Validation] Catalog is using $($CurrentImage). Will be processed." -Level Info
+            $pattern = "(?<=\\)([^\\]+)(?=\.template)"
+            $NewImage = $CurrentImage -replace $pattern,$ctx_Snapshot
+            Write-Log -Message "[Citrix Image] Current Catalog Image for Catalog: $($Catalog) is: $($CurrentImage)" -Level Info
+            Write-Log -Message "[Citrix Image] New Catalog Image for Catalog: $($Catalog) will be: $($NewImage)" -Level Info
+
+            #start the update process
+            try {
+                Write-Log -Message "[Citrix Catalog] Starting Catalog update process for Catalog: $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Info
+        
+                $PublishTask = Publish-ProvMasterVMImage -ProvisioningSchemeName $ProvScheme.ProvisioningSchemeName -MasterImageVM $NewImage -AdminAddress $AdminAddress -RunAsynchronously -ErrorAction Stop
+                $ProvTask = Get-ProvTask -TaskId $PublishTask -AdminAddress $AdminAddress -ErrorAction Stop
+        
+                ## Track progress of the image update
+                Write-Log -Message "[Citrix Catalog] Tracking progress of the Catalog update task. Catalog update for: $($Catalog) started at: $($ProvTask.DateStarted) on Delivery Controller: $($AdminAddress)" -Level Info
+                $totalPercent = 0
+                While ( $ProvTask.Active -eq $True ) {
+                    Try { $totalPercent = If ( $ProvTask.TaskProgress ) { $ProvTask.TaskProgress } Else { 0 } } Catch { }
+        
+                    Write-Log -Message "[Citrix Catalog] Provisioning image update current operation: $($ProvTask.CurrentOperation) on Provisioning Scheme: $($ProvScheme.ProvisioningSchemeName) is $($totalPercent)% Complete. Last Update Time is: $($ProvTask.LastUpdateTime) on Delivery Controller: $($AdminAddress)" -Level Info
+                    $ProvTask = Get-ProvTask -TaskId $PublishTask -AdminAddress $AdminAddress -ErrorAction Stop
+                }
+            }
+            catch {
+                Write-Log -Message "[Citrix Catalog] Failed to start the update process on catalog: $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Warn
+                Write-Log -Message $_ -Level Warn
+                $Global:TotalCatalogFailureCount += 1
+                Break
+            }
+        
+            Write-Log -Message "[Citrix Catalog] Catalog Update for catalog: $($Catalog) completed at $($ProvTask.DateFinished) with an Active time of $($ProvTask.ActiveElapsedTime) seconds on Delivery Controller: $($AdminAddress)" -Level Info
+            $Global:CurrentCatalogCount += 1
+            $Global:TotalCatalogSuccessCount += 1
+
+            $CurrentCatalogCount += 1
+        }
+    }
+    catch {
+        Write-Log -Message "[Citrix Validation] Failed to validate Citrix Image for Catalog $($Catalog) on Delivery Controller: $($AdminAddress)" -Level Warn
+        Write-Log -Message $_ -Level Warn
+        $Global:TotalCatalogFailureCount += 1
+    }
+}
+
 #endregion
 
 #region Variables
@@ -943,7 +1125,7 @@ $ProtectionRule = $ProtectionRules.entities | Where-Object {$_.status.name -eq "
 
 if ($ProtectionRule) {
     Write-Log -Message "[Protection Policy] Found Protection Policy: $($ProtectionPolicyName) under the Prism Central Instance $($PC_Source)" -level Info
-    $ProtectionPolicyTargetClusterCount = ($ProtectionRule.spec.resources.availability_zone_connectivity_list).Count
+    $ProtectionPolicyTargetClusterCount = ($ProtectionRule.status.resources.ordered_availability_zone_list.cluster_uuid).Count
     Write-Log -Message "[Protection Policy] There are $($ProtectionPolicyTargetClusterCount) Cluster Entities in the Protection Policy" -level Info
 }
 else {
@@ -951,6 +1133,8 @@ else {
     StopIteration
     Exit 1
 }
+
+$ClustersInProtectionRule = $ProtectionRule.status.resources.ordered_availability_zone_list.cluster_uuid #set the included cluster details for cluster processing filtering later on
 #endregion get Protection Policy Details
 
 #region get and select recovery points
@@ -1120,6 +1304,10 @@ $ClustersActionCount = 1
 $SnapshotName = $VMPrefix + $BaseVM + "_" + $RunDate
 
 foreach ($_ in $Clusters) {
+    if ($_.metadata.uuid -notin $ClustersInProtectionRule) {
+        Write-Log -Message "Cluster is listed under the Prism Central Instance $($pc_source) but is not included in the Protection Policy $($ProtectionPolicyName) so will not be processed" -Level Info
+        Continue
+    }
     $ClusterIP = $_.status.resources.network.external_ip
     $ClusterName = $_.status.name
     Write-Log -Message "[Target Cluster] Processing Cluster $($ClustersActionCount) of $($ClustersTotalCount): $($ClusterName)" -Level Info
@@ -1265,7 +1453,7 @@ foreach ($_ in $Clusters) {
             }
         }
         else {
-            Write-Log -Message "[VM Snapshot] There are no Snapshots to delete based on the retention value of: $($ImageSnapsToRetain) on the target cluster: $($ClusterName)" -Level Warn 
+            Write-Log -Message "[VM Snapshot] There are no Snapshots to delete based on the retention value of: $($ImageSnapsToRetain) on the target cluster: $($ClusterName)" -Level Info 
         }
     }
     #endregion delete Snapshot
