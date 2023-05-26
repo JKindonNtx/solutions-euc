@@ -1,13 +1,56 @@
 <#
 .SYNOPSIS
 .DESCRIPTION
-.PARAMETER Test
+.PARAMETER LogPath
+    Logpath output for all operations
+.PARAMETER LogRollover
+    Number of days before logfiles are rolled over. Default is 5.
+.PARAMETER pc_source
+    Mandatory. The Prism Central Source to target.
+.PARAMETER BaseVM
+    Mandatory. The name of the Citrix base image VM. This is CASE SENSITIVE.
+.PARAMETER ProtectionPolicyName
+    Mandatory. The name of the Protection Policy holding the BaseVM
+.PARAMETER VMPrefix
+    Optional. The prefix used for both the restored VM (temp) and the associated Snapshot. The default is ctx_
+.PARAMETER ImageSnapsToRetain
+    Optional. The number of snapshots to retain on each target Cluster. This is limited only to snaps meeting the BaseVM and VMPrefix naming patterns (Snapshots the script created).
+.PARAMETER ClustersToExclude
+    Optional. 
+.PARAMETER SleepTime
+    Optional. Sleep time operations between task status polling in both v2 and v3 functions. The default is 2 seconds.
+.PARAMETER UseCustomCredentialFile
+    Optional. Will call the Get-CustomCredentials function which keeps outputs and inputs a secure credential file base on Stephane Bourdeaud from Nutanix functions
+.PARAMETER CredPath
+    Optional. Used if using the UseCustomCredentialFile parameter. Defines the location of the credential file. The default is "$Env:USERPROFILE\Documents\WindowsPowerShell\CustomCredentials"
+.PARAMETER ctx_Catalogs
+    Optional. A list of Citrix Catalogs to update after the Snapshot replication has finished. User running the script must have sufficient rights on the Citrix Site. Single Citrix Site parameter only. For multi-site, use ctx_siteConfigJSON switch.
+.PARAMETER ctx_AdminAddress
+    Optional. The Delivery Controller to target for Citrix Catalog updates. Single Citrix Site parameter only. For multi-site, use ctx_siteConfigJSON switch.
+.PARAMETER ctx_SiteConfigJSON
+    Optional. A JSON file containing a list of Catalogs and associated Delivery Controllers for a multi-site environment. This will override the ctx_AdminAddress and ctx_Catalogs parameters
+    JSON file must be defined using the following element layout: 
+    [
+        {
+        "Catalog": "Catalog1",
+        "Controller": "ctxddc001"
+        },
+        }
+        "Catalog": "Catalog2",
+        "Controller": "ctxddc002"
+        }
+    ]
+.PARAMETER ctx_ProcessCitrixEnvironmentOnly
+    Optional. Switch parameter to indicate that we are purely updating Citrix Catalogs and not interacting with Nutanix. Used in a scenario where maybe some remediation work as been undertaken and only Citrix needs updating. Advanced Parameter for specific used cases. 
+.PARAMETER ctx_Snapshot
+    Optional. The name of the snapshot to be used with the ctx_ProcessCitrixEnvironmentOnly switch. This has no validation against Nutanix. Purely used to bring Citrix catalogs into line.
+.PARAMETER APICallVerboseLogging
+    Optional. Switch to enable logging output for API calls
 .EXAMPLE
 .NOTES
 ToDo
- - Add Counts for Success and Win
- - Add Citrix Components
  - Confirm validity of entity counts based on PP entity logic - check with J?
+ - Add Cluster Exclude list - This is required as I can't figure out which clusters are identified in the Protection Policy holding Recovery Points
  #>
 
 #region Params
@@ -36,8 +79,11 @@ Param(
     [Parameter(Mandatory = $false)]
     [int]$ImageSnapsToRetain, # The number of snapshots to retain. Effectively a cleanup mode
 
-    #[Parameter(Mandatory = $false)]
-    #[int]$SleepTime = 10, # Sleep time operations for VM and snapshot operations
+    [Parameter(Mandatory = $false)]
+    [Array]$ClustersToExclude, # Clusters to exclude from processing. If the cluster is not a memmber of the Protection Policy, it should be excluded
+
+    [Parameter(Mandatory = $false)]
+    [int]$SleepTime = 2, # Sleep time operations between task status polling in both v2 and v3 functions
 
     [Parameter(Mandatory = $false)]
     [switch]$UseCustomCredentialFile, # specifies that a credential file should be used
@@ -45,20 +91,20 @@ Param(
     [Parameter(Mandatory = $false)]
     [String]$CredPath = "$Env:USERPROFILE\Documents\WindowsPowerShell\CustomCredentials", # Default path for custom credential file
 
-    #[Parameter(Mandatory = $false)]
-    #[Array]$ctx_Catalogs, # Array of catalogs on a single Citrix site to process. If needing to update multiple sites, use the JSON input
+    [Parameter(Mandatory = $false)]
+    [Array]$ctx_Catalogs, # Array of catalogs on a single Citrix site to process. If needing to update multiple sites, use the JSON input
 
-    #[Parameter(Mandatory = $false)]
-    #[String]$ctx_AdminAddress, # Delivery Controller address on a single Citrix site to process. If needing to update multiple sites, use the JSON input
+    [Parameter(Mandatory = $false)]
+    [String]$ctx_AdminAddress, # Delivery Controller address on a single Citrix site to process. If needing to update multiple sites, use the JSON input
 
-    #[Parameter(Mandatory = $false)]
-    #[String]$ctx_SiteConfigJSON, # JSON input file for multi site (or single site) Citrix site configurations. Catalogs and Delivery Controllers
+    [Parameter(Mandatory = $false)]
+    [String]$ctx_SiteConfigJSON, # JSON input file for multi site (or single site) Citrix site configurations. Catalogs and Delivery Controllers
 
-    #[Parameter(Mandatory = $false)]
-    #[switch]$ctx_ProcessCitrixEnvironmentOnly, # Defines that we are processing ONLY citrix environments and not Nutanix
+    [Parameter(Mandatory = $false)]
+    [switch]$ctx_ProcessCitrixEnvironmentOnly, # Defines that we are processing ONLY citrix environments and not Nutanix
 
-    #[Parameter(Mandatory = $false)]
-    #[String]$ctx_Snapshot # the snapshot to be used to update Citrix Catalogs. Used in conjunction with ctx_ProcessCitrixEnvironmentOnly
+    [Parameter(Mandatory = $false)]
+    [String]$ctx_Snapshot, # the snapshot to be used to update Citrix Catalogs. Used in conjunction with ctx_ProcessCitrixEnvironmentOnly
 
     [Parameter(Mandatory = $false)]
     [switch]$APICallVerboseLogging # Show the API calls being made
@@ -453,12 +499,12 @@ function GetPrismv2Task {
         $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $Credential -ErrorAction Stop
         Write-Log -Message "$($Phase) Monitoring task: $($TaskId)"
         while ($TaskStatus.progress_status -ne "SUCCEEDED") {
-            Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.progress_status). Waiting for Task Completion. Status: $($TaskStatus.percentage_complete)% complete" -Level Info
-            Sleep 2
+            Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.progress_status). Waiting for Task completion. Status: $($TaskStatus.percentage_complete)% complete" -Level Info
+            Start-Sleep $SleepTime
             $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $Credential -ErrorAction Stop
         }
         if ($TaskStatus.progress_status -eq "SUCCEEDED") {
-            Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.progress_status). $PhaseSuccessMessage" -Level Info
+            Write-Log -Message "$($Phase) Task status is: $($TaskStatus.progress_status). $PhaseSuccessMessage" -Level Info
         }
     }
     catch {
@@ -487,7 +533,7 @@ function GetPrismv3Task {
         Write-Log -Message "$($Phase) Monitoring task: $($TaskId)"
         while ($TaskStatus.Status -ne "SUCCEEDED") {
             Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.Status). Waiting for Task Completion. Status: $($TaskStatus.percentage_complete)% complete" -Level Info
-            Sleep 2
+            Start-Sleep $SleepTime
             #$TaskStatus = Invoke-RestMethod -Uri $RequestUri -Headers $Headers -Method $Method -TimeoutSec 5 -UseBasicParsing -DisableKeepAlive -SkipCertificateCheck
             $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $Credential -ErrorAction Stop
         }
@@ -518,6 +564,109 @@ StartIteration
 
 #check PoSH version
 if ($PSVersionTable.PSVersion.Major -lt 5) { throw "$(get-date) [ERROR] Please upgrade to Powershell v5 or above (https://www.microsoft.com/en-us/download/details.aspx?id=50395)" }
+
+#region Modules
+
+#------------------------------------------------------------
+# Import Citrix Snapins
+#------------------------------------------------------------
+if ($ctx_Catalogs -or $ctx_SiteConfigJSON) {
+    try {
+        Write-Log -Message "[Citrix PowerShell] Attempting to import Citrix PowerShell Snapins" -Level Info
+        Add-PSSnapin -Name "Citrix.Broker.Admin.V2","Citrix.Host.Admin.V2" -ErrorAction Stop
+        Get-PSSnapin Citrix* -ErrorAction Stop | out-null
+        Write-Log -Message "[Citrix PowerShell] Successfully imported Citrix PowerShell Snapins" -Level Info
+    }
+    catch {
+        Write-Log -Message "[Citrix PowerShell] Failed to import Citrix PowerShell Module" -Level Warn
+        Write-Log -Message $_ -Level Warn
+        StopIteration
+        Exit 1
+    }
+}
+#endregion Modules
+
+#region Exclusive Citrix Processing Validation
+if ($ctx_ProcessCitrixEnvironmentOnly.IsPresent) {
+    Write-Log -Message "Exclusive Citrix environment processing enabled" -Level Info
+    if (!$ctx_Snapshot) {
+        Write-Log -Message "You must define a snapshot when using exlusive Citrix processing" -Level Warn
+        StopIteration
+        Exit 1
+    }
+    Write-Log -Message "Custom Snapshot defined: $($ctx_Snapshot)" -Level Warn
+}
+#endregion Exclusive Citrix Processing Validation
+
+#region Validate Citrix Environment
+if ($ctx_Catalogs -or $ctx_SiteConfigJSON) {
+    # Citrix mode has been enabled by either specifying a list of Catalogs or a JSON input file
+    Write-Log -Message "[Citrix Processing] Citrix Processing Mode is enabled" -Level Info
+    if ($ctx_Catalogs -and !$ctx_AdminAddress) {
+        Write-Log -Message "You must define a Delivery Controller to Process Citrix Catalogs" -Level Warn
+        StopIteration
+        Exit 1
+    }
+    $Global:CurrentCatalogCount = 1
+    $Global:TotalCatalogSuccessCount = 0
+    $Global:TotalCatalogFailureCount = 0
+
+    if ($ctx_SiteConfigJSON) {
+        #JSON
+        Write-Log -Message "[Citrix Validation] Using JSON input file: $($ctx_SiteConfigJSON) for Citrix configuration" -Level Info
+        try {
+            $CitrixConfig = Get-Content $ctx_SiteConfigJSON | ConvertFrom-Json
+        }
+        catch {
+            Write-Log -Message "[Citrix Validation] Failed to import JSON file" -Level Warn
+            Write-Log -Message $_ -Level Warn 
+            StopIteration
+            Exit 1
+        }
+
+        # Grab the unique controllers and test each one
+        $UniqeControllers = $CitrixConfig.Controller | Sort-Object -Unique
+        Write-Log -Message "[Citrix Validation] There are $($UniqeControllers.Count) unique Controllers (sites) to validate" -Level Info
+
+        # Test access to each defined controller
+        foreach ($AdminAddress in $UniqeControllers) {
+            ValidateCitrixController -AdminAddress $AdminAddress
+        }
+
+        # Process the Catalog list from JSON input
+        Write-Log -Message "[Citrix Validation] There are $($CitrixConfig.Catalog.Count) Catalogs to validate" -Level Info
+        $CatalogCount = $CitrixConfig.Catalog.Count
+        foreach ($_ in $CitrixConfig) {
+            # Set details
+            $Catalog = $_.Catalog
+            $AdminAddress = $_.Controller
+
+            ValidateCitrixCatalog -Catalog $Catalog -AdminAddress $AdminAddress
+        }
+    }
+    else {
+        #NO JSON
+        $Catalogs = $ctx_Catalogs
+        $AdminAddress = $ctx_AdminAddress
+
+        # Test access to the defined controller
+        ValidateCitrixController -AdminAddress $AdminAddress
+
+        Write-Log -Message "[Citrix Validation] There are $($Catalogs.Count) Catalogs to Validate" -Level Info
+        $CatalogCount = $Catalogs.Count
+        foreach ($Catalog in $Catalogs) {
+            ValidateCitrixCatalog -Catalog $Catalog -AdminAddress $AdminAddress
+        }
+    }
+
+    Write-Log -Message "[Citrix Validation] Successfully validated $($TotalCatalogSuccessCount) Catalogs" -Level Info
+    if ($TotalCatalogFailureCount -gt 0) {
+        Write-Log -Message "[Citrix Validation] Failed to validate $($TotalCatalogFailureCount) Catalogs" -Level Warn
+        StopIteration
+        Exit 1 # We do not want to proceed with failed validation
+    }
+}
+#endregion Validate Citrix Environment
 
 #region SSL Handling
 #------------------------------------------------------------
@@ -606,6 +755,52 @@ else {
 }
 #endregion Authentication
 
+#region Exclusive Citrix Processing
+if ($ctx_ProcessCitrixEnvironmentOnly) {
+    $Global:CurrentCatalogCount = 1
+    $Global:TotalCatalogSuccessCount = 0
+    $Global:TotalCatalogFailureCount = 0
+
+    if ($ctx_SiteConfigJSON) {
+        #JSON
+        $CatalogCount = $CitrixConfig.Catalog.Count
+        Write-Log -Message "[Citrix Validation] There are $($CitrixConfig.Catalog.Count) Catalogs to Process" -Level Info
+        foreach ($_ in $CitrixConfig) {
+            # Set details
+            $Catalog = $_.Catalog
+            $AdminAddress = $_.Controller
+
+            ValidateExclusiveCitrixProcessingCatalog -Catalog $Catalog -AdminAddress $AdminAddress -SnapshotName $ctx_Snapshot
+        }
+    }
+    else {
+        #NO JSON
+        $Catalogs = $ctx_Catalogs # This was set in the validation phase, but resetting here for ease of reading
+        $AdminAddress = $ctx_AdminAddress # This was set in the validation phase, but resetting here for ease of reading
+        $CatalogCount = $Catalogs.Count
+        Write-Log -Message "[Citrix Validation] There are $($Catalogs.Count) Catalogs to Process" -Level Info
+        foreach ($Catalog in $Catalogs) {
+            ValidateExclusiveCitrixProcessingCatalog -Catalog $Catalog -AdminAddress $AdminAddress -SnapshotName $ctx_Snapshot
+        }
+    }
+
+    Write-Log -Message "[Citrix Validation] Exclusive Citrix processing complete" -Level Info
+    Write-Log -Message "[Citrix Validation] Successfully Processed $($TotalCatalogSuccessCount) Catalogs" -Level Info
+    if ($TotalCatalogFailureCount -gt 0) {
+        Write-Log -Message "[Citrix Validation] Failed to process $($TotalCatalogFailureCount) Catalogs" -Level Warn
+    }
+
+    StopIteration
+    Exit 0
+}
+#endregion Exclusive Citrix Processing
+
+#------------------------------------------------------------
+# Initialise counts and variables
+#------------------------------------------------------------
+$TotalErrorCount = 0 # start the error count
+$TotalSuccessCount = 0 # start the succes count
+
 #region Query Prism Central
 #------------------------------------------------------------
 # Query Prism Central via V3 API
@@ -667,7 +862,6 @@ catch {
     Exit 1
 }
 
-# QUESTION: There will always be a minimum of 1 AZ'z right?
 foreach ($_ in $AvailabilityZones.entities) {
     $az_name = $_.status.name
     $az_uid = $_.status.uuid
@@ -697,8 +891,6 @@ catch {
     StopIteration
     Exit 1
 }
-
-#$virtualmachines = Invoke-RestMethod -Uri $RequestUri -Headers $Headers -Method $Method -Body $Payload -TimeoutSec 5 -UseBasicParsing -DisableKeepAlive -SkipCertificateCheck
 
 if ($virtualmachines.entities.count -eq 0) {
     Write-Log -Message "[VM] There are no virtual machines under the Prism Central Instance $($pc_source)" -Level Warn
@@ -859,8 +1051,7 @@ Write-Log -Message "[Recovery Point Clone] Temp virtual machine name is $($TempV
 $TempVMCreationDetails = @() # temp VM created uuid array
 foreach ($_ in $Target_RecoveryPoints) {
     Write-Log -Message "[Recovery Point Clone] Processing Cluster $($RecoveryPointActionCount) of $($RecoveryPointTotalCount) under the Prism Central Instance $($pc_source)" -Level Info
-    # Loop through the list of UIDs of the RP clones
-    # then recover the VM to the cluster. The recovery will be based on the RP location
+    # Loop through the list of UIDs of the RP clone then recover the VM to the cluster. The recovery will be based on the RP location
     $vm_RecoveryPointID = $_.metadata.uuid
     $Method = "POST"
     $RequestUri = "https://$($pc_source):9440/api/nutanix/v3/vm_recovery_points/$($vm_RecoveryPointID)/restore"
@@ -947,6 +1138,7 @@ foreach ($_ in $Clusters) {
     }
     catch {
         Write-Log -Message "[Target Cluster] Failed to retrieve virtual machines from the target cluster: $($ClusterName)" -Level Warn
+        $TotalErrorCount += 1
         Continue
     }
 
@@ -960,6 +1152,7 @@ foreach ($_ in $Clusters) {
     }
     else {
         Write-Log -Message "[VM] Failed to retrieve virtual machines on the target cluster: $($ClusterName)" -Level Warn
+        $TotalErrorCount += 1
         Continue
     }
 
@@ -988,6 +1181,7 @@ foreach ($_ in $Clusters) {
     catch {
         Write-Log -Message "[VM Snapshot] Failed to create Snapshot on the target cluster: $($ClusterName)" -Level Warn
         Write-Log -Message $_ -Level Warn
+        $TotalErrorCount += 1
         Continue
     }
     
@@ -1014,6 +1208,7 @@ foreach ($_ in $Clusters) {
         }
         catch {
             Write-Log -Message "[Snaphots] Failed to get an up to date list of snapshots on the target cluster: $($ClusterName)" -Level Warn
+            $TotalErrorCount += 1
             Continue
         }
 
@@ -1063,6 +1258,7 @@ foreach ($_ in $Clusters) {
                 catch {
                     Write-Log -Message "[VM Snapshot] Failed to delete Snapshot: $($snap.snapshot_name) on the target cluster: $($ClusterName)" -Level Warn
                     $SnapShotsFailedToDelete += 1
+                    $TotalErrorCount += 1
                     Continue
                 }
                 $SnapshotsToDeleteCount += 1
@@ -1088,6 +1284,7 @@ foreach ($_ in $Clusters) {
     }
     catch {
         Write-Log -Message "[VM Delete] Failed to Delete VM $($vm_name) with ID: $($vm_uuid) on cluster: $($ClusterName)" -Level Warn
+        $TotalErrorCount += 1
         Continue
     }
     
@@ -1100,10 +1297,57 @@ foreach ($_ in $Clusters) {
     #endregion delete Temp VM
 
     $ClustersActionCount += 1
+    $TotalSuccessCount += 1
 }
 
 #endregion Prism Element Loops
 
+Write-Log -Message "[Data] Processed a total of $($ClustersTotalCount.Count) Clusters" -Level Info
+Write-Log -Message "[Data] Successfully processed $($TotalSuccessCount.Count) Clusters without error" -Level Info
+Write-Log -Message "[Data] Encountered $($TotalErrorCount.Count) errors. Please review log file $($LogPath) for failures" -Level Info
+
+#region Process Citrix Environment
+if ($ctx_Catalogs -or $ctx_SiteConfigJSON) {
+    # Citrix mode has been enabled by either specifying a list of Catalogs or a JSON input file
+    if ($TotalErrorCount -gt 0) {
+        # We cannot process, way to risky
+        Write-Log -Message "[Citrix Processing] Citrix Environment processing has been enabled, however there are $($TotalErrorCount) errors in the snapshot replication phase. Not processing the Citrix environment" -Level Warn
+        StopIteration
+        Exit 1
+    }
+    $Global:CurrentCatalogCount = 1
+    $Global:TotalCatalogSuccessCount = 0
+    $Global:TotalCatalogFailureCount = 0
+
+    if ($ctx_SiteConfigJSON) {
+        #JSON
+        $CatalogCount = $CitrixConfig.Catalog.Count
+        Write-Log -Message "[Citrix Catalog] There are $($CitrixConfig.Catalog.Count) Catalogs to Process" -Level Info
+        foreach ($_ in $CitrixConfig) {
+            # Set details
+            $Catalog = $_.Catalog
+            $AdminAddress = $_.Controller
+
+            ProcessCitrixCatalog -Catalog $Catalog -AdminAddress $AdminAddress -snapshotName $snapshotName # Snapshot is set in the Nutanix phase
+        }
+    }
+    else {
+        #NO JSON
+        $Catalogs = $ctx_Catalogs # This was set in the validation phase, but resetting here for ease of reading
+        $AdminAddress = $ctx_AdminAddress # This was set in the validation phase, but resetting here for ease of reading
+        $CatalogCount = $Catalogs.Count
+
+        Write-Log -Message "[Citrix Catalog] There are $($Catalogs.Count) Catalogs to Process" -Level Info
+        foreach ($Catalog in $Catalogs) {
+            ProcessCitrixCatalog -Catalog $Catalog -AdminAddress $AdminAddress -snapshotName $snapshotName # Snapshot is set in the Nutanix phase
+        }
+    }
+    Write-Log -Message "[Citrix Catalog] Successfully processed $($TotalCatalogSuccessCount) Catalogs" -Level Info
+    if ($TotalCatalogFailureCount -gt 0) {
+        Write-Log "[Citrix Catalog] Failed to processed $($TotalCatalogFailureCount) Catalogs" -Level Warn
+    }
+}
+#endregion Process Citrix Environment
 
 StopIteration
 Exit 0
