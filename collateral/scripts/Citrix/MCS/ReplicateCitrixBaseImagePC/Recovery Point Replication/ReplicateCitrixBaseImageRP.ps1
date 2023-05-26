@@ -15,8 +15,6 @@
     Optional. The prefix used for both the restored VM (temp) and the associated Snapshot. The default is ctx_
 .PARAMETER ImageSnapsToRetain
     Optional. The number of snapshots to retain on each target Cluster. This is limited only to snaps meeting the BaseVM and VMPrefix naming patterns (Snapshots the script created).
-.PARAMETER ClustersToExclude
-    Optional. 
 .PARAMETER SleepTime
     Optional. Sleep time operations between task status polling in both v2 and v3 functions. The default is 2 seconds.
 .PARAMETER UseCustomCredentialFile
@@ -49,8 +47,6 @@
 .EXAMPLE
 .NOTES
 ToDo
- - Confirm validity of entity counts based on PP entity logic - check with J?
- - Add Cluster Exclude list - This is required as I can't figure out which clusters are identified in the Protection Policy holding Recovery Points
  - Restrict to single Availability Zone configurations?
  - Define a specified Recovery Point?
  #>
@@ -80,9 +76,6 @@ Param(
 
     [Parameter(Mandatory = $false)]
     [int]$ImageSnapsToRetain, # The number of snapshots to retain. Effectively a cleanup mode
-
-    [Parameter(Mandatory = $false)]
-    [Array]$ClustersToExclude, # Clusters to exclude from processing. If the cluster is not a memmber of the Protection Policy, it should be excluded
 
     [Parameter(Mandatory = $false)]
     [int]$SleepTime = 2, # Sleep time operations between task status polling in both v2 and v3 functions

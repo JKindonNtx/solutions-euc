@@ -49,7 +49,6 @@ The following parameters exist to drive the behaviour of the script:
 - `ctx_SiteConfigJSON`: Optional **`String`**. A JSON file containing a list of Catalogs and associated Delivery Controllers for a multi-site environment. This will override the `ctx_AdminAddress` and `ctx_Catalogs` parameters.
 - `ctx_ProcessCitrixEnvironmentOnly`: Optional **`Switch`**. Switch parameter to indicate that we are purely updating Citrix Catalogs and not interacting with Nutanix. Used in a scenario where maybe some remediation work as been undertaken and only Citrix needs updating. Advanced Parameter for specific used cases.
 - `ctx_Snapshot`: Optional **`String`**. The name of the snapshot to be used with the `ctx_ProcessCitrixEnvironmentOnly` switch. This has no validation against Nutanix. Purely used to bring Citrix catalogs into line.
-- `ClustersToExclude`: Optional **`Array`**
 - `APICallVerboseLogging`: Optional **`Switch`**.
 
 The following examples use parameter splatting to make reading easier. A corresponding commandline example is also included:
