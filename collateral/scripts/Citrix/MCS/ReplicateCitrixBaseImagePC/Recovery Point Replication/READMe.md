@@ -80,7 +80,7 @@ The script will:
 - Query Prism Central for Availability Zones, clusters, and virtual machines. Validates that the `CTX-Gold-01` virtual machine exists
 - Looks for the `Citrix-Image-Replication` Protection Policy which should be hosting the associated `CTX-Gold-01` virtual machine
 - Confirm that the `Citrix-Image-Replication` Protection Policy has the `CTX-Gold-01` virtual machine
-- Queries the `Citrix-Image-Replication` Protection Policy for the number of included clusters. It does this by filtering to the `availability_zone_connectivity_list` and does a count
+- Queries the `Citrix-Image-Replication` Protection Policy for the number of included clusters. It does this by filtering the `ordered_availability_zone_list.cluster_uuid` data on the Protection Policy and does a count
 - Queries the Protection Policy `Citrix-Image-Replication` for the latest Recovery Point based on timestamp. It then counts the number of Recovery Points matching this Recovery Point date. This should match the number of included clusters count from above.
 - For each Recovery Point, the script attempts a validation to ensure the Recovery Point is ok for restore.
 - Restores each identified Recovery Point. This will restore the Recovery Point into the appropriate cluster and capture the restored VMs `uuid` into an array.
@@ -91,3 +91,64 @@ The script will:
 - Deletes the temporary virtual machine created by the Recovery Point.
 - Log all output to the default `LogPath` directory of `C:\Logs\MCSReplicateBaseImageRP.log` and rollover logs after `5 days` based on the default `LogRollover` value.
  
+ ### General Basic Suggested Use With Citrix Catalog updates across multiple Citrix Sites
+
+ This scenario builds upon the above, by allowing a multi Citrix Site update based on a JSON input:
+
+```
+$params = @{
+    pc_source                          = "1.1.1.1" # The source Prism Central Instance holding the base image vm
+    ProtectionPolicyName               = "Citrix-Image-Replication" # The Protection Policy domain holding the base image vm
+    BaseVM                             = "CTX-Gold-01" # The name of the Base image VM. Case sensitive.
+    ImageSnapsToRetain                 = 10 # The number of snapshots to retain in each PE cluster.
+    UseCustomCredentialFile            = $true # Will look for a custom credential file. If not found, will create
+    ctx_SiteConfigJSON                 = "C:\temp\ctx_catalogs.json" # JSON file specifying a Catalog to Controller list
+}
+& ReplicateCitrixBaseImageRP.ps1 @params 
+```
+
+```
+.\ReplicateCitrixBaseImageRP.ps1 -pc_source "1.1.1.1" -ProtectionPolicyName "Citrix-Image-Replication" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -ctx_SiteConfigJSON "C:\temp\ctx_catalogs.json"
+```
+
+Note that the JSON file must be structured as per below:
+
+```
+[
+    {
+        "Catalog": "Catalog1",
+        "Controller": "Controller1"
+    },
+    {
+        "Catalog": "Catalog2",
+        "Controller": "Controller1"
+    },
+    {
+        "Catalog": "Catalog3",
+        "Controller": "Controller2"
+    },
+    {
+        "Catalog": "Catalog4",
+        "Controller": "Controller2"
+    }
+]
+```
+
+The script will:
+
+- Validate the Citrix environment can be reached at each unique Delivery Controller in the JSON file via the `ctx_SiteConfigJSON` parameter. Then validate all Catalogs specified in the JSON file `ctx_SiteConfigJSON` exist and are of the MCS provisioning type.
+- Connect to the source `1.1.1.1` Prism Central Instance, and authenticate using a custom credential file. If that does not exist, it will be created and used next time. A credential file will also be created for Prism Element connections.
+- Query Prism Central for Availability Zones, clusters, and virtual machines. Validates that the `CTX-Gold-01` virtual machine exists
+- Looks for the `Citrix-Image-Replication` Protection Policy which should be hosting the associated `CTX-Gold-01` virtual machine
+- Confirm that the `Citrix-Image-Replication` Protection Policy has the `CTX-Gold-01` virtual machine
+- Queries the `Citrix-Image-Replication` Protection Policy for the number of included clusters. It does this by filtering the `ordered_availability_zone_list.cluster_uuid` data on the Protection Policy and does a count
+- Queries the Protection Policy `Citrix-Image-Replication` for the latest Recovery Point based on timestamp. It then counts the number of Recovery Points matching this Recovery Point date. This should match the number of included clusters count from above.
+- For each Recovery Point, the script attempts a validation to ensure the Recovery Point is ok for restore.
+- Restores each identified Recovery Point. This will restore the Recovery Point into the appropriate cluster and capture the restored VMs `uuid` into an array.
+- Loops through each Cluster under the Prism Central instance `1.1.1.1` and connects via API v2 and the provided Prism Element Credentials
+- Locates the restored VM by comparing gathered vm entities against the restored vm array populated by the Recovery Point restoration
+- Creates a snapshot with an identical name based on the default `VMPrefix` value of `ctx_` + `BaseVM` + `Date`. For example: `ctx_CTX-Gold-01_2023-05-15-16-55-41`.
+- Delete all snapshots matching the above naming pattern older than `10` based on the `ImageSnapsToRetain` parameter
+- Deletes the temporary virtual machine created by the Recovery Point.
+- Log all output to the default `LogPath` directory of `C:\Logs\MCSReplicateBaseImageRP.log` and rollover logs after `5 days` based on the default `LogRollover` value.
+- If no replication failures have occurred in the Nutanix phase, update each Catalog listed in the `ctx_SiteConfigJSON` file.

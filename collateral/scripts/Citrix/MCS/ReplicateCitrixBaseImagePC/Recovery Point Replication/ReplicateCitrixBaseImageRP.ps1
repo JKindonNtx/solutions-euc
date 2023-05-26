@@ -1483,9 +1483,9 @@ foreach ($_ in $Clusters) {
 
 #endregion Prism Element Loops
 
-Write-Log -Message "[Data] Processed a total of $($ClustersTotalCount.Count) Clusters" -Level Info
-Write-Log -Message "[Data] Successfully processed $($TotalSuccessCount.Count) Clusters without error" -Level Info
-Write-Log -Message "[Data] Encountered $($TotalErrorCount.Count) errors. Please review log file $($LogPath) for failures" -Level Info
+Write-Log -Message "[Data] Processed a total of $($ClustersTotalCount) Clusters" -Level Info
+Write-Log -Message "[Data] Successfully processed $($TotalSuccessCount) Clusters without error" -Level Info
+Write-Log -Message "[Data] Encountered $($TotalErrorCount) errors. Please review log file $($LogPath) for failures" -Level Info
 
 #region Process Citrix Environment
 if ($ctx_Catalogs -or $ctx_SiteConfigJSON) {
