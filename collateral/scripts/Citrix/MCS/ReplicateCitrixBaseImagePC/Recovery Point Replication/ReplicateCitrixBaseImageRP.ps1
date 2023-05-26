@@ -1,6 +1,15 @@
 <#
 .SYNOPSIS
+    The script is designed to automate the VM restore and snapshot creation of a Citrix Base Image across multiple Nutanix clusters based on Protection Policy and Recovery Point methodology driven by Prism Centra and optionally update Citrix Catalogs.
 .DESCRIPTION
+    The script will query a single Prism Central instance of which your Citrix Base Image should be a member of. 
+    It will query the specified protection domain and figure out the latest recovery point available across all clusers.
+    It will restore a temporary VM on each target cluster defined in the Protection Policy via PC based Recovery Point restoration
+    It will connect into each cluster defined under the Protection Policy via Prism Element APIs and create a snapshot of the recovered VM leaving a Citrix ready snapshot for MCS provisioning.
+    The script will handle deletion of existing snapshots based on a retention period (effectively a cleanup mode). This is a destructive operation.
+    The script assumes that your Protection Policy configurations are setup correctly. It does not alter, modify, create or delete any form of Protection Policy configuration.
+    The script by default attempts to use the latest Recovery Point in the Protection Policy.
+    The script has optional processing to allow automated Citrix Catalogs across one or many Citrix sites.
 .PARAMETER LogPath
     Logpath output for all operations
 .PARAMETER LogRollover
