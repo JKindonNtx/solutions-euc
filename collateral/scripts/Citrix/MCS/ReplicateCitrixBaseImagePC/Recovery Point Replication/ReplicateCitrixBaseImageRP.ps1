@@ -538,7 +538,6 @@ function GetPrismv3Task {
         while ($TaskStatus.Status -ne "SUCCEEDED") {
             Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.Status). Waiting for Task Completion. Status: $($TaskStatus.percentage_complete)% complete" -Level Info
             Start-Sleep $SleepTime
-            #$TaskStatus = Invoke-RestMethod -Uri $RequestUri -Headers $Headers -Method $Method -TimeoutSec 5 -UseBasicParsing -DisableKeepAlive -SkipCertificateCheck
             $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $Credential -ErrorAction Stop
         }
         if ($TaskStatus.Status -eq "SUCCEEDED") {
