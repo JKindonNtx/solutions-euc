@@ -994,13 +994,16 @@ $TotalSuccessCount = 0 # start the succes count
 # Get a list of managed clusters under the PC
 #---------------------------------------------
 Write-Log -Message "[Prism Central] Quering for Clusters under the Prism Central Instance $($pc_source)" -Level Info
+#----------------------------------------------------------------------------------------------------------------------------
+# Set API call detail
+#----------------------------------------------------------------------------------------------------------------------------
 $Method = "POST"
 $RequestUri = "https://$($pc_source):9440/api/nutanix/v3/clusters/list"
 $PayloadContent = @{
     kind = "cluster"
 }
 $Payload = (ConvertTo-Json $PayloadContent)
-
+#----------------------------------------------------------------------------------------------------------------------------
 try {
     $TotalClusters = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
 }
@@ -1028,13 +1031,16 @@ foreach ($_ in $Clusters) {
 # Get Availability Zones
 #------------------------------------------
 Write-Log -Message "[Prism Central] Quering for Avaliability Zones under the Prism Central Instance $($pc_source)" -Level Info
+#----------------------------------------------------------------------------------------------------------------------------
+# Set API call detail
+#----------------------------------------------------------------------------------------------------------------------------
 $Method = "POST"
 $RequestUri = "https://$($pc_source):9440//api/nutanix/v3/availability_zones/list"
 $PayloadContent = @{
     kind = "availability_zone"
 }
 $Payload = (ConvertTo-Json $PayloadContent)
-
+#----------------------------------------------------------------------------------------------------------------------------
 try {
     $AvailabilityZones = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
     Write-Log -Message "[Availability Zones] There are $($AvailabilityZones.entities.Count) Avaliability Zones under the Prism Central Instance $($pc_source)" -level Info
@@ -1058,6 +1064,9 @@ foreach ($_ in $AvailabilityZones.entities) {
 # Get the Source VM
 #---------------------------------------------
 Write-Log -Message "[Prism Central] Quering for Virtual Machines under the Prism Central Instance $($pc_source)" -Level Info
+#----------------------------------------------------------------------------------------------------------------------------
+# Set API call detail
+#----------------------------------------------------------------------------------------------------------------------------
 $Method = "POST"
 $RequestUri = "https://$($pc_source):9440/api/nutanix/v3/vms/list"
 $PayloadContent = @{
@@ -1065,7 +1074,7 @@ $PayloadContent = @{
     length = 10000
 }
 $Payload = (ConvertTo-Json $PayloadContent)
-
+#----------------------------------------------------------------------------------------------------------------------------
 try {
     $VirtualMachines = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
 }
@@ -1105,13 +1114,16 @@ else {
 # Get the Protection Policy Details
 #---------------------------------------------
 Write-Log -Message "[Prism Central] Quering for Protection Policies under the Prism Central Instance $($pc_source)" -Level Info
+#----------------------------------------------------------------------------------------------------------------------------
+# Set API call detail
+#----------------------------------------------------------------------------------------------------------------------------
 $Method = "POST"
 $RequestUri = "https://$($pc_source):9440/api/nutanix/v3/protection_rules/list"
 $PayloadContent = @{
     kind = "protection_rule"
 }
 $Payload = (ConvertTo-Json $PayloadContent)
-
+#----------------------------------------------------------------------------------------------------------------------------
 try {
     $ProtectionRules = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
 }
@@ -1144,13 +1156,16 @@ $ClustersInProtectionRule = $ProtectionRule.status.resources.ordered_availabilit
 # Get the Recovery Points available 
 #---------------------------------------------
 Write-Log -Message "[Prism Central] Querying for Recovery Points under the Prism Central Instance $($pc_source)" -Level Info
+#----------------------------------------------------------------------------------------------------------------------------
+# Set API call detail
+#----------------------------------------------------------------------------------------------------------------------------
 $Method = "POST"
 $RequestUri = "https://$($pc_source):9440/api/nutanix/v3/vm_recovery_points/list"
 $PayloadContent = @{
     kind = "vm_recovery_point"
 }
 $Payload = (ConvertTo-Json $PayloadContent)
-
+#----------------------------------------------------------------------------------------------------------------------------
 try {
     $RecoveryPoints = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
 }
@@ -1192,21 +1207,22 @@ foreach ($_ in $Target_RecoveryPoints) {
     Write-Log -Message "[Recovery Point Validation] Processing Recovery Cluster $($RecoveryPointActionCount) of $($RecoveryPointTotalCount)" -Level Info
     $uuid = $_.metadata.uuid
     $createtime = $_.metadata.creation_time
-    #$vm_recovery_point_location_agnostic_uuid = $_.status.resources.vm_recovery_point_location_agnostic_uuid  ##<- this is the same when created with an RP, the same across all clusters
 
     #---------------------------------------------
     # Validate the ability to recover
     #---------------------------------------------
     Write-Log -Message "[Recovery Point Validation] Validating Recovery Point with ID: $($uuid) restoration capability" -Level Info
-
     $vm_RecoveryPointID = $uuid
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
     $Method = "POST"
     $RequestUri = "https://$($pc_source):9440/api/nutanix/v3/vm_recovery_points/$($vm_RecoveryPointID)/validate_restore"
     $PayloadContent = @{
         kind = "vm_recovery_point"
     }
     $Payload = (ConvertTo-Json $PayloadContent)
-
+    #----------------------------------------------------------------------------------------------------------------------------
     # validation will only return data is there is a failure. Fail one, fail all. Exit on fail.
     $rp_RecoveryDetails = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
     if ($rp_RecoveryDetails) {
@@ -1239,6 +1255,9 @@ foreach ($_ in $Target_RecoveryPoints) {
     Write-Log -Message "[Recovery Point Clone] Processing Cluster $($RecoveryPointActionCount) of $($RecoveryPointTotalCount) under the Prism Central Instance $($pc_source)" -Level Info
     # Loop through the list of UIDs of the RP clone then recover the VM to the cluster. The recovery will be based on the RP location
     $vm_RecoveryPointID = $_.metadata.uuid
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
     $Method = "POST"
     $RequestUri = "https://$($pc_source):9440/api/nutanix/v3/vm_recovery_points/$($vm_RecoveryPointID)/restore"
 
@@ -1248,10 +1267,17 @@ foreach ($_ in $Target_RecoveryPoints) {
         }
     }
     $Payload = (ConvertTo-Json $PayloadContent)
-
+    #----------------------------------------------------------------------------------------------------------------------------
     try {
         Write-Log -Message "[Recovery Point Clone] Restoring Recovery Point to temporary Virtual Machine: $($TempVMName) under the Prism Central Instance $($pc_source)" -Level Info
         $VMCreated = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
+
+        #Get the status of the task above
+        $TaskId = $VMCreated.task_uuid
+        $Phase = "[Recovery Point Clone]"
+        $PhaseSuccessMessage = "VM has been created"
+
+        GetPrismv3Task -TaskID $TaskId -Cluster $pc_source -Credential $PrismCentralCredentials
     }
     catch {
         # Fail one fail all. Exit on fail
@@ -1260,26 +1286,15 @@ foreach ($_ in $Target_RecoveryPoints) {
         Exit 1
     }
 
-    #Get the status of the task above
-    $TaskId = $VMCreated.task_uuid
-    $Phase = "[Recovery Point Clone]"
-    $PhaseSuccessMessage = "VM has been created"
-    
-    try {
-        GetPrismv3Task -TaskID $TaskId -Cluster $pc_source -Credential $PrismCentralCredentials
-    }
-    catch {
-        # Fail one fail all. Exit on fail
-        Write-Log -Message "[Recovery Point Clone] Unable to determine status of task $($TaskId) under the Prism Central Instance $($pc_source)" -Level Warn
-        StopIteration
-        Exit 1
-    }
-
     # Get machine creation details which will be matched in the target cluster loops in PE
     Write-Log -Message "[Recovery Point Clone] Capturing VM creation details from the Prism Central Instance $($pc_source)" -Level Info
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
     $RequestUri = "https://$($pc_source):9440/api/nutanix/v3/tasks/$TaskId"
     $Method = "GET"
     $Payload = $null # we are on a get run
+    #----------------------------------------------------------------------------------------------------------------------------
     try {
         $TempVMCreationDetail = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
         $TempVMCreationDetails += $TempVMCreationDetail.entity_reference_list.uuid # add per run after getting task    
@@ -1319,10 +1334,13 @@ foreach ($_ in $Clusters) {
     # Get the VM in PE 
     #---------------------------------------------
     Write-Log -Message "[Target Cluster] retrieving virtual machine entities for the target cluster: $($ClusterName)" -Level Info
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
     $Method = "GET"
     $RequestUri = "https://$($ClusterIP):9440/PrismGateway/services/rest/v2.0/vms"
     $Payload = $null # we are on a GET run
-
+    #----------------------------------------------------------------------------------------------------------------------------
     try {
         $VirtualMachines = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismElementCredentials -ErrorAction Stop
     }
@@ -1353,6 +1371,9 @@ foreach ($_ in $Clusters) {
     # Create a Snapshot of the VM from the temp VM
     #---------------------------------------------
     Write-Log -Message "[VM Snapshot] Creating Snapshot on the target cluster: $($ClusterName)" -Level Info
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
     $Method = "POST"
     $RequestUri = "https://$($ClusterIP):9440/PrismGateway/services/rest/v2.0/snapshots"
     $PayloadContent = @{
@@ -1364,9 +1385,15 @@ foreach ($_ in $Clusters) {
         )
     }
     $Payload = (ConvertTo-Json $PayloadContent)
-
+    #----------------------------------------------------------------------------------------------------------------------------
     try {
         $Snapshot = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismElementCredentials -ErrorAction Stop
+
+        #Get the status of the task above
+        $TaskId = $Snapshot.task_uuid
+        $Phase = "[VM Snapshot]"
+        $PhaseSuccessMessage = "Snapshot: $($SnapshotName) has been created"
+        GetPrismv2Task -TaskID $TaskId -Cluster $ClusterIP -Credential $PrismElementCredentials
     }
     catch {
         Write-Log -Message "[VM Snapshot] Failed to create Snapshot on the target cluster: $($ClusterName)" -Level Warn
@@ -1374,12 +1401,6 @@ foreach ($_ in $Clusters) {
         $TotalErrorCount += 1
         Continue
     }
-    
-    #Get the status of the task above
-    $TaskId = $Snapshot.task_uuid
-    $Phase = "[VM Snapshot]"
-    $PhaseSuccessMessage = "Snapshot: $($SnapshotName) has been created"
-    GetPrismv2Task -TaskID $TaskId -Cluster $ClusterIP -Credential $PrismElementCredentials
 
     #endregion create Snapshot
 
@@ -1389,10 +1410,13 @@ foreach ($_ in $Clusters) {
     #---------------------------------------------
     if ($ImageSnapsToRetain) {
         Write-Log "[Snapshots] Getting an up to date list of snapshots on the target cluster: $($ClusterName)" -Level Info
+        #----------------------------------------------------------------------------------------------------------------------------
+        # Set API call detail
+        #----------------------------------------------------------------------------------------------------------------------------
         $Method = "GET"
         $RequestUri = "https://$($ClusterIP):9440/PrismGateway/services/rest/v2.0/snapshots"
         $Payload = $null # we are on a GET run
-
+        #----------------------------------------------------------------------------------------------------------------------------
         try {
             $Snapshots = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismElementCredentials -ErrorAction Stop
         }
@@ -1406,7 +1430,6 @@ foreach ($_ in $Clusters) {
 
         $MatchedSnapshots = $Snapshots.entities | Where-Object {$_.snapshot_name -like "$($VMPrefix + $BaseVM)*"}
         Write-Log -Message "[VM Snapshot] There are $($MatchedSnapshots.Count) snapshots matching on the target cluster: $($ClusterName)" -Level Info
-    
     
         $SnapsToRetain = $MatchedSnapshots | Sort-Object -Property created_time -Descending | Select-Object -First $ImageSnapsToRetain
 
@@ -1430,10 +1453,13 @@ foreach ($_ in $Clusters) {
                 Write-Log -Message "[VM Snapshot] Processing Snapshot $($SnapshotsToDeleteCount) of $($SnapsToDelete.Count). Processing deletion of Snapshot: $($snap.snapshot_name) on the target cluster: $($ClusterName)" -Level Info            
                 $snap_id = $Snap.uuid
                 try {
+                    #----------------------------------------------------------------------------------------------------------------------------
+                    # Set API call detail
+                    #----------------------------------------------------------------------------------------------------------------------------
                     $Method = "DELETE"
                     $RequestUri = "https://$($ClusterIP):9440/PrismGateway/services/rest/v2.0/snapshots/$($snap_id)"
                     $Payload = $null # we are on a delete run
-        
+                    #----------------------------------------------------------------------------------------------------------------------------
                     $SnapShotDelete = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismElementCredentials -ErrorAction Stop
         
                     #Get the status of the task above
@@ -1465,25 +1491,29 @@ foreach ($_ in $Clusters) {
     # Delete the Temp VM 
     #---------------------------------------------
     Write-Log -Message "[VM Delete} Deleting VM $($vm_name) with ID: $($vm_uuid) on cluster: $($ClusterName)" -Level Info
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
     $Method = "DELETE"
     $RequestUri = "https://$($ClusterIP):9440/PrismGateway/services/rest/v2.0/vms/$vm_uuid"
     $Payload = $null # we are on the a DELETE run
-
+    #----------------------------------------------------------------------------------------------------------------------------
     try {
         $VMDeleted = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismElementCredentials -ErrorAction Stop
+
+        # Get the status of the task above
+        $TaskId = $VMDeleted.task_uuid
+        $Phase = "[VM Delete]"
+        $PhaseSuccessMessage = "VM $($vm_name) has been deleted"
+
+        GetPrismv2Task -TaskID $TaskId -Cluster $ClusterIP -Credential $PrismElementCredentials
     }
     catch {
         Write-Log -Message "[VM Delete] Failed to Delete VM $($vm_name) with ID: $($vm_uuid) on cluster: $($ClusterName)" -Level Warn
         $TotalErrorCount += 1
         Continue
     }
-    
-    # Get the status of the task above
-    $TaskId = $VMDeleted.task_uuid
-    $Phase = "[VM Delete]"
-    $PhaseSuccessMessage = "VM $($vm_name) has been deleted"
 
-    GetPrismv2Task -TaskID $TaskId -Cluster $ClusterIP -Credential $PrismElementCredentials
     #endregion delete Temp VM
 
     $ClustersActionCount += 1
