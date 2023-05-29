@@ -796,32 +796,6 @@ $RunDate = (Get-Date -Format "yyyy-MM-dd HH:mm:ss") -replace ":","-" -replace " 
 $EventCheckInterval = 10 # Controls the interval between checking for success query on Protection Domain replication
 $TimeBeforeEventSearch = 5 # Time to wait between triggering the PD replication and searching for events
 
-#//KINDON TEMP TESTING
-
-$LogPath = "C:\Logs\MCSReplicateBaseImageAPI.log" # Where we log to
-$LogRollover = 5 # Number of days before logfile rollover occurs
-$SourceCluster = "10.68.68.40"# The source cluster holding the VM base image
-$TargetCluster = "10.68.68.30"
-$pd = "W10_Migration_Test"# The protection domain holding the base VM
-$BaseVM = "JK-Test-030" # The VM entity name of the base VM
-$VMPrefix = "ctx_" # The prefix name to create for the restored entity and the created snapshots
-#$SnapshotID = ""# The source ID (numerical) of the snapshot to replicate
-$ImageSnapsToRetain = 5# The number of snapshots to retain. Effectively a cleanup mode
-$SleepTime = 10 # Sleep time operations for VM and snapshot operations
-$UseCustomCredentialFile = $False # specifies that a credential file should be used
-$CredPath = "$Env:USERPROFILE\Documents\WindowsPowerShell\CustomCredentials" # Default path for custom credential file 
-#$ExcludeSourceClusterFromProcessing = $False # do not process the source cluster
-$TriggerPDReplication = $True # Triggers an out of band protection domain replication
-$MaxReplicationSuccessQueryAttempts = 10 # configures the number of attempts to query the PD for replication success to all remote clusters
-#$ctx_Catalogs # Array of catalogs on a single Citrix site to process. If needing to update multiple sites, use the JSON input
-#$ctx_AdminAddress # Delivery Controller address on a single Citrix site to process. If needing to update multiple sites, use the JSON input
-#$ctx_SiteConfigJSON # JSON input file for multi site (or single site) Citrix site configurations. Catalogs and Delivery Controllers
-#$ctx_ProcessCitrixEnvironmentOnly # Defines that we are processing ONLY citrix environments and not Nutanix
-#$ctx_Snapshot # the snapshot to be used to update Citrix Catalogs. Used in conjunction with ctx_ProcessCitrixEnvironmentOnly
-$APICallVerboseLogging = $True # Show the API calls being made
-
-#//KINDON TEMP TESTING
-
 #endregion
 
 #Region Execute
