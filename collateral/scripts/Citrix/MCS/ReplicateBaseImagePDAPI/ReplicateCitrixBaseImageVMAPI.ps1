@@ -57,48 +57,50 @@
     Optional. Switch parameter to indicate that we are purely updating Citrix Catalogs and not interacting with Nutanix. Used in a scenario where maybe some remediation work as been undertaken and only Citrix needs updating. Advanced Parameter for specific used cases. 
 .PARAMETER ctx_Snapshot
     Optional. The name of the snapshot to be used with the ctx_ProcessCitrixEnvironmentOnly switch. This has no validation against Nutanix. Purely used to bring Citrix catalogs into line.
+.PARAMETER APICallVerboseLogging
+    Optional. Switch to enable logging output for API calls
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication
+    .\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity
     A Protection Domain Out of Band replicate will be triggered.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     A custom credential file will be created and consumed.
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -ctx_Catalogs "Catalog1","Catalog2" -ctx_adminAddress "ctxddc001" -UseCustomCredentialFile -TriggerPDReplication
+    .\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -ctx_Catalogs "Catalog1","Catalog2" -ctx_adminAddress "ctxddc001" -UseCustomCredentialFile -TriggerPDReplication
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity
     A Protection Domain Out of Band replicate will be triggered.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     A custom credential file will be created and consumed.
     The Citrix Catalogs "Catalog1" and "Catalog2" will be processed on the Citrix Delivery Controller "ctxddc001"
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -ctx_SiteConfigJSON "c:\temp\ctx_catalogs.json" -UseCustomCredentialFile -TriggerPDReplication
+    .\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -ctx_SiteConfigJSON "c:\temp\ctx_catalogs.json" -UseCustomCredentialFile -TriggerPDReplication
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity
     A Protection Domain Out of Band replicate will be triggered.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     A custom credential file will be created and consumed.
     A JSON file including the appropriate Catalogs and Delivery Groups will be processed.
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -SnapshotID 353902
+    .\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -SnapshotID 353902
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, and attempt to use the specified Protection Domain snapshotID for all operations. 
     Credentials will be prompted for.
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10
+    .\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     Credentials will be prompted for.
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile
+    .\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     A custom credential file will be created and consumed.
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication
+    .\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     A custom credential file will be created and consumed. 
     a Protection Domain Out of Band replicate will be triggered.
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication -MaxReplicationSuccessQueryAttempts 20
+    .\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication -MaxReplicationSuccessQueryAttempts 20
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     A custom credential file will be created and consumed. 
@@ -117,7 +119,7 @@
     All Nutanix processing will be ignored
     SourceCluster, pd, BaseVM params required, but ignored.
 .NOTES
-    The script is built on the lowest common version of Nutanix PowerShell capability
+    The script uses Nutanix Prism v2 API for Nutanix tasks
     The script uses Citrix Powershell snapins for Citrix tasks
     The script assumes the same username and password on all PE instances - This should be a service account
     The script assumes that the user/account executing the script has the required permissions in Citrix sites
@@ -126,7 +128,7 @@
     #--------------------------------------------------------------------------------------------------------#
     # This script is provided as-is to outline capability and methodology for achieving the defined goals.
     # James Kindon - Senior Solutions Architect, EUC - Nutanix
-    # 23.05.2023: Initial release
+    # 30.05.2023: Initial release
     #--------------------------------------------------------------------------------------------------------#
 #>
 
@@ -190,7 +192,10 @@ Param(
     [switch]$ctx_ProcessCitrixEnvironmentOnly, # Defines that we are processing ONLY citrix environments and not Nutanix
 
     [Parameter(Mandatory = $false)]
-    [String]$ctx_Snapshot # the snapshot to be used to update Citrix Catalogs. Used in conjunction with ctx_ProcessCitrixEnvironmentOnly
+    [String]$ctx_Snapshot, # the snapshot to be used to update Citrix Catalogs. Used in conjunction with ctx_ProcessCitrixEnvironmentOnly
+
+    [Parameter(Mandatory = $false)]
+    [switch]$APICallVerboseLogging # Show the API calls being made
 )
 #endregion
 
@@ -639,6 +644,144 @@ function ValidateExclusiveCitrixProcessingCatalog {
     }
 }
 
+function InvokePrismAPI {
+    param (
+        [parameter(mandatory = $true)]
+        [ValidateSet("POST", "GET", "DELETE", "PUT")]
+        [string]$Method,
+
+        [parameter(mandatory = $true)]
+        [string]$Url,
+
+        [parameter(mandatory = $false)]
+        [string]$Payload,
+
+        [parameter(mandatory = $true)]
+        [System.Management.Automation.PSCredential]$Credential
+    )
+    BEGIN {}
+    PROCESS {
+        if ($APICallVerboseLogging) { 
+            Write-Log -Message "[Prism API Call] Making a $method call to $url" -Level Info
+        }
+        try {
+            #check powershell version as PoSH 6 Invoke-RestMethod can natively skip SSL certificates checks and enforce Tls12 as well as use basic authentication with a pscredential object
+            if ($PSVersionTable.PSVersion.Major -gt 5) {
+                $headers = @{
+                    "Content-Type" = "application/json";
+                    "Accept"       = "application/json"
+                }
+                if ($payload) {
+                    $resp = Invoke-RestMethod -Method $method -Uri $url -Headers $headers -Body $payload -SkipCertificateCheck -SslProtocol Tls12 -Authentication Basic -Credential $credential -ErrorAction Stop
+                }
+                else {
+                    $resp = Invoke-RestMethod -Method $method -Uri $url -Headers $headers -SkipCertificateCheck -SslProtocol Tls12 -Authentication Basic -Credential $credential -ErrorAction Stop
+                }
+            }
+            else {
+                $username = $credential.UserName
+                $password = $credential.Password
+                $headers = @{
+                    "Authorization" = "Basic " + [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($username + ":" + ([System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))) ));
+                    "Content-Type"  = "application/json";
+                    "Accept"        = "application/json"
+                }
+                if ($payload) {
+                    $resp = Invoke-RestMethod -Method $method -Uri $url -Headers $headers -Body $payload -ErrorAction Stop
+                }
+                else {
+                    $resp = Invoke-RestMethod -Method $method -Uri $url -Headers $headers -ErrorAction Stop
+                }
+            }
+        }
+        catch {
+            $saved_error = $_.Exception.Message
+            # Write-Host "$(Get-Date) [INFO] Headers: $($headers | ConvertTo-Json)"
+            Write-Log -Message "Payload: $payload" -Level Info
+            Throw "$(get-date) [ERROR] $saved_error"
+        }
+        finally {
+            #add any last words here; this gets processed no matter what
+        }
+    }
+    END {
+        return $resp
+    }
+}
+
+function GetPrismv2Task {
+    param (
+        [parameter(mandatory = $true)]
+        [string]$TaskID, #ID of the task to grab
+
+        [parameter(mandatory = $true)]
+        [string]$Cluster,
+
+        [parameter(mandatory = $true)]
+        [System.Management.Automation.PSCredential]$Credential
+    )
+
+    $Method = "GET"
+    $RequestUri = "https://$($Cluster):9440/PrismGateway/services/rest/v2.0/tasks/$($TaskId)"
+    $Payload = $null
+    try {
+        $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $Credential -ErrorAction Stop
+        Write-Log -Message "$($Phase) Monitoring task: $($TaskId)"
+        while ($TaskStatus.progress_status -ne "SUCCEEDED") {
+            Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.progress_status). Waiting for Task completion. Status: $($TaskStatus.percentage_complete)% complete" -Level Info
+            Start-Sleep $SleepTime
+            $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $Credential -ErrorAction Stop
+        }
+        if ($TaskStatus.progress_status -eq "SUCCEEDED") {
+            Write-Log -Message "$($Phase) Task status is: $($TaskStatus.progress_status). $PhaseSuccessMessage" -Level Info
+        }
+    }
+    catch {
+        Write-Log -Message "$($Phase) Failed to get task status for task ID: $($TaskId)" -Level Warn
+        Break
+    }     
+}
+
+function Set-PoshTls {
+    <#
+    .SYNOPSIS
+    Makes sure we use the proper Tls version (1.2 only required for connection to Prism).
+
+    .DESCRIPTION
+    Makes sure we use the proper Tls version (1.2 only required for connection to Prism).
+
+    .NOTES
+    Author: Stephane Bourdeaud (sbourdeaud@nutanix.com)
+
+    .EXAMPLE
+    .\Set-PoshTls
+    Makes sure we use the proper Tls version (1.2 only required for connection to Prism).
+
+    .LINK
+    https://github.com/sbourdeaud
+    #>
+    [CmdletBinding(DefaultParameterSetName = 'None')] #make this function advanced
+
+    param 
+    (
+        
+    )
+
+    begin {
+    }
+
+    process {
+        Write-Log -Message "[SSL] Adding Tls12 support" -Level Info
+        [Net.ServicePointManager]::SecurityProtocol = `
+        ([Net.ServicePointManager]::SecurityProtocol -bor `
+                [Net.SecurityProtocolType]::Tls12)
+    }
+
+    end {
+
+    }
+} #this function is used to make sure we use the proper Tls version (1.2 only required for connection to Prism)
+
 #endregion
 
 #region Variables
@@ -659,27 +802,14 @@ StartIteration
 
 if ($PSVersionTable.PSVersion.Major -lt 5) { throw "$(get-date) [ERROR] Please upgrade to Powershell v5 or above (https://www.microsoft.com/en-us/download/details.aspx?id=50395)" }
 
-if ($PSVersionTable.PSedition -eq "Core") { throw "$(get-date) You cannot use snapins with PowerShell Core. You must use PowerShell 5.x" }
 #region Modules
-#------------------------------------------------------------
-# Import Nutanix PowerShell Modules
-#------------------------------------------------------------
-try {
-    Write-Log -Message "[Nutanix PowerShell] Attempting to import Nutanix PowerShell Module" -Level Info
-    & 'C:\Program Files (x86)\Nutanix Inc\NutanixCmdlets\powershell\import_modules\ImportModules.PS1' -ErrorAction Stop
-    Write-Log -Message "[Nutanix PowerShell] Successfully imported Nutanix PowerShell Module" -Level Info 
-}
-catch {
-    Write-Log -Message "[Nutanix PowerShell] Failed to import Nutanix PowerShell Module" -Level Warn
-    Write-Log -Message $_ -Level Warn
-    StopIteration
-    Exit 1
-}
 
 #------------------------------------------------------------
 # Import Citrix Snapins
 #------------------------------------------------------------
 if ($ctx_Catalogs -or $ctx_SiteConfigJSON) {
+    if ($PSVersionTable.PSedition -eq "Core") { throw "$(get-date) You cannot use snapins with PowerShell Core. You must use PowerShell 5.x" }
+
     try {
         Write-Log -Message "[Citrix PowerShell] Attempting to import Citrix PowerShell Snapins" -Level Info
         Add-PSSnapin -Name "Citrix.Broker.Admin.V2","Citrix.Host.Admin.V2" -ErrorAction Stop
@@ -817,6 +947,47 @@ if ($ctx_ProcessCitrixEnvironmentOnly) {
 }
 #endregion Exclusive Citrix Processing
 
+#region SSL Handling
+#------------------------------------------------------------
+# Handle Invalid Certs
+#------------------------------------------------------------
+if ($PSEdition -eq 'Desktop') {
+Write-Log -Message "[SSL] Ignoring invalid certificates" -Level Info
+    if (-not ([System.Management.Automation.PSTypeName]'ServerCertificateValidationCallback').Type) {
+    $certCallback = @"
+using System;
+using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
+public class ServerCertificateValidationCallback
+{
+public static void Ignore()
+{
+    if(ServicePointManager.ServerCertificateValidationCallback ==null)
+    {
+        ServicePointManager.ServerCertificateValidationCallback += 
+            delegate
+            (
+                Object obj, 
+                X509Certificate certificate, 
+                X509Chain chain, 
+                SslPolicyErrors errors
+            )
+            {
+                return true;
+            };
+    }
+}
+}
+"@
+    Add-Type $certCallback
+    }
+    [ServerCertificateValidationCallback]::Ignore()
+}
+
+Set-PoshTls
+#endregion SSL Handling
+
 #region Authentication
 #------------------------------------------------------------
 # Handle Authentication
@@ -831,7 +1002,7 @@ if ($UseCustomCredentialFile.IsPresent) {
         Set-CustomCredentials -credname $PrismCreds
         $PrismCredentials = Get-CustomCredentials -credname $PrismCreds -ErrorAction Stop
     }
-}
+} 
 else {
     Write-Log -Message "[Credentials] Prompting user for Prism credentials" -Level Info
     $PrismCredentials = Get-Credential -Message "Enter Credentials for Prism Element Instances"
@@ -843,13 +1014,21 @@ else {
 }
 #endregion Authentication
 
+
 #region Connect to Source Cluster
 #------------------------------------------------------------
 # Connect to the Source Cluster
 #------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------------------
+# Set API call detail
+#----------------------------------------------------------------------------------------------------------------------------
+$Method = "GET"
+$RequestUri = "https://$($SourceCluster):9440/PrismGateway/services/rest/v2.0/cluster"
+$Payload = $null # we are on a get run
+#----------------------------------------------------------------------------------------------------------------------------
 try {
     Write-Log -Message "[Source Cluster] Connecting to the source Cluster: $($SourceCluster)" -Level Info
-    Connect-NTNXCluster -Server $SourceCluster -UserName $PrismCredentials.Username -Password $PrismCredentials.Password -AcceptInvalidSSLCerts -ErrorAction Stop | Out-null
+    $Cluster = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
     Write-Log -Message "[Source Cluster] Successfully connected to the source Cluser: $($SourceCluster)" -Level Info
 }
 catch {
@@ -864,10 +1043,17 @@ catch {
 #------------------------------------------------------------
 # Get the protection domain
 #------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------------------
+# Set API call detail
+#----------------------------------------------------------------------------------------------------------------------------
+$Method = "GET"
+$RequestUri = "https://$($SourceCluster):9440/PrismGateway/services/rest/v2.0/protection_domains/?names=$($pd)"
+$Payload = $null # we are on a get run
+#----------------------------------------------------------------------------------------------------------------------------
 try {
     Write-Log -Message "[Protection Domain] Getting Protection Domain details for: $($pd) in the source Cluster: $($SourceCluster)" -Level Info
-    $ProtectionDomain = Get-NTNXProtectionDomain -Name $pd -Server $SourceCluster -ErrorAction Stop
-    
+    $ProtectionDomain = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+
     if ($ProtectionDomain) {
         # may not respond with an error so capturing empty variable
         Write-Log -Message "[Protection Domain] Sucessfully retrieved Protection Domain details for: $($pd) in the source Cluster: $($SourceCluster)" -Level Info
@@ -890,16 +1076,38 @@ catch {
 #------------------------------------------------------------
 # Find the remote sites
 #------------------------------------------------------------
-$RemoteSites = Get-NTNXRemoteSite -Server $SourceCluster | Where-Object {$_.name -in ($ProtectionDomain).remoteSiteNames}
-
-if (!$RemoteSites) {
-    Write-Log -Message "[Remote Sites] There are no Remote Sites defined for: $($pd) in the source Cluster: $($SourceCluster)" -Level Warn
+Write-Log -Message "[Remote Sites] Getting remote sites associated with Protection Domain: $($pd) on the source Cluster: $($SourceCluster)" -Level Info
+#----------------------------------------------------------------------------------------------------------------------------
+# Set API call detail
+#----------------------------------------------------------------------------------------------------------------------------
+$Method = "GET"
+$RequestUri = "https://$($SourceCluster):9440/PrismGateway/services/rest/v2.0/remote_sites"
+$Payload = $null # we are on a get run
+#----------------------------------------------------------------------------------------------------------------------------
+try {
+    $RemoteSites = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+}
+catch {
+    Write-Log -Message "[Remote Sites] Failed to get Remote Sites for: $($pd) on the source Cluster: $($SourceCluster)" -Level Warn
+    Write-Log -Message $_ -Level Warn
     StopIteration
     Exit 1
 }
 
+$RemoteSites = $RemoteSites.entities | Where-Object {$_.name -in $ProtectionDomain.entities.remote_site_names}
+
+if (!$RemoteSites) {
+    Write-Log -Message "[Remote Sites] There are no Remote Sites defined for: $($pd) on the source Cluster: $($SourceCluster)" -Level Warn
+    StopIteration
+    Exit 1
+}
+
+$RemoteSiteIPS = @() # Initialise the Remote Site IP Array
 # get a list of the IP addresses
-$RemoteSiteIPS = ($remoteSites.remoteIpPorts).Keys
+foreach ($_ in $remoteSites) {
+    $RemoteIP = $_.remote_ip_address_ports | Get-Member -MemberType NoteProperty | Select -ExpandProperty Name
+    $RemoteSiteIPS += $RemoteIP
+}
 
 $TotalRemoteClusterCount = $RemoteSiteIPS.Count
 Write-Log -Message "[Remote Sites] Remote Clusters to process: $($TotalRemoteClusterCount)" -Level Info
@@ -912,10 +1120,25 @@ Write-Log -Message "[Remote Sites] Remote Clusters to process: $($TotalRemoteClu
 if ($TriggerPDReplication.IsPresent) {
     # Kick off the replication
     Write-Log -Message "[PD Replication] Protection Domain replication has been selected. Attempting to initiate an out of band Protection Domain replication to all remote clusters from the source Cluster: $($SourceCluster)" -Level Info
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
+    $Method = "POST"
+    $RequestUri = "https://$($SourceCluster):9440/PrismGateway/services/rest/v2.0/protection_domains/$($pd)/oob_schedules"
+    $PayloadContent = @{
+        remote_site_names =  @(
+            @(
+                $ProtectionDomain.entities.remote_site_names
+            )
+        )
+        snapshot_retention_time_secs = 3600
+    }
+    $Payload = (ConvertTo-Json $PayloadContent)
+    #----------------------------------------------------------------------------------------------------------------------------
     try {
-        $NewOOBReplication = Add-NTNXOutOfBandSchedule -PdName $pd -RemoteSiteNames $RemoteSites.name -SnapshotRetentionTimeSecs 3600 -Server $SourceCluster -ErrorAction Stop
+        $NewOOBReplication = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
         if ($NewOOBReplication) {
-            Write-Log -Message "[PD Replication] Initiated a replication with scheduleId: $($NewOOBReplication.scheduleId) from the source Cluster: $($SourceCluster)" -Level Info
+            Write-Log -Message "[PD Replication] Initiated a replication with scheduleId: $($NewOOBReplication.schedule_Id) from the source Cluster: $($SourceCluster)" -Level Info
         }
         else {
             Write-Log -Message "[PD Replication] Failed to initiate an out of band replication for Protection Domain: $($pd) from the source Cluster: $($SourceCluster)" -Level Warn
@@ -932,8 +1155,23 @@ if ($TriggerPDReplication.IsPresent) {
     ## Get Snapshot ID based on Protection Domain Events
     Write-Log -Message "[PD Replication] Waiting $($TimeBeforeEventSearch) seconds for Events to be logged on the source Cluster: $($SourceCluster)" -Level Info
     Start-Sleep $TimeBeforeEventSearch
-    $MessageMatchString = "*created for protection domain $($pd)*"
-    $SnapshotIDOfOOBReplication = Get-NTNXProtectionDomainEvent -Server $SourceCluster -PdName $pd | Where-Object {$_.message -like $MessageMatchString} | Sort-Object createdTimeStampInUsecs -Descending | Select-Object -First 1
+    $MessageMatchString = "*created for protection domain*"
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
+    $Method = "GET"
+    $RequestUri = "https://$($SourceCluster):9440/PrismGateway/services/rest/v2.0/events/?count=20"
+    $Payload = $null # we are on a get run
+    #----------------------------------------------------------------------------------------------------------------------------
+    Write-Log -Message "[PD Replication] Searching for events to identify Snapshot ID of OOB replication on the source Cluster: $($SourceCluster)" -Level Info
+    try {
+        $SnapshotIDOfOOBReplication = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+    }
+    catch {
+        Write-Log -Message "[PD Replication] Failed to find appropriate OOB replication events on the source Cluster: $($SourceCluster)" -Level Warn
+        StopIteration
+        Exit 1
+    }
 
     if (!$SnapshotIDOfOOBReplication) {
         # report on fail and quit
@@ -943,16 +1181,32 @@ if ($TriggerPDReplication.IsPresent) {
     }
     else {
         # report on success and set variables
-        $Pattern = "\d+" # finds numerical value of the snapshot in the message
-        $SnapID = $SnapshotIDOfOOBReplication.message | Select-String -Pattern $pattern -AllMatches | ForEach-Object { $_.matches } | Sort-Object -Descending | Select-Object -First 1
+        $EventMatch = $SnapshotIDOfOOBReplication.entities | Where-Object {$_.message -like $MessageMatchString} | Sort-Object createdTimeStampInUsecs -Descending | Select-Object -First 1
+        $SnapID = $EventMatch.context_values[1]
         Write-Log -Message "[PD Replication] Got snapshot ID reference: $($SnapID). Checking for replication finish events on the source Cluster: $($SourceCluster)" -Level Info
     }
 
     # Check replication status based on event messages
-    $MessageMatchString = "*Replication completed for Protection Domain $($pd) to remote* *$($SnapID.Value)*"
+    $MessageMatchString = "*Replication completed for Protection Domain*"
     $ReplicationSuccessQueryAttempts = 1  # Initialise the attempt count
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
+    $Method = "GET"
+    $RequestUri = "https://$($SourceCluster):9440/PrismGateway/services/rest/v2.0/events/?count=20"
+    $Payload = $null # we are on a get run
+    #----------------------------------------------------------------------------------------------------------------------------
+    try {
+        $CompletionMessageofOOBReplication = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+    }
+    catch {
+        Write-Log -Message "[PD Replication] Cannot find any events indicating replication success on the source Cluster: $($SourceCluster)" -Level Warn
+        StopIteration
+        Exit 1
+    }
+    
+    $CompletionMessageofOOBReplication = $CompletionMessageofOOBReplication.entities | Where-Object {$_.message -like $MessageMatchString} | Sort-Object createdTimeStampInUsecs -Descending | Where-Object {$_.context_values[2] -eq $SnapID -and $_.context_values[1] -in $ProtectionDomain.entities.remote_site_names}
 
-    $CompletionMessageofOOBReplication = Get-NTNXProtectionDomainEvent -Server $SourceCluster -PdName $pd | Where-Object {$_.Message -like $MessageMatchString} | Sort-Object createdTimeStampInUsecs -Descending
     if ($CompletionMessageofOOBReplication.Count -eq $RemoteSites.count) {
         Write-Log -Message "[PD Replication] Cluster replication complete. Found replication finished events for $($CompletionMessageofOOBReplication.Count) out of $($RemoteSites.count) remote Clusters" -Level Info
     }
@@ -967,7 +1221,24 @@ if ($TriggerPDReplication.IsPresent) {
                 if ($ReplicationSuccessQueryAttempts -ne 1) {
                     Write-Log -Message "[PD Replication] Attempting to retrieve replication complete events. Attempt $($ReplicationSuccessQueryAttempts) of a maximum $($MaxReplicationSuccessQueryAttempts)" -Level Info
                 }
-                $CompletionMessageofOOBReplication = Get-NTNXProtectionDomainEvent -Server $SourceCluster -PdName $pd | Where-Object {$_.Message -like $MessageMatchString} | Sort-Object createdTimeStampInUsecs -Descending
+                #----------------------------------------------------------------------------------------------------------------------------
+                # Set API call detail
+                #----------------------------------------------------------------------------------------------------------------------------
+                $Method = "GET"
+                $RequestUri = "https://$($SourceCluster):9440/PrismGateway/services/rest/v2.0/events/?count=20"
+                $Payload = $null
+                #----------------------------------------------------------------------------------------------------------------------------
+                try {
+                    $CompletionMessageofOOBReplication = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+                }
+                catch {
+                    Write-Log -Message "[PD Replication] Cannot find any events indicating replication success on the source Cluster: $($SourceCluster)" -Level Warn
+                    StopIteration
+                    Exit 1
+                }
+                
+                $CompletionMessageofOOBReplication = $CompletionMessageofOOBReplication.entities | Where-Object {$_.message -like $MessageMatchString} | Sort-Object createdTimeStampInUsecs -Descending | Where-Object {$_.context_values[2] -eq $SnapID -and $_.context_values[1] -in $ProtectionDomain.entities.remote_site_names}
+                
                 Write-Log -Message "[PD Replication] Found replication finished events for $($CompletionMessageofOOBReplication.Count) out of $($RemoteSites.count). Checking again in $($EventCheckInterval) seconds." -Level Info
                 $ReplicationSuccessQueryAttempts += 1
                 Start-Sleep $EventCheckInterval
@@ -983,8 +1254,16 @@ if ($TriggerPDReplication.IsPresent) {
 # Get a list of snapshots from the Source
 #------------------------------------------------------------
 Write-Log -Message "[PD Snapshot] Getting Snapshots on the source Cluster $($SourceCluster)" -Level Info
+#----------------------------------------------------------------------------------------------------------------------------
+# Set API call detail
+#----------------------------------------------------------------------------------------------------------------------------
+$Method = "GET"
+$RequestUri = "https://$($SourceCluster):9440/PrismGateway/services/rest/v2.0/protection_domains/$($pd)/dr_snapshots"
+$Payload = $null # we are on a get run
+#----------------------------------------------------------------------------------------------------------------------------
 try {
-    $SourceSnaps = Get-NTNXProtectionDomainSnapshot -Servers $SourceCluster -PdName $pd -ErrorAction Stop | Where-Object {$_.State -ne "EXPIRED"}
+    $SourceSnaps = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+    $SourceSnaps = $SourceSnaps.entities | Where-Object {$_.State -ne "EXPIRED"}
     if (!$SourceSnaps) {
         # can't process an empty array
         Write-Log -Message "[PD Snapshot] There are no Snapshots on the specified Protection Domain $($pd) in the source Cluster: $($SourceCluster). Terminating" -Level Warn
@@ -1003,7 +1282,7 @@ catch {
 # Validate the snapshot exists (if specified)
 #------------------------------------------------------------
 if ($SnapshotID) {
-    $SourceSnapExists = $SourceSnaps | where-Object {$_.SnapshotId -like $SnapshotID}
+    $SourceSnapExists = $SourceSnaps | where-Object {$_.Snapshot_id -like $SnapshotID}
     if ($SourceSnapExists) {
         Write-Log -Message "[PD Snapshot] Snapshot with ID: $($SnapshotID) has been found on the source Cluster: $($SourceCluster)" -Level Info
     }
@@ -1027,12 +1306,29 @@ $TotalSuccessCount = 0 # start the succes count
 #------------------------------------------------------------
 if (!$ExcludeSourceClusterFromProcessing) {
     Write-Log -Message "[Source Cluster: Start] Processing source Cluster: $($SourceCluster)" -Level Info
+    #region get local VM
     #------------------------------------------------------------
     # Find the local VM
     #------------------------------------------------------------
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
+    $Method = "GET"
+    $RequestUri = "https://$($SourceCluster):9440/PrismGateway/services/rest/v2.0/vms/?filter=vm_name==$($BaseVM)"
+    $Payload = $null # we are on a get run
+    #----------------------------------------------------------------------------------------------------------------------------
     Write-Log -Message "[VM] Looking for base VM $($BaseVM) on the source Cluster: $($SourceCluster)" -Level Info
-    $vm = Get-NTNXVM -SearchString ($BaseVM) -Server $SourceCluster
-    if (!$vm) {
+    try {
+        $vm = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+    }
+    catch {
+        Write-Log -Message "[VM] Could not find the VM: $($BaseVM) on the source Cluster: $($SourceCluster)" -Level Warn
+        Write-Log -Message $_ -Level Warn
+        StopIteration
+        Exit 1
+    }
+
+    if ($vm.count -eq 0) {
         #couldn't find the VM
         Write-Log -Message "[VM] Could not find the VM: $($BaseVM) on the source Cluster: $($SourceCluster)" -Level Warn
         $IterationErrorCount += 1
@@ -1042,55 +1338,123 @@ if (!$ExcludeSourceClusterFromProcessing) {
     # handle multiple vm match
     if ($vm.count -gt 1) {
         Write-Log -Message "[VM] There are $($vm.Count) vm entities found. Doing a direct name match to identify VM" -Level Info
-        $vm = $vm | where-Object { $_.vmName -eq $BaseVM }
+        $vm = $vm | where-Object { $_.entities.name -eq $BaseVM }
     }
 
+    $vm_name = $vm.entities.name
+    $vm_uuid = $vm.entities.uuid
+    Write-Log -Message "[VM] Virtual Machine name is: $($vm_name) on the source Cluster: $($SourceCluster)" -level Info
+    Write-Log -Message "[VM] Virtual Machine uuid is: $($vm_uuid) on the source Cluster: $($SourceCluster)" -level Info
+    #endregion get local VM
+    
+    #region Get Snaphots
+    #------------------------------------------------------------
+    # Get Start Count of Snapshots
+    #------------------------------------------------------------
+    $IterationErrorCount = 0 # start the iteration error count
+    $SnapshotName = $VMPrefix + $vm_name + "_" + $RunDate
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
+    $Method = "GET"
+    $RequestUri = "https://$($SourceCluster):9440/PrismGateway/services/rest/v2.0/snapshots"
+    $Payload = $null # we are on a get run
+    #----------------------------------------------------------------------------------------------------------------------------
+    try {
+        $snapshots = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+    }
+    catch {
+        Write-Log -Message "[VM Snapshot] Failed to retrieve snapshot list on the source Cluster: $($SourceCluster)" -Level Warn
+        StopIteration
+        Exit 1
+    }
+
+    $SnaphotCount = ($snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*")}).Count
+    Write-Log -Message "[VM Snapshot] There are $($SnaphotCount) Snapshots matching: $($VMPrefix + $BaseVM) on the source Cluster: $($SourceCluster)" -Level Info
+    #Write-Log -Message "[VM Snapshot] There are $(($snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*")}).count) Snapshots matching: $($VMPrefix + $BaseVM) on the source Cluster: $($SourceCluster)" -Level Info
+    #endregion Get Snaphots
+    
+    #region Take Snapshot
     #------------------------------------------------------------
     # Take a snapshot
     #------------------------------------------------------------
-    $IterationErrorCount = 0 # start the iteration error count
-    # start count for snapshots (how many currently exist)
-    Write-Log -Message "[VM Snapshot] There are $((Get-NTNXSnapshot -Server $SourceCluster | Where-Object {$_.snapshotName -like ($VMPrefix + "$BaseVM*")}).Count) Snapshots matching: $($VMPrefix + $BaseVM) on the source Cluster: $($SourceCluster)" -Level Info
-
     if ($vm) {
         # create snapshot config
-        Write-Log -Message "[VM Snapshot] Creating Snapshot spec and creating Snapshot on the source Cluster: $($SourceCluster)" -Level Info
-        $snapshotName = $VMPrefix + $vm.vmName + "_" + $RunDate
-        $newSnapshot = New-NTNXObject -Name SnapshotSpecDTO
-        $newSnapshot.vmuuid = $vm.uuid
-        $newSnapshot.snapshotname = $snapshotName
-        # take the snapshot
+        Write-Log -Message "[VM Snapshot] Creating Snapshot on the source Cluster: $($SourceCluster)" -Level Info
+        #----------------------------------------------------------------------------------------------------------------------------
+        # Set API call detail
+        #----------------------------------------------------------------------------------------------------------------------------
+        $Method = "POST"
+        $RequestUri = "https://$($SourceCluster):9440/PrismGateway/services/rest/v2.0/snapshots"
+        $PayloadContent = @{
+            snapshot_specs =  @(
+                @{
+                    snapshot_name = $SnapshotName
+                    vm_uuid = $vm_uuid
+                }
+            )
+        }
+        $Payload = (ConvertTo-Json $PayloadContent)
+        #----------------------------------------------------------------------------------------------------------------------------
         try {
-            New-NTNXSnapshot -SnapshotSpecs $newSnapshot -Server $SourceCluster -ErrorAction Stop | Out-Null
-            Write-Log -Message "[VM Snapshot] Waiting $($SleepTime) seconds for Snapshot creation of: $($snapshotName) to finalise on the source Cluster: $($SourceCluster)" -Level Info
-            Start-Sleep $SleepTime
-            Write-Log -Message "[VM Snapshot] Sucessfully created Snapshot: $($snapshotName) on the source Cluster: $($SourceCluster)" -Level Info
+            $SnapshotCreated = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+            
+            #Get the status of the task above
+            $TaskId = $SnapshotCreated.task_uuid
+            $Phase = "[VM Snapshot]"
+            $PhaseSuccessMessage = "Snapshot: $($SnapshotName) has been created"
+
+            GetPrismv2Task -TaskID $TaskId -Cluster $SourceCluster -Credential $PrismCredentials
         }
         catch {
             Write-Log -Message "[VM Snapshot] Failed to create Snapshot: $($snapshotName) on the source Cluster: $($SourceCluster) " -Level Warn
             Write-Log -Message $_ -level Warn
             $IterationErrorCount += 1
             $TotalErrorCount += 1
+            StopIteration
+            Exit 1
         }
     }
+    #endregion Take Snapshot
 
-    # end count for snapshots (how many currently exist)
-    Write-Log -Message "[VM Snapshot] There are now: $((Get-NTNXSnapshot -Server $SourceCluster | Where-Object {$_.snapshotName -like ($VMPrefix + "$BaseVM*")}).Count) Snapshots matching $($VMPrefix + $BaseVM) on the source cluster $($SourceCluster)" -Level Info
+    #region Get Snapshots
+    #------------------------------------------------------------
+    # Get Final Count of Snapshots
+    #------------------------------------------------------------
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
+    $Method = "GET"
+    $RequestUri = "https://$($SourceCluster):9440/PrismGateway/services/rest/v2.0/snapshots"
+    $Payload = $null # we are on a get run
+    #----------------------------------------------------------------------------------------------------------------------------
+    try {
+        $Snapshots = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+    }
+    catch {
+        Write-Log -Message "[VM Snapshot] Failed to retrieve snapshot list on the source Cluster: $($SourceCluster)" -Level Warn
+        StopIteration
+        Exit 1
+    }
 
+    $SnaphotCount = ($snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*")}).Count
+    Write-Log -Message "[VM Snapshot] There are now: $($SnaphotCount) Snapshots matching $($VMPrefix + $BaseVM) on the source cluster $($SourceCluster)" -Level Info
+    #endregion Get Snapshots
+    
+    #region Snaphot deletion
     #------------------------------------------------------------
     # Handle the deletion of snapshot retention if set
     #------------------------------------------------------------
     if ($ImageSnapsToRetain) {
         Write-Log -Message "[VM Snapshot] Removing Snapshots that do not meet the retention value: $($ImageSnapsToRetain) on the source Cluster: $($SourceCluster)" -Level Info
-
-        $ImageSnapsOnSource = Get-NTNXSnapshot -Server $SourceCluster | Where-Object { $_.snapshotName -like ($VMPrefix + "$BaseVM*") }
-        $ImageSnapsOnSourceToRetain = $ImageSnapsOnSource | Sort-Object -Property createdTime -Descending | Select-Object -First $ImageSnapsToRetain
+        $ImageSnapsOnSource = $Snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*")} #retrieved in the above query
+        $ImageSnapsOnSourceToRetain = $ImageSnapsOnSource | Sort-Object -Property created_time -Descending | Select-Object -First $ImageSnapsToRetain
 
         $ImageSnapsOnSourceToDelete = @() #Initialise the delete array
         foreach ($snap in $ImageSnapsOnSource) {
             # loop through each snapshot and add to delete array if not in the ImageSnapsOnTargetToRetain array
             if ($snap -notin $ImageSnapsOnSourceToRetain) {
-                Write-Log -Message "[VM Snapshot] Adding Snapshot: $($snap.snapshotName) to the delete list" -Level Info
+                Write-Log -Message "[VM Snapshot] Adding Snapshot: $($snap.snapshot_name) to the delete list" -Level Info
                 $ImageSnapsOnSourceToDelete += $snap
             }
         }
@@ -1101,14 +1465,27 @@ if (!$ExcludeSourceClusterFromProcessing) {
             Write-Log -Message "[VM Snapshot] There are $($ImageSnapsOnSourceToDelete.Count) Snapshots to delete based on a retention value of $($ImageSnapsToRetain) on the source Cluster: $($SourceCluster)" -Level Info
             foreach ($Snap in $ImageSnapsOnSourceToDelete) {
                 # process the snapshot deletion
-                Write-Log -Message "[VM Snapshot] Processing deletion of Snapshot: $($snap.snapshotName) on the source Cluster: $($SourceCluster)" -Level Info
+                Write-Log -Message "[VM Snapshot] Processing deletion of Snapshot: $($snap.snapshot_name) on the source Cluster: $($SourceCluster)" -Level Info
+                #----------------------------------------------------------------------------------------------------------------------------
+                # Set API call detail
+                #----------------------------------------------------------------------------------------------------------------------------
+                $Method = "DELETE"
+                $RequestUri = "https://$($SourceCluster):9440/PrismGateway/services/rest/v2.0/snapshots/$($snap.uuid)"
+                $Payload = $null # we are on a delete run
+                #----------------------------------------------------------------------------------------------------------------------------
                 try {
-                    Remove-NTNXSnapshot -Uuid $snap.uuid -Server $SourceCluster -ErrorAction Stop | Out-Null
-                    Write-Log -Message "[VM Snapshot] Successfully deleted Snapshot: $($snap.snapshotName) on the source Cluster: $($SourceCluster)" -Level Info
+                    $SnapshotDelete = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+
+                    #Get the status of the task above
+                    $TaskId = $SnapshotDelete.task_uuid
+                    $Phase = "[VM Snapshot]"
+                    $PhaseSuccessMessage = "Snapshot: $($snap.snapshot_name) has been deleted"
+
+                    GetPrismv2Task -TaskID $TaskId -Cluster $SourceCluster -Credential $PrismCredentials
                     $SnapShotsDeletedOnSource += 1
                 }
                 catch {
-                    Write-Log -Message "[VM Snapshot] Failed to delete vm Snapshot: $($snap.snapshotName) on the source Cluster: $($SourceCluster)" -Level Warn
+                    Write-Log -Message "[VM Snapshot] Failed to delete vm Snapshot: $($snap.snapshot_name) on the source Cluster: $($SourceCluster)" -Level Warn
                     Write-Log -Message $_ -level Warn
                     $SnapShotsFailedToDeleteOnSource += 1
                     Break
@@ -1127,6 +1504,7 @@ if (!$ExcludeSourceClusterFromProcessing) {
     else {
         Write-Log -Message "[VM Snapshot] Cleanup (ImageSnapsToRetain) not specified. Nothing to process." -Level Info
     }
+    #endregion Snaphot deletion
 
     #------------------------------------------------------------
     # Update the processed cluster counts
@@ -1149,16 +1527,23 @@ else {
 #------------------------------------------------------------
 foreach ($Site in $RemoteSiteIPS){
     $IterationErrorCount = 0 # start the iteration error count
-
     #region Connect to the Target Cluster
     #------------------------------------------------------------
     # Process the target cluster
     #------------------------------------------------------------
     Write-Log -Message "[Target Cluster: Start] Processing Cluster $($CurrentClusterCount) of $($TotalRemoteClusterCount)" -Level Info
     $TargetCluster = $Site
-    Write-Log -Message "[Target Cluster] Connecting to the target Cluster: $($TargetCluster)" -Level Info
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
+    $Method = "GET"
+    $RequestUri = "https://$($TargetCluster):9440/PrismGateway/services/rest/v2.0/cluster"
+    $Payload = $null # we are on a get run
+    #----------------------------------------------------------------------------------------------------------------------------
     try {
-        Connect-NTNXCluster -Server $TargetCluster -UserName $PrismCredentials.Username -Password $PrismCredentials.Password -AcceptInvalidSSLCerts -ErrorAction Stop | Out-Null
+        Write-Log -Message "[Target Cluster] Connecting to the target Cluster: $($TargetCluster)" -Level Info
+        $Cluster = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+        Write-Log -Message "[Target Cluster] Successfully connected to the target Cluser: $($TargetCluster)" -Level Info
     }
     catch {
         Write-Log -Message "[Target Cluster] Could not connect to the target Cluster: $($TargetCluster) " -Level Warn
@@ -1169,16 +1554,21 @@ foreach ($Site in $RemoteSiteIPS){
     }
     #endregion Connect to the Target Cluster
     
-    # start count for snapshots (how many currently exist)
-    Write-Log -Message "[VM Snapshot] There are $((Get-NTNXSnapshot -Server $TargetCluster | Where-Object {$_.snapshotName -like ($VMPrefix + "$BaseVM*")}).Count) Snapshots matching: $($VMPrefix + $BaseVM) on the target Cluster: $($TargetCluster)" -Level Info
-    
     #region Get PD Snapshots on target
     #------------------------------------------------------------
     # Get PD snapshots
     #------------------------------------------------------------
     Write-Log -Message "[PD Snapshot] Getting Snapshots on the target Cluster $($TargetCluster)" -Level Info
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
+    $Method = "GET"
+    $RequestUri = "https://$($TargetCluster):9440/PrismGateway/services/rest/v2.0/protection_domains/$($pd)/dr_snapshots"
+    $Payload = $null # we are on a get run
+    #----------------------------------------------------------------------------------------------------------------------------
     try {
-        $TargetSnaps = Get-NTNXProtectionDomainSnapshot -Servers $TargetCluster -PdName $pd -ErrorAction Stop | Where-Object {$_.State -ne "EXPIRED"}
+        $TargetSnaps = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+        $TargetSnaps = $TargetSnaps.entities | Where-Object {$_.State -ne "EXPIRED"}
         if (!$TargetSnaps) {
             # can't process an empty array
             Write-Log -Message "[PD Snapshot] There are no Snapshots on the specified Protection Domain $($pd) in the target Cluster: $($TargetCluster)" -Level Warn
@@ -1196,29 +1586,28 @@ foreach ($Site in $RemoteSiteIPS){
         
     if ($SnapshotID) {
         # we specified a specific Snapshot ID - Validate Destination Snaps
-        $TargetSnapExists = $TargetSnaps | where-Object {$_.SnapshotId -like "*:$SnapshotID"}
+        $TargetSnapExists = $TargetSnaps | where-Object {$_.Snapshot_id -like "*:$SnapshotID"}
         if ($TargetSnapExists) {
             Write-Log -Message "[PD Snapshot] Snapshot with ID: $($SnapshotID) has been found on the target Cluster: $($TargetCluster)" -Level Info
-            $SelectedSnapshot = $TargetSnapExists.snapshotId
+            $SelectedSnapshot = $TargetSnapExists.snapshot_id
         }
         else {
             # the snapshot doesnt exist in the target
             Write-Log -Message "[PD Snapshot] Could not find defined Snapshot on the target Cluster: $($TargetCluster). Terminating" -Level Warn
             $IterationErrorCount += 1
             $TotalErrorCount += 1
-            Disconnect-NTNXCluster -Server $TargetCluster
             Break
         }
     }
     else {
         # we are using the most recent snapshot matching the name pattern
         Write-Log -Message "[PD Snapshot] Comparing latest PD Snapshot ID in the source: $($SourceCluster) and target: $($TargetCluster) Clusters" -Level Info
-        $LatestSourceSnap = $SourceSnaps[0].snapshotId 
-        $LatestTargetSnap = ($TargetSnaps[0].snapshotId -split ":")[1]
+        $LatestSourceSnap = $SourceSnaps[0].snapshot_id 
+        $LatestTargetSnap = ($TargetSnaps[0].snapshot_id -split ":")[1]
 
         if ($LatestTargetSnap -eq $LatestSourceSnap) {
             Write-Log -Message "[PD Snapshot] The latest PD Snapshot ID: $($LatestTargetSnap) on the target Cluster: $($TargetCluster) matches the latest PD Snapshot ID: $($LatestSourceSnap) on the source cluster: $($SourceCluster)" -Level Info
-            $SelectedSnapshot = $TargetSnaps[0].snapshotId
+            $SelectedSnapshot = $TargetSnaps[0].snapshot_id
         }
         else {
             # snapshots exist in both source and target
@@ -1226,7 +1615,6 @@ foreach ($Site in $RemoteSiteIPS){
             Write-Log -Message "[PD Snapshot] Please check Protection Domain replication status for Snapshot consistency. Terminating PD: $($pd) processing on target Cluster $($TargetCluster)" -Level Warn
             $IterationErrorCount += 1
             $TotalErrorCount += 1
-            Disconnect-NTNXCluster -Server $TargetCluster
             Break
         }
     }
@@ -1237,104 +1625,208 @@ foreach ($Site in $RemoteSiteIPS){
     # Restore the instance
     #------------------------------------------------------------
     Write-Log -Message "[VM] Restoring VM: $($BaseVM) from Protection Domain: $($pd) on target Cluster: $($TargetCluster) from Snapshot ID: $($SelectedSnapshot)" -Level Info
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
+    $Method = "POST"
+    $RequestUri = "https://$($TargetCluster):9440/PrismGateway/services/rest/v2.0/protection_domains/$($pd)/restore_entities"
+    $PayloadContent = @{
+        snapshot_id = $SelectedSnapshot
+        vm_name_prefix = $VMPrefix
+        vm_names = @(
+            $BaseVM
+        )
+    }
+    $Payload = (ConvertTo-Json $PayloadContent)
+    #----------------------------------------------------------------------------------------------------------------------------
     try {
-        Restore-NTNXEntity -VmNames $BaseVM -pdName $pd -SnapshotId $SelectedSnapshot -VmNamePrefix $VMPrefix -Server $TargetCluster -ErrorAction Stop | Out-Null
-        # wait due to delay
-        Write-Log -Message "[VM] Waiting $($SleepTime) seconds for VM creation of: $($VMPrefix + $BaseVM) to finalise on target Cluster: $($TargetCluster)" -Level Info
-        Start-Sleep $SleepTime
-        Write-Log -Message "[VM] Successfully restored VM: $($VMPrefix + $BaseVM) on target Cluster: $($TargetCluster)" -Level Info
+        $RestoredVM = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+        
+        #Get the status of the task above
+        $TaskId = $RestoredVM.task_uuid
+        $Phase = "[VM]"
+        $PhaseSuccessMessage = "VM: $($BaseVM) has been restored"
+        
+        GetPrismv2Task -TaskID $TaskId -Cluster $TargetCluster -Credential $PrismCredentials
     }
     catch {
         Write-Log -Message "[VM] Failed to restore VM: $($BaseVM) from Protection Domain: $($pd) on target Cluster: $($TargetCluster) from Snapshot ID: $($SelectedSnapshot)" -Level Warn
         Write-Log -Message $_ -level Warn
         $IterationErrorCount += 1
         $TotalErrorCount += 1
-        Disconnect-NTNXCluster -Server $TargetCluster
         Break
     }
     #endregion Restore the Instance on target
 
     #region VM Snapshot on target
     #------------------------------------------------------------
+    # Get Start Count of Snapshots
+    #------------------------------------------------------------
+
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
+    $Method = "GET"
+    $RequestUri = "https://$($TargetCluster):9440/PrismGateway/services/rest/v2.0/snapshots"
+    $Payload = $null # we are on a get run
+    #----------------------------------------------------------------------------------------------------------------------------
+    try {
+        $Snapshots = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+    }
+    catch {
+        Write-Log -Message "[VM Snapshot] Failed to retrieve snapshot list on the target Cluster: $($TargetCluster)" -Level Warn
+        StopIteration
+        Exit 1
+    }
+
+    $SnaphotCount = ($snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*")}).Count
+    Write-Log -Message "[VM Snapshot] There are: $($SnaphotCount) Snapshots matching $($VMPrefix + $BaseVM) on the target cluster $($TargetCluster)" -Level Info
+      
+    #------------------------------------------------------------
     # Take a snaphot
     #------------------------------------------------------------
-    $vm = Get-NTNXVM -SearchString ($VMPrefix + $BaseVM) -Server $TargetCluster
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
+    $Method = "GET"
+    $RequestUri = "https://$($TargetCluster):9440/PrismGateway/services/rest/v2.0/vms/?filter=vm_name==$($VMPrefix + $BaseVM)"
+    $Payload = $null # we are on a get run
+    #----------------------------------------------------------------------------------------------------------------------------
+    try {
+        $vm = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+    }
+    catch {
+        Write-Log -Message "[VM] Could not find the VM: $($VMPrefix + $BaseVM) on the target Cluster: $($TargetCluster)" -Level Warn
+        Write-Log -Message $_ -Level Warn
+        StopIteration
+        Exit 1
+    }
+
     if (!$vm) {
         #couldn't find the VM
         Write-Log -Message "[VM] Could not find the VM: $($VMPrefix + $BaseVM) on the target Cluster: $($TargetCluster)" -Level Warn
         $IterationErrorCount += 1
         $TotalErrorCount += 1
-        Disconnect-NTNXCluster -Server $TargetCluster
         Break
     }
 
     # handle multiple vm match
     if ($vm.count -gt 1) {
         Write-Log -Message "[VM] There are $($vm.Count) vm entities found. Doing a direct name match to identify VM" -Level Info
-        $vm = $vm | where-Object {$_.vmName -eq $VMPrefix + $BaseVM}
+        $vm = $vm | where-Object { $_.entities.name -eq $BaseVM }
     }
 
-    # create snapshot config
-    Write-Log -Message "[VM Snapshot] Creating Snapshot spec and creating Snapshot on the target Cluster: $($TargetCluster)" -Level Info
-    $snapshotName = $vm.vmName + "_" + $RunDate
-    $newSnapshot = New-NTNXObject -Name SnapshotSpecDTO
-    $newSnapshot.vmuuid = $vm.uuid
-    $newSnapshot.snapshotname = $snapshotName
-    # take the snapshot
+    $vm_name = $vm.entities.name
+    $vm_uuid = $vm.entities.uuid
+    Write-Log -Message "[VM] Virtual Machine name is: $($vm_name) on the target Cluster: $($TargetCluster)" -level Info
+    Write-Log -Message "[VM] Virtual Machine uuid is: $($vm_uuid) on the target Cluster: $($TargetCluster)" -level Info
+
+    # create snapshot
+    Write-Log -Message "[VM Snapshot] Creating Snapshot on the target Cluster: $($TargetCluster)" -Level Info
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
+    $Method = "POST"
+    $RequestUri = "https://$($TargetCluster):9440/PrismGateway/services/rest/v2.0/snapshots"
+    $PayloadContent = @{
+        snapshot_specs =  @(
+            @{
+                snapshot_name = $SnapshotName
+                vm_uuid = $vm_uuid
+            }
+        )
+    }
+    $Payload = (ConvertTo-Json $PayloadContent)
+    #----------------------------------------------------------------------------------------------------------------------------
     try {
-        New-NTNXSnapshot -SnapshotSpecs $newSnapshot -Server $TargetCluster -ErrorAction Stop | Out-Null
-        Write-Log -Message "[VM Snapshot] Waiting $($SleepTime) seconds for Snapshot creation of: $($snapshotName) to finalise on the target Cluster: $($TargetCluster)" -Level Info
-        Start-Sleep $SleepTime
-        Write-Log -Message "[VM Snapshot] Sucessfully created Snapshot: $($snapshotName) on the target Cluster: $($TargetCluster)" -Level Info
+        $SnapshotCreated = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+            
+        #Get the status of the task above
+        $TaskId = $SnapshotCreated.task_uuid
+        $Phase = "[VM Snapshot]"
+        $PhaseSuccessMessage = "Snapshot: $($SnapshotName) has been created"
+
+        GetPrismv2Task -TaskID $TaskId -Cluster $TargetCluster -Credential $PrismCredentials
     }
     catch {
         Write-Log -Message "[VM Snapshot] Failed to create Snapshot: $($snapshotName) on the target Cluster: $($TargetCluster) " -Level Warn
         Write-Log -Message $_ -level Warn
         $IterationErrorCount += 1
         $TotalErrorCount += 1
-        Disconnect-NTNXCluster -Server $TargetCluster
         Break
     }
+
+    #------------------------------------------------------------
+    # Get Final Count of Snapshots
+    #------------------------------------------------------------
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
+    $Method = "GET"
+    $RequestUri = "https://$($TargetCluster):9440/PrismGateway/services/rest/v2.0/snapshots"
+    $Payload = $null # we are on a get run
+    #----------------------------------------------------------------------------------------------------------------------------
+    try {
+        $Snapshots = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+    }
+    catch {
+        Write-Log -Message "[VM Snapshot] Failed to retrieve snapshot list on the target Cluster: $($TargetCluster)" -Level Warn
+        StopIteration
+        Exit 1
+    }
+    
+    $SnaphotCount = ($snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*")}).Count
+    Write-Log -Message "[VM Snapshot] There are now: $($SnaphotCount) Snapshots matching $($VMPrefix + $BaseVM) on the target cluster $($TargetCluster)" -Level Info
+
     #endregion VM Snapshot on target
 
     #region VM Removal on target
     #------------------------------------------------------------    
     # Remove the VM
     #------------------------------------------------------------
-    Write-Log -Message "[VM] Removing Temp VM: $($vm.vmName) on the target Cluster: $($TargetCluster)" -Level Info
+    Write-Log -Message "[VM] Removing Temp VM: $($vm_name) on the target Cluster: $($TargetCluster)" -Level Info
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
+    $Method = "DELETE"
+    $RequestUri = "https://$($TargetCluster):9440/PrismGateway/services/rest/v2.0/vms/$($vm_uuid)"
+    $Payload = $null # we are on a delete run
+    #----------------------------------------------------------------------------------------------------------------------------
     try {
-        Remove-NTNXVirtualMachine -Vmid $vm.uuid -Server $TargetCluster -ErrorAction Stop | Out-Null
-        Write-Log -Message "[VM] Successfully removed Temp VM: $($vm.vmName) on the target Cluster: $($TargetCluster)" -Level Info
+        $VMDeleted = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+        
+        #Get the status of the task above
+        $TaskId = $VMDeleted.task_uuid
+        $Phase = "[VM]"
+        $PhaseSuccessMessage = "VM: $($vm_name) has been deleted"
+
+        GetPrismv2Task -TaskID $TaskId -Cluster $TargetCluster -Credential $PrismCredentials
     }
     catch {
-        Write-Log -Message "[VM] Failed to remove Temp VM: $($vm.vmName) on the target Cluster: $($TargetCluster)" -Level Warn
+        Write-Log -Message "[VM] Failed to remove Temp VM: $($vm_name) on the target Cluster: $($TargetCluster)" -Level Warn
         Write-Log -Message $_ -level Warn
         $IterationErrorCount += 1
         $TotalErrorCount += 1
-        Disconnect-NTNXCluster -Server $TargetCluster
         Break
     }
-    #endregion VM Removal on target
 
-    # end count for snapshots (how many currently exist)
-    Write-Log -Message "[VM Snapshot] There are now: $((Get-NTNXSnapshot -Server $TargetCluster | Where-Object {$_.snapshotName -like ($VMPrefix + "$BaseVM*")}).Count) Snapshots matching $($VMPrefix + $BaseVM) on the target cluster $($TargetCluster)" -Level Info
+    #endregion VM Removal on target
 
     #region Snapshot Deletion on target
     #------------------------------------------------------------
     # Handle the deletion of snapshot retention if set
     #------------------------------------------------------------
-
     if ($ImageSnapsToRetain) {
         Write-Log -Message "[VM Snapshot] Removing Snapshots that do not meet the retention value: $($ImageSnapsToRetain) on the target Cluster: $($TargetCluster)" -Level Info
 
-        $ImageSnapsOnTarget = Get-NTNXSnapshot -Server $TargetCluster | Where-Object { $_.snapshotName -like ($VMPrefix + "$BaseVM*") }
-        $ImageSnapsOnTargetToRetain = $ImageSnapsOnTarget | Sort-Object -Property createdTime -Descending | Select-Object -First $ImageSnapsToRetain
+        $ImageSnapsOnTarget = $Snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*") } #retrieved in the above query
+        $ImageSnapsOnTargetToRetain = $ImageSnapsOnTarget | Sort-Object -Property created_time -Descending | Select-Object -First $ImageSnapsToRetain
 
         $ImageSnapsOnTargetToDelete = @() #Initialise the delete array
         foreach ($snap in $ImageSnapsOnTarget) {
             # loop through each snapshot and add to delete array if not in the ImageSnapsOnTargetToRetain array
             if ($snap -notin $ImageSnapsOnTargetToRetain) {
-                Write-Log -Message "[VM Snapshot] Adding Snapshot: $($snap.snapshotName) to the delete list" -Level Info
+                Write-Log -Message "[VM Snapshot] Adding Snapshot: $($snap.snapshot_name) to the delete list" -Level Info
                 $ImageSnapsOnTargetToDelete += $snap
             }
         }
@@ -1345,14 +1837,27 @@ foreach ($Site in $RemoteSiteIPS){
             Write-Log -Message "[VM Snapshot] There are $($ImageSnapsOnTargetToDelete.Count) Snapshots to delete based on a retention value of $($ImageSnapsToRetain) on the target Cluster: $($TargetCluster)" -Level Info
             foreach ($Snap in $ImageSnapsOnTargetToDelete) {
                 # process the snapshot deletion
-                Write-Log -Message "[VM Snapshot] Processing deletion of Snapshot: $($snap.snapshotName) on the target Cluster: $($TargetCluster)" -Level Info
-                try {
-                    Remove-NTNXSnapshot -Uuid $snap.uuid -Server $TargetCluster -ErrorAction Stop | Out-Null
-                    Write-Log -Message "[VM Snapshot] Successfully deleted Snapshot: $($snap.snapshotName) on the target Cluster: $($TargetCluster)" -Level Info
+                Write-Log -Message "[VM Snapshot] Processing deletion of Snapshot: $($snap.snapshot_name) on the target Cluster: $($TargetCluster)" -Level Info
+                #----------------------------------------------------------------------------------------------------------------------------
+                # Set API call detail
+                #----------------------------------------------------------------------------------------------------------------------------
+                $Method = "DELETE"
+                $RequestUri = "https://$($TargetCluster):9440/PrismGateway/services/rest/v2.0/snapshots/$($snap.uuid)"
+                $Payload = $null # we are on a delete run
+                #----------------------------------------------------------------------------------------------------------------------------
+                try { 
+                    $SnapshotDelete = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+
+                    #Get the status of the task above
+                    $TaskId = $SnapshotDelete.task_uuid
+                    $Phase = "[VM Snapshot]"
+                    $PhaseSuccessMessage = "Snapshot: $($snap.snapshot_name) has been deleted"
+
+                    GetPrismv2Task -TaskID $TaskId -Cluster $TargetCluster -Credential $PrismCredentials
                     $SnapShotsDeletedOnTarget += 1
                 }
                 catch {
-                    Write-Log -Message "[VM Snapshot] Failed to delete vm Snapshot: $($snap.snapshotName) on the target Cluster: $($TargetCluster)" -Level Warn
+                    Write-Log -Message "[VM Snapshot] Failed to delete vm Snapshot: $($snap.snapshot_name) on the target Cluster: $($TargetCluster)" -Level Warn
                     Write-Log -Message $_ -level Warn
                     $SnapShotsFailedToDeleteOnTarget += 1
                     Break
@@ -1373,12 +1878,6 @@ foreach ($Site in $RemoteSiteIPS){
     }
     
     #endregion Snapshot Deletion on target
-
-    #------------------------------------------------------------
-    # Disconnect from the cluster
-    #------------------------------------------------------------
-    Write-Log -Message "[Target Cluster] Disconnecting from the target Cluster: $($TargetCluster)" -Level Info
-    Disconnect-NTNXCluster -Server $TargetCluster
 
     #------------------------------------------------------------
     # Update the processed cluster counts
