@@ -20,6 +20,8 @@
     Mandatory. The name of the Citrix base image VM. This is CASE SENSITIVE.
 .PARAMETER ProtectionPolicyName
     Mandatory. The name of the Protection Policy holding the BaseVM
+.PARAMETER RecoveryPoint
+    Optional. The name of a specific Recovery Point to target. This is an advanced parameter only.
 .PARAMETER VMPrefix
     Optional. The prefix used for both the restored VM (temp) and the associated Snapshot. The default is ctx_
 .PARAMETER ImageSnapsToRetain
@@ -54,10 +56,19 @@
 .PARAMETER APICallVerboseLogging
     Optional. Switch to enable logging output for API calls
 .EXAMPLE
+    .\ReplicateCitrixBaseImageRP.ps1 -pc_source "1.1.1.1" -ProtectionPolicyName "Citrix-Image-Replication" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile
+    Will connect to the Prism Central 1.1.1.1 and look for the Protection Policy named Citrix-Image-Replication and ensures that it holds member CTX-Gold-01
+    Will use a custom credential file. If it doesn't exist, it will be prompted for and used next time
+    Will retain the last 10 snapshots matching the naming conditions in the script
+.EXAMPLE
+    .\ReplicateCitrixBaseImageRP.ps1 -pc_source "1.1.1.1" -ProtectionPolicyName "Citrix-Image-Replication" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -ctx_SiteConfigJSON "C:\temp\ctx_catalogs.json"
+    Will connect to the Prism Central 1.1.1.1 and look for the Protection Policy named Citrix-Image-Replication and ensures that it holds member CTX-Gold-01
+    Will use a custom credential file. If it doesn't exist, it will be prompted for and used next time
+    Will retain the last 10 snapshots matching the naming conditions in the script
+    Will update the Citrix environment based on the ctx_catalogs.json file
 .NOTES
-ToDo
- - Restrict to single Availability Zone configurations?
- - Define a specified Recovery Point?
+    ToDo
+    - Test against multiple Availability Zone configurations?
  #>
 
 #region Params
@@ -79,6 +90,9 @@ Param(
 
     [Parameter(Mandatory = $true)]
     [string]$ProtectionPolicyName, # The name of the protection policy hosting the Base VM
+
+    [Parameter(Mandatory = $false)]
+    [string]$RecoveryPoint, # The name of the Recovery Point targeted
 
     [Parameter(Mandatory = $false)]
     [string]$VMPrefix = "ctx_", # The prefix name to create for the restored entity and the created snapshots
@@ -1187,14 +1201,21 @@ if (!$Target_RecoveryPoints) {
 }
 Write-Log -Message "[Recovery Point] There are $($target_recoverypoints.Count) Recovery Points matching $($source_vm_name) with uuid: $($source_vm_uuid) under the Prism Central Instance $($pc_source)" -Level Info
 
-#Get the latest by creation date
-Write-Log -Message "[Recovery Point] Filtering Recovery Points for the latest creation time under the Prism Central Instance $($pc_source)" -Level Info
-$LatestCreationDate = $Target_RecoveryPoints.status.resources.creation_time | Sort-Object creation_time | Select-Object -last 1
+if ($RecoveryPoint) {
+	# we specified a Recovery Point by name
+    Write-Log -Message "[Recovery Point] Filtering Recovery Points based on custom input name: $($RecoveryPoint) time under the Prism Central Instance $($pc_source)" -Level Info
+    $Target_RecoveryPoints = $Target_RecoveryPoints | Where-Object {$_.status.name -eq $RecoveryPoint}
+}
+else {
+	#Get the latest by creation date
+    Write-Log -Message "[Recovery Point] Filtering Recovery Points for the latest creation time under the Prism Central Instance $($pc_source)" -Level Info
+    $LatestCreationDate = $Target_RecoveryPoints.status.resources.creation_time | Sort-Object creation_time | Select-Object -last 1
+    #Match all RPs to that creation date and grab a count. Line this up against the entities in the Policy to make sure distribution has occured to all targets
+    $Target_RecoveryPoints = $Target_RecoveryPoints | Where-Object {$_.status.resources.creation_time -match $LatestCreationDate}
+}
 
-#Match all RPs to that creation date and grab a count. Line this up against the entities in the Policy to make sure distribution has occured to all targets
-$Target_RecoveryPoints = $Target_RecoveryPoints | Where-Object {$_.status.resources.creation_time -match $LatestCreationDate}
 if ($Target_RecoveryPoints.Count -eq $ProtectionPolicyTargetClusterCount) {
-    Write-Log -Message "[Recovery Point] Recovery Point is on all target clusters based on timestamp match under the Prism Central Instance $($pc_source)" -Level Info
+    Write-Log -Message "[Recovery Point] Recovery Point is on all target clusters under the Prism Central Instance $($pc_source)" -Level Info
 } 
 else {
     Write-Log -Message "[Recovery Point] Recovery Point is not on all target clusters. Present on $($target_recoverypoints.Count) of $($ProtectionPolicyTargetClusterCount) targets under the Prism Central Instance $($pc_source)" -Level Warn
