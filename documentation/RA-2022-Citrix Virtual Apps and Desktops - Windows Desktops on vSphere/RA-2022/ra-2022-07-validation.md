@@ -28,7 +28,7 @@ The following section will show the performance details during a boot storm simu
 
 ### Machine Creation Services - 8 Nodes
 
-Test Run Detail: 8 nodes with 1120 VMs (140 VMs per node)
+Test Run Detail: 8 nodes with 1000 VMs (125 VMs per node)
 
 | Hosting Connection Setting | Detail | 
 | --- | --- |
@@ -44,7 +44,7 @@ Test Run Detail: 8 nodes with 1120 VMs (140 VMs per node)
 
 ### Provisioning Services - 8 Nodes
 
-Test Run Detail: 8 nodes with 1120 VMs (140 VMs per node)
+Test Run Detail: 8 nodes with 1000 VMs (125 VMs per node)
 
 | Hosting Connection Setting | Detail | 
 | --- | --- |
@@ -102,16 +102,16 @@ The following table shows the linear scalability detail for application performa
 
 | Application Name (Start Time - Seconds) | 1 Node | 2 Node | 4 Node | 6 Node | 8 Node | 
 | --- | --- | --- | --- | --- | --- |
-| Outlook | 4.45 | 4.60 | 4.82 | 4.95 | 5.18 |
-| Word | 1.10 | 1.10 | 1.10 | 1.14 | 1.15 |
-| Excel | 1.54 | 1.61 | 1.68 | 1.73 | 1.77 |
-| Powerpoint | 1.39 | 1.43 | 1.47 | 1.52 | 1.54 |
+| Outlook | 3.76 | 4.20 | 4.23 | 4.42 | 4.69 |
+| Word | 0.80 | 0.80 | 0.79 | 0.80 | 0.81 |
+| Excel | 1.23 | 1.33 | 1.33 | 1.38 | 1.46 |
+| Powerpoint | 1.02 | 1.10 | 1.10 | 1.13 | 1.18 |
 
 | Application Name (Action - Seconds) | 1 Node | 2 Node | 4 Node | 6 Node | 8 Node | 
 | --- | --- | --- | --- | --- | --- |
-| Microsoft Edge (Logon) | 0.19 | 0.19 | 0.19 | 0.20 | 0.20 |
-| Microsoft Word (Open Doc) | 1.26 | 1.27 | 1.29 | 1.33 | 1.34 |
-| Microsoft Excel (Save File) | 0.64 | 0.63 | 0.62 | 0.62 | 0.61 |
+| Microsoft Edge (Logon) | 0.09 | 0.09 | 0.09 | 0.09 | 0.09 |
+| Microsoft Word (Open Doc) | 1.08 | 1.11 | 1.11 | 1.13 | 1.16 |
+| Microsoft Excel (Save File) | 0.42 | 0.42 | 0.42 | 0.43 | 0.43 |
 
 ## Power Consumption
 
@@ -121,7 +121,7 @@ The following table shows the linear scalability detail for application performa
 
 ## MCS vs PVS
 
-Test Run Detail: 8 nodes with 1120 VMs (140 VMs per node) for both MCS and PVS.
+Test Run Detail: 8 nodes with 1000 VMs (125 VMs per node) for both MCS and PVS.
 
 | Hosting Connection Setting | Detail | 
 | --- | --- |
@@ -145,16 +145,16 @@ Test Run Detail: 8 nodes with 1120 VMs (140 VMs per node) for both MCS and PVS.
 
 | Application Name (Start Time - Seconds) | MCS | PVS | 
 | --- | --- | --- | 
-| Outlook | 5.18 | 3.18 | 
-| Word | 1.15 | 0.80 | 
-| Excel | 1.77 | 1.38 |
-| Powerpoint | 1.54 | 1.10 | 
+| Outlook | 4.69 | 3.59 | 
+| Word | 0.81 | 0.81 | 
+| Excel | 1.46 | 1.31 |
+| Powerpoint | 1.18 | 1.04 | 
 
 | Application Name (Action - Seconds) | MCS | PVS | 
 | --- | --- | --- | 
-| Microsoft Edge (Logon) | 0.20 | 0.10 |
-| Microsoft Word (Open Doc) | 1.30 | 1.00 | 
-| Microsoft Excel (Save File) | 0.61 | 0.44 | 
+| Microsoft Edge (Logon) | 0.09 | 0.09 |
+| Microsoft Word (Open Doc) | 1.16 | 1.04 | 
+| Microsoft Excel (Save File) | 0.43 | 0.43 | 
 
 ![Disk AppData](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image28.png "Disk AppData")
 
