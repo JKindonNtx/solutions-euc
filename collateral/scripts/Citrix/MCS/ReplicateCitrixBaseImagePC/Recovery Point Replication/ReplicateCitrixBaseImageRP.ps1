@@ -1071,6 +1071,7 @@ $Method = "POST"
 $RequestUri = "https://$($pc_source):9440/api/nutanix/v3/vms/list"
 $PayloadContent = @{
     kind = "vm"
+    filter = "vm_name==$BaseVM"
     length = 10000
 }
 $Payload = (ConvertTo-Json $PayloadContent)
@@ -1091,11 +1092,12 @@ if ($virtualmachines.entities.count -eq 0) {
     Exit 1
 }
 
-Write-Log -Message "[VM] There are $($VirtualMachines.entities.Count) virtual machines under the the Prism Central Instance $($pc_source)" -Level Info
+#//JKWrite-Log -Message "[VM] There are $($VirtualMachines.entities.Count) virtual machines under the the Prism Central Instance $($pc_source)" -Level Info
 
 # Filter to find the source VM we need
-Write-Log -Message "[VM] Filtering for the specified virtual machine: $($BaseVM)" -Level Info
-$source_vm = $VirtualMachines.entities | Where-Object {$_.status.name -eq $BaseVM}
+##//JKWrite-Log -Message "[VM] Filtering for the specified virtual machine: $($BaseVM)" -Level Info
+##//JK$source_vm = $VirtualMachines.entities | Where-Object {$_.status.name -eq $BaseVM}
+$source_vm = $VirtualMachines.entities
 if (!$source_vm) {
     Write-Log -Message "[VM] The specified virtual machine $($BaseVM) was not found under the the Prism Central Instance $($pc_source)" -Level Warn
     StopIteration
