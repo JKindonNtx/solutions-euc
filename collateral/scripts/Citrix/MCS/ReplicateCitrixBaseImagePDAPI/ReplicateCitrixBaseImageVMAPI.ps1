@@ -1289,6 +1289,8 @@ if ($SnapshotID) {
     else {
         # the snapshot doesnt exist in the source
         Write-Log -Message "[PD Snapshot] Could not find the defined Snapshot on the source Cluster: $($SourceCluster). Terminating" -Level Warn
+        StopIteration
+        Exit 1
     }
 }
 #endregion Get PD Snapshots
@@ -1331,8 +1333,8 @@ if (!$ExcludeSourceClusterFromProcessing) {
     if ($vm.count -eq 0) {
         #couldn't find the VM
         Write-Log -Message "[VM] Could not find the VM: $($BaseVM) on the source Cluster: $($SourceCluster)" -Level Warn
-        $IterationErrorCount += 1
-        $TotalErrorCount += 1
+        StopIteration
+        Exit 1
     }
 
     # handle multiple vm match
@@ -1409,8 +1411,6 @@ if (!$ExcludeSourceClusterFromProcessing) {
         catch {
             Write-Log -Message "[VM Snapshot] Failed to create Snapshot: $($snapshotName) on the source Cluster: $($SourceCluster) " -Level Warn
             Write-Log -Message $_ -level Warn
-            $IterationErrorCount += 1
-            $TotalErrorCount += 1
             StopIteration
             Exit 1
         }
