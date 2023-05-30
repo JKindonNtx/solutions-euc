@@ -1106,7 +1106,6 @@ if ($virtualmachines.entities.count -eq 0) {
     Exit 1
 }
 
-
 # Filter to find the source VM we need
 $source_vm = $VirtualMachines.entities
 if (!$source_vm) {
