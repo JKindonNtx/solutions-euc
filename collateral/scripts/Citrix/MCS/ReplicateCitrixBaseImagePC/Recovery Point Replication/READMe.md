@@ -41,6 +41,7 @@ The following parameters exist to drive the behaviour of the script:
 - `LogPath`: Optional **`String`**. Log path output for all operations. The default is `C:\Logs\MCSReplicateBaseImage.log`
 - `LogRollover`: Optional **`Integer`**. Number of days before the log files are rolled over. The default is 5.
 - `VMPrefix`: Optional **`String`**. The prefix used for both the restored VM (temp) and the associated Snapshot. The default is `ctx_`
+- `RecoveryPoint`: Optional **`string`**. The name of the Recovery Point used for a custom restore. It not specified, the latest is used. This is an advanced parameter. This is typically the name in brackets when looking at PC.
 - `SleepTime`: Optional **`Integer`**. The amount of time to sleep between task status polling in both v2 and v3 functions. Default is `2 seconds`.
 - `UseCustomCredentialFile` Optional: **`Switch`**: Will call the `Get-CustomCredentials` function which keeps outputs and inputs a secure credential file base on `Stephane Bourdeaud` from Nutanix functions.
 - `CredPath`: Optional **`String`**. Used if using the `UseCustomCredentialFile` parameter. Defines the location of the credential file. The default is `"$Env:USERPROFILE\Documents\WindowsPowerShell\CustomCredentials"`
