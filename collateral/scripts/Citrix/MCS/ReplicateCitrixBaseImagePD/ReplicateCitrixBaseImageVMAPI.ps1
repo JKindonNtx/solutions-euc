@@ -128,12 +128,8 @@
     #--------------------------------------------------------------------------------------------------------#
     # This script is provided as-is to outline capability and methodology for achieving the defined goals.
     # James Kindon - Senior Solutions Architect, EUC - Nutanix
-    # 23.05.2023: Initial release
+    # 30.05.2023: Initial release
     #--------------------------------------------------------------------------------------------------------#
-
-    To Do
-     - Cleanup nasty names - set vmname and vmuuid at time of creation and then reference later
-     - Figure out appropriate Break/Continue/Exit logic
 #>
 
 #region Params
@@ -1098,7 +1094,7 @@ catch {
     Exit 1
 }
 
-$RemoteSites = $RemoteSites | Where-Object {$_.entities.name -in $ProtectionDomain.entities.remote_site_names}
+$RemoteSites = $RemoteSites.entities | Where-Object {$_.name -in $ProtectionDomain.entities.remote_site_names}
 
 if (!$RemoteSites) {
     Write-Log -Message "[Remote Sites] There are no Remote Sites defined for: $($pd) on the source Cluster: $($SourceCluster)" -Level Warn
@@ -1106,8 +1102,12 @@ if (!$RemoteSites) {
     Exit 1
 }
 
+$RemoteSiteIPS = @() # Initialise the Remote Site IP Array
 # get a list of the IP addresses
-$RemoteSiteIPS = $RemoteSites.entities.remote_ip_address_ports | Get-Member -MemberType NoteProperty | Select -ExpandProperty Name
+foreach ($_ in $remoteSites) {
+    $RemoteIP = $_.remote_ip_address_ports | Get-Member -MemberType NoteProperty | Select -ExpandProperty Name
+    $RemoteSiteIPS += $RemoteIP
+}
 
 $TotalRemoteClusterCount = $RemoteSiteIPS.Count
 Write-Log -Message "[Remote Sites] Remote Clusters to process: $($TotalRemoteClusterCount)" -Level Info
@@ -1204,6 +1204,8 @@ if ($TriggerPDReplication.IsPresent) {
         StopIteration
         Exit 1
     }
+    
+    $CompletionMessageofOOBReplication = $CompletionMessageofOOBReplication.entities | Where-Object {$_.message -like $MessageMatchString} | Sort-Object createdTimeStampInUsecs -Descending | Where-Object {$_.context_values[2] -eq $SnapID -and $_.context_values[1] -in $ProtectionDomain.entities.remote_site_names}
 
     if ($CompletionMessageofOOBReplication.Count -eq $RemoteSites.count) {
         Write-Log -Message "[PD Replication] Cluster replication complete. Found replication finished events for $($CompletionMessageofOOBReplication.Count) out of $($RemoteSites.count) remote Clusters" -Level Info
@@ -1234,6 +1236,9 @@ if ($TriggerPDReplication.IsPresent) {
                     StopIteration
                     Exit 1
                 }
+                
+                $CompletionMessageofOOBReplication = $CompletionMessageofOOBReplication.entities | Where-Object {$_.message -like $MessageMatchString} | Sort-Object createdTimeStampInUsecs -Descending | Where-Object {$_.context_values[2] -eq $SnapID -and $_.context_values[1] -in $ProtectionDomain.entities.remote_site_names}
+                
                 Write-Log -Message "[PD Replication] Found replication finished events for $($CompletionMessageofOOBReplication.Count) out of $($RemoteSites.count). Checking again in $($EventCheckInterval) seconds." -Level Info
                 $ReplicationSuccessQueryAttempts += 1
                 Start-Sleep $EventCheckInterval
@@ -1312,6 +1317,7 @@ if (!$ExcludeSourceClusterFromProcessing) {
     $RequestUri = "https://$($SourceCluster):9440/PrismGateway/services/rest/v2.0/vms/?filter=vm_name==$($BaseVM)"
     $Payload = $null # we are on a get run
     #----------------------------------------------------------------------------------------------------------------------------
+    Write-Log -Message "[VM] Looking for base VM $($BaseVM) on the source Cluster: $($SourceCluster)" -Level Info
     try {
         $vm = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
     }
@@ -1322,7 +1328,7 @@ if (!$ExcludeSourceClusterFromProcessing) {
         Exit 1
     }
 
-    if (!$vm) {
+    if ($vm.count -eq 0) {
         #couldn't find the VM
         Write-Log -Message "[VM] Could not find the VM: $($BaseVM) on the source Cluster: $($SourceCluster)" -Level Warn
         $IterationErrorCount += 1
@@ -1334,6 +1340,11 @@ if (!$ExcludeSourceClusterFromProcessing) {
         Write-Log -Message "[VM] There are $($vm.Count) vm entities found. Doing a direct name match to identify VM" -Level Info
         $vm = $vm | where-Object { $_.entities.name -eq $BaseVM }
     }
+
+    $vm_name = $vm.entities.name
+    $vm_uuid = $vm.entities.uuid
+    Write-Log -Message "[VM] Virtual Machine name is: $($vm_name) on the source Cluster: $($SourceCluster)" -level Info
+    Write-Log -Message "[VM] Virtual Machine uuid is: $($vm_uuid) on the source Cluster: $($SourceCluster)" -level Info
     #endregion get local VM
     
     #region Get Snaphots
@@ -1341,7 +1352,7 @@ if (!$ExcludeSourceClusterFromProcessing) {
     # Get Start Count of Snapshots
     #------------------------------------------------------------
     $IterationErrorCount = 0 # start the iteration error count
-    $SnapshotName = $VMPrefix + $vm.entities.name + "_" + $RunDate
+    $SnapshotName = $VMPrefix + $vm_name + "_" + $RunDate
     #----------------------------------------------------------------------------------------------------------------------------
     # Set API call detail
     #----------------------------------------------------------------------------------------------------------------------------
@@ -1358,7 +1369,9 @@ if (!$ExcludeSourceClusterFromProcessing) {
         Exit 1
     }
 
-    Write-Log -Message "[VM Snapshot] There are $(($snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*")}).count) Snapshots matching: $($VMPrefix + $BaseVM) on the source Cluster: $($SourceCluster)" -Level Info
+    $SnaphotCount = ($snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*")}).Count
+    Write-Log -Message "[VM Snapshot] There are $($SnaphotCount) Snapshots matching: $($VMPrefix + $BaseVM) on the source Cluster: $($SourceCluster)" -Level Info
+    #Write-Log -Message "[VM Snapshot] There are $(($snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*")}).count) Snapshots matching: $($VMPrefix + $BaseVM) on the source Cluster: $($SourceCluster)" -Level Info
     #endregion Get Snaphots
     
     #region Take Snapshot
@@ -1377,7 +1390,7 @@ if (!$ExcludeSourceClusterFromProcessing) {
             snapshot_specs =  @(
                 @{
                     snapshot_name = $SnapshotName
-                    vm_uuid = $vm.entities.uuid
+                    vm_uuid = $vm_uuid
                 }
             )
         }
@@ -1392,14 +1405,14 @@ if (!$ExcludeSourceClusterFromProcessing) {
             $PhaseSuccessMessage = "Snapshot: $($SnapshotName) has been created"
 
             GetPrismv2Task -TaskID $TaskId -Cluster $SourceCluster -Credential $PrismCredentials
-
-            Write-Log -Message "[VM Snapshot] Sucessfully created Snapshot: $($snapshotName) on the source Cluster: $($SourceCluster)" -Level Info
         }
         catch {
             Write-Log -Message "[VM Snapshot] Failed to create Snapshot: $($snapshotName) on the source Cluster: $($SourceCluster) " -Level Warn
             Write-Log -Message $_ -level Warn
             $IterationErrorCount += 1
             $TotalErrorCount += 1
+            StopIteration
+            Exit 1
         }
     }
     #endregion Take Snapshot
@@ -1423,7 +1436,9 @@ if (!$ExcludeSourceClusterFromProcessing) {
         StopIteration
         Exit 1
     }
-    Write-Log -Message "[VM Snapshot] There are now: $(($snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*")}).count) Snapshots matching $($VMPrefix + $BaseVM) on the source cluster $($SourceCluster)" -Level Info
+
+    $SnaphotCount = ($snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*")}).Count
+    Write-Log -Message "[VM Snapshot] There are now: $($SnaphotCount) Snapshots matching $($VMPrefix + $BaseVM) on the source cluster $($SourceCluster)" -Level Info
     #endregion Get Snapshots
     
     #region Snaphot deletion
@@ -1432,9 +1447,8 @@ if (!$ExcludeSourceClusterFromProcessing) {
     #------------------------------------------------------------
     if ($ImageSnapsToRetain) {
         Write-Log -Message "[VM Snapshot] Removing Snapshots that do not meet the retention value: $($ImageSnapsToRetain) on the source Cluster: $($SourceCluster)" -Level Info
-
-        $ImageSnapsOnSource = $Snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*") } #retrieved in the above query
-        $ImageSnapsOnSourceToRetain = $ImageSnapsOnSource | Sort-Object -Property createdTime -Descending | Select-Object -First $ImageSnapsToRetain
+        $ImageSnapsOnSource = $Snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*")} #retrieved in the above query
+        $ImageSnapsOnSourceToRetain = $ImageSnapsOnSource | Sort-Object -Property created_time -Descending | Select-Object -First $ImageSnapsToRetain
 
         $ImageSnapsOnSourceToDelete = @() #Initialise the delete array
         foreach ($snap in $ImageSnapsOnSource) {
@@ -1468,7 +1482,6 @@ if (!$ExcludeSourceClusterFromProcessing) {
                     $PhaseSuccessMessage = "Snapshot: $($snap.snapshot_name) has been deleted"
 
                     GetPrismv2Task -TaskID $TaskId -Cluster $SourceCluster -Credential $PrismCredentials
-                    Write-Log -Message "[VM Snapshot] Successfully deleted Snapshot: $($snap.snapshot_name) on the source Cluster: $($SourceCluster)" -Level Info
                     $SnapShotsDeletedOnSource += 1
                 }
                 catch {
@@ -1665,8 +1678,9 @@ foreach ($Site in $RemoteSiteIPS){
         StopIteration
         Exit 1
     }
-    
-    Write-Log -Message "[VM Snapshot] There are: $(($snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*")}).count) Snapshots matching $($VMPrefix + $BaseVM) on the target cluster $($TargetCluster)" -Level Info
+
+    $SnaphotCount = ($snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*")}).Count
+    Write-Log -Message "[VM Snapshot] There are: $($SnaphotCount) Snapshots matching $($VMPrefix + $BaseVM) on the target cluster $($TargetCluster)" -Level Info
       
     #------------------------------------------------------------
     # Take a snaphot
@@ -1702,6 +1716,11 @@ foreach ($Site in $RemoteSiteIPS){
         $vm = $vm | where-Object { $_.entities.name -eq $BaseVM }
     }
 
+    $vm_name = $vm.entities.name
+    $vm_uuid = $vm.entities.uuid
+    Write-Log -Message "[VM] Virtual Machine name is: $($vm_name) on the target Cluster: $($TargetCluster)" -level Info
+    Write-Log -Message "[VM] Virtual Machine uuid is: $($vm_uuid) on the target Cluster: $($TargetCluster)" -level Info
+
     # create snapshot
     Write-Log -Message "[VM Snapshot] Creating Snapshot on the target Cluster: $($TargetCluster)" -Level Info
     #----------------------------------------------------------------------------------------------------------------------------
@@ -1713,7 +1732,7 @@ foreach ($Site in $RemoteSiteIPS){
         snapshot_specs =  @(
             @{
                 snapshot_name = $SnapshotName
-                vm_uuid = $vm.entities.uuid
+                vm_uuid = $vm_uuid
             }
         )
     }
@@ -1728,8 +1747,6 @@ foreach ($Site in $RemoteSiteIPS){
         $PhaseSuccessMessage = "Snapshot: $($SnapshotName) has been created"
 
         GetPrismv2Task -TaskID $TaskId -Cluster $TargetCluster -Credential $PrismCredentials
-
-        Write-Log -Message "[VM Snapshot] Sucessfully created Snapshot: $($snapshotName) on the target Cluster: $($TargetCluster)" -Level Info
     }
     catch {
         Write-Log -Message "[VM Snapshot] Failed to create Snapshot: $($snapshotName) on the target Cluster: $($TargetCluster) " -Level Warn
@@ -1742,7 +1759,6 @@ foreach ($Site in $RemoteSiteIPS){
     #------------------------------------------------------------
     # Get Final Count of Snapshots
     #------------------------------------------------------------
-
     #----------------------------------------------------------------------------------------------------------------------------
     # Set API call detail
     #----------------------------------------------------------------------------------------------------------------------------
@@ -1759,7 +1775,8 @@ foreach ($Site in $RemoteSiteIPS){
         Exit 1
     }
     
-    Write-Log -Message "[VM Snapshot] There are now: $(($snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*")}).count) Snapshots matching $($VMPrefix + $BaseVM) on the target cluster $($TargetCluster)" -Level Info
+    $SnaphotCount = ($snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*")}).Count
+    Write-Log -Message "[VM Snapshot] There are now: $($SnaphotCount) Snapshots matching $($VMPrefix + $BaseVM) on the target cluster $($TargetCluster)" -Level Info
 
     #endregion VM Snapshot on target
 
@@ -1767,12 +1784,12 @@ foreach ($Site in $RemoteSiteIPS){
     #------------------------------------------------------------    
     # Remove the VM
     #------------------------------------------------------------
-    Write-Log -Message "[VM] Removing Temp VM: $($vm.entities.name) on the target Cluster: $($TargetCluster)" -Level Info
+    Write-Log -Message "[VM] Removing Temp VM: $($vm_name) on the target Cluster: $($TargetCluster)" -Level Info
     #----------------------------------------------------------------------------------------------------------------------------
     # Set API call detail
     #----------------------------------------------------------------------------------------------------------------------------
     $Method = "DELETE"
-    $RequestUri = "https://$($TargetCluster):9440/PrismGateway/services/rest/v2.0/vms/$($vm.entities.uuid)"
+    $RequestUri = "https://$($TargetCluster):9440/PrismGateway/services/rest/v2.0/vms/$($vm_uuid)"
     $Payload = $null # we are on a delete run
     #----------------------------------------------------------------------------------------------------------------------------
     try {
@@ -1781,12 +1798,12 @@ foreach ($Site in $RemoteSiteIPS){
         #Get the status of the task above
         $TaskId = $VMDeleted.task_uuid
         $Phase = "[VM]"
-        $PhaseSuccessMessage = "VM: $($vm.entities.name) has been deleted"
+        $PhaseSuccessMessage = "VM: $($vm_name) has been deleted"
 
         GetPrismv2Task -TaskID $TaskId -Cluster $TargetCluster -Credential $PrismCredentials
     }
     catch {
-        Write-Log -Message "[VM] Failed to remove Temp VM: $($vm.entities.name) on the target Cluster: $($TargetCluster)" -Level Warn
+        Write-Log -Message "[VM] Failed to remove Temp VM: $($vm_name) on the target Cluster: $($TargetCluster)" -Level Warn
         Write-Log -Message $_ -level Warn
         $IterationErrorCount += 1
         $TotalErrorCount += 1
@@ -1803,7 +1820,7 @@ foreach ($Site in $RemoteSiteIPS){
         Write-Log -Message "[VM Snapshot] Removing Snapshots that do not meet the retention value: $($ImageSnapsToRetain) on the target Cluster: $($TargetCluster)" -Level Info
 
         $ImageSnapsOnTarget = $Snapshots.entities | Where-Object {$_.snapshot_name -like ($VMPrefix + "$BaseVM*") } #retrieved in the above query
-        $ImageSnapsOnTargetToRetain = $ImageSnapsOnTarget | Sort-Object -Property createdTime -Descending | Select-Object -First $ImageSnapsToRetain
+        $ImageSnapsOnTargetToRetain = $ImageSnapsOnTarget | Sort-Object -Property created_time -Descending | Select-Object -First $ImageSnapsToRetain
 
         $ImageSnapsOnTargetToDelete = @() #Initialise the delete array
         foreach ($snap in $ImageSnapsOnTarget) {
@@ -1836,7 +1853,7 @@ foreach ($Site in $RemoteSiteIPS){
                     $Phase = "[VM Snapshot]"
                     $PhaseSuccessMessage = "Snapshot: $($snap.snapshot_name) has been deleted"
 
-                    GetPrismv2Task -TaskID $TaskId -Cluster $SourceCluster -Credential $PrismCredentials
+                    GetPrismv2Task -TaskID $TaskId -Cluster $TargetCluster -Credential $PrismCredentials
                     $SnapShotsDeletedOnTarget += 1
                 }
                 catch {

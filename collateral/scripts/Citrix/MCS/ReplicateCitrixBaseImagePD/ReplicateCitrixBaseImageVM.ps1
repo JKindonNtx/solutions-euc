@@ -1030,6 +1030,7 @@ if (!$ExcludeSourceClusterFromProcessing) {
     #------------------------------------------------------------
     # Find the local VM
     #------------------------------------------------------------
+    Write-Log -Message "[VM] Looking for base VM $($BaseVM) on the source Cluster: $($SourceCluster)" -Level Info
     $vm = Get-NTNXVM -SearchString ($BaseVM) -Server $SourceCluster
     if (!$vm) {
         #couldn't find the VM
