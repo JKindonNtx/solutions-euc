@@ -60,47 +60,47 @@
 .PARAMETER APICallVerboseLogging
     Optional. Switch to enable logging output for API calls
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication
+    .\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity
     A Protection Domain Out of Band replicate will be triggered.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     A custom credential file will be created and consumed.
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -ctx_Catalogs "Catalog1","Catalog2" -ctx_adminAddress "ctxddc001" -UseCustomCredentialFile -TriggerPDReplication
+    .\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -ctx_Catalogs "Catalog1","Catalog2" -ctx_adminAddress "ctxddc001" -UseCustomCredentialFile -TriggerPDReplication
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity
     A Protection Domain Out of Band replicate will be triggered.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     A custom credential file will be created and consumed.
     The Citrix Catalogs "Catalog1" and "Catalog2" will be processed on the Citrix Delivery Controller "ctxddc001"
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -ctx_SiteConfigJSON "c:\temp\ctx_catalogs.json" -UseCustomCredentialFile -TriggerPDReplication
+    .\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -ctx_SiteConfigJSON "c:\temp\ctx_catalogs.json" -UseCustomCredentialFile -TriggerPDReplication
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity
     A Protection Domain Out of Band replicate will be triggered.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     A custom credential file will be created and consumed.
     A JSON file including the appropriate Catalogs and Delivery Groups will be processed.
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -SnapshotID 353902
+    .\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -SnapshotID 353902
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, and attempt to use the specified Protection Domain snapshotID for all operations. 
     Credentials will be prompted for.
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10
+    .\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     Credentials will be prompted for.
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile
+    .\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     A custom credential file will be created and consumed.
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication
+    .\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     A custom credential file will be created and consumed. 
     a Protection Domain Out of Band replicate will be triggered.
 .EXAMPLE
-    .\ReplicateCitrixBaseImageVM.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication -MaxReplicationSuccessQueryAttempts 20
+    .\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster 1.1.1.1 -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication -MaxReplicationSuccessQueryAttempts 20
     This will connect to the specified source cluster, look for the specified protection domain, look for the specified base VM entity, select the latest available Protection Domain Snapshot.
     Any target snapshots outside of the last 10 will be deleted on the target clusters.
     A custom credential file will be created and consumed. 
@@ -119,7 +119,7 @@
     All Nutanix processing will be ignored
     SourceCluster, pd, BaseVM params required, but ignored.
 .NOTES
-    The script is built on the lowest common version of Nutanix PowerShell capability
+    The script uses Nutanix Prism v2 API for Nutanix tasks
     The script uses Citrix Powershell snapins for Citrix tasks
     The script assumes the same username and password on all PE instances - This should be a service account
     The script assumes that the user/account executing the script has the required permissions in Citrix sites
