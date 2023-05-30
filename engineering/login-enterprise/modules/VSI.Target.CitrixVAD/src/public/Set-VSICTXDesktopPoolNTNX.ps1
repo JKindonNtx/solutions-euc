@@ -130,14 +130,24 @@ function Set-VSICTXDesktopPoolNTNX {
                 }
         ## ESXi ##
         } elseif (($HypervisorType) -eq "ESXi") {
+            # Update CPU Count to Reflect vCPUs and Cores
+            $TotalCPU = [int]$CpuCount * [int]$CoresCount
+
+            $provcustomProperties = @"
+<CustomProperties xmlns="http://schemas.citrix.com/2014/xd/machinecreation">
+    <StringProperty Name="UseManagedDisks" Value="true"/>
+    <StringProperty Name="ManagedDisksPreview" Value="false"/>
+</CustomProperties>
+"@
             $Task = New-ProvScheme -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName `
                 -HostingUnitName $HypervisorConnection `
-                -VMCpuCount $CpuCount `
+                -VMCpuCount $TotalCPU `
                 -VMMemoryMB $MemoryMB `
                 -CleanOnBoot `
                 -IdentityPoolName $DesktopPoolName `
                 -MasterImageVM $ParentVM `
-                -NoImagePreparation:$SkipImagePrep
+                -NetworkMapping $networkMap `
+                -CustomProperties $provcustomProperties
                 if ($Task.TaskState -ne "Finished") {
                     Write-Log "Failed to create Provisioning scheme"
                     throw $Task.TerminatingError
