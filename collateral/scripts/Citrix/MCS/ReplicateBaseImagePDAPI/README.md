@@ -69,11 +69,11 @@ $params = @{
     ExcludeSourceClusterFromProcessing = $false # Excludes the source cluster from being included in snapshot processing
     TriggerPDReplication               = $true # Triggers an out-of-band PD replication for the specified PD
 }
-& ReplicateCitrixBaseImageVM.ps1 @params 
+& ReplicateCitrixBaseImageVMAPI.ps1 @params 
 ```
 
 ```
-.\ReplicateCitrixBaseImageVM.ps1 -SourceCluster "1.1.1.1" -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication
+.\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster "1.1.1.1" -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication
 ```
 
 The script will:
@@ -101,11 +101,11 @@ $params = @{
     ctx_Catalogs                       = "Catalog1","Catalog2" # A list of Citrix Catalogs to update
     ctx_AdminAddress                   = "ctxddc01" # The Citrix controller to target
 }
-& ReplicateCitrixBaseImageVM.ps1 @params 
+& ReplicateCitrixBaseImageVMAPI.ps1 @params 
 ```
 
 ```
-.\ReplicateCitrixBaseImageVM.ps1 -SourceCluster "1.1.1.1" -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication -ctx_Catalogs "Catalog1","Catalog2" -ctx_AdminAddress "ctxddc01"
+.\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster "1.1.1.1" -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication -ctx_Catalogs "Catalog1","Catalog2" -ctx_AdminAddress "ctxddc01"
 ```
 
 The script will:
@@ -134,11 +134,11 @@ $params = @{
     TriggerPDReplication               = $true # Triggers an out-of-band PD replication for the specified PD
     ctx_SiteConfigJSON                 = "C:\temp\ctx_catalogs.json" # JSON file specifying a Catalog to Controller list
 }
-& ReplicateCitrixBaseImageVM.ps1 @params 
+& ReplicateCitrixBaseImageVMAPI.ps1 @params 
 ```
 
 ```
-.\ReplicateCitrixBaseImageVM.ps1 -SourceCluster "1.1.1.1" -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication -ctx_SiteConfigJSON "c:\temp\ctx_catalogs.json"
+.\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster "1.1.1.1" -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ImageSnapsToRetain 10 -UseCustomCredentialFile -TriggerPDReplication -ctx_SiteConfigJSON "c:\temp\ctx_catalogs.json"
 ```
 
 Note that the JSON file must be structured as per below:
@@ -187,11 +187,11 @@ $params = @{
     ctx_ProcessCitrixEnvironmentOnly   = $true
     ctx_Snapshot                       = "ctx_CTX-Gold-01_2023-05-15-16-55-41"
 }
-& ReplicateCitrixBaseImageVM.ps1 @params 
+& ReplicateCitrixBaseImageVMAPI.ps1 @params 
 ```
 
 ```
-.\ReplicateCitrixBaseImageVM.ps1 -SourceCluster "1.1.1.1" -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ctx_SiteConfigJSON "c:\temp\ctx_catalogs.json" -ctx_ProcessCitrixEnvironmentOnly -ctx_Snapshot "ctx_CTX-Gold-01_2023-05-15-16-55-41"
+.\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster "1.1.1.1" -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -ctx_SiteConfigJSON "c:\temp\ctx_catalogs.json" -ctx_ProcessCitrixEnvironmentOnly -ctx_Snapshot "ctx_CTX-Gold-01_2023-05-15-16-55-41"
 ```
 
 The script will:
@@ -214,11 +214,11 @@ $params = @{
     ExcludeSourceClusterFromProcessing = $false # Excludes the source cluster from being included in snapshot processing
     TriggerPDReplication               = $true # Triggers an out-of-band PD replication for the specified PD
 }
-& ReplicateCitrixBaseImageVM.ps1 @params 
+& ReplicateCitrixBaseImageVMAPI.ps1 @params 
 ```
 
 ```
-.\ReplicateCitrixBaseImageVM.ps1 -SourceCluster "1.1.1.1" -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -VMPrefix "custsnapname_" -ImageSnapsToRetain 20 -UseCustomCredentialFile -TriggerPDReplication -ExcludeSourceClusterFromProcessing
+.\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster "1.1.1.1" -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -VMPrefix "custsnapname_" -ImageSnapsToRetain 20 -UseCustomCredentialFile -TriggerPDReplication -ExcludeSourceClusterFromProcessing
 ```
 
 The script will:
@@ -244,11 +244,11 @@ $params = @{
     ExcludeSourceClusterFromProcessing = $true # Excludes the source cluster from being included in snapshot processing
     TriggerPDReplication               = $false # Triggers an out-of-band PD replication for the specified PD
 }
-& ReplicateCitrixBaseImageVM.ps1 @params 
+& ReplicateCitrixBaseImageVMAPI.ps1 @params 
 ```
 
 ```
-.\ReplicateCitrixBaseImageVM.ps1 -SourceCluster "1.1.1.1" -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -SnapshotID "657465" -ImageSnapsToRetain 100 -ExcludeSourceClusterFromProcessing
+.\ReplicateCitrixBaseImageVMAPI.ps1 -SourceCluster "1.1.1.1" -pd "PD-Citrix-Base-Image" -BaseVM "CTX-Gold-01" -SnapshotID "657465" -ImageSnapsToRetain 100 -ExcludeSourceClusterFromProcessing
 ```
 
 The script will:
