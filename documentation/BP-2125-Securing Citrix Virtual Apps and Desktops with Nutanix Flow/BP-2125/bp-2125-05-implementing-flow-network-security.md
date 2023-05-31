@@ -208,6 +208,6 @@ Once you've repeated this process for all the VMs in the deployment, the VMs are
 
 - Navigate back to the security policy and open it. The policy should now apply to the appropriate VMs based on category assignments.
 
-![VM Policy Applied](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image39.png "VM Policy Applied")
+![VM Policy Applied](../images/bp-2125-securing-citrix-virtual-apps-and-desktops-with-nutanix-flow_image29.png "VM Policy Applied")
 
 The policies you've created and configured are now operating in monitor mode.
