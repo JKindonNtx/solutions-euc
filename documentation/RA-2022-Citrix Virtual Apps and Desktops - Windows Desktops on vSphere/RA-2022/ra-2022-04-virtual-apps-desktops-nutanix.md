@@ -34,7 +34,7 @@ Time-sliced clusters
 
 : Like public cloud environments, Nutanix can provide a truly converged cloud infrastructure, allowing you to run your server and desktop virtualization on a single cloud. Get the efficiency and savings you require with a converged cloud on a truly unified architecture.
 
-## Virtual Apps and Desktops on VMware vSphere with Nutanix AOS
+## Virtual Apps and Desktops on VMware vSphere with Nutanix Cloud Platform
 The following figure shows the main architectural components of the Citrix Virtual Apps and Desktops on Nutanix solution and the communication path between services. 
  
 ![Overview of CVAD](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image02.png "Overview of CVAD")
@@ -49,9 +49,13 @@ The next table contains highlights from a high-level snapshot of the Citrix Virt
 | Services Pod | vSphere hosts | up to 32 |
 | Services Pod | Nutanix clusters | 1 |
 | Services Pod | datastores | 1 |
-| Services Pod | desktops | up to 7,360 |
+| Services Pod | desktops | up to 4,340 |
 
-You can have a maximum of 32 vSphere host nodes per cluster. We validated Citrix Virtual Apps and Desktops with Windows desktop VDAs, using 3 vCPUs and 4 GB of memory per VM and 230 VMs per node. When you use 32 vSphere host nodes, you can run up to 7,360 Windows desktop VDAs per Nutanix vSphere cluster. If you change the vCPU count or memory, the number of Windows VDAs per node and per cluster change as well.  While testing we saw an AOS NFS metadata size overshoot alert for the datastore and while everything performed as it should, we recommend breaking up one larger datastore into smaller failure domains.  For smaller failure domains consider having 1,000 VMs per datastore.
+You can have a maximum of 32 vSphere host nodes per cluster. We validated Citrix Virtual Apps and Desktops with Windows desktop VDAs and the Login Enterprise knowledge worker workload, using 2 vCPUs and 4 GB of memory per VM and 140 VMs per node. When you use 32 vSphere host nodes, you can run up to 4,340 Windows desktop VDAs per Nutanix vSphere cluster.
+
+<note>One node is calculated as a spare (n + 1).</note>
+
+If you change the vCPU count or memory, the number of Windows VDAs per node and per cluster change as well.  While testing we saw an AOS NFS metadata size overshoot alert for the datastore and while everything performed as it should, we recommend breaking up one larger datastore into smaller failure domains.  For smaller failure domains consider having 1,000 VMs per datastore.
 
 ## Nutanix Compute and Storage
 

@@ -6,7 +6,7 @@ _Table: Platform Design Decisions: General_
 
 | Item | Detail | Rationale |
 | --- | --- | --- |
-| Software versions | Citrix Virtual Apps and Desktops 2203 CU2; AOS 6.5.1 | – |
+| Software versions | Citrix Virtual Apps and Desktops 2203 CU2; AOS 6.5.1 | Latest LTS version available |
 | Minimum size | 3 Nutanix nodes (3 vSphere hosts) | Minimum size requirement |
 | Scale approach | Incremental modular scale | Allows growth from PoC (hundreds of desktops) to massive scale (thousands of desktops) |
 | Scale unit  | Nodes, blocks, or pods | Granular scale to precisely meet capacity demands; scale in n × node increments |
@@ -86,8 +86,6 @@ _Table: Infrastructure Design Decisions: SQL Server_
 | --- | --- | --- |
 | SQL Servers | Minimum: 2 (n + 1) per site; Scale: 2 per additional pod | High availability for SQL Servers |
 | Data protection | SQL Server clustering, mirroring, or Always On availability groups (including basic availability groups) | Ensures availability of SQL Server instances |
-
-While testing we saw an AOS NFS metadata size overshoot alert for the datastore and while everything performed as it should, we recommend breaking up one larger datastore into smaller failure domains. For smaller failure domains consider having 1,000 VMs per datastore.
 
 ## Desktop Optimizations
 
