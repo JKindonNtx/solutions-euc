@@ -54,4 +54,4 @@ Will create and delete data in C:\Users\\%Username%\AppData\Roaming\CrudData, wa
 ```
 .\CreateCrudData.ps1 -AutoCreateAndClean -FileSetSizeinGb 30 -CrudPath "MoreCrudThanCrud"
 ```
-Will create and delete data in C:\Users\\%Username%\AppData\Roaming\MoreCrudThanCrud, wait default 20 seconds between creation and deletion and use the default 30 GiB file set
+Will create and delete data in C:\Users\\%Username%\AppData\Roaming\MoreCrudThanCrud, wait default 20 seconds between creation and deletion and use the 30 GiB file set
