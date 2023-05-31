@@ -30,6 +30,15 @@
 .EXAMPLE
     .\CreateCrudData.ps1 -Mode Delete -CrudPath "MoreCrudThanCrud"
     Will delete data in C:\Users\%Username%\AppData\Roaming\MoreCrudThanCrud
+.EXAMPLE
+    .\CreateCrudData.ps1 -AutoCreateAndClean
+    Will create and delete data in C:\Users\%Username%\AppData\Roaming\CrudData, wait the default 20 seconds between creation and deletion and use the default 15 GiB file set
+.EXAMPLE
+    .\CreateCrudData.ps1 -AutoCreateAndClean -AutoCreateAndCleanRestTime 30
+    Will create and delete data in C:\Users\%Username%\AppData\Roaming\CrudData, wait 30 seconds between creation and deletion and use the default 15 GiB file set
+.EXAMPLE
+    .\CreateCrudData.ps1 -AutoCreateAndClean -FileSetSizeinGb 30 -CrudPath "MoreCrudThanCrud"
+    Will create and delete data in C:\Users\%Username%\AppData\Roaming\MoreCrudThanCrud, wait default 20 seconds between creation and deletion and use the default 30 GiB file set
 .NOTES 
     Author: James Kindon, Nutanix
 #>
