@@ -49,17 +49,13 @@ We found that we could use this version of the VSImax to do an A/B comparison, b
 
 We quantified the evaluation using the following metrics:
 
-- EUXbase: The average EUX score of the first five minutes.
+- EUX base: The average EUX score of the first five minutes.
 - EUX score: The average EUX score for the entire test.
-- Steady State Score: The average EUX score 5 minutes after the final login.
+- Steady State Score: The average EUX score starting from 5 minutes after the final login to the end of the test.
 - Average logon time: The average user logon time.
 - VSImax: If reached, the maximum value of sessions launched before the VSI Index Average reaches one of the thresholds.
 - Maximum CPU usage: The maximum observed CPU usage during the test.
 - CPU usage during steady state: The average CPU usage during the steady state, or the state when all the sessions are active and using applications. This state simulates user activity during the entire day, rather than just during the logon period.
-
-<note>
-Ideal CPU usage during steady state  < 85%
-</note>
 
 The Baseline and Steady State EUX Scores provide additional dimensions to the experience your virtual users are having. The Standard EUX Score provides a single score for the duration of the entire test, including the login period and the application interaction period during the test run. As more users are steadily added to the system being tested, naturally the system will work harder and start to impact the user experience. The Steady State and Baseline EUX Scores show us what the user experience is like during specific periods of the test run.
 

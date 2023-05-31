@@ -49,13 +49,15 @@ The next table contains highlights from a high-level snapshot of the Citrix Virt
 | Services Pod | vSphere hosts | up to 32 |
 | Services Pod | Nutanix clusters | 1 |
 | Services Pod | datastores | 1 |
-| Services Pod | desktops | up to 4,340 |
+| Services Pod | desktops | up to 3,875 |
 
-You can have a maximum of 32 vSphere host nodes per cluster. We validated Citrix Virtual Apps and Desktops with Windows desktop VDAs and the Login Enterprise knowledge worker workload, using 2 vCPUs and 4 GB of memory per VM and 140 VMs per node. When you use 32 vSphere host nodes, you can run up to 4,340 Windows desktop VDAs per Nutanix vSphere cluster.
+You can have a maximum of 32 vSphere host nodes per cluster. We validated Citrix Virtual Apps and Desktops with Windows desktop VDAs and the Login Enterprise knowledge worker workload, using 2 vCPUs and 4 GB of memory per VM and 125 VMs per node. When you use 32 vSphere host nodes, you can run up to 3,875 Windows desktop VDAs per Nutanix vSphere cluster.
 
 <note>One node is calculated as a spare (n + 1).</note>
 
-If you change the vCPU count or memory, the number of Windows VDAs per node and per cluster change as well.  While testing we saw an AOS NFS metadata size overshoot alert for the datastore and while everything performed as it should, we recommend breaking up one larger datastore into smaller failure domains.  For smaller failure domains consider having 1,000 VMs per datastore.
+<note> The sizing of this Pod Design is based on the Login Enterprise knowledge worker workload. A more resource intensive workload results in a lower density and a less resource intensive workload results in a higher density. If you change the vCPU count or memory, the number of Windows VDAs per node and per cluster change as well.</note>
+
+<note>While testing we saw an AOS NFS metadata size overshoot alert for the datastore and while everything performed as it should, we recommend breaking up one larger datastore into smaller failure domains.  For smaller failure domains consider having 1,000 VMs per datastore.</note>
 
 ## Nutanix Compute and Storage
 

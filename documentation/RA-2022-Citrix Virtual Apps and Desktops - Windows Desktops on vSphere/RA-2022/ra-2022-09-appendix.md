@@ -1,4 +1,40 @@
 # Appendix
+## Configuration
+
+### Hardware
+
+Storage and compute:
+
+- Nutanix NX-3170-G8
+- Per-node specs:
+  - CPU: 2 × Intel Xeon Gold 6342
+  - Memory: 1,536 GB
+  - Disk: 6 × 1.9 TB SSD
+
+Network:
+
+- Arista 7050Q: L3 spine
+- Arista 7050S: L2 leaf
+
+### Software
+
+Nutanix
+
+- AOS 6.5.1.8
+- CVM: 12 vCPU, 32 GB of memory
+
+Citrix Virtual Apps and Desktops
+
+- 7.2203 CU2
+
+Virtual Desktop
+
+- Windows 10: 22H2 Build 19045.2364
+
+Infrastructure
+
+- VMware vSphere: 7.0.3 build-20328353
+- VMware vCenter, 7.0.3 build-21290409
 
 ## References
 
