@@ -15,7 +15,6 @@ In this document we describe how to use Flow Network Security to design a set of
 - Policy enforcement
 - Auditing
 - Quarantine VMs
-- Flow Security Dashboard
   
 Unless otherwise stated, the solution described in this document is valid on all supported AOS releases.
 
@@ -27,4 +26,4 @@ Unless otherwise stated, the solution described in this document is valid on all
 | 1.1 | October 2019 | Updated for AOS 5.11. |
 | 1.2 | March 2021 | Updated Nutanix overview, terminology, and references. |
 | 2.0 | April 2023 | Updated to provide detailed overview for Citrix Virtual Apps and Desktops. |
-| 2.1 | May 2023 | Updated to add Citrix Provisioning Services. |
+| 2.1 | June 2023 | Updated to add Citrix Provisioning Services. |

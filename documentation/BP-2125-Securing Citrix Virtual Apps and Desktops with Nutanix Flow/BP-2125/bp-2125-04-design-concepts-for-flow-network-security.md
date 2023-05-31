@@ -46,7 +46,7 @@ The following list presents some typical components in a Citrix Virtual Apps and
   - AppTier: Microsoft SQL Server
   - AppTier: Citrix Director
   - AppTier: Citrix Controllers
-  - AppTier: Citrix Provisioning Services
+  - AppTier: Citrix Provisioning
 - AppType: Citrix Workers
   - AppTier: Workers HR
   - AppTier: Workers Finance
@@ -89,13 +89,13 @@ _Table. Example AppTier Port and Protocol Definitions_
 | Citrix Controllers | HTTP | 80 | UDP |
 | Citrix Controllers | HTTPS | 443 | TCP |
 | Citrix Controllers | HTTPS | 443 | UDP |
-| Citrix Provisioning Services | Target device to Citrix Provisioning communication | 6901 | UDP |
-| Citrix Provisioning Services | Target device to Citrix Provisioning communication | 6902 | UDP |
-| Citrix Provisioning Services | Target device to Citrix Provisioning communication | 6905 | UDP |
-| Citrix Provisioning Services | Virtual disk Streaming (Streaming Service) | 6910-6930 | UDP |
-| Citrix Provisioning Services | Only BDM: Two Stage Boot (BDM). Used in boot from ISO or USB scenarios only | 6969 | UDP |
-| Citrix Provisioning Services | Only BDM: Two Stage Boot (BDM). Used in boot from ISO or USB scenarios only | 2071 | UDP |
-| Citrix Provisioning Services | SOAP Service | 54321-54323 | TCP |
+| Citrix Provisioning | Target device to Citrix Provisioning communication | 6901 | UDP |
+| Citrix Provisioning | Target device to Citrix Provisioning communication | 6902 | UDP |
+| Citrix Provisioning | Target device to Citrix Provisioning communication | 6905 | UDP |
+| Citrix Provisioning | Virtual disk Streaming (Streaming Service) | 6910-6930 | UDP |
+| Citrix Provisioning | Only BDM: Two Stage Boot (BDM). Used in boot from ISO or USB scenarios only | 6969 | UDP |
+| Citrix Provisioning | Only BDM: Two Stage Boot (BDM). Used in boot from ISO or USB scenarios only | 2071 | UDP |
+| Citrix Provisioning | SOAP Service | 54321-54323 | TCP |
 | Citrix Workers | ICA | 1494 | TCP |
 | Citrix Workers | ICA | 1494 | UDP |
 | Citrix Workers | Session reliability | 2598 | TCP |
