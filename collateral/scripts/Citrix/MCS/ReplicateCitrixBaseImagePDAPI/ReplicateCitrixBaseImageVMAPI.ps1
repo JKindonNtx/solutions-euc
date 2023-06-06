@@ -1105,7 +1105,7 @@ if (!$RemoteSites) {
 $RemoteSiteIPS = @() # Initialise the Remote Site IP Array
 # get a list of the IP addresses
 foreach ($_ in $remoteSites) {
-    $RemoteIP = $_.remote_ip_address_ports | Get-Member -MemberType NoteProperty | Select -ExpandProperty Name
+    $RemoteIP = $_.remote_ip_address_ports | Get-Member -MemberType NoteProperty | Select-object -ExpandProperty Name
     $RemoteSiteIPS += $RemoteIP
 }
 
