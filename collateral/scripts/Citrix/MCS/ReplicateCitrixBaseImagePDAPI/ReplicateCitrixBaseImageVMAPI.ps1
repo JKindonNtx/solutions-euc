@@ -1181,12 +1181,14 @@ if ($TriggerPDReplication.IsPresent) {
     }
     else {
         # report on success and set variables
-        $EventMatch = $SnapshotIDOfOOBReplication.entities | Where-Object {$_.message -like $MessageMatchString} | Sort-Object createdTimeStampInUsecs -Descending | Select-Object -First 1
+        $EventMatch = $SnapshotIDOfOOBReplication.entities | Where-Object {$_.message -like $MessageMatchString} | Sort-Object created_time_stamp_in_usecs -Descending | Select-Object -First 1
         $SnapID = $EventMatch.context_values[1]
         Write-Log -Message "[PD Replication] Got snapshot ID reference: $($SnapID). Checking for replication finish events on the source Cluster: $($SourceCluster)" -Level Info
     }
 
     # Check replication status based on event messages
+    Write-Log -Message "[PD Replication] Waiting $($TimeBeforeEventSearch) seconds for Events to be logged on the source Cluster: $($SourceCluster)" -Level Info
+    Start-Sleep $TimeBeforeEventSearch
     $MessageMatchString = "*Replication completed for Protection Domain*"
     $ReplicationSuccessQueryAttempts = 1  # Initialise the attempt count
     #----------------------------------------------------------------------------------------------------------------------------
@@ -1205,7 +1207,7 @@ if ($TriggerPDReplication.IsPresent) {
         Exit 1
     }
     
-    $CompletionMessageofOOBReplication = $CompletionMessageofOOBReplication.entities | Where-Object {$_.message -like $MessageMatchString} | Sort-Object createdTimeStampInUsecs -Descending | Where-Object {$_.context_values[2] -eq $SnapID -and $_.context_values[1] -in $ProtectionDomain.entities.remote_site_names}
+    $CompletionMessageofOOBReplication = $CompletionMessageofOOBReplication.entities | Where-Object {$_.message -like $MessageMatchString} | Sort-Object created_time_stamp_in_usecs -Descending | Where-Object {$_.context_values[2] -eq $SnapID -and $_.context_values[1] -in $ProtectionDomain.entities.remote_site_names}
 
     if ($CompletionMessageofOOBReplication.Count -eq $RemoteSites.count) {
         Write-Log -Message "[PD Replication] Cluster replication complete. Found replication finished events for $($CompletionMessageofOOBReplication.Count) out of $($RemoteSites.count) remote Clusters" -Level Info
@@ -1237,7 +1239,7 @@ if ($TriggerPDReplication.IsPresent) {
                     Exit 1
                 }
                 
-                $CompletionMessageofOOBReplication = $CompletionMessageofOOBReplication.entities | Where-Object {$_.message -like $MessageMatchString} | Sort-Object createdTimeStampInUsecs -Descending | Where-Object {$_.context_values[2] -eq $SnapID -and $_.context_values[1] -in $ProtectionDomain.entities.remote_site_names}
+                $CompletionMessageofOOBReplication = $CompletionMessageofOOBReplication.entities | Where-Object {$_.message -like $MessageMatchString} | Sort-Object created_time_stamp_in_usecs -Descending | Where-Object {$_.context_values[2] -eq $SnapID -and $_.context_values[1] -in $ProtectionDomain.entities.remote_site_names}
                 
                 Write-Log -Message "[PD Replication] Found replication finished events for $($CompletionMessageofOOBReplication.Count) out of $($RemoteSites.count). Checking again in $($EventCheckInterval) seconds." -Level Info
                 $ReplicationSuccessQueryAttempts += 1

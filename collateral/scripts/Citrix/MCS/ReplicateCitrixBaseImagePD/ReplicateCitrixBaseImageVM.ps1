@@ -949,6 +949,8 @@ if ($TriggerPDReplication.IsPresent) {
     }
 
     # Check replication status based on event messages
+    Write-Log -Message "[PD Replication] Waiting $($TimeBeforeEventSearch) seconds for Events to be logged on the source Cluster: $($SourceCluster)" -Level Info
+    Start-Sleep $TimeBeforeEventSearch
     $MessageMatchString = "*Replication completed for Protection Domain $($pd) to remote* *$($SnapID.Value)*"
     $ReplicationSuccessQueryAttempts = 1  # Initialise the attempt count
 
