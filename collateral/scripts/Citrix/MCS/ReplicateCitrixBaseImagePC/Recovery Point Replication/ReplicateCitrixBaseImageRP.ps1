@@ -67,6 +67,13 @@
     Will retain the last 10 snapshots matching the naming conditions in the script
     Will update the Citrix environment based on the ctx_catalogs.json file
 .NOTES
+    #--------------------------------------------------------------------------------------------------------#
+    # Authors and release:
+    #--------------------------------------------------------------------------------------------------------#
+    # This script is provided as-is to outline capability and methodology for achieving the defined goals.
+    # James Kindon - Senior Solutions Architect, EUC - Nutanix
+    # 13.06.2023: Initial release
+    #--------------------------------------------------------------------------------------------------------#
     ToDo
     - Test against multiple Availability Zone configurations?
  #>
