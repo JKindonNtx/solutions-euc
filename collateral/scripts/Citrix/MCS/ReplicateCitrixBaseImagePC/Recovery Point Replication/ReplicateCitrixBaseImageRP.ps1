@@ -524,6 +524,10 @@ function GetPrismv2Task {
         $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $Credential -ErrorAction Stop
         Write-Log -Message "$($Phase) Monitoring task: $($TaskId)"
         while ($TaskStatus.progress_status -ne "SUCCEEDED") {
+            if ($TaskStatus.progress_status -ne "FAILED") {
+                Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.progress_status)" -level Warn
+                Break
+            }
             Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.progress_status). Waiting for Task completion. Status: $($TaskStatus.percentage_complete)% complete" -Level Info
             Start-Sleep $SleepTime
             $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $Credential -ErrorAction Stop
@@ -557,6 +561,11 @@ function GetPrismv3Task {
         $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $Credential -ErrorAction Stop
         Write-Log -Message "$($Phase) Monitoring task: $($TaskId)"
         while ($TaskStatus.Status -ne "SUCCEEDED") {
+            if ($TaskStatus.Status -eq "FAILED") {
+                Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.Status)" -Level Warn
+                Write-Log -Message "$($TaskStatus.error_detail)" -Level Warn
+                Break
+            }
             Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.Status). Waiting for Task Completion. Status: $($TaskStatus.percentage_complete)% complete" -Level Info
             Start-Sleep $SleepTime
             $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $Credential -ErrorAction Stop
