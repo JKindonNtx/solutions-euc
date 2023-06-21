@@ -60,7 +60,7 @@
 # ============================================================================
 Param(
     [Parameter(Mandatory = $false)]
-    [string]$LogPath = "C:\Logs\CategoyFun.log", # Where we log to
+    [string]$LogPath = "C:\Logs\UpdatePCVMCategories.log", # Where we log to
 
     [Parameter(Mandatory = $false)]
     [int]$LogRollover = 5, # Number of days before logfile rollover occurs
