@@ -161,7 +161,7 @@ The script will:
 - Check for existence of the Category `Citrix_Provisioning_Type`:`PVS` pair before proceeding.
 - Pull all virtual machine entities and filter based on the `*PVS` name pattern.
 - Action an `Add` of the Category to each VM in the list.
-- - Check each category action for a successful finish (task queried)
+- Check each category action for a successful finish (task queried)
 
 
 
