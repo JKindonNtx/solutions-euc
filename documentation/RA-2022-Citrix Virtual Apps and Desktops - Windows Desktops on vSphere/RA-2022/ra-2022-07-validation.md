@@ -1,79 +1,79 @@
-# Test Validation
+# Citrix Virtual Apps and Desktops on Nutanix Test Validation
 
-Below you will find the detail and results of the performance testing completed for Citrix Virtual Apps and Desktops for the Windows Desktop Operating System on vSphere. Each test scenario was run a minimum of 3 times to ensure accuracy.
+This section provides the details and results of our Citrix Virtual Apps and Desktops performance tests on Windows 10 with vSphere. We ran each test scenario a minimum of three times to ensure accuracy.
 
 ## Test Objectives
-The overall objective was to determine the session capacity we could host on Nutanix using a Windows 10, version 22H2 image and running the Login Enterprise tests with Citrix Virtual Apps and Desktops. We tested with the Login Enterprise knowledge worker profile.
 
-Our specific objectives were to:
+Our overall objective was to determine the session capacity we could host on Nutanix using a Windows 10, version 22H2 image and running the Login Enterprise tests with Citrix Virtual Apps and Desktops. We tested with the Login Enterprise knowledge worker profile.
 
-- Run a boot storm simulation with 1,000 virtual desktops on 8 nodes.
-- Determine the maximum number of sessions we can host on this system with the Login Enterprise Knowledge worker workload while maintaining a good EUX score.
+We had the following specific objectives:
+
+- Run a boot storm simulation with 1,000 virtual desktops on eight nodes.
+- Determine the maximum number of sessions we can host on this system with the Login Enterprise knowledge worker workload while maintaining a good EUX Score.
 - Show the linear scalability of the Nutanix platform.
-- Show the differences between MCS and PVS on the Nutanix platform.
+- Show the differences between MCS and Citrix Provisioning on the Nutanix platform.
 - Determine the impact of adding Nutanix Files to the Nutanix cluster and using it to store the user’s FSLogix Profile Container.
-
 
 ## Considerations for Test Results
 
 - We used Citrix MCS to deploy the Windows 10 desktops to validate linear scalability and FSLogix.
 - We used Windows 10, version 22H2 to test the infrastructure with Login Enterprise.
-- We didn’t enable the Side-Channel-Aware scheduler in VMware vSphere ESXi, and the mitigation for CVE-2018-12207 is disabled by default on ESXi. Enabling these mitigations on the hypervisor affects the performance of VDI- and RDSH-based workloads.
-- We tested using a single, full-HD screen as the client and limited the frames per second (FPS) to 16. Using multiple screens or other screen resolution settings affects the results.
+- We didn’t enable the Side-Channel-Aware scheduler in VMware vSphere ESXi and left the mitigation for CVE-2018-12207 disabled (default on ESXi). Enabling these mitigations on the hypervisor affects the performance of VDI- and RDSH-based workloads.
+- We tested using a single, full-HD screen as the client and limited the frames per second to 16. Using multiple screens or other screen resolution settings affects the results.
 
 ## Boot Storm Simulation
 
-The following section will show the performance details during a boot storm simulation test.
+The following section provides the performance details of the boot storm simulation test.
 
-### Machine Creation Services - 8 Nodes
+### Machine Creation Services: Eight Nodes
 
-Test Run Detail: 8 nodes with 1000 VMs (125 VMs per node)
+_Table: Eight Nodes, 1,000 VMs (125 VMs per Node) with MCS_
 
-| Hosting Connection Setting | Detail | 
+| **Hosting Connection Setting** | **Detail** |
 | --- | --- |
 | Simultaneous Actions (Absolute) | 100 |
-| Simultaneous Actions (Percentage) | 40 % |
+| Simultaneous Actions (Percentage) | 40% |
 | Max New Actions per Minute (Absolute) | 50 |
 
-![MCS 8 Node Boot Time](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image06.png "MCS 8 Node Boot Time")
+![MCS Eight-Node Boot Time](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image06.png "MCS Eight-Node Boot Time")
 
-![MCS 8 Node CPU Usage](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image07.png "MCS 8 Node CPU Usage")
+![MCS Eight-Node CPU Usage](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image07.png "MCS Eight-Node CPU Usage")
 
-![MCS 8 Node IOPS](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image08.png "MCS 8 Node IOPS")
+![MCS Eight-Node IOPS](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image08.png "MCS Eight-Node IOPS")
 
-### Provisioning Services - 8 Nodes
+### Citrix Provisioning: Eight Nodes
 
-Test Run Detail: 8 nodes with 1000 VMs (125 VMs per node)
+_Table: Eight Nodes, 1,000 VMs (125 VMs per node) with Citrix Provisioning_
 
-| Hosting Connection Setting | Detail | 
+| **Hosting Connection Setting** | **Detail** |
 | --- | --- |
 | Simultaneous Actions (Absolute) | 100 |
-| Simultaneous Actions (Percentage) | 40 % |
+| Simultaneous Actions (Percentage) | 40% |
 | Max New Actions per Minute (Absolute) | 50 |
 
-![PVS 8 Node Boot Time](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image09.png "PVS 8 Node Boot Time")
+![Citrix Provisioning Eight-Node Boot Time](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image09.png "Citrix Provisioning Eight-Node Boot Time")
 
-![PVS 8 Node CPU Usage](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image10.png "PVS 8 Node CPU Usage")
+![Citrix Provisioning Eight-Node CPU Usage](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image10.png "Citrix Provisioning Eight-Node CPU Usage")
 
-![PVS 8 Node IOPS](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image11.png "PVS 8 Node IOPS")
+![Citrix Provisioning Eight-Node IOPS](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image11.png "Citrix Provisioning Eight-Node IOPS")
 
 ### Boot Storm Comparison
 
-Below you can see the comparison between MCS and PVS with regard to the boot storm simulation test.
+The following figures compare the MCS and Citrix Provisioning boot storm simulation tests.
 
-![8 Node Boot Time](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image12.png "8 Node Boot Time")
+![Eight-Node Boot Time](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image12.png "Eight-Node Boot Time")
 
-![8 Node CPU Usage](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image13.png "8 Node CPU Usage")
+![Eight-Node CPU Usage](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image13.png "Eight-Node CPU Usage")
 
-![8 Node IOPS](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image14.png "8 Node IOPS")
+![Eight-Node IOPS](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image14.png "Eight-Node IOPS")
 
-## Linear scalability
+## Linear Scalability
 
-The following graphs will show the linear scalability detail for the test runs. The tests were performed with 1, 2, 4, 6 and 8 nodes and 125 VMs per node. The results show good EUX scores in all scenarios.
+The following graphs show the linear scalability of the test runs. We performed the tests with one, two, four, six, and eight nodes with 125 VMs per node. The results show good EUX Scores in all scenarios.
 
 ### EUX Scores
 
-The following two charts detail the EUX Scores during the entire tests:
+The following charts show the EUX Scores during the tests.
 
 ![EUX Score](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image15.png "EUX Score")
 
@@ -81,15 +81,15 @@ The following two charts detail the EUX Scores during the entire tests:
 
 ### Steady State Scores
 
-The following two chart details the EUX Score during the steady state:
+The following charts show the EUX Scores during the steady state of each test.
 
 ![EUX Score Steady State](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image17.png "EUX Score Steady State")
 
 ![EUX Score Steady State Bar Chart](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image18.png "EUX Score Steady State Bar Chart")
 
-### Logon Time Scores
+### Logon Times
 
-The following graphs will show the linear scalability detail for logon performance over the test runs. A lower result is better:
+The following graphs show the linear scalability of logon times over the test runs. A lower result represents better performance.
 
 ![Logon Performance Bar Chart](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image19.png "Logon Performance Bar Chart")
 
@@ -97,123 +97,143 @@ The following graphs will show the linear scalability detail for logon performan
 
 ### Application Performance
 
-The following table shows the linear scalability detail for application performance over the test runs. A lower result is better.
+The following tables show the linear scalability of application performance over the test runs. A lower result represents better performance.
 
-| Application Name (Start Time) - Seconds | 1 Node | 2 Node | 4 Node | 6 Node | 8 Node | 
-| --- | --- | --- | --- | --- | --- |
-| Outlook | 3.76 | 4.20 | 4.23 | 4.42 | 4.69 |
-| Word | 0.80 | 0.80 | 0.79 | 0.80 | 0.81 |
-| Excel | 1.23 | 1.33 | 1.33 | 1.38 | 1.46 |
-| Powerpoint | 1.02 | 1.10 | 1.10 | 1.13 | 1.18 |
+_Table: Application Performance: Logon Time (in Seconds)_
 
-| Application Name (Action) - Seconds | 1 Node | 2 Node | 4 Node | 6 Node | 8 Node | 
+| **Application Name** | **1 Node** | **2 Nodes** | **4 Nodes** | **6 Nodes** | **8 Nodes** | 
 | --- | --- | --- | --- | --- | --- |
-| Microsoft Edge (Logon) | 0.09 | 0.09 | 0.09 | 0.09 | 0.09 |
-| Microsoft Word (Open Doc) | 1.08 | 1.11 | 1.11 | 1.13 | 1.16 |
-| Microsoft Excel (Save File) | 0.42 | 0.42 | 0.42 | 0.43 | 0.43 |
+| Microsoft Outlook | 3.76 sec | 4.20 sec | 4.23 sec | 4.42 sec | 4.69 sec |
+| Microsoft Word | 0.80 sec | 0.80 sec | 0.79 sec | 0.80 sec | 0.81 sec |
+| Microsoft Excel | 1.23 sec | 1.33 sec | 1.33 sec | 1.38 sec | 1.46 sec |
+| Microsoft Powerpoint | 1.02 sec | 1.10 sec | 1.10 sec | 1.13 sec | 1.18 sec |
+
+_Table: Application Performance: Specific Action (in Seconds)_
+
+| **Application Name (Action)** | **1 Node** | **2 Nodes** | **4 Nodes** | **6 Nodes** | **8 Nodes** |
+| --- | --- | --- | --- | --- | --- |
+| Microsoft Edge (Logon) | 0.09 sec | 0.09 sec | 0.09 sec | 0.09 sec | 0.09 sec |
+| Microsoft Word (Open Doc) | 1.08 sec | 1.11 sec | 1.11 sec | 1.13 sec | 1.16 sec |
+| Microsoft Excel (Save File) | 0.42 sec | 0.42 sec | 0.42 sec | 0.43 sec | 0.43 sec |
 
 ## Power Consumption
-During the 8 nodes test, we monitored the Power usage of one of the nodes. The following chart shows the power usage of this host:
 
-![Power Usage Full Run](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image43.png "Power Usage Full Run")
+During the eight-node test, we monitored one node's power usage. The following chart shows this host's power usage over the test duration.
 
-The next chart shows the power usage during the steady state of the test:
+![Power Usage: Full Run](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image43.png "Power Usage: Full Run")
 
-![Power Usage Steady State](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image44.png "Power Usage Steady State")
+The next chart shows the power usage during the steady state of the test.
 
-On average, the host used 754 Watts during the steady state. The 8 nodes cluster used 6,032 Watts on average during the steady state with 1,000 active users.
+![Power Usage: Steady State](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image44.png "Power Usage: Steady State")
 
-## MCS vs PVS
+On average, the host used 754 W during the steady state. The eight-node cluster used 6,032 W on average during the steady state with 1,000 active users.
 
-In this section we compare the results of a Login Enterprise test on 8 nodes, using MCS and PVS as the deployment method. 
-Test Run Detail: 8 nodes with 1,000 VMs (125 VMs per node) for both MCS and PVS.
+## MCS vs. Citrix Provisioning
+
+In this section, we compare the results of a Login Enterprise test on eight nodes, using MCS and Citrix Provisioning as the deployment methods. 
 
 ### EUX Scores
-The following chart details the EUX Base score of the test (a higher score is better):
 
-![MCS vs PVS EUX Base](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image21.png "MCS vs PVS EUX Base")
+The following chart shows the EUX Base scores from the tests. A higher score indicates better end-user experience.
 
-The following two charts detail the EUX Scores during the entire test:
+![MCS vs. Citrix Provisioning EUX Base Scores](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image21.png "MCS vs. Citrix Provisioning EUX Base Scores")
 
-![MCS vs PVS EUX Score](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image22.png "MCS vs PVS EUX Score")
+The following charts detail the EUX Scores during the tests.
 
-![MCS vs PVS EUX Score Line Graph](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image23.png "MCS vs PVS EUX Score Line Graph")
+![MCS vs. Citrix Provisioning EUX Scores](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image22.png "MCS vs. Citrix Provisioning EUX Score")
+
+![MCS vs. Citrix Provisioning EUX Score Line Graph](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image23.png "MCS vs. Citrix Provisioning EUX Score Line Graph")
 
 ### Steady State Scores
 
-The following chart details the EUX Score during the steady state:
+The following chart details the EUX Scores during the steady state.
 
-![MCS vs PVS EUX Steady State](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image24.png "MCS vs PVS EUX Steady State")
+![MCS vs. Citrix Provisioning EUX Steady State](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image24.png "MCS vs. Citrix Provisioning EUX Steady State")
 
-The next chart compares the cluster CPU usage during the test:
+### Logon Time Performance
 
-### Logon Time Scores
+The following graphs show the linear scalability of logon time performance over the test runs.
 
-The following graphs will show the linear scalability detail for login performance over the test runs.
-
-![MCS vs PVS Logon Time](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image27.png "MCS vs PVS Logon Time")
+![MCS vs. Citrix Provisioning Logon Times](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image27.png "MCS vs. Citrix Provisioning Logon Times")
 
 ### Application Performance
+
 The following table shows the linear scalability detail for application performance.
 
-| Application Name (Start Time - Seconds) | MCS | PVS | 
-| --- | --- | --- | 
-| Outlook | 4.69 | 3.59 | 
-| Word | 0.81 | 0.81 | 
-| Excel | 1.46 | 1.31 |
-| Powerpoint | 1.18 | 1.04 | 
+_Table: MCS vs. Citrix Provisioning: Application Logon Time (in Seconds)_
 
-| Application Name (Action - Seconds) | MCS | PVS | 
+| **Application** | **MCS** | **Citrix Provisioning** | 
 | --- | --- | --- | 
-| Microsoft Edge (Logon) | 0.09 | 0.09 |
-| Microsoft Word (Open Doc) | 1.16 | 1.04 | 
-| Microsoft Excel (Save File) | 0.43 | 0.43 | 
+| Outlook | 4.69 sec | 3.59 sec | 
+| Word | 0.81 sec | 0.81 sec | 
+| Excel | 1.46 sec | 1.31 sec |
+| Powerpoint | 1.18 sec | 1.04 sec | 
 
-The following graphs are Login Enterprise EUX specific measurements. A higher score is better:
+_Table: MCS vs. Citrix Provisioning: Specific Action (in Seconds)_
+
+| **Application (Action)** | **MCS** | **Citrix Provisioning** | 
+| --- | --- | --- | 
+| Microsoft Edge (Logon) | 0.09 sec | 0.09 sec |
+| Microsoft Word (Open Doc) | 1.16 sec | 1.04 sec | 
+| Microsoft Excel (Save File) | 0.43 sec | 0.43 sec | 
+
+The following graphs show Login Enterprise EUX–specific measurements, where a higher score is better.
 
 ![Disk AppData](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image28.png "Disk AppData")
 
 ![Disk MyDocs](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image29.png "Disk MyDocs")
 
-### CPU usage
+### CPU Usage
+The next chart compares the cluster CPU usage during the test:
 
-![MCS vs PVS Cluster CPU](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image25.png "MCS vs PVS Cluster CPU")
+![MCS vs. Citrix Provisioning Cluster CPU Usage](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image25.png "MCS vs. Citrix Provisioning Cluster CPU Usage")
 
-### Cluster controller IOPS
-The next chart shows the difference in Cluster Controller IOPS:
+### Cluster Controller IOPS
 
-![MCS vs PVS IOPS](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image26.png "MCS vs PVS IOPS")
+The next chart shows the difference in the cluster controller IOPS.
 
-## FSLogix (Nutanix Files co-located) vs FSLogix (Nutanix Files dedicated)
+![MCS vs. Citrix Provisioning Cluster Controller IOPS](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image26.png "MCS vs. Citrix Provisioning Cluster Controller IOPS")
 
-Test Run Detail: 8 nodes with 1,000 VMs (125 VMs per node), FSLogix Profile exists on file server already (not first logon).
+<note>As we explained earlier, the I/O load in the current release of Login Enterprise EUX 2023 is much higher than is realistic for a knowledge worker. However, this result shows that Nutanix storage can handle the load.</note>
 
-| Nutanix Files Setting | Detail | 
+## FSLogix with Nutanix Files: Colocated Versus Dedicated
+
+We ran the test on eight nodes with 1,000 VMs (125 VMs per node). The FSLogix Profile was on the file server already (not first logon).
+
+_Table: Nutanix Files Configuration_
+
+| **Setting** | **Detail** | 
 | --- | --- |
 | Version | 4.2.1.1 |
 | Cluster size | 3 VMs |
-| vCPUs per VM | 4 |
+| vCPU per VM | 4 |
 | Memory per VM | 12 GB |
 
-| FSLogix Setting | Detail | 
+_Table: FSLogix Configuration_
+
+|  Setting | Detail | 
 | --- | --- |
 | Version | 2.9.8440.42104 |
 | Configuration | Profile & Office Container |
 
-### Nutanix Files Hosted on the Desktops Cluster (co-located)
-In this scenario, we configured the user’s profile to use an FSLogix Profile Container stored on a Nutanix Files share. One of the advantages of FSLogix is that you can store the user’s profile in a VHD or VHDX file. This file is stored on a network share (in our case a share hosted on Nutanix Files) and mounted at user logon. This method can improve logon times and provide advantages for disaster recovery scenarios.
+### Nutanix Files Hosted on the Desktops Cluster (Colocated)
+
+In this scenario, we configured the user’s profile to use an FSLogix Profile Container stored on a Nutanix Files share. With FSLogix, you can store the user’s profile in a VHD or VHDX file. The system stores this file on a network share (in our case, a share hosted on Nutanix Files) and mounts it at user logon. This method can improve logon times and provide advantages for disaster recovery scenarios.
 
 For this test, users had an existing profile stored in an FSLogix container, and we hosted Nutanix Files on the same Nutanix cluster as the desktops.
+
 The following charts show the storage performance of the Nutanix Files cluster during the test.
 
-![Nutanix Files Co Located IOPS](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image37.png "Nutanix Files Co Located IOPS")
+![Nutanix Files Colocated IOPS](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image37.png "Nutanix Files Colocated IOPS")
 
-![Nutanix Files Co Located Latency](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image38.png "Nutanix Files Co Located Latency")
+![Nutanix Files Colocated Latency](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image38.png "Nutanix Files Colocated Latency")
 
-![Nutanix Files Co Located Throughput](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image39.png "Nutanix Files Co Located Throughput")
+![Nutanix Files Colocated Throughput](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image39.png "Nutanix Files Colocated Throughput")
 
-### Nutanix Files Hosted on the Infrastructure Cluster (dedicated)
-In this scenario, we also used FSLogix Profile Containers for the user profiles and stored them on a Nutanix Files share. This time, we hosted Nutanix Files on the infrastructure cluster. This setup doesn’t affect the overall CPU usage of the cluster nodes hosting the virtual desktops.
+### Nutanix Files Hosted on the Infrastructure Cluster (Dedicated)
+
+In this scenario we used FSLogix Profile Containers for the user profiles and stored them on a Nutanix Files share again, but we hosted Nutanix Files on the infrastructure cluster. This setup doesn’t affect the overall CPU usage of the cluster nodes hosting the virtual desktops.
+
 The following charts show the storage performance of the Nutanix Files cluster during the test.
 
 ![Nutanix Files Dedicated IOPS](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image40.png "Nutanix Files Dedicated IOPS")
@@ -223,27 +243,29 @@ The following charts show the storage performance of the Nutanix Files cluster d
 ![Nutanix Files Dedicated Throughput](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image42.png "Nutanix Files Dedicated Throughput")
 
 ### Performance Comparison
-In this section we compare the results of the Login Enterprise test where the FSLogix profiles are stored on a Nutanix Files cluster co-located with the desktops with the test where the FSLogix profiles are stored on the a Nutanix Files cluster hosted on a dedicated cluster.
 
-First, the EUX scores during the steady state:
+This section compares the performance of storing FSLogix profiles on a Nutanix Files cluster colocated with the desktops with the performance of storing FSLogix profiles on a Nutanix Files cluster hosted on a dedicated cluster.
+
+The following figure shows the EUX Scores during the steady state.
+
 ![FSLogix EUX Steady State](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image34.png "FSLogix EUX Steady State")
 
-The next two charts show the details of the logon:
+The following figures show the logon times.
+
 ![FSLogix Logon Time](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image32.png "FSLogix Logon Time")
 
 ![FSLogix Profile Load](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image33.png "FSLogix Profile Load")
 
-The following graphs are Login Enterprise EUX specific measurements. A higher score is better:
+The following figures show Login Enterprise EUX–specific measurements, where a higher score is better.
 
 ![FSLogix AppData](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image35.png "FSLogix AppData")
 
 ![FSLogix MyDocs](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image36.png "FSLogix MyDocs")
 
-The cluster CPU usage of the Desktop cluster:
+The following graph shows the desktop cluster's CPU usage.
 
-![FSLogix Cluster CPU](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image30.png "FSLogix Cluster CPU")
+![FSLogix Cluster CPU Usage](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image30.png "FSLogix Cluster CPU Usage")
 
-The next chart shows the cluster controller IOPS:
+The next figure shows the cluster controller IOPS.
 
-![FSLogix Cluster IOPS](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image31.png "FSLogix Cluster IOPS")
-
+![FSLogix Cluster Controller IOPS](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image31.png "FSLogix Cluster Controller IOPS")

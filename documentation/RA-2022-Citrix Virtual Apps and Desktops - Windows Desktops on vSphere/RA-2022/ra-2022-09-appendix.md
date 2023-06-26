@@ -1,7 +1,6 @@
 # Appendix
-## Configuration
 
-### Hardware
+## Hardware Configuration
 
 Storage and compute:
 
@@ -16,7 +15,7 @@ Network:
 - Arista 7050Q: L3 spine
 - Arista 7050S: L2 leaf
 
-### Software
+## Software Configuration
 
 Nutanix
 
@@ -34,7 +33,7 @@ Virtual Desktop
 Infrastructure
 
 - VMware vSphere: 7.0.3 build-20328353
-- VMware vCenter, 7.0.3 build-21290409
+- VMware vCenter: 7.0.3 build-21290409
 
 ## References
 
@@ -42,8 +41,3 @@ Infrastructure
 2.  [Login Enterprise EUX Score](https://support.loginvsi.com/hc/en-us/articles/4408717958162-Login-Enterprise-EUX-Score-#h_01GS8W30049HVB851TX60TDKS3)
 3.  [Login Enterprise Workload Templates](https://support.loginvsi.com/hc/en-us/sections/360001765419-Workload-Templates)
 4.  [Citrix Virtual Apps and Desktops 2203 Long Term Service Release (LTSR) Documentation](https://docs.citrix.com/en-us/citrix-virtual-apps-desktops/2203-ltsr/)
-
-## About the Authors
-**Jarian Gibson** is a staff solutions architect on the End-User Computing Engineering team at Nutanix. Follow Jarian on Twitter @JarianGibson.
-**Sven Huisman** is a staff solutions architect on the End-User Computing Engineering team at Nutanix. Follow Sven on Twitter @SvenH.
-**Dave Brett** is a senior solutions architect on the End-User Computing Engineering team at Nutanix. Follow Dave on Twitter @dbretty.
