@@ -1,83 +1,81 @@
-# Benchmarking and Test Environment
+# Citrix Virtual Apps and Desktops Benchmarking and Test Environment
+
+The following sections describe the benchmarking method and test environment we used in this reference architecture.
 
 ## Login Enterprise
 
-[Login VSI](http://www.loginvsi.com/) provides the industry-standard virtual desktop testing platform, Login Enterprise. It's designed to help organizations benchmark and validate the performance and scalability of their virtual desktop solutions. With Login Enterprise, IT teams can reliably measure the impact of changes to their virtual desktop infrastructure on end-user experience and identify performance issues before they impact the business. Login Enterprise uses synthetic user workloads to simulate real-world user behavior, so IT teams can measure the responsiveness and performance of their virtual desktop environment under different scenarios. Login Enterprise comes with two built-in workloads: The [task worker](https://support.loginvsi.com/hc/en-us/articles/6949195003932-Task-Worker-Out-of-the-box) and [knowledge worker](https://support.loginvsi.com/hc/en-us/articles/6949191203740-Knowledge-Worker-Out-of-the-box). 
+[Login VSI](http://www.loginvsi.com/) provides the industry-standard virtual desktop testing platform, Login Enterprise, which helps organizations benchmark and validate the performance and scalability of their virtual desktop solutions. With Login Enterprise, IT teams can reliably measure the effects of changes to their virtual desktop infrastructure on end-user experience and identify performance issues before they impact the business. Login Enterprise uses synthetic user workloads to simulate real-world user behavior, so IT teams can measure the responsiveness and performance of their virtual desktop environment under different scenarios. Login Enterprise has two built-in workloads: The [task worker](https://support.loginvsi.com/hc/en-us/articles/6949195003932-Task-Worker-Out-of-the-box) and [knowledge worker](https://support.loginvsi.com/hc/en-us/articles/6949191203740-Knowledge-Worker-Out-of-the-box).
 
-<note>
-You can't compare either of the Login Enterprise workloads to the workloads included in the previous edition of Login VSI.
-</note>
+<note>You can't compare the Login Enterprise workloads to the workloads included in the previous edition of Login VSI. The Login Enterprise workloads are much more resource intensive.</note>
 
 The following table includes both workloads available in Login Enterprise.
 
 _Table: Login Enterprise Workloads_
 
 | **Task Worker** | **Knowledge Worker** |
-| --- | --- | 
-| Light | Medium | 
-| 2 vCPU | 2-4 vCPU |
-| 2-3 apps | 4-6 apps |
+| --- | --- |
+| Light | Medium |
+| 2 vCPU | 2–4 vCPU |
+| 2–3 apps | 4–6 apps |
 | No video | 720p video |
 
 ### Login Enterprise EUX Score
 
-According to [Login Enterprise documentation](https://support.loginvsi.com/hc/en-us/articles/4408717958162-Login-Enterprise-EUX-Score-), the EUX (End User Experience) score represents the performance of any Windows machine (virtual, physical, cloud, or on-premises). The score ranges from 0 to 10 and is based on the experience of one (minimum) or many users.
+According to the [Login Enterprise documentation](https://support.loginvsi.com/hc/en-us/articles/4408717958162-Login-Enterprise-EUX-Score-), the EUX (End User Experience) Score represents the performance of any Windows machine (virtual, physical, cloud, or on-premises). The score ranges from 0 to 10 and measures the experience of one (minimum) or many virtual users.
 
-<note>
-As you add more users to your VDI platform, expect your EUX score to drop. As more users demand a greater share of a VDI system’s shared resources, performance and user experience decrease.
-</note>
+<note>As you add more users to your VDI platform, expect your EUX Score to drop. As more users demand a greater share of a VDI system’s shared resources, performance and user experience decrease.</note>
 
-We grade EUX scores internally as shown by the below table and will be displayed via a bar chart as shown below.
+We interpret EUX Scores with the grades in the following table.
+
+_Table: EUX Score Grades_
 
 | **EUX Score** | **Grade** |
-| --- | --- | 
-| 1-5 | Bad | 
+| --- | --- |
+| 1-5 | Bad |
 | 5-6 | Poor |
 | 6-7 | Average |
 | 7-8 | Good |
 | 8-10 | Excellent |
 
-![EUX Score](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image04.png "EUX Score")
+![Sample EUX Score Graph](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image04.png "Sample EUX Score Graph")
 
 ### Login Enterprise VSImax
 
-For our test results, we used the 2023 EUX Score's version of VSImax. In this version, the VSImax (or the maximum number of users) is determined by a number of triggers. These triggers are CPU- and disk-related operations and can determine if the user experience is acceptable or not. Another trigger is when the EUX score is below 5.5. 
+For our test results, we used the 2023 EUX Score's version of VSImax. In this version, a number of triggers determine the VSImax (or the maximum number of users). These triggers are CPU- and disk-related operations and can determine whether the user experience is acceptable. EUX Scores below 5.5 are one example of a trigger.
 
-We found that we could use this version of the VSImax to do an A/B comparison, but the VSImax on its own doesn't represent the maximum user density accurately. For a more realistic maximum number of users, we suggest using the number of active users at the moment when the EUX score is 85 to 90 percent of the initial EUX score.
+We found that we could use this version of the VSImax to do an A/B comparison, but the VSImax on its own doesn't represent the maximum user density accurately. For a more realistic maximum number of users, we suggest using the number of active users at the moment when the EUX Score is 85 to 90 percent of the initial EUX Score.
+
+<note>In the 2023 release of EUX Score, the disk-related operations of EUX have an unrealistic impact on storage. In our testing, we discovered that the IOPS are up to 10 times higher when the EUX metrics are enabled, with a read-to-write ratio of 70:30 percent during the steady state. In reality, a knowledge worker has a much lower I/O profile and a read-to-write ratio of 20 percent to 30 percent reads and 70 percent to 80 percent writes.</note>
 
 ### Login Enterprise Metrics
 
 We quantified the evaluation using the following metrics:
 
-- EUXbase: The average EUX score of the first five minutes.
-- EUX score: The average EUX score for the entire test.
-- Steady State Score: The average EUX score 5 minutes after the final login.
+- EUX base: The average EUX Score of the first 5 minutes.
+- EUX Score: The average EUX Score for the entire test.
+- Steady State Score: The average EUX Score starting 5 minutes after the final logon to the end of the test.
 - Average logon time: The average user logon time.
 - VSImax: If reached, the maximum value of sessions launched before the VSI Index Average reaches one of the thresholds.
 - Maximum CPU usage: The maximum observed CPU usage during the test.
 - CPU usage during steady state: The average CPU usage during the steady state, or the state when all the sessions are active and using applications. This state simulates user activity during the entire day, rather than just during the logon period.
 
-<note>
-Ideal CPU usage during steady state  < 85%
-</note>
-
-The Baseline and Steady State EUX Scores provide additional dimensions to the experience your virtual users are having. The Standard EUX Score provides a single score for the duration of the entire test, including the login period and the application interaction period during the test run. As more users are steadily added to the system being tested, naturally the system will work harder and start to impact the user experience. The Steady State and Baseline EUX Scores show us what the user experience is like during specific periods of the test run.
+The Baseline and Steady State EUX Scores provide additional dimensions to the simulated user experience. The Standard EUX Score provides a single score for the entire test duration, including the login period and the application interaction period. As you add more users to the system you're testing, it works harder, and the user experience diminishes. The Steady State and Baseline EUX Scores describe the user experience during specific periods of the test run.
 
 Baseline EUX Score
-: The Baseline EUX Score represents the best possible performance of the system and is the average EUX score of the best 5 minutes of the test. This score gives an indication of how system performs when it is not under stress. Typically, the Baseline Score is captured in the beginning of the test before the system is fully loaded.
+: The Baseline EUX Score represents the best possible performance of the system and is the average EUX Score of the best 5 minutes of the test. This score indicates how the system performs when it's not under stress. Typically you capture the Baseline EUX Score at the beginning of the test, before the system is fully loaded.
 
 Steady State EUX Score
-: The Steady State period represents the time after all users have logged (login storm) and the system has begun to normalize. The Steady State EUX Score is the average of the EUX Scores captured 5 minutes after all sessions are logged in, until the end of the test.
+: The steady state represents the period after all users have logged on (login storm) and the system has started to normalize. The Steady State EUX Score is the average of the EUX Scores captured between 5 minutes after all sessions have logged in and at the end of the test.
 
 ### Login Enterprise Graph
 
-The Login Enterprise graph shows the values obtained during the launch for each desktop session. The following figure is an example graph of the test data. The y-axis on the left side measures the EUX score, the y-axis on the right side measures the number of active sessions, and the x-axis represents the test duration in minutes. We configured our benchmark test to sign in all sessions in 48 minutes, followed by a steady state of 10 minutes.
+The Login Enterprise graph shows the values obtained during the launch for each desktop session. The following figure is an example graph of the test data. The y-axis on the left side measures the EUX Score, the y-axis on the right side measures the number of active sessions, and the x-axis represents the test duration in minutes. We configured our benchmark test to sign in all sessions in 48 minutes, followed by a steady state of 10 minutes.
 
 ![Sample Login Enterprise Graph](../images/RA-2022-Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_vSphere_image05.png "Sample Login Enterprise Graph")
 
 ## Test Environment
 
-In this section you can read about the hardware we used for this reference architecture.
+In this section, we describe the hardware we used for this reference architecture.
 
 ### Management Infrastructure Cluster
 
@@ -85,7 +83,7 @@ We used one Nutanix NX-3060-G7 cluster with four nodes to host all infrastructur
 
 _Table: Citrix Configuration_
 
-| VM | Quantity | vCPU | Memory | Disks |
+| **VM** | **Quantity** | **vCPU** | **Memory** | **Disks** |
 | --- | :---: | :---: | :---: | :---: |
 | Delivery Controllers | 2 | 4 | 8 GB | 1 × 60 GB (OS) |
 | StoreFront | 1 | 2 | 4 GB | 1 × 60 GB (OS) |
@@ -101,7 +99,7 @@ Eight Nutanix NX-3170-G8 nodes formed the cluster to host all virtual desktops. 
 
 _Table: Virtual Desktop Cluster Specifications_
 
-| Parameter | Setting |
+| **Parameter** | **Setting** |
 | --- | --- |
 | Block type | Nutanix NX-3170-G8 |
 | Number of blocks | 8 |
@@ -115,7 +113,7 @@ _Table: Virtual Desktop Cluster Specifications_
 
 _Table: Nutanix Software Specifications_
 
-| Parameter | Setting | 
+| **Parameter** | **Setting** | 
 | --- | --- |
 | Nutanix AOS version | 6.5.1.8 |
 | CVM vCPU | 12 |
@@ -126,7 +124,7 @@ _Table: Nutanix Software Specifications_
 
 _Table: VMware Software Specifications_
 
-| Parameter | Setting | 
+| **Parameter** | **Setting** | 
 | --- | --- |
 | Number of vCenter servers | 1 |
 | vCenter version | 7.0 U3 |
@@ -139,14 +137,14 @@ _Table: VMware Software Specifications_
 
 _Table: Citrix Software Specifications_ 
 
-| Parameter | Setting |
+| **Parameter** | **Setting** |
 | --- | --- |
 | Citrix Virtual Apps and Desktops version | 7.2203 CU2 |
 | Provisioning Services version | 7.2203 CU2 |
 
 _Table: Windows 10 Template Image Configuration_ 
 
-| Parameter | Setting |
+| **Parameter** | **Setting** |
 | --- | --- |
 | Operating system | Windows 10 22H2 (x64) |
 | Windows updates | 12/13/22 |
@@ -160,5 +158,5 @@ _Table: Windows 10 Template Image Configuration_
 | Applications | Adobe Acrobat DC, Microsoft Edge Browser, Microsoft Office 2019 (x64) |
 | Citrix Virtual Desktop Agent | 7.2203 CU2 |
 | Citrix Provisioning Services Target Device | 7.2203 CU2 |
-| FSlogix (tests with Nutanix Files only) | 2.9.8440.42104 |
+| FSLogix (tests with Nutanix Files only) | 2.9.8440.42104 |
 | Optimizations | Citrix Optimizer; custom optimizations to the default user profile |

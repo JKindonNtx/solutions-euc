@@ -53,7 +53,7 @@ If ($GitHub.UserName -like "* *") {
 }
 
 # Check on build type and if AHV then gather cluster specific information
-if ($JSON.vm.Hypervisor -eq "AHV"){
+if ($JSON.VM.Hypervisor -eq "AHV"){
     Write-Host (Get-Date) ":AHV build selected, getting cluster specific information"
     $Clusterinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "cluster"
     $VMTimezone = $Clusterinfo.timezone
