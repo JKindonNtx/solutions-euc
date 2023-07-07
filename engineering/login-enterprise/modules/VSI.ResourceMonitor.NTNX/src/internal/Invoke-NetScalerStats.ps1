@@ -34,6 +34,20 @@ function Invoke-NetScalerStats {
     $NSDetails | Add-Member -MemberType NoteProperty -Name "TotalTransmitmbits" -Value $Stats.ns.tottxmbits
     $NSDetails | Add-Member -MemberType NoteProperty -Name "RateTransmit" -Value $Stats.ns.txmbitsrate
 
+    # Get StoreFront Stats
+    $SFStats = Invoke-RestMethod -uri "$hostname/nitro/v1/stat/lbvserver?args=name:vsvr_storefront_80" -WebSession $NSSession.WebSession -Method GET 
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "SFCurrentClientConnections" -Value $SFStats.lbvserver.curclntconnections
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "SFCurrentPersistentSessions" -Value $SFStats.lbvserver.curpersistencesessions
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "SFTotalSpillovers" -Value $SFStats.lbvserver.totspillovers
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "SFCPUUsage" -Value $SFStats.lbvserver.cpuusagepm
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "SFTotalHits" -Value $SFStats.lbvserver.tothits
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "SFTotalRequests" -Value $SFStats.lbvserver.totalrequests
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "SFTotalResponses" -Value $SFStats.lbvserver.totalresponses
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "SFTotalRequestBytes" -Value $SFStats.lbvserver.totalrequestbytes
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "SFTotalResponseBytes" -Value $SFStats.lbvserver.totalresponsebytes
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "SFTotalPacketsReceived" -Value $SFStats.lbvserver.totalpktsrecvd
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "SFTotalPacketsSent" -Value $SFStats.lbvserver.totalpktssent
+    
     # Logout of NetScaler
     $logout = @{
         logout = @{

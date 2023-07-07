@@ -49,6 +49,17 @@ function Start-NTNXNSMonitoring {
             $item | Add-Member -MemberType NoteProperty -Name "RateReceived" -Value $NetScalerStats.RateReceived -Force
             $item | Add-Member -MemberType NoteProperty -Name "TotalTransmitmbits" -Value $NetScalerStats.TotalTransmitmbits -Force
             $item | Add-Member -MemberType NoteProperty -Name "RateTransmit" -Value $NetScalerStats.RateTransmit -Force
+            $item | Add-Member -MemberType NoteProperty -Name "SFCurrentClientConnections" -Value $NetScalerStats.SFCurrentClientConnections -Force
+            $item | Add-Member -MemberType NoteProperty -Name "SFCurrentPersistentSessions" -Value $NetScalerStats.SFCurrentPersistentSessions -Force
+            $item | Add-Member -MemberType NoteProperty -Name "SFTotalSpillovers" -Value $NetScalerStats.SFTotalSpillovers -Force
+            $item | Add-Member -MemberType NoteProperty -Name "SFCPUUsage" -Value $NetScalerStats.SFCPUUsage -Force
+            $item | Add-Member -MemberType NoteProperty -Name "SFTotalHits" -Value $NetScalerStats.SFTotalHits -Force
+            $item | Add-Member -MemberType NoteProperty -Name "SFTotalRequests" -Value $NetScalerStats.SFTotalRequests -Force
+            $item | Add-Member -MemberType NoteProperty -Name "SFTotalResponses" -Value $NetScalerStats.SFTotalResponses -Force
+            $item | Add-Member -MemberType NoteProperty -Name "SFTotalRequestBytes" -Value $NetScalerStats.SFTotalRequestBytes -Force
+            $item | Add-Member -MemberType NoteProperty -Name "SFTotalResponseBytes" -Value $NetScalerStats.SFTotalResponseBytes -Force
+            $item | Add-Member -MemberType NoteProperty -Name "SFTotalPacketsReceived" -Value $NetScalerStats.SFTotalPacketsReceived -Force
+            $item | Add-Member -MemberType NoteProperty -Name "SFTotalPacketsSent" -Value $NetScalerStats.SFTotalPacketsSent -Force
             $item | Export-Csv -Path $NSStats -NoTypeInformation -Append
 
             $StartTimeStamp = $StartTimeStamp.AddSeconds($SampleSize)
