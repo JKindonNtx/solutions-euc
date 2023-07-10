@@ -15,6 +15,8 @@
     Mandatory. The value of the Category to assign or remove.
 .PARAMETER VM_Pattern_Match
     Mandatory. A pattern match string to filter virtual machine entities by. Eg, MCS* will match all vms' starting with MCS.
+.PARAMETER ExclusionList
+    Optional. A list of names to exclude from the captured VM list.
 .PARAMETER Mode
     Mandatory. What mode to operate in, either add or remove for the Category assignment.
 .PARAMETER VMCount
@@ -35,6 +37,9 @@
     .\UpdatePCVMCategories.ps1 -pc_source 1.1.1.1 -Category Citrix_Provisioning_Type -Value MCS -Mode Add -VM_Pattern_Match "*MCS" -UseCustomCredentialFile
     Update all machines matching the name *MCS under the PC 1.1.1.1 by adding a Category of Citrix_Provisioning_Type with value MCS using a custom credential file
 .EXAMPLE
+    .\UpdatePCVMCategories.ps1 -pc_source 1.1.1.1 -Category Citrix_Provisioning_Type -Value MCS -Mode Add -VM_Pattern_Match "*MCS" -UseCustomCredentialFile -ExclusionList "Server1","Server2"
+    Update all machines matching the name *MCS under the PC 1.1.1.1 by adding a Category of Citrix_Provisioning_Type with value MCS using a custom credential file. Will Exclude Server1 and Server2 from the list of VMs
+.EXAMPLE
     .\UpdatePCVMCategories.ps1 -pc_source 1.1.1.1 -Category Citrix_Provisioning_Type -Value MCS -Mode Add -VM_Pattern_Match "*MCS" -UseCustomCredentialFile -async
     Update all machines matching the name *MCS under the PC 1.1.1.1 by adding a Category of Citrix_Provisioning_Type with value MCS using a custom credential file in async mode (no task checking)
 .EXAMPLE
@@ -52,6 +57,7 @@
 
 .NOTES
     Author: James Kindon, Nutanix, 21.06.23. Most of the core logic via Stephane Bourdeaud at Nutanix
+    10.07.23 - JK - Added ExclusionList capability
 #>
 
 #region Params
@@ -82,6 +88,9 @@ Param(
     
     [Parameter(Mandatory = $true)]
     [string]$VM_Pattern_Match, # String to match VM targets on
+
+    [Parameter(Mandatory = $false)]
+    [array]$ExclusionList, # List of names to exclude
 
     [Parameter(Mandatory = $true)]
     [ValidateSet("Add","Remove")]
@@ -532,6 +541,7 @@ Write-Log -Message "[Script Params] Script CredPath = $($CredPath)" -Level Info
 Write-Log -Message "[Script Params] Script Category = $($Category)" -Level Info
 Write-Log -Message "[Script Params] Script Value = $($Value)" -Level Info
 Write-Log -Message "[Script Params] Script VM_Pattern_Match = $($VM_Pattern_Match)" -Level Info
+Write-Log -Message "[Script Params] Script ExclusionList = $($ExclusionList)" -Level Info
 Write-Log -Message "[Script Params] Script Mode = $($Mode)" -Level Info
 Write-Log -Message "[Script Params] Script SleepTime = $($SleepTime)" -Level Info
 Write-Log -Message "[Script Params] Script VMCount = $($VMCount)" -Level Info
@@ -666,7 +676,6 @@ try {
     
     $TargetCount = ($VirtualMachinesPatternMatch.status.name).count
 
-
     if ($TargetCount -gt 0) {
         Write-Log -Message "[VM Retrieval] Sucessfully retrieved and matched $($TargetCount) machines from $($pc_source)"
     }
@@ -682,6 +691,21 @@ catch {
 }
 
 $VirtualMachinesToProcess = $VirtualMachinesPatternMatch.status.name
+
+#---------------------------------------------
+# Handle VM Exclusions
+#---------------------------------------------
+$ExclusionListCount = 0
+foreach ($vm in $VirtualMachinesToProcess) {
+    if ($vm -in $ExclusionList) {
+        Write-Log -Message "[VM Retrieval] $($vm) is in the specified Exclusion List and will not be included for processing" -Level Info
+        $ExclusionListCount += 1
+    }
+}
+Write-Log -Message "[VM Retrieval] Excluding a total of $($ExclusionListCount) virtual machines" -Level Info
+$TargetCount = $TargetCount - $ExclusionListCount #remove the excluded machines from the count
+Write-Log -Message "[VM Retrieval] Will process $($TargetCount) machines from $($pc_source)" -Level Info
+$VirtualMachinesToProcess = $VirtualMachinesPatternMatch.status.name | Where-Object {$_ -notin $ExclusionList}
 #endregion Get VM list
 
 #region Process the VM list
