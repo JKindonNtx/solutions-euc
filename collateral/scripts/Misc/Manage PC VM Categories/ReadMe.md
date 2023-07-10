@@ -24,6 +24,7 @@ The following parameters exist to drive the behaviour of the script:
 - **`Mode`**: Mandatory **`String`**. What mode to operate in, either `add` or `remove` for the Category assignment.
 
 #### Optional Parameters
+- **`ExclusionList`**: Optional **`array`**. A list of vm names to exclude from processing.
 - **`LogPath`**: Optional **`String`**. Log path output for all operations. The default is `C:\Logs\UpdatePCVMCategories.log`
 - **`LogRollover`**: Optional **`Int`**.Number of days before log files are rolled over. Default is 5
 - **`VMCount`**: Optional **`Int`**. The number of virtual machine entities to retrieve from PC. Defaults to 1000.
@@ -47,6 +48,7 @@ $params = @{
     Value                   = "MCS"
     Mode                    = "Add"
     VM_Pattern_Match        = "*MCS"
+    ExclusionList           = "Server1","Server2"
     UseCustomCredentialFile = $true
     Whatif                  = $true
 }
@@ -57,7 +59,7 @@ $params = @{
 The direct script invocation via the command line with define arguments would be:
 
 ```
-.\UpdatePCVMCategories.ps1 -pc_source 1.1.1.1 -Category Citrix_Provisioning_Type -Value MCS -Mode Add -VM_Pattern_Match "*MCS" -UseCustomCredentialFile -Whatif
+.\UpdatePCVMCategories.ps1 -pc_source 1.1.1.1 -Category Citrix_Provisioning_Type -Value MCS -Mode Add -VM_Pattern_Match "*MCS" -ExclusionList "Server1","Server2" -UseCustomCredentialFile -Whatif
 ```
 
 The script will:
@@ -65,6 +67,7 @@ The script will:
 - Connect to the Prism Central source `1.1.1.1`.
 - Check for existence of the Category `Citrix_Provisioning_Type`:`MCS` pair before proceeding.
 - Pull all virtual machine entities and filter based on the `*MCS` name pattern.
+- Exclude VMs matching either `Server1` or `Server2`.
 - Action an `Add` of the Category to each VM in the list.
 - Process in a `whatif` mode to identify which machines will be actioned. No changes to the environment will occur.
 
