@@ -5,10 +5,10 @@
 # User Input Script Variables
 
 # Source Uri - This is the Uri for the Grafana Dashboard you want the report for
-$SourceUri = "http://10.57.64.119:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&from=1672534887696&to=1672535613821&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=2023&var-Month=07&var-DocumentName=ENG-AMD-AHV67-CG-Test3EUX&var-Comment=1n-AMD-AHV-W10-CG&var-Comment=1n-AMD-AHV-W10-CG-INVTSC&var-Comment=1n-AMD-AHV-W10-noCG&var-Testname=76bc80_1n_A6.7_AHV_135V_135U_KW&var-Testname=1b8b90_1n_A6.7_AHV_135V_135U_KW&var-Testname=928302_1n_A6.7_AHV_135V_135U_KW&var-Run=1b8b90_1n_A6.7_AHV_135V_135U_KW_Run2&var-Run=76bc80_1n_A6.7_AHV_135V_135U_KW_Run2&var-Run=928302_1n_A6.7_AHV_135V_135U_KW_Run2&var-Naming=Comment"
+$SourceUri = "http://10.57.64.119:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=2023&var-Month=07&var-DocumentName=ENG-Profile-Files-Baseline&var-Comment=Windows_10_Profile_Citrix_UPM_-_All_Off&var-Comment=Windows_10_Profile_Citrix_UPM_No_Cache_-_All_Off&var-Testname=049fd6_8n_A6.5.3.5_AHV_1000V_1000U_KW&var-Testname=8aa73e_8n_A6.5.3.5_AHV_1000V_1000U_KW&var-Run=049fd6_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run1&var-Run=8aa73e_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run1&var-Naming=Comment"
 
 # Report Title - This is the Title that you want for your report
-$ReportTitle = "Credential Guard Testing on AMD with AOS 6.7"
+$ReportTitle = "Citrix UPM"
 
 # Sections - Set the sections that you want in your report to $true 
 $BootInfo = $true
@@ -227,7 +227,8 @@ if($BootInfo){
 
     # Build the PanelID Array 
     $Panels = @('85','84','86','94','92','96','89','95','93','97')   
-
+    [int]$maxboottime = (($testDetailResults.boottime | measure -Maximum).maximum + 30) * 1000
+    $endtime = 1672534800000 + $maxboottime
     # Loop through the panels and download the images
     foreach($Panel in $Panels){
 
@@ -235,7 +236,7 @@ if($BootInfo){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Europe%2FLondon"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=$($endtime)&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -274,7 +275,7 @@ if($LoginEnterpriseResults){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Europe%2FLondon"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -313,7 +314,7 @@ if($HostResources){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Europe%2FLondon"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -346,7 +347,7 @@ if($ClusterResources){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Europe%2FLondon"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -379,7 +380,7 @@ if($LoginTimes){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Europe%2FLondon"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -414,7 +415,7 @@ if($IndividualRuns){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Europe%2FLondon"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -448,7 +449,7 @@ if($Applications){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Europe%2FLondon"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -492,7 +493,7 @@ if($VsiEuxMeasurements){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Europe%2FLondon"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -529,7 +530,7 @@ if($NutanixFiles){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Europe%2FLondon"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -562,7 +563,7 @@ if($CitrixNetScaler){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Europe%2FLondon"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
