@@ -13,8 +13,10 @@
     Mandatory. The Name of the Category to assign or remove.
 .PARAMETER Value
     Mandatory. The value of the Category to assign or remove.
+.PARAMETER IncludeList
+    Optional. An array of virtual machines to target. You must specify either this parameter or VM_Pattern_Match
 .PARAMETER VM_Pattern_Match
-    Mandatory. A pattern match string to filter virtual machine entities by. Eg, MCS* will match all vms' starting with MCS.
+    Optional. A pattern match string to filter virtual machine entities by. Eg, MCS* will match all vms' starting with MCS. You must use this parameter or IncludeList
 .PARAMETER ExclusionList
     Optional. A list of names to exclude from the captured VM list.
 .PARAMETER Mode
@@ -33,6 +35,9 @@
     Optional. Will action the script in a whatif processing mode only.
 .PARAMETER async
   Switch to specify that you don't want to wait for the update tasks to complete. When categories are updated for vms in Prism Central, the API will return with success and a task uuid. That task may still fail for whatever reason, but if you're doing mass updates, it may also cause significant processing delays to wait for each task to return status.
+.EXAMPLE
+    .\UpdatePCVMCategories.ps1 -pc_source 1.1.1.1 -Category Citrix_Provisioning_Type -Value MCS -Mode Add -IncludeList "Server1","Server2","Server3" -UseCustomCredentialFile
+    Update all machines matching Server1, Server2, Server3 under the PC 1.1.1.1 by adding a Category of Citrix_Provisioning_Type with value MCS using a custom credential file
 .EXAMPLE
     .\UpdatePCVMCategories.ps1 -pc_source 1.1.1.1 -Category Citrix_Provisioning_Type -Value MCS -Mode Add -VM_Pattern_Match "*MCS" -UseCustomCredentialFile
     Update all machines matching the name *MCS under the PC 1.1.1.1 by adding a Category of Citrix_Provisioning_Type with value MCS using a custom credential file
@@ -58,6 +63,7 @@
 .NOTES
     Author: James Kindon, Nutanix, 21.06.23. Most of the core logic via Stephane Bourdeaud at Nutanix
     10.07.23 - JK - Added ExclusionList capability
+    17.07.23 - JK - Added IncludeList capability
 #>
 
 #region Params
@@ -85,8 +91,11 @@ Param(
 
     [Parameter(Mandatory = $true)]
     [string]$Value, # the value of category
+
+    [Parameter(Mandatory = $false)]
+    [array]$IncludeList, # array of target virtual machines
     
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $false)]
     [string]$VM_Pattern_Match, # String to match VM targets on
 
     [Parameter(Mandatory = $false)]
@@ -540,6 +549,7 @@ Write-Log -Message "[Script Params] Script UseCustomCredentialFile = $($UseCusto
 Write-Log -Message "[Script Params] Script CredPath = $($CredPath)" -Level Info
 Write-Log -Message "[Script Params] Script Category = $($Category)" -Level Info
 Write-Log -Message "[Script Params] Script Value = $($Value)" -Level Info
+Write-Log -Message "[Script Params] Script IncludeList = $($IncludeList)" -Level Info
 Write-Log -Message "[Script Params] Script VM_Pattern_Match = $($VM_Pattern_Match)" -Level Info
 Write-Log -Message "[Script Params] Script ExclusionList = $($ExclusionList)" -Level Info
 Write-Log -Message "[Script Params] Script Mode = $($Mode)" -Level Info
@@ -552,6 +562,20 @@ Write-Log -Message "[Script Params] Script async = $($async)" -Level Info
 
 #check PoSH version
 if ($PSVersionTable.PSVersion.Major -lt 5) { throw "$(get-date) [ERROR] Please upgrade to Powershell v5 or above (https://www.microsoft.com/en-us/download/details.aspx?id=50395)" }
+
+#region Param Validation
+if (!($VM_Pattern_Match) -and !($IncludeList)) {
+    Write-Log -Message "[PARAM ERROR]: You must specify either VM_Pattern_Match or IncludeList. Invalid parameter options" -Level Warn
+    StopIteration
+    Exit 0
+}
+
+if ($VM_Pattern_Match -and $IncludeList) {
+    Write-Log -Message "[PARAM ERROR]: You cannot use both VM_Pattern_Match and IncludeList parameters together. Invalid parameter options" -Level Warn
+    StopIteration
+    Exit 0
+}
+#endregion Param Validation
 
 #region SSL Handling
 #------------------------------------------------------------
@@ -669,18 +693,35 @@ $PayloadContent = @{
 }
 $Payload = (ConvertTo-Json $PayloadContent)
 #----------------------------------------------------------------------------------------------------------------------------
-Write-Log -Message "[VM Retrieval] Retrieving VMs and filtering on pattern match $($VM_Pattern_Match) from $($pc_source)" -Level Info
+if ($VM_Pattern_Match) {
+    Write-Log -Message "[VM Retrieval] Retrieving VMs and filtering on pattern match $($VM_Pattern_Match) from $($pc_source)" -Level Info
+}
+elseif ($IncludeList) {
+    Write-Log -Message "[VM Retrieval] Retrieving VMs and filtering on the specified IncludeList from $($pc_source)" -Level Info
+}
+
 try {
     $VirtualMachines = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
-    $VirtualMachinesPatternMatch = $VirtualMachines.entities | Where-Object { $_.status.name -like "$VM_Pattern_Match*" }
-    
-    $TargetCount = ($VirtualMachinesPatternMatch.status.name).count
+    if ($VM_Pattern_Match) {
+        $VirtualMachinesPatternMatch = $VirtualMachines.entities | Where-Object { $_.status.name -like "$VM_Pattern_Match*" }
+        $TargetCount = ($VirtualMachinesPatternMatch.status.name).count
+    }
+    elseif ($IncludeList) {
+        $VirtualMachinesIncludeMatch = $VirtualMachines.entities | Where-Object { $_.status.name -in $IncludeList }
+        $TargetCount = ($VirtualMachinesIncludeMatch.status.name).count
+    }
+
 
     if ($TargetCount -gt 0) {
         Write-Log -Message "[VM Retrieval] Sucessfully retrieved and matched $($TargetCount) machines from $($pc_source)"
     }
     else {
-        Write-Log -Message "[VM Retrieval] Failed to retrieve and match any machines using pattern match $($VM_Pattern_Match) from $($pc_source)" -Level Warn
+        if ($VM_Pattern_Match) {
+            Write-Log -Message "[VM Retrieval] Failed to retrieve and match any machines using pattern match $($VM_Pattern_Match) from $($pc_source)" -Level Warn
+        }
+        elseif ($IncludeList) {
+            Write-Log -Message "[VM Retrieval] Failed to retrieve and match any machines using the specified IncludeList from $($pc_source)" -Level Warn
+        }
         StopIteration
         Exit 0
     }
@@ -690,7 +731,12 @@ catch {
     Break
 }
 
-$VirtualMachinesToProcess = $VirtualMachinesPatternMatch.status.name
+if ($VM_Pattern_Match) {
+    $VirtualMachinesToProcess = $VirtualMachinesPatternMatch.status.name
+}
+elseif ($IncludeList) {
+    $VirtualMachinesToProcess = $VirtualMachinesIncludeMatch.status.name
+}
 
 #---------------------------------------------
 # Handle VM Exclusions
@@ -705,7 +751,12 @@ foreach ($vm in $VirtualMachinesToProcess) {
 Write-Log -Message "[VM Retrieval] Excluding a total of $($ExclusionListCount) virtual machines" -Level Info
 $TargetCount = $TargetCount - $ExclusionListCount #remove the excluded machines from the count
 Write-Log -Message "[VM Retrieval] Will process $($TargetCount) machines from $($pc_source)" -Level Info
-$VirtualMachinesToProcess = $VirtualMachinesPatternMatch.status.name | Where-Object {$_ -notin $ExclusionList}
+if ($VM_Pattern_Match) {
+    $VirtualMachinesToProcess = $VirtualMachinesPatternMatch.status.name | Where-Object {$_ -notin $ExclusionList}
+}
+elseif ($IncludeList) {
+    $VirtualMachinesToProcess = $VirtualMachinesIncludeMatch.status.name | Where-Object {$_ -notin $ExclusionList}
+}
 #endregion Get VM list
 
 #region Process the VM list
