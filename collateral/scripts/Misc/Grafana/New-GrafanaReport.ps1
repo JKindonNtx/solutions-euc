@@ -770,6 +770,21 @@ Add-Content $mdFullFile $HostGPU
 Add-Content $mdFullFile $Nodes
 Add-Content $mdFullFile $TotalNodes
 
+# Infra software specifics
+
+
+# Broker Specifics
+
+
+# Target VM
+
+
+# LE Specifics
+
+
+# Test Specifics
+
+
 
 # -----------------------------------------------------------------------------------------------------------------------
 # Section - Test Results
@@ -779,6 +794,9 @@ Add-Content $mdFullFile "## Test Results"
 # -----------------------------------------------------------------------------------------------------------------------
 # Section - Boot Info
 # -----------------------------------------------------------------------------------------------------------------------
+
+# Boot Params - before boot info screenshots
+
 
 # Execute if Option Enabled
 if($BootInfo){
