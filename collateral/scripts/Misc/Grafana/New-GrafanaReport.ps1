@@ -864,7 +864,58 @@ Add-Content $mdFullFile $sessioncfg
 
 
 # Test Specifics
+$TestFiltered = $TestDetailResults | Select measurement, infrasinglenodetest, numberofvms, numberofsessions, vsiactivesessioncount, vsieuxsscore, vsieuxstate, vsivsimax, vsivsimaxstate, comment | Sort-Object measurement | Get-Unique -AsString
 
+Add-Content $mdFullFile "### Test Specifics"
+
+$HeaderLine = ""
+$TableLine = ""
+for ($i = 0; $i -lt (($TestFiltered).Count + 1) ; $i++)
+{    
+    if($i -eq 0){
+        $HeaderLine = "| "
+        $TableLine = "| --- "
+    } else {
+        $Comment = ($TestFiltered[$i - 1].comment).replace("_", " ")
+        $HeaderLine = $HeaderLine + "| $($Comment) "
+        $TableLine = $TableLine + "| --- "
+        if($i -eq ($TestFiltered.Count)){
+            $HeaderLine = $HeaderLine + "|"
+            $TableLine = $TableLine + "|"
+        }
+    }
+}
+Add-Content $mdFullFile $HeaderLine
+Add-Content $mdFullFile $TableLine
+
+[string]$infrasinglenodetest = "| **Single Node Test** | "
+[string]$numberofvms = "| **Number Of VMs** | "
+[string]$numberofsessions = "| **Number Of Sessions** | "
+[string]$vsiactivesessioncount = "| **VSI Active Session Count** | "
+[string]$vsieuxsscore = "| **VSI EUX Score** | "
+[string]$vsieuxstate = "| **VSI EUX State** | "
+[string]$vsivsimax = "| **VSI Max** | "
+[string]$vsivsimaxstate = "| **VSI Max State** | "
+
+foreach($Record in $TestFiltered){
+    $infrasinglenodetest = $infrasinglenodetest + "$($Record.infrasinglenodetest) | "
+    $numberofvms = $numberofvms + "$($Record.numberofvms) | "
+    $numberofsessions = $numberofsessions + "$($Record.numberofsessions) | "
+    $vsiactivesessioncount = $vsiactivesessioncount + "$($Record.vsiactivesessioncount) | "
+    $vsieuxsscore = $vsieuxsscore + "$($Record.vsieuxsscore) | "
+    $vsieuxstate = $vsieuxstate + "$($Record.vsieuxstate) | "
+    $vsivsimax = $vsivsimax + "$($Record.vsivsimax) | "
+    $vsivsimaxstate = $vsivsimaxstate + "$($Record.vsivsimaxstate) | "
+}
+
+Add-Content $mdFullFile $infrasinglenodetest
+Add-Content $mdFullFile $numberofvms
+Add-Content $mdFullFile $numberofsessions
+Add-Content $mdFullFile $vsiactivesessioncount
+Add-Content $mdFullFile $vsieuxsscore
+Add-Content $mdFullFile $vsieuxstate
+Add-Content $mdFullFile $vsivsimax
+Add-Content $mdFullFile $vsivsimaxstate
 
 
 # -----------------------------------------------------------------------------------------------------------------------
