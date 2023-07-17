@@ -302,7 +302,7 @@ if(!(Test-Path -Path $Directory)){
 # Section - Download Icons
 # -----------------------------------------------------------------------------------------------------------------------
 
-$icons = @('Nutanix-Logo','bootinfo','hardware','infrastructure','broker','targetvm','loginenterprise','filesicon')   
+$icons = @('Nutanix-Logo','bootinfo','hardware','infrastructure','broker','targetvm','loginenterprise','testicon','leresults','hostresources','clusterresources','logintimes','individualruns','appresults','euxmeasurements','filesicon','citrixnetscaler')   
     # Loop through the icons and download the images
     foreach($icon in $icons){
         
@@ -1164,6 +1164,12 @@ if($LoginEnterpriseResults){
     # Add Section Title
     Add-Content $mdFullFile "### Login Enterprise Test Results"
 
+    # Add LE icon
+    $Path = "../images/leresults.png"
+    $Link = "<img src=$($Path) alt=le-results>"
+    Add-Content $mdFullFile "$($Link)"
+    Add-Content $mdFullFile "  "
+
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
         
@@ -1188,6 +1194,12 @@ if($HostResources){
 
     # Add Section Title
     Add-Content $mdFullFile "### Host Resources Test Results"
+
+    # Add Host Resources icon
+    $Path = "../images/hostresources.png"
+    $Link = "<img src=$($Path) alt=Host-Resources>"
+    Add-Content $mdFullFile "$($Link)"
+    Add-Content $mdFullFile "  "
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
@@ -1214,6 +1226,12 @@ if($ClusterResources){
     # Add Section Title
     Add-Content $mdFullFile "### Cluster Resources Test Results"
 
+    # Add Cluster Resources icon
+    $Path = "../images/clusterresources.png"
+    $Link = "<img src=$($Path) alt=Cluster-Resources>"
+    Add-Content $mdFullFile "$($Link)"
+    Add-Content $mdFullFile "  "
+
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
         
@@ -1238,6 +1256,12 @@ if($LoginTimes){
 
     # Add Section Title
     Add-Content $mdFullFile "### Login Times Test Results"
+
+    # Add Login Times icon
+    $Path = "../images/logintimes.png"
+    $Link = "<img src=$($Path) alt=Login-Times>"
+    Add-Content $mdFullFile "$($Link)"
+    Add-Content $mdFullFile "  "
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
@@ -1264,6 +1288,12 @@ if($IndividualRuns){
     # Add Section Title
     Add-Content $mdFullFile "### Individual Runs Test Results"
 
+    # Add Individual Runs icon
+    $Path = "../images/individualruns.png"
+    $Link = "<img src=$($Path) alt=Individual Runs>"
+    Add-Content $mdFullFile "$($Link)"
+    Add-Content $mdFullFile "  "
+
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
         
@@ -1289,6 +1319,12 @@ if($Applications){
     # Add Section Title
     Add-Content $mdFullFile "### Application Test Results"
 
+    # Add Application Test Results icon
+    $Path = "../images/appresults.png"
+    $Link = "<img src=$($Path) alt=Applications>"
+    Add-Content $mdFullFile "$($Link)"
+    Add-Content $mdFullFile "  "
+
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
         
@@ -1313,6 +1349,12 @@ if($VsiEuxMeasurements){
 
     # Add Section Title
     Add-Content $mdFullFile "### VSI EUX Test Results"
+
+    # Add EUX Measurements icon
+    $Path = "../images/euxmeasurements.png"
+    $Link = "<img src=$($Path) alt=EUXmeasurements>"
+    Add-Content $mdFullFile "$($Link)"
+    Add-Content $mdFullFile "  "
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
@@ -1369,6 +1411,12 @@ if($CitrixNetScaler){
 
     # Add Section Title
     Add-Content $mdFullFile "### Citrix NetScaler Test Results"
+
+    # Add Citrix Netscaler icon
+    $Path = "../images/citrixnetscaler.png"
+    $Link = "<img src=$($Path) alt=citrix-Netscaler>"
+    Add-Content $mdFullFile "$($Link)"
+    Add-Content $mdFullFile "  "
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
