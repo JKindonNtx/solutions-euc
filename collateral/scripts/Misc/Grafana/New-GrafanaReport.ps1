@@ -776,8 +776,79 @@ Add-Content $mdFullFile $TotalNodes
 # Broker Specifics
 
 
-# Target VM
+# Target VM Specifics
 
+$TargetVMFiltered = $TestDetailResults | Select measurement, numcpus, numcores, memorygb, gpuprofile, secureboot, vtpm, credentialguard, targetos, targetosversion, desktopbrokeragentversion, officeversion, clonetype, toolsguestversion, optimizervendor, optimizerversion, comment | Sort-Object measurement | Get-Unique -AsString
+Add-Content $mdFullFile "### Target VM Specifics"
+
+$HeaderLine = ""
+$TableLine = ""
+for ($i = 0; $i -lt (($TargetVMFiltered).Count + 1) ; $i++)
+{    
+    if($i -eq 0){
+        $HeaderLine = "| "
+        $TableLine = "| --- "
+    } else {
+        $Comment = ($TargetVMFiltered[$i - 1].comment).replace("_", " ")
+        $HeaderLine = $HeaderLine + "| $($Comment) "
+        $TableLine = $TableLine + "| --- "
+        if($i -eq ($TargetVMFiltered.Count)){
+            $HeaderLine = $HeaderLine + "|"
+            $TableLine = $TableLine + "|"
+        }
+    }
+}
+Add-Content $mdFullFile $HeaderLine
+Add-Content $mdFullFile $TableLine
+
+[string]$numcpus = "| **CPU Sockets** | "
+[string]$numcores = "| **Cores per Socket** | "
+[string]$memorygb = "| **Memory** | "
+[string]$gpuprofile = "| **GPU profile** | "
+[string]$secureboot = "| **Secure Boot** | "
+[string]$vtpm = "| **Virtual TPM** | "
+[string]$credentialguard = "| **Credential Guard** | "
+[string]$targetos = "| **Operating System** | "
+[string]$targetosversion = "| **Operating System Version** | "
+[string]$desktopbrokeragentversion = "| **Desktop Broker Agent Version** | "
+[string]$officeversion = "| **Office Version** | "
+[string]$clonetype = "| **Clone Type** | "
+[string]$toolsguestversion = "| **Guest Tools Version** | "
+[string]$optimizervendor = "| **Optimizer Vendor** | "
+[string]$optimizerversion = "| **Optimizer Version** | "
+
+foreach($Record in $HardwareFiltered){
+    $numcpus = $numcpus + "$($Record.numcpus) | "
+    $numcores = $CPUSnumcorespeed + "$($Record.numcores) | "
+    $memorygb = $memorygb + "$($Record.memorygb) GB | "
+    $gpuprofile = $gpuprofile + "$($Record.gpuprofile) | "
+    $secureboot = $secureboot + "$($Record.secureboot) | "
+    $vtpm = $vtpm + "$($Record.vtpm) | "
+    $credentialguard = $credentialguard + "$($Record.credentialguard) | "
+    $targetos = $targetos + "$($Record.targetos) | "
+    $targetosversion = $targetosversion + "$($Record.targetosversion) | "
+    $desktopbrokeragentversion = $desktopbrokeragentversion + "$($Record.desktopbrokeragentversion) | "
+    $officeversion = $officeversion + "$($Record.officeversion) | "
+    $clonetype = $clonetype + "$($Record.clonetype) | "
+    $toolsguestversion = $toolsguestversion + "$($Record.toolsguestversion) | "
+    $optimizervendor = $optimizervendor + "$($Record.optimizervendor) | "
+    $optimizerversion = $optimizerversion + "$($Record.optimizerversion) | "
+
+Add-Content $mdFullFile $numcpus
+Add-Content $mdFullFile $numcores
+Add-Content $mdFullFile $memorygb
+Add-Content $mdFullFile $gpuprofile
+Add-Content $mdFullFile $secureboot
+Add-Content $mdFullFile $vtpm
+Add-Content $mdFullFile $credentialguard
+Add-Content $mdFullFile $targetos
+Add-Content $mdFullFile $targetosversion
+Add-Content $mdFullFile $desktopbrokeragentversion
+Add-Content $mdFullFile $officeversion
+Add-Content $mdFullFile $clonetype
+Add-Content $mdFullFile $toolsguestversion
+Add-Content $mdFullFile $optimizervendor
+Add-Content $mdFullFile $optimizerversion
 
 # LE Specifics
 
