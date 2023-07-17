@@ -5,10 +5,10 @@
 # User Input Script Variables
 
 # Source Uri - This is the Uri for the Grafana Dashboard you want the report for
-$SourceUri = "http://10.57.64.119:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=2023&var-Month=07&var-Comment=Windows_10_Profile_Citrix_UPM_-_ABE_On&var-Comment=Windows_10_Profile_Citrix_UPM_-_All_Off&var-Testname=afb1a2_8n_A6.5.3.5_AHV_1000V_1000U_KW&var-Testname=8dcaca_8n_A6.5.3.5_AHV_1000V_1000U_KW&var-Run=8dcaca_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run2&var-Run=afb1a2_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run2&var-Run=afb1a2_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run3&var-Run=8dcaca_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run3&var-Naming=Comment&var-DocumentName=ENG-Profile-Files-Baseline&editPanel=85"
+$SourceUri = "http://10.57.64.119:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=2023&var-Month=07&var-DocumentName=ENG-AMD-AHV67-CG-Test3EUX&var-Comment=1n-AMD-AHV-W10-CG&var-Comment=1n-AMD-AHV-W10-CG-INVTSC&var-Comment=1n-AMD-AHV-W10-noCG&var-Testname=76bc80_1n_A6.7_AHV_135V_135U_KW&var-Testname=1b8b90_1n_A6.7_AHV_135V_135U_KW&var-Testname=928302_1n_A6.7_AHV_135V_135U_KW&var-Run=76bc80_1n_A6.7_AHV_135V_135U_KW_Run1&var-Run=928302_1n_A6.7_AHV_135V_135U_KW_Run1&var-Run=1b8b90_1n_A6.7_AHV_135V_135U_KW_Run2&var-Naming=Comment"
 
 # Report Title - This is the Title that you want for your report
-$ReportTitle = "Test"
+$ReportTitle = "Credential Guard on AMD"
 
 # Sections - Set the sections that you want in your report to $true 
 $BootInfo = $false
@@ -27,6 +27,9 @@ $CitrixNetScaler = $false
 # Influx DB Uri and Token
 $influxDbUrl = "http://10.57.64.119:8086/api/v2/query?orgID=bca5b8aeb2b51f2f"
 $InfluxToken = "b4yxMiQGOAlR3JftuLHuqssnwo-SOisbC2O6-7od7noAE5W1MLsZxLF7e63RzvUoiOHObc9G8_YOk1rnCLNblA=="
+
+# Logo and Icons
+$iconsSource = "http://10.57.64.119:3000/public/img/nutanix/"
 
 $BoilerPlateExecSummary = @"
 Nutanix designed its software to give customers running workloads in a hybrid cloud environment the same experience they expect from on-premises Nutanix clusters. Because Nutanix in a hybrid multicloud environment runs AOS and AHV with the same CLI, UI, and APIs, existing IT processes and third-party integrations continue to work regardless of where they run.
@@ -294,6 +297,24 @@ if(!(Test-Path -Path $Directory)){
     write-host "Directory: $($Directory) already exists, please enter a different report title"
     break 
 }
+
+# -----------------------------------------------------------------------------------------------------------------------
+# Section - Download Icons
+# -----------------------------------------------------------------------------------------------------------------------
+
+$icons = @('Nutanix-Logo','bootinfo','hardware','infrastructure','broker','targetvm','loginenterprise','testicon','leresults','hostresources','clusterresources','logintimes','individualruns','appresults','euxmeasurements','filesicon','citrixnetscaler')   
+    # Loop through the icons and download the images
+    foreach($icon in $icons){
+        
+        # Append the Rendering Uri to the Base Uri
+        $iconSourceUri = $iconsSource + "$($icon).png"
+
+        # Define output file
+        $OutFile = Join-Path -Path $imagePath -ChildPath "$($icon).png"
+
+        # Download the image
+        Invoke-WebRequest -Uri $iconSourceUri -outfile $OutFile
+    }
 
 # -----------------------------------------------------------------------------------------------------------------------
 # Section - Boot Info
@@ -677,6 +698,11 @@ if(!(Test-Path -Path $mdFullFile)){
 # Section - Create Header
 # -----------------------------------------------------------------------------------------------------------------------
 
+# Add Nutanix Logo
+$Path = "../images/Nutanix-Logo.png"
+$Link = "<img src=$($Path) alt=Nutanix>"
+Add-Content $mdFullFile "$($Link)"
+
 # Create the Title and Introduction
 Add-Content $mdFullFile "# $($ReportTitle)"
 Add-Content $mdFullFile "## Executive Summary"
@@ -704,6 +730,11 @@ Add-Content $mdFullFile "## Test Detail Specifics"
 # Hardware Specifics Section
 $HardwareFiltered = $TestDetailResults | Select measurement, infrahardwaretype, infracpubrand, infracputype, infracpuspeed, infracpucores, inframemorygb, infracpusocketcount, nodecount, infratotalnodes, infrassdcount, infrabios, hostgpus, comment | Sort-Object measurement | Get-Unique -AsString
 Add-Content $mdFullFile "### Hardware Specifics"
+# Add hardware icon
+$Path = "../images/hardware.png"
+$Link = "<img src=$($Path) alt=Hardware>"
+Add-Content $mdFullFile "$($Link)"
+Add-Content $mdFullFile "  "
 
 $HeaderLine = ""
 $TableLine = ""
@@ -775,6 +806,12 @@ $InfraFiltered = $TestDetailResults | Select measurement, infraaosversion, infra
 
 Add-Content $mdFullFile "### Infrastructure Specifics"
 
+# Add Infrastructure icon
+$Path = "../images/infrastructure.png"
+$Link = "<img src=$($Path) alt=Infrastructure>"
+Add-Content $mdFullFile "$($Link)"
+Add-Content $mdFullFile "  "
+
 $HeaderLine = ""
 $TableLine = ""
 for ($i = 0; $i -lt (($InfraFiltered).Count + 1) ; $i++)
@@ -820,6 +857,12 @@ $BrokerFiltered = $TestDetailResults | Select measurement, deliverytype, desktop
 
 Add-Content $mdFullFile "### Brokering Specifics"
 
+# Add Broker icon
+$Path = "../images/broker.png"
+$Link = "<img src=$($Path) alt=Broker>"
+Add-Content $mdFullFile "$($Link)"
+Add-Content $mdFullFile "  "
+
 $HeaderLine = ""
 $TableLine = ""
 for ($i = 0; $i -lt (($BrokerFiltered).Count + 1) ; $i++)
@@ -861,6 +904,12 @@ Add-Content $mdFullFile $sessioncfg
 
 $TargetVMFiltered = $TestDetailResults | Select measurement, numcpus, numcores, memorygb, gpuprofile, secureboot, vtpm, credentialguard, targetos, targetosversion, desktopbrokeragentversion, officeversion, clonetype, toolsguestversion, optimizervendor, optimizerversion, comment | Sort-Object measurement | Get-Unique -AsString
 Add-Content $mdFullFile "### Target VM Specifics"
+
+# Add VM icon
+$Path = "../images/targetvm.png"
+$Link = "<img src=$($Path) alt=TargetVM>"
+Add-Content $mdFullFile "$($Link)"
+Add-Content $mdFullFile "  "
 
 $HeaderLine = ""
 $TableLine = ""
@@ -937,6 +986,12 @@ Add-Content $mdFullFile $optimizerversion
 $LEspecsFiltered = $TestDetailResults | Select measurement, vsiproductversion, euxversion, vsivsimaxversion, workload, comment | Sort-Object measurement | Get-Unique -AsString
 Add-Content $mdFullFile "### Login Enterprise Specifics"
 
+# Add LE icon
+$Path = "../images/loginenterprise.png"
+$Link = "<img src=$($Path) alt=loginenterprise>"
+Add-Content $mdFullFile "$($Link)"
+Add-Content $mdFullFile "  "
+
 $HeaderLine = ""
 $TableLine = ""
 for ($i = 0; $i -lt (($LEspecsFiltered).Count + 1) ; $i++)
@@ -963,7 +1018,8 @@ Add-Content $mdFullFile $TableLine
 [string]$workload = "| **Workload** | "
 
 foreach($Record in $LEspecsFiltered){
-    $vsiproductversion = $vsiproductversion + "$($Record.vsiproductversion) | "
+    $vsiversion = ($Record.vsiproductversion).Trim()
+    $vsiproductversion = $vsiproductversion + "$($vsiversion) | "
     $euxversion = $euxversion + "$($Record.euxversion) | "
     $vsivsimaxversion = $vsivsimaxversion + "$($Record.vsivsimaxversion) | "
     $workload = $workload + "$($Record.workload) | "
@@ -978,6 +1034,12 @@ Add-Content $mdFullFile $workload
 $TestFiltered = $TestDetailResults | Select measurement, infrasinglenodetest, numberofvms, numberofsessions, comment | Sort-Object measurement | Get-Unique -AsString
 
 Add-Content $mdFullFile "### Test Specifics"
+
+# Add Test icon
+$Path = "../images/testicon.png"
+$Link = "<img src=$($Path) alt=testicon>"
+Add-Content $mdFullFile "$($Link)"
+Add-Content $mdFullFile "  "
 
 $HeaderLine = ""
 $TableLine = ""
@@ -1020,50 +1082,6 @@ Add-Content $mdFullFile $numberofsessions
 # -----------------------------------------------------------------------------------------------------------------------
 Add-Content $mdFullFile "## Test Results"
 
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Boot Info
-# -----------------------------------------------------------------------------------------------------------------------
-
-# Boot Params - before boot info screenshots
-
-$BootFiltered = $TestDetailResults | Select measurement, maxabsoluteactiveactions, maxabsolutenewactionsperminute, maxpercentageactiveactions, comment | Sort-Object measurement | Get-Unique -AsString
-
-Add-Content $mdFullFile "### Boot Parameters"
-
-$HeaderLine = ""
-$TableLine = ""
-for ($i = 0; $i -lt (($BootFiltered).Count + 1) ; $i++)
-{    
-    if($i -eq 0){
-        $HeaderLine = "| "
-        $TableLine = "| --- "
-    } else {
-        $Comment = ($BootFiltered[$i - 1].comment).replace("_", " ")
-        $HeaderLine = $HeaderLine + "| $($Comment) "
-        $TableLine = $TableLine + "| --- "
-        if($i -eq ($BootFiltered.Count)){
-            $HeaderLine = $HeaderLine + "|"
-            $TableLine = $TableLine + "|"
-        }
-    }
-}
-Add-Content $mdFullFile $HeaderLine
-Add-Content $mdFullFile $TableLine
-
-[string]$maxabsoluteactiveactions = "| **Max Absolute Active Actions** | "
-[string]$maxabsolutenewactionsperminute = "| **Max Absolute Actions Per Minute** | "
-[string]$maxpercentageactiveactions = "| **Max Percentage Active Actions** | "
-
-foreach($Record in $BootFiltered){
-    $maxabsoluteactiveactions = $maxabsoluteactiveactions + "$($Record.maxabsoluteactiveactions) | "
-    $maxabsolutenewactionsperminute = $maxabsolutenewactionsperminute + "$($Record.maxabsolutenewactionsperminute) | "
-    $maxpercentageactiveactions = $maxpercentageactiveactions + "$($Record.maxpercentageactiveactions) | "
-}
-
-Add-Content $mdFullFile $maxabsoluteactiveactions
-Add-Content $mdFullFile $maxabsolutenewactionsperminute
-Add-Content $mdFullFile $maxpercentageactiveactions
-
 # Execute if Option Enabled
 if($BootInfo){
 
@@ -1071,6 +1089,56 @@ if($BootInfo){
 
     # Add Section Title
     Add-Content $mdFullFile "### Boot Information Test Results"
+
+    # Add Test icon
+    $Path = "../images/bootinfo.png"
+    $Link = "<img src=$($Path) alt=Bootinfo>"
+    Add-Content $mdFullFile "$($Link)"
+    Add-Content $mdFullFile "  "
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Boot Info
+    # -----------------------------------------------------------------------------------------------------------------------
+
+    # Boot Params - before boot info screenshots
+
+    $BootFiltered = $TestDetailResults | Select measurement, maxabsoluteactiveactions, maxabsolutenewactionsperminute, maxpercentageactiveactions, comment | Sort-Object measurement | Get-Unique -AsString
+
+    Add-Content $mdFullFile "#### Boot Parameters"
+
+    $HeaderLine = ""
+    $TableLine = ""
+    for ($i = 0; $i -lt (($BootFiltered).Count + 1) ; $i++)
+    {    
+        if($i -eq 0){
+            $HeaderLine = "| "
+            $TableLine = "| --- "
+        } else {
+            $Comment = ($BootFiltered[$i - 1].comment).replace("_", " ")
+            $HeaderLine = $HeaderLine + "| $($Comment) "
+            $TableLine = $TableLine + "| --- "
+            if($i -eq ($BootFiltered.Count)){
+                $HeaderLine = $HeaderLine + "|"
+                $TableLine = $TableLine + "|"
+            }
+        }
+    }
+    Add-Content $mdFullFile $HeaderLine
+    Add-Content $mdFullFile $TableLine
+
+    [string]$maxabsoluteactiveactions = "| **Max Absolute Active Actions** | "
+    [string]$maxabsolutenewactionsperminute = "| **Max Absolute Actions Per Minute** | "
+    [string]$maxpercentageactiveactions = "| **Max Percentage Active Actions** | "
+
+    foreach($Record in $BootFiltered){
+        $maxabsoluteactiveactions = $maxabsoluteactiveactions + "$($Record.maxabsoluteactiveactions) | "
+        $maxabsolutenewactionsperminute = $maxabsolutenewactionsperminute + "$($Record.maxabsolutenewactionsperminute) | "
+        $maxpercentageactiveactions = $maxpercentageactiveactions + "$($Record.maxpercentageactiveactions) | "
+    }
+
+    Add-Content $mdFullFile $maxabsoluteactiveactions
+    Add-Content $mdFullFile $maxabsolutenewactionsperminute
+    Add-Content $mdFullFile $maxpercentageactiveactions
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
@@ -1097,6 +1165,12 @@ if($LoginEnterpriseResults){
     # Add Section Title
     Add-Content $mdFullFile "### Login Enterprise Test Results"
 
+    # Add LE icon
+    $Path = "../images/leresults.png"
+    $Link = "<img src=$($Path) alt=le-results>"
+    Add-Content $mdFullFile "$($Link)"
+    Add-Content $mdFullFile "  "
+
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
         
@@ -1121,6 +1195,12 @@ if($HostResources){
 
     # Add Section Title
     Add-Content $mdFullFile "### Host Resources Test Results"
+
+    # Add Host Resources icon
+    $Path = "../images/hostresources.png"
+    $Link = "<img src=$($Path) alt=Host-Resources>"
+    Add-Content $mdFullFile "$($Link)"
+    Add-Content $mdFullFile "  "
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
@@ -1147,6 +1227,12 @@ if($ClusterResources){
     # Add Section Title
     Add-Content $mdFullFile "### Cluster Resources Test Results"
 
+    # Add Cluster Resources icon
+    $Path = "../images/clusterresources.png"
+    $Link = "<img src=$($Path) alt=Cluster-Resources>"
+    Add-Content $mdFullFile "$($Link)"
+    Add-Content $mdFullFile "  "
+
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
         
@@ -1171,6 +1257,12 @@ if($LoginTimes){
 
     # Add Section Title
     Add-Content $mdFullFile "### Login Times Test Results"
+
+    # Add Login Times icon
+    $Path = "../images/logintimes.png"
+    $Link = "<img src=$($Path) alt=Login-Times>"
+    Add-Content $mdFullFile "$($Link)"
+    Add-Content $mdFullFile "  "
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
@@ -1197,6 +1289,12 @@ if($IndividualRuns){
     # Add Section Title
     Add-Content $mdFullFile "### Individual Runs Test Results"
 
+    # Add Individual Runs icon
+    $Path = "../images/individualruns.png"
+    $Link = "<img src=$($Path) alt=Individual Runs>"
+    Add-Content $mdFullFile "$($Link)"
+    Add-Content $mdFullFile "  "
+
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
         
@@ -1221,6 +1319,12 @@ if($Applications){
 
     # Add Section Title
     Add-Content $mdFullFile "### Application Test Results"
+
+    # Add Application Test Results icon
+    $Path = "../images/appresults.png"
+    $Link = "<img src=$($Path) alt=Applications>"
+    Add-Content $mdFullFile "$($Link)"
+    Add-Content $mdFullFile "  "
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
@@ -1247,6 +1351,12 @@ if($VsiEuxMeasurements){
     # Add Section Title
     Add-Content $mdFullFile "### VSI EUX Test Results"
 
+    # Add EUX Measurements icon
+    $Path = "../images/euxmeasurements.png"
+    $Link = "<img src=$($Path) alt=EUXmeasurements>"
+    Add-Content $mdFullFile "$($Link)"
+    Add-Content $mdFullFile "  "
+
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
         
@@ -1272,6 +1382,12 @@ if($NutanixFiles){
     # Add Section Title
     Add-Content $mdFullFile "### Nutanix Files Test Results"
 
+    # Add Test icon
+    $Path = "../images/filesicon.png"
+    $Link = "<img src=$($Path) alt=NutanixFiles>"
+    Add-Content $mdFullFile "$($Link)"
+    Add-Content $mdFullFile "  "
+
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
         
@@ -1296,6 +1412,12 @@ if($CitrixNetScaler){
 
     # Add Section Title
     Add-Content $mdFullFile "### Citrix NetScaler Test Results"
+
+    # Add Citrix Netscaler icon
+    $Path = "../images/citrixnetscaler.png"
+    $Link = "<img src=$($Path) alt=citrix-Netscaler>"
+    Add-Content $mdFullFile "$($Link)"
+    Add-Content $mdFullFile "  "
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
