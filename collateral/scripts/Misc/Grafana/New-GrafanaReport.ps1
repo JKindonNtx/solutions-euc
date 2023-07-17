@@ -8,7 +8,7 @@
 $SourceUri = "http://10.57.64.119:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=2023&var-Month=07&var-Comment=Windows_10_Profile_Citrix_UPM_-_ABE_On&var-Comment=Windows_10_Profile_Citrix_UPM_-_All_Off&var-Testname=afb1a2_8n_A6.5.3.5_AHV_1000V_1000U_KW&var-Testname=8dcaca_8n_A6.5.3.5_AHV_1000V_1000U_KW&var-Run=8dcaca_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run2&var-Run=afb1a2_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run2&var-Run=afb1a2_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run3&var-Run=8dcaca_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run3&var-Naming=Comment&var-DocumentName=ENG-Profile-Files-Baseline&editPanel=85"
 
 # Report Title - This is the Title that you want for your report
-$ReportTitle = "Citrix UPM"
+$ReportTitle = "Test"
 
 # Sections - Set the sections that you want in your report to $true 
 $BootInfo = $true
@@ -16,11 +16,11 @@ $LoginEnterpriseResults = $true
 $HostResources = $true
 $ClusterResources = $true
 $LoginTimes = $true
-$IndividualRuns = $false
+$IndividualRuns = $true
 $Applications = $true
 $VsiEuxMeasurements = $true
-$NutanixFiles = $false
-$CitrixNetScaler = $false
+$NutanixFiles = $true
+$CitrixNetScaler = $true
 
 # Script Variables - do not change
 
@@ -900,7 +900,7 @@ Add-Content $mdFullFile $TableLine
 
 foreach($Record in $TargetVMFiltered){
     $numcpus = $numcpus + "$($Record.numcpus) | "
-    $numcores = $CPUSnumcorespeed + "$($Record.numcores) | "
+    $numcores = $numcores + "$($Record.numcores) | "
     $memorygb = $memorygb + "$($Record.memorygb) GB | "
     $gpuprofile = $gpuprofile + "$($Record.gpuprofile) | "
     $secureboot = $secureboot + "$($Record.secureboot) | "
@@ -914,6 +914,7 @@ foreach($Record in $TargetVMFiltered){
     $toolsguestversion = $toolsguestversion + "$($Record.toolsguestversion) | "
     $optimizervendor = $optimizervendor + "$($Record.optimizervendor) | "
     $optimizerversion = $optimizerversion + "$($Record.optimizerversion) | "
+}
 
 Add-Content $mdFullFile $numcpus
 Add-Content $mdFullFile $numcores
@@ -922,13 +923,13 @@ Add-Content $mdFullFile $gpuprofile
 Add-Content $mdFullFile $secureboot
 Add-Content $mdFullFile $vtpm
 Add-Content $mdFullFile $credentialguard
-Add-Content $mdFullFile $targetos
+Add-Content $mdFullFile ($targetos).replace("_", " ")
 Add-Content $mdFullFile $targetosversion
 Add-Content $mdFullFile $desktopbrokeragentversion
-Add-Content $mdFullFile $officeversion
+Add-Content $mdFullFile ($officeversion).replace("_", " ")
 Add-Content $mdFullFile $clonetype
 Add-Content $mdFullFile $toolsguestversion
-Add-Content $mdFullFile $optimizervendor
+Add-Content $mdFullFile ($optimizervendor).replace("_", " ")
 Add-Content $mdFullFile $optimizerversion
 
 # Login Enterprise Specifics
@@ -966,6 +967,7 @@ foreach($Record in $LEspecsFiltered){
     $euxversion = $euxversion + "$($Record.euxversion) | "
     $vsivsimaxversion = $vsivsimaxversion + "$($Record.vsivsimaxversion) | "
     $workload = $workload + "$($Record.workload) | "
+}
 
 Add-Content $mdFullFile $vsiproductversion
 Add-Content $mdFullFile $euxversion
@@ -973,7 +975,7 @@ Add-Content $mdFullFile $vsivsimaxversion
 Add-Content $mdFullFile $workload
 
 # Test Specifics
-$TestFiltered = $TestDetailResults | Select measurement, infrasinglenodetest, numberofvms, numberofsessions, vsieuxsscore, vsieuxstate, vsivsimaxstate, comment | Sort-Object measurement | Get-Unique -AsString
+$TestFiltered = $TestDetailResults | Select measurement, infrasinglenodetest, numberofvms, numberofsessions, comment | Sort-Object measurement | Get-Unique -AsString
 
 Add-Content $mdFullFile "### Test Specifics"
 
@@ -1000,25 +1002,17 @@ Add-Content $mdFullFile $TableLine
 [string]$infrasinglenodetest = "| **Single Node Test** | "
 [string]$numberofvms = "| **Number Of VMs** | "
 [string]$numberofsessions = "| **Number Of Sessions** | "
-[string]$vsieuxsscore = "| **VSI EUX Score** | "
-[string]$vsieuxstate = "| **VSI EUX State** | "
-[string]$vsivsimaxstate = "| **VSI Max State** | "
 
 foreach($Record in $TestFiltered){
-    $infrasinglenodetest = $infrasinglenodetest + "$($Record.infrasinglenodetest) | "
+    $SN = ($Record.infrasinglenodetest).Trim()
+    $infrasinglenodetest = $infrasinglenodetest + "$($SN) | "
     $numberofvms = $numberofvms + "$($Record.numberofvms) | "
     $numberofsessions = $numberofsessions + "$($Record.numberofsessions) | "
-    $vsieuxsscore = $vsieuxsscore + "$($Record.vsieuxsscore) | "
-    $vsieuxstate = $vsieuxstate + "$($Record.vsieuxstate) | "
-    $vsivsimaxstate = $vsivsimaxstate + "$($Record.vsivsimaxstate) | "
 }
 
 Add-Content $mdFullFile $infrasinglenodetest
 Add-Content $mdFullFile $numberofvms
 Add-Content $mdFullFile $numberofsessions
-Add-Content $mdFullFile $vsieuxsscore
-Add-Content $mdFullFile $vsieuxstate
-Add-Content $mdFullFile $vsivsimaxstate
 
 
 # -----------------------------------------------------------------------------------------------------------------------
@@ -1085,11 +1079,8 @@ if($BootInfo){
         $TitleRaw = ($Image.BaseName).Replace("_", " ")
         $Title = (Get-Culture).TextInfo.ToTitleCase($TitleRaw)
         $Path = "../images/$($Image.BaseName).png"
-        $ImageLink = "![$($Title)]($($Path) ""$($Title)"")"
-        
-        #Add Content to document
-        #Add-Content $mdFullFile "### $($Title)"
-        Add-Content $mdFullFile "$($ImageLink)"
+        $Link = "<img src=$($Path) alt=$($Title) style=""border: 2px solid #7855FA;"">"
+        Add-Content $mdFullFile "$($Link)"
     }
 
 }
@@ -1113,11 +1104,8 @@ if($LoginEnterpriseResults){
         $TitleRaw = ($Image.BaseName).Replace("_", " ")
         $Title = (Get-Culture).TextInfo.ToTitleCase($TitleRaw)
         $Path = "../images/$($Image.BaseName).png"
-        $ImageLink = "![$($Title)]($($Path) ""$($Title)"")"
-        
-        #Add Content to document
-        #Add-Content $mdFullFile "### $($Title)"
-        Add-Content $mdFullFile "$($ImageLink)"
+        $Link = "<img src=$($Path) alt=$($Title) style=""border: 2px solid #7855FA;"">"
+        Add-Content $mdFullFile "$($Link)"
     }
 
 }
@@ -1141,11 +1129,8 @@ if($HostResources){
         $TitleRaw = ($Image.BaseName).Replace("_", " ")
         $Title = (Get-Culture).TextInfo.ToTitleCase($TitleRaw)
         $Path = "../images/$($Image.BaseName).png"
-        $ImageLink = "![$($Title)]($($Path) ""$($Title)"")"
-        
-        #Add Content to document
-        #Add-Content $mdFullFile "### $($Title)"
-        Add-Content $mdFullFile "$($ImageLink)"
+        $Link = "<img src=$($Path) alt=$($Title) style=""border: 2px solid #7855FA;"">"
+        Add-Content $mdFullFile "$($Link)"
     }
 
 }
@@ -1169,11 +1154,8 @@ if($ClusterResources){
         $TitleRaw = ($Image.BaseName).Replace("_", " ")
         $Title = (Get-Culture).TextInfo.ToTitleCase($TitleRaw)
         $Path = "../images/$($Image.BaseName).png"
-        $ImageLink = "![$($Title)]($($Path) ""$($Title)"")"
-        
-        #Add Content to document
-        #Add-Content $mdFullFile "### $($Title)"
-        Add-Content $mdFullFile "$($ImageLink)"
+        $Link = "<img src=$($Path) alt=$($Title) style=""border: 2px solid #7855FA;"">"
+        Add-Content $mdFullFile "$($Link)"
     }
 
 }
@@ -1197,11 +1179,8 @@ if($LoginTimes){
         $TitleRaw = ($Image.BaseName).Replace("_", " ")
         $Title = (Get-Culture).TextInfo.ToTitleCase($TitleRaw)
         $Path = "../images/$($Image.BaseName).png"
-        $ImageLink = "![$($Title)]($($Path) ""$($Title)"")"
-        
-        #Add Content to document
-        #Add-Content $mdFullFile "### $($Title)"
-        Add-Content $mdFullFile "$($ImageLink)"
+        $Link = "<img src=$($Path) alt=$($Title) style=""border: 2px solid #7855FA;"">"
+        Add-Content $mdFullFile "$($Link)"
     }
 
 }
@@ -1225,11 +1204,8 @@ if($IndividualRuns){
         $TitleRaw = ($Image.BaseName).Replace("_", " ")
         $Title = (Get-Culture).TextInfo.ToTitleCase($TitleRaw)
         $Path = "../images/$($Image.BaseName).png"
-        $ImageLink = "![$($Title)]($($Path) ""$($Title)"")"
-        
-        #Add Content to document
-        #Add-Content $mdFullFile "### $($Title)"
-        Add-Content $mdFullFile "$($ImageLink)"
+        $Link = "<img src=$($Path) alt=$($Title) style=""border: 2px solid #7855FA;"">"
+        Add-Content $mdFullFile "$($Link)"
     }
 
 }
@@ -1253,11 +1229,8 @@ if($Applications){
         $TitleRaw = ($Image.BaseName).Replace("_", " ")
         $Title = (Get-Culture).TextInfo.ToTitleCase($TitleRaw)
         $Path = "../images/$($Image.BaseName).png"
-        $ImageLink = "![$($Title)]($($Path) ""$($Title)"")"
-        
-        #Add Content to document
-        #Add-Content $mdFullFile "### $($Title)"
-        Add-Content $mdFullFile "$($ImageLink)"
+        $Link = "<img src=$($Path) alt=$($Title) style=""border: 2px solid #7855FA;"">"
+        Add-Content $mdFullFile "$($Link)"
     }
 
 }
@@ -1281,11 +1254,8 @@ if($VsiEuxMeasurements){
         $TitleRaw = ($Image.BaseName).Replace("_", " ")
         $Title = (Get-Culture).TextInfo.ToTitleCase($TitleRaw)
         $Path = "../images/$($Image.BaseName).png"
-        $ImageLink = "![$($Title)]($($Path) ""$($Title)"")"
-        
-        #Add Content to document
-        #Add-Content $mdFullFile "### $($Title)"
-        Add-Content $mdFullFile "$($ImageLink)"
+        $Link = "<img src=$($Path) alt=$($Title) style=""border: 2px solid #7855FA;"">"
+        Add-Content $mdFullFile "$($Link)"
     }
     
 }
@@ -1309,11 +1279,8 @@ if($NutanixFiles){
         $TitleRaw = ($Image.BaseName).Replace("_", " ")
         $Title = (Get-Culture).TextInfo.ToTitleCase($TitleRaw)
         $Path = "../images/$($Image.BaseName).png"
-        $ImageLink = "![$($Title)]($($Path) ""$($Title)"")"
-        
-        #Add Content to document
-        #Add-Content $mdFullFile "### $($Title)"
-        Add-Content $mdFullFile "$($ImageLink)"
+        $Link = "<img src=$($Path) alt=$($Title) style=""border: 2px solid #7855FA;"">"
+        Add-Content $mdFullFile "$($Link)"
     }
 
 }
@@ -1337,11 +1304,8 @@ if($CitrixNetScaler){
         $TitleRaw = ($Image.BaseName).Replace("_", " ")
         $Title = (Get-Culture).TextInfo.ToTitleCase($TitleRaw)
         $Path = "../images/$($Image.BaseName).png"
-        $ImageLink = "![$($Title)]($($Path) ""$($Title)"")"
-        
-        #Add Content to document
-        #Add-Content $mdFullFile "### $($Title)"
-        Add-Content $mdFullFile "$($ImageLink)"
+        $Link = "<img src=$($Path) alt=$($Title) style=""border: 2px solid #7855FA;"">"
+        Add-Content $mdFullFile "$($Link)"
     }
 
 }
@@ -1350,12 +1314,12 @@ if($CitrixNetScaler){
 # Section - Conclusion
 # -----------------------------------------------------------------------------------------------------------------------
 
-$BoilerPlateConclusion = @"
-This document is part of the Nutanix Solutions Architecture Artifacts. We wrote it for individuals responsible for designing, building, managing, testing and supporting Nutanix infrastructures. Readers should be familiar with Nutanix and Citrix products as well as familiar with Login Enterprise testing.
-"@
+# $BoilerPlateConclusion = @"
+# This document is part of the Nutanix Solutions Architecture Artifacts. We wrote it for individuals responsible for designing, building, managing, testing and supporting Nutanix infrastructures. Readers should be familiar with Nutanix and Citrix products as well as familiar with Login Enterprise testing.
+# "@
 
-Add-Content $mdFullFile "## Conclusion"
-Add-Content $mdFullFile "$($BoilerPlateConclusion)"
+# Add-Content $mdFullFile "## Conclusion"
+# Add-Content $mdFullFile "$($BoilerPlateConclusion)"
 
 # -----------------------------------------------------------------------------------------------------------------------
 # Section - Appendix
