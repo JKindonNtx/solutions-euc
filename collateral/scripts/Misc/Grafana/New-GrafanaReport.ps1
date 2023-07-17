@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------------------------------------------------
-# Section - Define Script Variables
+# Section - Define Script Variables - to do - PDF / Logo image / Script Params and Switches for false items
 # -----------------------------------------------------------------------------------------------------------------------
 
 # User Input Script Variables
@@ -11,16 +11,16 @@ $SourceUri = "http://10.57.64.119:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&va
 $ReportTitle = "Test"
 
 # Sections - Set the sections that you want in your report to $true 
-$BootInfo = $true
+$BootInfo = $false
 $LoginEnterpriseResults = $true
 $HostResources = $true
 $ClusterResources = $true
 $LoginTimes = $true
-$IndividualRuns = $true
+$IndividualRuns = $false
 $Applications = $true
 $VsiEuxMeasurements = $true
-$NutanixFiles = $true
-$CitrixNetScaler = $true
+$NutanixFiles = $false
+$CitrixNetScaler = $false
 
 # Script Variables - do not change
 
