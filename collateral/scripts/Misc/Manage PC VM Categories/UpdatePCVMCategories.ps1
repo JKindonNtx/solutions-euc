@@ -544,20 +544,21 @@ StartIteration
 Write-Log -Message "[Script Params] Logging Script Parameter configurations" -Level Info
 Write-Log -Message "[Script Params] Script LogPath = $($LogPath)" -Level Info
 Write-Log -Message "[Script Params] Script LogRollover = $($LogRollover)" -Level Info
-Write-Log -Message "[Script Params] Script pc_source = $($pc_source)" -Level Info
-Write-Log -Message "[Script Params] Script UseCustomCredentialFile = $($UseCustomCredentialFile)" -Level Info
-Write-Log -Message "[Script Params] Script CredPath = $($CredPath)" -Level Info
-Write-Log -Message "[Script Params] Script Category = $($Category)" -Level Info
-Write-Log -Message "[Script Params] Script Value = $($Value)" -Level Info
-Write-Log -Message "[Script Params] Script IncludeList = $($IncludeList)" -Level Info
-Write-Log -Message "[Script Params] Script VM_Pattern_Match = $($VM_Pattern_Match)" -Level Info
-Write-Log -Message "[Script Params] Script ExclusionList = $($ExclusionList)" -Level Info
-Write-Log -Message "[Script Params] Script Mode = $($Mode)" -Level Info
-Write-Log -Message "[Script Params] Script SleepTime = $($SleepTime)" -Level Info
-Write-Log -Message "[Script Params] Script VMCount = $($VMCount)" -Level Info
 Write-Log -Message "[Script Params] Script APICallVerboseLogging = $($APICallVerboseLogging)" -Level Info
 Write-Log -Message "[Script Params] Script Whatif = $($Whatif)" -Level Info
 Write-Log -Message "[Script Params] Script async = $($async)" -Level Info
+Write-Log -Message "[Script Params] Script SleepTime = $($SleepTime)" -Level Info
+Write-Log -Message "[Script Params] Nutanix pc_source = $($pc_source)" -Level Info
+Write-Log -Message "[Script Params] NUtanix UseCustomCredentialFile = $($UseCustomCredentialFile)" -Level Info
+Write-Log -Message "[Script Params] Nutanix CredPath = $($CredPath)" -Level Info
+Write-Log -Message "[Script Params] Category Name = $($Category)" -Level Info
+Write-Log -Message "[Script Params] Category Value = $($Value)" -Level Info
+Write-Log -Message "[Script Params] Category Assignment Mode = $($Mode)" -Level Info
+Write-Log -Message "[Script Params] VM IncludeList = $($IncludeList)" -Level Info
+Write-Log -Message "[Script Params] VM VM_Pattern_Match = $($VM_Pattern_Match)" -Level Info
+Write-Log -Message "[Script Params] VM ExclusionList = $($ExclusionList)" -Level Info
+Write-Log -Message "[Script Params] VM Retrievel Count = $($VMCount)" -Level Info
+
 #endregion script parameter reporting
 
 #check PoSH version
