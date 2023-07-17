@@ -771,10 +771,91 @@ Add-Content $mdFullFile $Nodes
 Add-Content $mdFullFile $TotalNodes
 
 # Infra software specifics
+$InfraFiltered = $TestDetailResults | Select measurement, infraaosversion, infrafullversion, infrahypervisorbrand, infrahypervisortype, infrahypervisorversion, comment | Sort-Object measurement | Get-Unique -AsString
 
+Add-Content $mdFullFile "### Infrastructure Specifics"
+
+$HeaderLine = ""
+$TableLine = ""
+for ($i = 0; $i -lt (($InfraFiltered).Count + 1) ; $i++)
+{    
+    if($i -eq 0){
+        $HeaderLine = "| "
+        $TableLine = "| --- "
+    } else {
+        $Comment = ($InfraFiltered[$i - 1].comment).replace("_", " ")
+        $HeaderLine = $HeaderLine + "| $($Comment) "
+        $TableLine = $TableLine + "| --- "
+        if($i -eq ($InfraFiltered.Count)){
+            $HeaderLine = $HeaderLine + "|"
+            $TableLine = $TableLine + "|"
+        }
+    }
+}
+Add-Content $mdFullFile $HeaderLine
+Add-Content $mdFullFile $TableLine
+
+[string]$infraaosversion = "| **OS Version** | "
+[string]$infrafullversion = "| **OS Full Version** | "
+[string]$infrahypervisorbrand = "| **Hypervisor Brand** | "
+[string]$infrahypervisortype = "| **Hypervisor Type** | "
+[string]$infrahypervisorversion = "| **Hypervisor Version** | "
+
+foreach($Record in $InfraFiltered){
+    $infraaosversion = $infraaosversion + "$($Record.infraaosversion) | "
+    $infrafullversion = $infrafullversion + "$($Record.infrafullversion) | "
+    $infrahypervisorbrand = $infrahypervisorbrand + "$($Record.infrahypervisorbrand) | "
+    $infrahypervisortype = $infrahypervisortype + "$($Record.infrahypervisortype) | "
+    $infrahypervisorversion = $infrahypervisorversion + "$($Record.infrahypervisorversion) | "
+}
+
+Add-Content $mdFullFile $infraaosversion
+Add-Content $mdFullFile $infrafullversion
+Add-Content $mdFullFile $infrahypervisorbrand
+Add-Content $mdFullFile $infrahypervisortype
+Add-Content $mdFullFile $infrahypervisorversion
 
 # Broker Specifics
+$BrokerFiltered = $TestDetailResults | Select measurement, deliverytype, desktopbrokerversion, sessionssupport, sessioncfg, comment | Sort-Object measurement | Get-Unique -AsString
 
+Add-Content $mdFullFile "### Brokering Specifics"
+
+$HeaderLine = ""
+$TableLine = ""
+for ($i = 0; $i -lt (($BrokerFiltered).Count + 1) ; $i++)
+{    
+    if($i -eq 0){
+        $HeaderLine = "| "
+        $TableLine = "| --- "
+    } else {
+        $Comment = ($BrokerFiltered[$i - 1].comment).replace("_", " ")
+        $HeaderLine = $HeaderLine + "| $($Comment) "
+        $TableLine = $TableLine + "| --- "
+        if($i -eq ($BrokerFiltered.Count)){
+            $HeaderLine = $HeaderLine + "|"
+            $TableLine = $TableLine + "|"
+        }
+    }
+}
+Add-Content $mdFullFile $HeaderLine
+Add-Content $mdFullFile $TableLine
+
+[string]$deliverytype = "| **Delivery Type** | "
+[string]$desktopbrokerversion = "| **Desktop Broker Version** | "
+[string]$sessionssupport = "| **Session Type** | "
+[string]$sessioncfg = "| **Session Config** | "
+
+foreach($Record in $BrokerFiltered){
+    $deliverytype = $deliverytype + "$($Record.deliverytype) | "
+    $desktopbrokerversion = $desktopbrokerversion + "$($Record.desktopbrokerversion) | "
+    $sessionssupport = $sessionssupport + "$($Record.sessionssupport) | "
+    $sessioncfg = $sessioncfg + "$($Record.sessioncfg) | "
+}
+
+Add-Content $mdFullFile $deliverytype
+Add-Content $mdFullFile $desktopbrokerversion
+Add-Content $mdFullFile $sessionssupport
+Add-Content $mdFullFile $sessioncfg
 
 # Target VM Specifics
 
@@ -854,7 +935,58 @@ Add-Content $mdFullFile $optimizerversion
 
 
 # Test Specifics
+$TestFiltered = $TestDetailResults | Select measurement, infrasinglenodetest, numberofvms, numberofsessions, vsiactivesessioncount, vsieuxsscore, vsieuxstate, vsivsimax, vsivsimaxstate, comment | Sort-Object measurement | Get-Unique -AsString
 
+Add-Content $mdFullFile "### Test Specifics"
+
+$HeaderLine = ""
+$TableLine = ""
+for ($i = 0; $i -lt (($TestFiltered).Count + 1) ; $i++)
+{    
+    if($i -eq 0){
+        $HeaderLine = "| "
+        $TableLine = "| --- "
+    } else {
+        $Comment = ($TestFiltered[$i - 1].comment).replace("_", " ")
+        $HeaderLine = $HeaderLine + "| $($Comment) "
+        $TableLine = $TableLine + "| --- "
+        if($i -eq ($TestFiltered.Count)){
+            $HeaderLine = $HeaderLine + "|"
+            $TableLine = $TableLine + "|"
+        }
+    }
+}
+Add-Content $mdFullFile $HeaderLine
+Add-Content $mdFullFile $TableLine
+
+[string]$infrasinglenodetest = "| **Single Node Test** | "
+[string]$numberofvms = "| **Number Of VMs** | "
+[string]$numberofsessions = "| **Number Of Sessions** | "
+[string]$vsiactivesessioncount = "| **VSI Active Session Count** | "
+[string]$vsieuxsscore = "| **VSI EUX Score** | "
+[string]$vsieuxstate = "| **VSI EUX State** | "
+[string]$vsivsimax = "| **VSI Max** | "
+[string]$vsivsimaxstate = "| **VSI Max State** | "
+
+foreach($Record in $TestFiltered){
+    $infrasinglenodetest = $infrasinglenodetest + "$($Record.infrasinglenodetest) | "
+    $numberofvms = $numberofvms + "$($Record.numberofvms) | "
+    $numberofsessions = $numberofsessions + "$($Record.numberofsessions) | "
+    $vsiactivesessioncount = $vsiactivesessioncount + "$($Record.vsiactivesessioncount) | "
+    $vsieuxsscore = $vsieuxsscore + "$($Record.vsieuxsscore) | "
+    $vsieuxstate = $vsieuxstate + "$($Record.vsieuxstate) | "
+    $vsivsimax = $vsivsimax + "$($Record.vsivsimax) | "
+    $vsivsimaxstate = $vsivsimaxstate + "$($Record.vsivsimaxstate) | "
+}
+
+Add-Content $mdFullFile $infrasinglenodetest
+Add-Content $mdFullFile $numberofvms
+Add-Content $mdFullFile $numberofsessions
+Add-Content $mdFullFile $vsiactivesessioncount
+Add-Content $mdFullFile $vsieuxsscore
+Add-Content $mdFullFile $vsieuxstate
+Add-Content $mdFullFile $vsivsimax
+Add-Content $mdFullFile $vsivsimaxstate
 
 
 # -----------------------------------------------------------------------------------------------------------------------
@@ -868,6 +1000,43 @@ Add-Content $mdFullFile "## Test Results"
 
 # Boot Params - before boot info screenshots
 
+$BootFiltered = $TestDetailResults | Select measurement, maxabsoluteactiveactions, maxabsolutenewactionsperminute, maxpercentageactiveactions, comment | Sort-Object measurement | Get-Unique -AsString
+
+Add-Content $mdFullFile "### Boot Parameters"
+
+$HeaderLine = ""
+$TableLine = ""
+for ($i = 0; $i -lt (($BootFiltered).Count + 1) ; $i++)
+{    
+    if($i -eq 0){
+        $HeaderLine = "| "
+        $TableLine = "| --- "
+    } else {
+        $Comment = ($BootFiltered[$i - 1].comment).replace("_", " ")
+        $HeaderLine = $HeaderLine + "| $($Comment) "
+        $TableLine = $TableLine + "| --- "
+        if($i -eq ($BootFiltered.Count)){
+            $HeaderLine = $HeaderLine + "|"
+            $TableLine = $TableLine + "|"
+        }
+    }
+}
+Add-Content $mdFullFile $HeaderLine
+Add-Content $mdFullFile $TableLine
+
+[string]$maxabsoluteactiveactions = "| **Max Absolute Active Actions** | "
+[string]$maxabsolutenewactionsperminute = "| **Max Absolute Actions Per Minute** | "
+[string]$maxpercentageactiveactions = "| **Max Percentage Active Actions** | "
+
+foreach($Record in $BootFiltered){
+    $maxabsoluteactiveactions = $maxabsoluteactiveactions + "$($Record.maxabsoluteactiveactions) | "
+    $maxabsolutenewactionsperminute = $maxabsolutenewactionsperminute + "$($Record.maxabsolutenewactionsperminute) | "
+    $maxpercentageactiveactions = $maxpercentageactiveactions + "$($Record.maxpercentageactiveactions) | "
+}
+
+Add-Content $mdFullFile $maxabsoluteactiveactions
+Add-Content $mdFullFile $maxabsolutenewactionsperminute
+Add-Content $mdFullFile $maxpercentageactiveactions
 
 # Execute if Option Enabled
 if($BootInfo){
