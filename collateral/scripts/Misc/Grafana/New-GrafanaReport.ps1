@@ -5,10 +5,10 @@
 # User Input Script Variables
 
 # Source Uri - This is the Uri for the Grafana Dashboard you want the report for
-$SourceUri = "http://10.57.64.119:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=2023&var-Month=07&var-Comment=Windows_10_Profile_Citrix_UPM_-_ABE_On&var-Comment=Windows_10_Profile_Citrix_UPM_-_All_Off&var-Testname=afb1a2_8n_A6.5.3.5_AHV_1000V_1000U_KW&var-Testname=8dcaca_8n_A6.5.3.5_AHV_1000V_1000U_KW&var-Run=8dcaca_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run2&var-Run=afb1a2_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run2&var-Run=afb1a2_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run3&var-Run=8dcaca_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run3&var-Naming=Comment&var-DocumentName=ENG-Profile-Files-Baseline&editPanel=85"
+$SourceUri = "http://10.57.64.119:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=2023&var-Month=07&var-DocumentName=ENG-AMD-AHV67-CG-Test3EUX&var-Comment=1n-AMD-AHV-W10-CG&var-Comment=1n-AMD-AHV-W10-CG-INVTSC&var-Comment=1n-AMD-AHV-W10-noCG&var-Testname=76bc80_1n_A6.7_AHV_135V_135U_KW&var-Testname=1b8b90_1n_A6.7_AHV_135V_135U_KW&var-Testname=928302_1n_A6.7_AHV_135V_135U_KW&var-Run=76bc80_1n_A6.7_AHV_135V_135U_KW_Run1&var-Run=928302_1n_A6.7_AHV_135V_135U_KW_Run1&var-Run=1b8b90_1n_A6.7_AHV_135V_135U_KW_Run2&var-Naming=Comment"
 
 # Report Title - This is the Title that you want for your report
-$ReportTitle = "Test"
+$ReportTitle = "Credential Guard on AMD"
 
 # Sections - Set the sections that you want in your report to $true 
 $BootInfo = $true
@@ -1018,7 +1018,8 @@ Add-Content $mdFullFile $TableLine
 [string]$workload = "| **Workload** | "
 
 foreach($Record in $LEspecsFiltered){
-    $vsiproductversion = $vsiproductversion + "$($Record.vsiproductversion) | "
+    $vsiversion = ($Record.vsiproductversion).Trim()
+    $vsiproductversion = $vsiproductversion + "$($vsiversion) | "
     $euxversion = $euxversion + "$($Record.euxversion) | "
     $vsivsimaxversion = $vsivsimaxversion + "$($Record.vsivsimaxversion) | "
     $workload = $workload + "$($Record.workload) | "
