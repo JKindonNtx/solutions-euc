@@ -898,7 +898,7 @@ Add-Content $mdFullFile $TableLine
 [string]$optimizervendor = "| **Optimizer Vendor** | "
 [string]$optimizerversion = "| **Optimizer Version** | "
 
-foreach($Record in $HardwareFiltered){
+foreach($Record in $TargetVMFiltered){
     $numcpus = $numcpus + "$($Record.numcpus) | "
     $numcores = $CPUSnumcorespeed + "$($Record.numcores) | "
     $memorygb = $memorygb + "$($Record.memorygb) GB | "
@@ -931,8 +931,46 @@ Add-Content $mdFullFile $toolsguestversion
 Add-Content $mdFullFile $optimizervendor
 Add-Content $mdFullFile $optimizerversion
 
-# LE Specifics
+# Login Enterprise Specifics
 
+$LEspecsFiltered = $TestDetailResults | Select measurement, vsiproductversion, euxversion, vsivsimaxversion, workload, comment | Sort-Object measurement | Get-Unique -AsString
+Add-Content $mdFullFile "### Login Enterprise Specifics"
+
+$HeaderLine = ""
+$TableLine = ""
+for ($i = 0; $i -lt (($LEspecsFiltered).Count + 1) ; $i++)
+{    
+    if($i -eq 0){
+        $HeaderLine = "| "
+        $TableLine = "| --- "
+    } else {
+        $Comment = ($LEspecsFiltered[$i - 1].comment).replace("_", " ")
+        $HeaderLine = $HeaderLine + "| $($Comment) "
+        $TableLine = $TableLine + "| --- "
+        if($i -eq ($LEspecsFiltered.Count)){
+            $HeaderLine = $HeaderLine + "|"
+            $TableLine = $TableLine + "|"
+        }
+    }
+}
+Add-Content $mdFullFile $HeaderLine
+Add-Content $mdFullFile $TableLine
+
+[string]$vsiproductversion = "| **Product Version** | "
+[string]$euxversion = "| **EUX Version** | "
+[string]$vsivsimaxversion = "| **VSIMax Version** | "
+[string]$workload = "| **Workload** | "
+
+foreach($Record in $LEspecsFiltered){
+    $vsiproductversion = $vsiproductversion + "$($Record.vsiproductversion) | "
+    $euxversion = $euxversion + "$($Record.euxversion) | "
+    $vsivsimaxversion = $vsivsimaxversion + "$($Record.vsivsimaxversion) | "
+    $workload = $workload + "$($Record.workload) | "
+
+Add-Content $mdFullFile $vsiproductversion
+Add-Content $mdFullFile $euxversion
+Add-Content $mdFullFile $vsivsimaxversion
+Add-Content $mdFullFile $workload
 
 # Test Specifics
 $TestFiltered = $TestDetailResults | Select measurement, infrasinglenodetest, numberofvms, numberofsessions, vsiactivesessioncount, vsieuxsscore, vsieuxstate, vsivsimax, vsivsimaxstate, comment | Sort-Object measurement | Get-Unique -AsString
