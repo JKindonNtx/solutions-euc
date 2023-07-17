@@ -5,7 +5,7 @@
 # User Input Script Variables
 
 # Source Uri - This is the Uri for the Grafana Dashboard you want the report for
-$SourceUri = "http://10.57.64.119:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=2023&var-Month=07&var-DocumentName=ENG-Profile-Files-Baseline&var-Comment=Windows_10_Profile_Citrix_UPM_-_All_Off&var-Comment=Windows_10_Profile_Citrix_UPM_No_Cache_-_All_Off&var-Testname=049fd6_8n_A6.5.3.5_AHV_1000V_1000U_KW&var-Testname=8aa73e_8n_A6.5.3.5_AHV_1000V_1000U_KW&var-Run=049fd6_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run1&var-Run=8aa73e_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run1&var-Naming=Comment"
+$SourceUri = "http://10.57.64.119:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=2023&var-Month=07&var-Comment=Windows_10_Profile_Citrix_UPM_-_ABE_On&var-Comment=Windows_10_Profile_Citrix_UPM_-_All_Off&var-Testname=afb1a2_8n_A6.5.3.5_AHV_1000V_1000U_KW&var-Testname=8dcaca_8n_A6.5.3.5_AHV_1000V_1000U_KW&var-Run=8dcaca_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run2&var-Run=afb1a2_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run2&var-Run=afb1a2_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run3&var-Run=8dcaca_8n_A6.5.3.5_AHV_1000V_1000U_KW_Run3&var-Naming=Comment&var-DocumentName=ENG-Profile-Files-Baseline&editPanel=85"
 
 # Report Title - This is the Title that you want for your report
 $ReportTitle = "Citrix UPM"
@@ -20,13 +20,8 @@ $IndividualRuns = $false
 $Applications = $true
 $VsiEuxMeasurements = $true
 $NutanixFiles = $false
+$CitrixNetScaler = $false
 
-
-if($SkipNetScaler){
-    $CitrixNetScaler = $false
-} else {
-    $CitrixNetScaler = $false
-}
 # Script Variables - do not change
 
 # Influx DB Uri and Token
@@ -44,6 +39,72 @@ In addition to desktop and application performance reliability, you get unlimite
 $BoilerPlateIntroduction = @"
 This document is part of the Nutanix Solutions Architecture Artifacts. We wrote it for individuals responsible for designing, building, managing, testing and supporting Nutanix infrastructures. Readers should be familiar with Nutanix and Citrix products as well as familiar with Login Enterprise testing.
 "@
+
+$BoilerPlateLE = @'
+### Login Enterprise
+
+[Login VSI](http://www.loginvsi.com/) provides the industry-standard virtual desktop testing platform, Login Enterprise, which helps organizations benchmark and validate the performance and scalability of their virtual desktop solutions. With Login Enterprise, IT teams can reliably measure the effects of changes to their virtual desktop infrastructure on end-user experience and identify performance issues before they impact the business. Login Enterprise uses synthetic user workloads to simulate real-world user behavior, so IT teams can measure the responsiveness and performance of their virtual desktop environment under different scenarios. Login Enterprise has two built-in workloads: The [task worker](https://support.loginvsi.com/hc/en-us/articles/6949195003932-Task-Worker-Out-of-the-box) and [knowledge worker](https://support.loginvsi.com/hc/en-us/articles/6949191203740-Knowledge-Worker-Out-of-the-box).
+
+<note>You can't compare the Login Enterprise workloads to the workloads included in the previous edition of Login VSI. The Login Enterprise workloads are much more resource intensive.</note>
+
+The following table includes both workloads available in Login Enterprise.
+
+_Table: Login Enterprise Workloads_
+
+| **Task Worker** | **Knowledge Worker** |
+| --- | --- |
+| Light | Medium |
+| 2 vCPU | 2 / 4 vCPU |
+| 2 / 3 apps | 4 / 6 apps |
+| No video | 720p video |
+
+#### Login Enterprise EUX Score
+
+According to the [Login Enterprise documentation](https://support.loginvsi.com/hc/en-us/articles/4408717958162-Login-Enterprise-EUX-Score-), the EUX (End User Experience) Score represents the performance of any Windows machine (virtual, physical, cloud, or on-premises). The score ranges from 0 to 10 and measures the experience of one (minimum) or many virtual users.
+
+<note>As you add more users to your VDI platform, expect your EUX Score to drop. As more users demand a greater share of a VDI system’s shared resources, performance and user experience decrease.</note>
+
+We interpret EUX Scores with the grades in the following table.
+
+_Table: EUX Score Grades_
+
+| **EUX Score** | **Grade** |
+| --- | --- |
+| 1 / 5 | Bad |
+| 5 /  6 | Poor |
+| 6 / 7 | Average |
+| 7 / 8 | Good |
+| 8 / 10 | Excellent |
+
+#### Login Enterprise VSImax
+
+For our test results, we used the 2023 EUX Score's version of VSImax. In this version, a number of triggers determine the VSImax (or the maximum number of users). These triggers are CPU- and disk-related operations and can determine whether the user experience is acceptable. EUX Scores below 5.5 are one example of a trigger.
+
+We found that we could use this version of the VSImax to do an A/B comparison, but the VSImax on its own doesn't represent the maximum user density accurately. For a more realistic maximum number of users, we suggest using the number of active users at the moment when the EUX Score is 85 to 90 percent of the initial EUX Score.
+
+<note>In the 2023 release of EUX Score, the disk-related operations of EUX have an unrealistic impact on storage. In our testing, we discovered that the IOPS are up to 10 times higher when the EUX metrics are enabled, with a read-to-write ratio of 70:30 percent during the steady state. In reality, a knowledge worker has a much lower I/O profile and a read-to-write ratio of 20 percent to 30 percent reads and 70 percent to 80 percent writes.</note>
+
+#### Login Enterprise Metrics
+
+We quantified the evaluation using the following metrics:
+
+- EUX base: The average EUX Score of the first 5 minutes.
+- EUX Score: The average EUX Score for the entire test.
+- Steady State Score: The average EUX Score starting 5 minutes after the final logon to the end of the test.
+- Average logon time: The average user logon time.
+- VSImax: If reached, the maximum value of sessions launched before the VSI Index Average reaches one of the thresholds.
+- Maximum CPU usage: The maximum observed CPU usage during the test.
+- CPU usage during steady state: The average CPU usage during the steady state, or the state when all the sessions are active and using applications. This state simulates user activity during the entire day, rather than just during the logon period.
+
+The Baseline and Steady State EUX Scores provide additional dimensions to the simulated user experience. The Standard EUX Score provides a single score for the entire test duration, including the login period and the application interaction period. As you add more users to the system you're testing, it works harder, and the user experience diminishes. The Steady State and Baseline EUX Scores describe the user experience during specific periods of the test run.
+
+Baseline EUX Score
+: The Baseline EUX Score represents the best possible performance of the system and is the average EUX Score of the best 5 minutes of the test. This score indicates how the system performs when it's not under stress. Typically you capture the Baseline EUX Score at the beginning of the test before the system is fully loaded.
+
+Steady State EUX Score
+: The steady state represents the period after all users have logged on (login storm) and the system has started to normalize. The Steady State EUX Score is the average of the EUX Scores captured between 5 minutes after all sessions have logged in and at the end of the test.
+
+'@
 
 # -----------------------------------------------------------------------------------------------------------------------
 # Section - Get Data From Influx for Report
@@ -143,6 +204,20 @@ foreach($Line in $SourceSplit){
     }
 }
 
+# Get Run Information from the Source Uri
+$i = 0
+foreach($Line in $SourceSplit){
+    $LineSplit = $Line.Split("=")
+    if($LineSplit[0] -eq "var-Run"){
+        If($i -eq 0){
+            $TestRun = $LineSplit[1]
+            $i++
+        } else {
+            $TestRun = $TestRun + "|" + $LineSplit[1]
+        }
+    }
+}
+
 # Format Data for Influx Query
 $FormattedBucket = $($Bucket).replace('.','\.')
 $FormattedYear = $($Year).replace('.','\.')
@@ -150,6 +225,7 @@ $FormattedMonth = $($Month).replace('.','\.')
 $FormattedDocumentName = $($DocumentName).replace('.','\.')
 $FormattedComment = $($Comment).replace('.','\.')
 $FormattedTestname = $($Testname).replace('.','\.')
+$FormattedTestRun = $($TestRun).replace('.','\.')
 
 # Build Body
 $Body = @"
@@ -160,6 +236,7 @@ from(bucket:"$($FormattedBucket)")
   |> filter(fn: (r) => r["DocumentName"] =~ /^$($FormattedDocumentName)$/ )
   |> filter(fn: (r) => r["Comment"] =~ /^$($FormattedComment)$/ )
   |> filter(fn: (r) => r["_measurement"] =~ /^$($FormattedTestname)$/ )
+  |> filter(fn: (r) => r["InfraTestName"] =~ /^$($FormattedTestRun)$/ )
   |> filter(fn: (r) => r._field == "EUXScore")
   |> last()
   |> map(fn: (r) => ({measurement: r._measurement, run: r.Run, deliverytype: r.DeliveryType, desktopbrokerversion: r.DesktopBrokerVersion, desktopbrokeragentversion: r.DesktopBrokerAgentVersion, clonetype: r.CloneType, sessioncfg: r.SessionCfg, sessionssupport: r.SessionsSupport, nodecount: r.NodeCount, workload: r.Workload, numcpus: r.NumCPUs, numcores: r.NumCores, memorygb: r.MemoryGB, hostgpus: r.HostGPUs, secureboot: r.SecureBoot, vtpm: r.vTPM, credentialguard: r.CredentialGuard, numberofsessions: r.NumberOfSessions, numberofvms: r.NumberOfVMs, targetos: r.TargetOS, targetosversion: r.TargetOSVersion, officeversion: r.OfficeVersion, toolsguestversion: r.ToolsGuestVersion, optimizervendor: r.OptimizerVendor, optimizerversion: r.OptimizationsVersion, gpuprofile: r.GPUProfile, comment: r.Comment, infrassdcount: r.InfraSSDCount, infrasinglenodetest: r.InfraSingleNodeTest, infrahardwaretype: r.InfraHardwareType, infrafullversion: r.InfraFullVersion, infracpubrand: r.InfraCPUBrand, infracputype: r.InfraCPUType, infraaosversion: r.InfraAOSVersion, infrahypervisorbrand: r.InfraHypervisorBrand, infrahypervisorversion: r.InfraHypervisorVersion, infrahypervisortype: r.InfraHypervisorType, infrabios: r.InfraBIOS, infratotalnodes: r.InfraTotalNodes, infracpucores: r.InfraCPUCores, infracputhreadcount: r.InfraCPUThreadCount, infracpusocketcount: r.InfraCPUSocketCount, infracpuspeed: r.InfraCPUSpeed, inframemorygb: r.InfraMemoryGB, bootstart: r.BootStart, boottime: r.BootTime, maxabsoluteactiveactions: r.MaxAbsoluteActiveActions, maxabsolutenewactionsperminute: r.MaxAbsoluteNewActionsPerMinute, maxpercentageactiveactions: r.MaxPercentageActiveActions, vsiproductversion: r.VSIproductVersion, euxversion: r.VSIEUXversion, vsiactivesessioncount: r.VSIactivesessionCount, vsieuxscore: r.VSIEUXscore, vsieuxstate: r.VSIEUXstate, vsivsimax: r.VSIvsiMax, vsivsimaxstate: r.VSIvsiMaxstate, vsivsimaxversion: r.VSIvsiMaxversion}))
@@ -236,7 +313,7 @@ if($BootInfo){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=$($endtime)&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=$($endtime)&panelId=$($Panel)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -275,7 +352,7 @@ if($LoginEnterpriseResults){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -314,7 +391,7 @@ if($HostResources){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -347,7 +424,7 @@ if($ClusterResources){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -380,7 +457,7 @@ if($LoginTimes){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -415,7 +492,7 @@ if($IndividualRuns){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -449,7 +526,7 @@ if($Applications){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -493,7 +570,7 @@ if($VsiEuxMeasurements){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -530,7 +607,7 @@ if($NutanixFiles){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -563,7 +640,7 @@ if($CitrixNetScaler){
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         
         # Append the Rendering Uri to the Base Uri
-        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1000&height=600&tz=Atlantic%2FCape_Verde"
+        $RenderUri = $UpdatedUri + "&from=1672534800000&to=1672538820000&panelId=$($Panel)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
         
         # Get output Filename
         switch ($Panel)
@@ -601,16 +678,17 @@ if(!(Test-Path -Path $mdFullFile)){
 # -----------------------------------------------------------------------------------------------------------------------
 
 # Create the Title and Introduction
-Add-Content $mdFullFile "# Executive Summary"
+Add-Content $mdFullFile "# $($ReportTitle)"
+Add-Content $mdFullFile "## Executive Summary"
 Add-Content $mdFullFile "$($BoilerPlateExecSummary)"
-Add-Content $mdFullFile "# Introduction"
-Add-Content $mdFullFile "## Audience"
+Add-Content $mdFullFile "## Introduction"
+Add-Content $mdFullFile "### Audience"
 Add-Content $mdFullFile "$($BoilerPlateIntroduction)"
-Add-Content $mdFullFile "## Purpose"
+Add-Content $mdFullFile "### Purpose"
 Add-Content $mdFullFile "This document covers the following subject areas:"
 Add-Content $mdFullFile " - Test Detail Specifics."
 Add-Content $mdFullFile " - Test Results for $($ReportTitle)."
-Add-Content $mdFullFile "## Document Version History "
+Add-Content $mdFullFile "### Document Version History "
 Add-Content $mdFullFile "| Version Number | Published | Notes |"
 Add-Content $mdFullFile "| :---: | --- | --- |"
 $Month = get-date -format "MM"
@@ -621,54 +699,82 @@ Add-Content $mdFullFile "| 1.0 | $($ReportMonth) $($ReportYear) | Original publi
 # -----------------------------------------------------------------------------------------------------------------------
 # Section - Test Detail Specifics
 # -----------------------------------------------------------------------------------------------------------------------
-Add-Content $mdFullFile "# Test Detail Specifics"
+Add-Content $mdFullFile "## Test Detail Specifics"
 
-# Loop through the TestDetailResults and output a table for each entry
+# Hardware Specifics Section
+$HardwareFiltered = $TestDetailResults | Select measurement, infrahardwaretype, infracpubrand, infracputype, infracpuspeed, infracpucores, inframemorygb, infracpusocketcount, nodecount, infratotalnodes, infrassdcount, infrabios, hostgpus, comment | Sort-Object measurement | Get-Unique -AsString
+Add-Content $mdFullFile "### Hardware Specifics"
 
-foreach($Test in $TestDetailResults){
-    $TestTitle = ($Test.comment).Replace("_", " ")
-    Add-Content $mdFullFile "## Test Name - $($TestTitle)"
-    Add-Content $mdFullFile "| Item | Detail |"
-    Add-Content $mdFullFile "| --- | --- |"
-    Add-Content $mdFullFile "| Measurement Name | $($Test.measurement) |"
-    Add-Content $mdFullFile "| AOS Version | $($Test.AOS) |"
-    Add-Content $mdFullFile "| Broker Agent Version | $($Test.BrokerAgentVersion) |"
-    Add-Content $mdFullFile "| Broker Version | $($Test.BrokerVersion) |"
-    Add-Content $mdFullFile "| Credential Guard Enabled | $($Test.CG) |"
-    $CPU = ($Test.CPU).Replace("_", " ")
-    Add-Content $mdFullFile "| CPU Type | $($CPU) |"
-    Add-Content $mdFullFile "| CPU Speed | $($Test.CPUSpeed) |"
-    Add-Content $mdFullFile "| Clone Type | $($Test.CloneType) |"
-    Add-Content $mdFullFile "| Cluster Nodes | $($Test.Clusternodes) |"
-    Add-Content $mdFullFile "| EUX Score | $($Test.EUXScore) |"
-    Add-Content $mdFullFile "| Hypervisor | $($Test.Hypervisor) |"
-    Add-Content $mdFullFile "| Hypervisor Version | $($Test.Hypervisorversion) |"
-    Add-Content $mdFullFile "| Hypervisor Node CPU Sockets | $($Test.NodeCPUSockets) |"
-    Add-Content $mdFullFile "| Hypervisor Node CPU Cores | $($Test.NodeCPUCores) |"
-    Add-Content $mdFullFile "| VM CPU Sockets | $($Test.NumCPUs) |"
-    Add-Content $mdFullFile "| VM CPU Cores | $($Test.NumCores) |"
-    Add-Content $mdFullFile "| VM Memory | $($Test.MemGB) |"
-    $OS = ($Test.OS).Replace("_", " ")
-    Add-Content $mdFullFile "| VM Operating System | $($OS) |"
-    Add-Content $mdFullFile "| VM Operating System Version | $($Test.OSVersion) |"
-    $Office = ($test.Office).Replace("_", " ")
-    Add-Content $mdFullFile "| VM Office Version | $($Office) |"
-    Add-Content $mdFullFile "| Secure Boot Enabled | $($Test.SecureBoot) |"
-    Add-Content $mdFullFile "| Session Type | $($Test.Sessiontype) |"
-    Add-Content $mdFullFile "| Session Config | $($Test.SessionConfig) |"
-    Add-Content $mdFullFile "| Test Nodes | $($Test.Testnodes) |"
-    Add-Content $mdFullFile "| VSI Max | $($Test.VSImax) |"
-    Add-Content $mdFullFile "| VSI Max State | $($Test.VSImaxstate) |"
-    Add-Content $mdFullFile "| VSI Version | $($Test.VSIversion) |"
-    Add-Content $mdFullFile "| VSI Workload | $($Test.WorkLoad) |"
-    Add-Content $mdFullFile "| Total Number Of Sessions | $($Test.numberOfSessions) |"
-    Add-Content $mdFullFile "| Total Number Of VMs | $($Test.numberOfVMs) |"
+$HeaderLine = ""
+$TableLine = ""
+for ($i = 0; $i -lt (($HardwareFiltered).Count + 1) ; $i++)
+{    
+    if($i -eq 0){
+        $HeaderLine = "| "
+        $TableLine = "| --- "
+    } else {
+        $Comment = ($HardwareFiltered[$i - 1].comment).replace("_", " ")
+        $HeaderLine = $HeaderLine + "| $($Comment) "
+        $TableLine = $TableLine + "| --- "
+        if($i -eq ($HardwareFiltered.Count)){
+            $HeaderLine = $HeaderLine + "|"
+            $TableLine = $TableLine + "|"
+        }
+    }
 }
+Add-Content $mdFullFile $HeaderLine
+Add-Content $mdFullFile $TableLine
+
+[string]$HardwareType = "| **Hardware Type** | "
+[string]$CPUBrand = "| **CPU Brand** | "
+[string]$CPUType = "| **CPU Type** | "
+[string]$CPUSpeed = "| **CPU Speed** | "
+[string]$CPUCores = "| **CPU Cores Per Node** | "
+[string]$Memory = "| **Memory Per Node** | "
+[string]$Sockets = "| **Socket Count** | "
+[string]$Nodes = "| **Nodes In Test** | "
+[string]$TotalNodes = "| **Nodes In Cluster** | "
+[string]$SSD = "| **SSD Count Per Node** | "
+[string]$Bios = "| **BIOS Version** | "
+[string]$HostGPU = "| **Host GPU Type** | "
+
+foreach($Record in $HardwareFiltered){
+    $Hardware = $Record.infrahardwaretype
+    $HWTrim = $Hardware.trim()
+    $HardwareType = $HardwareType + "$($HWTrim) | "
+    $CPUBrand = $CPUBrand + "$($Record.infracpubrand) | "
+    $CPUSpeed = $CPUSpeed + "$($Record.infracpuspeed) GHz | "
+    $Sockets = $Sockets + "$($Record.infracpusocketcount) | "
+    $CPUCores = $CPUCores + "$($Record.infracpucores) | "
+    $Memory = $Memory + "$($Record.inframemorygb) GB | "
+    $Nodes = $Nodes + "$($Record.nodecount) | "
+    $TotalNodes = $TotalNodes + "$($Record.infratotalnodes) | "
+    $SSD = $SSD + "$($Record.infrassdcount) | "
+    $Bios = $Bios + "$($Record.infrabios) | "
+    $HostGPU = $HostGPU + "$($Record.hostgpus) | "
+    $CT = ($Record.infracputype).Replace("_", " ")
+    $CPUType = $CPUType + "$($CT) | "
+}
+
+Add-Content $mdFullFile $HardwareType
+Add-Content $mdFullFile $Bios
+Add-Content $mdFullFile $CPUBrand
+Add-Content $mdFullFile $CPUType
+Add-Content $mdFullFile $CPUSpeed
+Add-Content $mdFullFile $CPUBrand
+Add-Content $mdFullFile $Sockets
+Add-Content $mdFullFile $CPUCores
+Add-Content $mdFullFile $Memory
+Add-Content $mdFullFile $SSD
+Add-Content $mdFullFile $HostGPU
+Add-Content $mdFullFile $Nodes
+Add-Content $mdFullFile $TotalNodes
+
 
 # -----------------------------------------------------------------------------------------------------------------------
 # Section - Test Results
 # -----------------------------------------------------------------------------------------------------------------------
-Add-Content $mdFullFile "# Test Results"
+Add-Content $mdFullFile "## Test Results"
 
 # -----------------------------------------------------------------------------------------------------------------------
 # Section - Boot Info
@@ -680,7 +786,7 @@ if($BootInfo){
     $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "boot_time*")} | Sort-Object CreationTime
 
     # Add Section Title
-    Add-Content $mdFullFile "## Boot Information Test Results"
+    Add-Content $mdFullFile "### Boot Information Test Results"
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
@@ -708,7 +814,7 @@ if($LoginEnterpriseResults){
     $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "le_results*")} | Sort-Object CreationTime
 
     # Add Section Title
-    Add-Content $mdFullFile "## Login Enterprise Test Results"
+    Add-Content $mdFullFile "### Login Enterprise Test Results"
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
@@ -736,7 +842,7 @@ if($HostResources){
     $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "host_resources*")} | Sort-Object CreationTime
 
     # Add Section Title
-    Add-Content $mdFullFile "## Host Resources Test Results"
+    Add-Content $mdFullFile "### Host Resources Test Results"
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
@@ -764,7 +870,7 @@ if($ClusterResources){
     $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "cluster_resources*")} | Sort-Object CreationTime
 
     # Add Section Title
-    Add-Content $mdFullFile "## Cluster Resources Test Results"
+    Add-Content $mdFullFile "### Cluster Resources Test Results"
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
@@ -792,7 +898,7 @@ if($LoginTimes){
     $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "login_times*")} | Sort-Object CreationTime
 
     # Add Section Title
-    Add-Content $mdFullFile "## Login Times Test Results"
+    Add-Content $mdFullFile "### Login Times Test Results"
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
@@ -820,7 +926,7 @@ if($IndividualRuns){
     $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "individual_runs*")} | Sort-Object CreationTime
 
     # Add Section Title
-    Add-Content $mdFullFile "## Individual Runs Test Results"
+    Add-Content $mdFullFile "### Individual Runs Test Results"
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
@@ -848,7 +954,7 @@ if($Applications){
     $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "applications*")} | Sort-Object CreationTime
 
     # Add Section Title
-    Add-Content $mdFullFile "## Application Test Results"
+    Add-Content $mdFullFile "### Application Test Results"
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
@@ -876,7 +982,7 @@ if($VsiEuxMeasurements){
     $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "vsi_eux*")} | Sort-Object CreationTime
 
     # Add Section Title
-    Add-Content $mdFullFile "## VSI EUX Test Results"
+    Add-Content $mdFullFile "### VSI EUX Test Results"
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
@@ -904,7 +1010,7 @@ if($NutanixFiles){
     $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "nutanix_files*")} | Sort-Object CreationTime
 
     # Add Section Title
-    Add-Content $mdFullFile "## Nutanix Files Test Results"
+    Add-Content $mdFullFile "### Nutanix Files Test Results"
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
@@ -932,7 +1038,7 @@ if($CitrixNetScaler){
     $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "citrix_netscaler*")} | Sort-Object CreationTime
 
     # Add Section Title
-    Add-Content $mdFullFile "## Citrix NetScaler Test Results"
+    Add-Content $mdFullFile "### Citrix NetScaler Test Results"
 
     # Loop through each image and insert it into the document
     foreach($Image in $Source){
@@ -949,3 +1055,21 @@ if($CitrixNetScaler){
     }
 
 }
+
+# -----------------------------------------------------------------------------------------------------------------------
+# Section - Conclusion
+# -----------------------------------------------------------------------------------------------------------------------
+
+$BoilerPlateConclusion = @"
+This document is part of the Nutanix Solutions Architecture Artifacts. We wrote it for individuals responsible for designing, building, managing, testing and supporting Nutanix infrastructures. Readers should be familiar with Nutanix and Citrix products as well as familiar with Login Enterprise testing.
+"@
+
+Add-Content $mdFullFile "## Conclusion"
+Add-Content $mdFullFile "$($BoilerPlateConclusion)"
+
+# -----------------------------------------------------------------------------------------------------------------------
+# Section - Appendix
+# -----------------------------------------------------------------------------------------------------------------------
+
+Add-Content $mdFullFile "## Appendix"
+Add-Content $mdFullFile "$($BoilerPlateLE)"
