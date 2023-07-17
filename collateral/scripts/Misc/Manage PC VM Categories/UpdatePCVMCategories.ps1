@@ -891,7 +891,7 @@ foreach ($vm in $VirtualMachinesToProcess) {
             }
             else {
                 #we are in whatif mode
-                Write-Log -Message "[WHATIF] [VM Update] Would $($mode) the category: $($Category) with value: $($value) from the vm $($vm) in $($pc_source)" -Level Info
+                Write-Log -Message "[WHATIF] [VM Update] Would $($mode) the category: $($Category) with value: $($value) targeting vm: $($vm) in $($pc_source)" -Level Info
             }
         }
     }
