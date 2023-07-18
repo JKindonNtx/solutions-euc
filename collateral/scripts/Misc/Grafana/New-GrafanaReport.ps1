@@ -29,16 +29,16 @@ if($ReportTitle -eq ""){
 
 # Default Sections On
 $LoginEnterpriseResults = $true
-$HostResources = $true
+$HostResources = $false
 $ClusterResources = $true
 $LoginTimes = $true
-$Applications = $true
-$VsiEuxMeasurements = $true
+$Applications = $false
+$VsiEuxMeasurements = $false
 
 # Default Sections Off
-$BootInfo = $false
+$BootInfo = $true
 $IndividualRuns = $false
-$NutanixFiles = $false
+$NutanixFiles = $true
 $CitrixNetScaler = $false
 
 # -----------------------------------------------------------------------------------------------------------------------
@@ -49,7 +49,7 @@ $BoilerPlateIntroduction = @"
 This document is part of the Nutanix Solutions Architecture Artifacts. We wrote it for individuals responsible for designing, building, managing, testing and supporting Nutanix infrastructures. Readers should be familiar with Nutanix and Citrix products as well as familiar with Login Enterprise testing.
 "@
 
-$BoilerPlateAppendix = @'
+$BoilerPlateAppendix = @"
 ### Login Enterprise
 
 [Login VSI](http://www.loginvsi.com/) provides the industry-standard virtual desktop testing platform, Login Enterprise, which helps organizations benchmark and validate the performance and scalability of their virtual desktop solutions. With Login Enterprise, IT teams can reliably measure the effects of changes to their virtual desktop infrastructure on end-user experience and identify performance issues before they impact the business. Login Enterprise uses synthetic user workloads to simulate real-world user behavior, so IT teams can measure the responsiveness and performance of their virtual desktop environment under different scenarios. Login Enterprise has two built-in workloads: The [task worker](https://support.loginvsi.com/hc/en-us/articles/6949195003932-Task-Worker-Out-of-the-box) and [knowledge worker](https://support.loginvsi.com/hc/en-us/articles/6949191203740-Knowledge-Worker-Out-of-the-box).
@@ -63,8 +63,8 @@ _Table: Login Enterprise Workloads_
 | **Task Worker** | **Knowledge Worker** |
 | --- | --- |
 | Light | Medium |
-| 2 vCPU | 2 / 4 vCPU |
-| 2 / 3 apps | 4 / 6 apps |
+| 2 vCPU | 2 - 4 vCPU |
+| 2 - 3 apps | 4 - 6 apps |
 | No video | 720p video |
 
 #### Login Enterprise EUX Score
@@ -79,11 +79,11 @@ _Table: EUX Score Grades_
 
 | **EUX Score** | **Grade** |
 | --- | --- |
-| 1 / 5 | Bad |
-| 5 /  6 | Poor |
-| 6 / 7 | Average |
-| 7 / 8 | Good |
-| 8 / 10 | Excellent |
+| 1 - 5 | Bad |
+| 5 - 6 | Poor |
+| 6 - 7 | Average |
+| 7 - 8 | Good |
+| 8 - 10 | Excellent |
 
 ![Sample EUX Score Graph](../images/sample-eux-score-graph.png "Sample EUX Score Graph")
 
@@ -121,7 +121,7 @@ The Login Enterprise graph shows the values obtained during the launch for each 
 
 ![Sample Login Enterprise Graph](../images/sample-login-enterprise-graph.png "Sample Login Enterprise Graph")
 
-'@
+"@
 
 $BoilerPlateExecSummary = @"
 Nutanix designed its software to give customers running workloads in a hybrid cloud environment the same experience they expect from on-premises Nutanix clusters. Because Nutanix in a hybrid multicloud environment runs AOS and AHV with the same CLI, UI, and APIs, existing IT processes and third-party integrations continue to work regardless of where they run.
