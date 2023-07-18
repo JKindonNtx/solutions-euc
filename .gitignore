@@ -35,3 +35,4 @@ inventory
 
 # Built Visual Studio Code Extensions
 *.vsix
+collateral/scripts/Misc/Grafana/Reports/*

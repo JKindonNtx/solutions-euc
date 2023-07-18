@@ -4,365 +4,50 @@
 Write-Host "Setup Script Parameters"
 
 # User Input Script Variables
+$maxLength = 65536
+[System.Console]::SetIn([System.IO.StreamReader]::new([System.Console]::OpenStandardInput($maxLength), [System.Console]::InputEncoding, $false, $maxLength))
 
 # Source Uri - This is the Uri for the Grafana Dashboard you want the report for
-$SourceUri = "http://10.57.64.119:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=2023&var-Month=07&var-DocumentName=ENG-AMD-AHV67-CG-Test3EUX&var-Comment=1n-AMD-AHV-W10-CG&var-Comment=1n-AMD-AHV-W10-CG-INVTSC&var-Comment=1n-AMD-AHV-W10-noCG&var-Testname=76bc80_1n_A6.7_AHV_135V_135U_KW&var-Testname=1b8b90_1n_A6.7_AHV_135V_135U_KW&var-Testname=928302_1n_A6.7_AHV_135V_135U_KW&var-Run=76bc80_1n_A6.7_AHV_135V_135U_KW_Run1&var-Run=928302_1n_A6.7_AHV_135V_135U_KW_Run1&var-Run=1b8b90_1n_A6.7_AHV_135V_135U_KW_Run2&var-Naming=Comment"
+Write-Host "Enter the Uri from Grafana that you would like the Test Report for"
+$SourceUri = [System.Console]::ReadLine()
+
+if($SourceUri -eq ""){
+    write-host "You MUST enter a Source Uri"
+    break
+}
 
 # Report Title - This is the Title that you want for your report
-$ReportTitle = "Credential Guard with AMD"
+Write-Host "Enter the Report Title"
+$ReportTitle = [System.Console]::ReadLine()
 
-#$SourceUri = Read-Host "Please Enter the Source Uri (From Grafana)"
-#if($SourceUri -eq "") { 
-#    Write-Screen -Message "You have to specify a Source Uri"
-#    break 
-#}
-
-#$ReportTitle = Read-Host "Please Enter the Report Title"
-#if($ReportTitle -eq "") { 
-#    Write-Screen -Message "You have to specify a Report Title"
-#    break 
-#}
+if($ReportTitle -eq ""){
+    write-host "You MUST enter a Report Title"
+    break
+}
 
 # Sections - Set the sections that you want in your report to $true 
 
 # Default Sections On
-$LoginEnterpriseResults = $false
-$HostResources = $false
+$LoginEnterpriseResults = $true
+$HostResources = $true
 $ClusterResources = $true
 $LoginTimes = $true
-$Applications = $false
-$VsiEuxMeasurements = $false
+$Applications = $true
+$VsiEuxMeasurements = $true
 
 # Default Sections Off
-$BootInfo = $true
+$BootInfo = $false
 $IndividualRuns = $false
 $NutanixFiles = $false
 $CitrixNetScaler = $false
 
 # -----------------------------------------------------------------------------------------------------------------------
-# Section - Functions
+# Section - Boiler Plates
 # -----------------------------------------------------------------------------------------------------------------------
-
-# Write formatted output to screen
-Write-Host "Setup Script Functions"
-
-function Write-Screen {
-    param
-    (
-        $Message
-    )
-
-    Write-Host "$(get-date -format "dd/MM/yyyy HH:mm") - $($Message)"
-}
-
-# Get Uri Variable Information
-function Get-UriVariable {
-    param(
-        $Uri,
-        $Var
-    )
-
-    $SourceSplit = $Uri.Split("&") 
-
-    $i = 0
-    foreach($Line in $SourceSplit){
-        $LineSplit = $Line.Split("=")
-        if($LineSplit[0] -eq "$($Var)"){
-            If($i -eq 0){
-                $Return = $LineSplit[1]
-                $i++
-            } else {
-                $Return = $Return + "|" + $LineSplit[1]
-            }
-        }
-    }
-
-    Write-Screen -Message "Getting Uri Variable $($Var): $($Return)"
-    Return $Return
-}
-
-# Get Test Detail Order Index
-function Get-PayloadIndex {
-    param(
-        $TestDetails
-    )
-
-    $TestDetailSplit = $TestDetails.Split("`n")
-    Write-Screen -Message "Split Test Detail Into Array"
-
-    # Set up PSCustom Object for Array Index
-    $Return = New-Object -TypeName psobject 
-    $Headers = ($TestDetailSplit[0]).Split(",")
-    for ($i = 3; $i -le (($Headers).Count - 1) ; $i++)
-    {    
-        [string]$Value = ($Headers[$i]).Trim()
-        $Return | Add-Member -MemberType NoteProperty -Name $i -Value $Value
-    
-    }
-
-    Write-Screen -Message "Return Test Payload Index"
-    Return $Return
-}
-
-# Get the Test Detail Results
-function Get-PayloadResults {
-    param(
-        $TestDetails
-    )
-
-    $TestDetailSplit = $TestDetails.Split("`n")
-    Write-Screen -Message "Split Test Detail Into Array"
-
-    $Return = @()
-    $i = 0
-    foreach($TestLine in $TestDetailSplit){
-        if(!($i -eq 0)){
-            $Line = $TestLine.Split(",")
-            if(!($null -eq $Line[3])){
-                $Item = New-Object -TypeName psobject 
-                for ($x = 3; $x -le (($Line).Count - 1) ; $x++)
-                {    
-                    [string]$Value = $Line[$x]
-                    $TrimmedValue = $Value.Trim()
-                    [string]$Name = $Order.$x
-                    $TrimmedName = $Name.Trim()
-                    $Item | Add-Member -MemberType NoteProperty -Name $TrimmedName -Value $TrimmedValue
-                }
-                $Return += $item
-            }
-        }
-        $i++
-    }
-
-    Write-Screen -Message "Return Test Payload Results"
-    Return $Return
-}
-
-# Download a file from Uri
-function Get-UriFile{
-    param (
-        $Uri,
-        $OutFile
-    )
-
-    $ProgressPreference = 'SilentlyContinue' 
-
-    Write-Screen -Message "Downloading $($OutFile)"
-    try {
-        $Result = Invoke-WebRequest -Uri $Uri -outfile $OutFile
-        Write-Screen -Message "Download Complete"
-    } catch {
-        Write-Screen -Message "Download $($OutFile) Failed"
-    }
-}
-
-# Get Grafana Graphs
-function Get-Graphs {
-    param (
-        $Panels,
-        $EndTime,
-        $SourceUri,
-        $imagePath
-    )
-
-    foreach($Panel in $Panels){
-
-        # Build Uri to download image
-        $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
-        $Uri = $UpdatedUri + "&from=1672534800000&to=$($EndTime)&panelId=$($Panel)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
-
-        # Get output Filename
-        switch ($Panel)
-        {
-            85 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time.png"}
-            84 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_individual_runs.png"}
-            86 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_cpu.png"}
-            94 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_cpu_individual_runs.png"}
-            92 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_power_usage.png"}
-            96 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_power_usage_individual_runs.png"}
-            89 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_iops.png"}
-            95 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_iops_individual_runs.png"}
-            93 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_latency.png"}
-            97 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_latency_individual_runs.png"}
-            2 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_vsi_max.png"}
-            5 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_vsi_max_individual_runs.png"}
-            8 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_base.png"}
-            4 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_base_individual_runs.png"}
-            7 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score.png"}
-            6 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_individual_runs.png"}
-            99 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_steady_state.png"}
-            100 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_steady_state_individual_runs.png"}
-            10 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_overlay.png"}
-            101 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_timer_scores.png"}
-            13 {$OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_cpu_usage.png"}
-            83 {$OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_cpu_usage_with_eux_score.png"}
-            14 {$OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_power_usage.png"}
-            9 {$OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_memory_usage.png"}
-            53 {$OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_cpu_usage.png"}
-            54 {$OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_memory_usage.png"}
-            57 {$OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_controller_iops.png"}
-            58 {$OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_controller_latency.png"}
-            61 {$OutFile = Join-Path -Path $imagePath -ChildPath "login_times_average.png"}
-            98 {$OutFile = Join-Path -Path $imagePath -ChildPath "login_times_logon_rate_per_minute.png"}
-            16 {$OutFile = Join-Path -Path $imagePath -ChildPath "login_times_total_logon_time.png"}
-            28 {$OutFile = Join-Path -Path $imagePath -ChildPath "login_times_group_policies.png"}
-            27 {$OutFile = Join-Path -Path $imagePath -ChildPath "login_times_user_profile_load.png"}
-            29 {$OutFile = Join-Path -Path $imagePath -ChildPath "login_times_connection.png"}
-            66 {$OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_eux_score.png"}
-            67 {$OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_host_cpu_usage.png"}
-            68 {$OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_controller_iops.png"}
-            70 {$OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_total_logon_time.png"}
-            69 {$OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_controller_latency.png"}
-            31 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_start.png"}
-            32 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_open_doc.png"}
-            33 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_save_file.png"}
-            34 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_open_window.png"}
-            37 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint_start.png"}
-            38 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint_save_file.png"}
-            39 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint_open_window.png"}
-            40 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint__open_file.png"}
-            36 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_start.png"}
-            42 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_save_file.png"}
-            44 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_open_window.png"}
-            43 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_open_file.png"}
-            35 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_microsoft_edge_logon.png"}
-            41 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_outlook_start.png"}
-            102 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_microsoft_edge_page_load.png"}
-            15 {$OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_high_compression.png"}
-            30 {$OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_cpu_speed.png"}
-            45 {$OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_app_speed.png"}
-            46 {$OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_app_speed_user_input.png"}
-            47 {$OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_appdata.png"}
-            48 {$OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_appdata_latency.png"}
-            49 {$OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_my_docs.png"}
-            50 {$OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_my_docs_latency.png"}
-            71 {$OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_iops.png"}
-            77 {$OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_latency.png"}
-            78 {$OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_throughput.png"}
-            79 {$OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_connections_and_number_of_files.png"}
-            80 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_management_cpu.png"}
-            81 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_packet_engine_cpu.png"}
-            82 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_memory_usage.png"}
-            104 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_network_throughput.png"}
-            105 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_packets.png"}
-            103 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_connections.png"}
-            106 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_request_and_response.png"}
-        }
-
-        # Download the image
-        Get-UriFile -Uri $Uri -outfile $OutFile
-    }
-}
-
-# Add Table Headers
-function Add-TableHeaders {
-    param (
-        $mdFullFile,
-        $TableTitle,
-        $TableData,
-        $TableImage
-    )
-
-    # Add the table title
-    Write-Screen -Message "Adding Table Header for $($TableTitle)"
-    Add-Content $mdFullFile "### $($TableTitle)"
-
-    # Add the Table Headers
-    $HeaderLine = ""
-    $TableLine = ""
-    for ($i = 0; $i -lt (($TableData).Count + 1) ; $i++)
-    {    
-        if($i -eq 0){
-            $HeaderLine = "| $($TableImage) "
-            $TableLine = "| --- "
-        } else {
-            $Comment = ($TableData[$i - 1].comment).replace("_", " ")
-            $HeaderLine = $HeaderLine + "| $($Comment) "
-            $TableLine = $TableLine + "| --- "
-            if($i -eq ($TableData.Count)){
-                $HeaderLine = $HeaderLine + "|"
-                $TableLine = $TableLine + "|"
-            }
-        }
-    }
-    Add-Content $mdFullFile $HeaderLine
-    Add-Content $mdFullFile $TableLine
-}
-
-# Trim Data Item
-function Get-CleanData {
-    param (
-        $Data
-    )
-
-    # Trim the Data
-    $TrimmedData = $Data.Trim()
-
-    # Replace Underscores
-    $Return = $TrimmedData.Replace("_", " ")
-
-    # Return the trimmed Data
-    Return $Return
-}
-
-# Add Title Text
-function Add-Title{
-    param(
-        $Title,
-        $mdFullFile
-    )
-
-    Add-Content $mdFullFile "## <span style=""color:#7855FA"">$($Title)</span>"
-}
-
-# Add the Graphs
-function Add-Graphs {
-    param(
-        $Source,
-        $Title,
-        $mdFullFile
-    )
-
-    # Add Section Title
-    Write-Screen -Message "Adding Graphs for $($Title)"
-    Add-Content $mdFullFile "### $($Title)"
-
-    # Loop through each image and insert it into the document
-    foreach($Image in $Source){
-        
-        # Get Image Title and Image Link
-        $TitleRaw = ($Image.BaseName).Replace("_", " ")
-        $Title = (Get-Culture).TextInfo.ToTitleCase($TitleRaw)
-        $Path = "../images/$($Image.BaseName).png"
-        $Link = "<img src=$($Path) alt=$($Title) style=""border: 2px solid #7855FA;"">"
-        Add-Content $mdFullFile "$($Link)"
-    }
-}
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Script Variables - do not change
-# -----------------------------------------------------------------------------------------------------------------------
-
-$influxDbUrl = "http://10.57.64.119:8086/api/v2/query?orgID=bca5b8aeb2b51f2f"
-$InfluxToken = "b4yxMiQGOAlR3JftuLHuqssnwo-SOisbC2O6-7od7noAE5W1MLsZxLF7e63RzvUoiOHObc9G8_YOk1rnCLNblA=="
-Write-Screen -Message "Set InfluxDB Uri: $($influxDbUrl)"
-
-$iconsSource = "http://10.57.64.119:3000/public/img/nutanix/"
-Write-Screen -Message "Set Icon Uri: $($iconsSource)"
-
-$BoilerPlateExecSummary = @"
-Nutanix designed its software to give customers running workloads in a hybrid cloud environment the same experience they expect from on-premises Nutanix clusters. Because Nutanix in a hybrid multicloud environment runs AOS and AHV with the same CLI, UI, and APIs, existing IT processes and third-party integrations continue to work regardless of where they run.
-
-Nutanix AOS can withstand hardware failures and software glitches and ensures that application availability and performance are never compromised. Combining features like native rack awareness with public cloud partition placement groups, Nutanix operates freely in a dynamic hybrid multicloud environment.
-
-In addition to desktop and application performance reliability, you get unlimited scalability, data locality, AHV clones, and a single datastore when you deploy Citrix Virtual Apps and Desktops on Nutanix. Nutanix takes the Citrix commitment to simplicity to another level with streamlined management, reduced rollout time, and lower operating expenses.
-"@
-Write-Screen -Message "Set Exec Summary Boiler Plate"
 
 $BoilerPlateIntroduction = @"
 This document is part of the Nutanix Solutions Architecture Artifacts. We wrote it for individuals responsible for designing, building, managing, testing and supporting Nutanix infrastructures. Readers should be familiar with Nutanix and Citrix products as well as familiar with Login Enterprise testing.
 "@
-Write-Screen -Message "Set Introduction Boiler Plate"
 
 $BoilerPlateAppendix = @'
 ### Login Enterprise
@@ -437,765 +122,1141 @@ The Login Enterprise graph shows the values obtained during the launch for each 
 ![Sample Login Enterprise Graph](../images/sample-login-enterprise-graph.png "Sample Login Enterprise Graph")
 
 '@
-Write-Screen -Message "Set Appendix Boiler Plate"
+
+$BoilerPlateExecSummary = @"
+Nutanix designed its software to give customers running workloads in a hybrid cloud environment the same experience they expect from on-premises Nutanix clusters. Because Nutanix in a hybrid multicloud environment runs AOS and AHV with the same CLI, UI, and APIs, existing IT processes and third-party integrations continue to work regardless of where they run.
+
+Nutanix AOS can withstand hardware failures and software glitches and ensures that application availability and performance are never compromised. Combining features like native rack awareness with public cloud partition placement groups, Nutanix operates freely in a dynamic hybrid multicloud environment.
+
+In addition to desktop and application performance reliability, you get unlimited scalability, data locality, AHV clones, and a single datastore when you deploy Citrix Virtual Apps and Desktops on Nutanix. Nutanix takes the Citrix commitment to simplicity to another level with streamlined management, reduced rollout time, and lower operating expenses.
+"@
 
 $BoilerPlateConclusion = @"
 This document is part of the Nutanix Solutions Architecture Artifacts. We wrote it for individuals responsible for designing, building, managing, testing and supporting Nutanix infrastructures. Readers should be familiar with Nutanix and Citrix products as well as familiar with Login Enterprise testing.
 "@
-Write-Screen -Message "Set Conclusion Boiler Plate"
 
 # -----------------------------------------------------------------------------------------------------------------------
-# Section - Get Data From Influx for Report
+# Section - Display Options and Start Report
 # -----------------------------------------------------------------------------------------------------------------------
-Write-Screen -Message "Gathering Test Data"
 
-# Build the Influx DB Web Headers
-$WebHeaders = @{
-    Authorization = "Token $InfluxToken"
-    "Accept" = "application/csv"
-    "Content-Type" = "application/vnd.flux"
-}
-Write-Screen -Message "Build InfluxDB Web Headers"
+# Write out a SNAZZY header
+Clear
+Write-Host "
+_____ _   _  ____   _____             _                      _             
+| ____| | | |/ ___| | ____|_ __   __ _(_)_ __   ___  ___ _ __(_)_ __   __ _ 
+|  _| | | | | |     |  _| | '_ \ / _` | | '_ \ / _ \/ _ \ '__| | '_ \ / _` |
+| |___| |_| | |___  | |___| | | | (_| | | | | |  __/  __/ |  | | | | | (_| |
+|_____|\___/ \____| |_____|_| |_|\__, |_|_| |_|\___|\___|_|  |_|_| |_|\__, |
+                                 |___/                                |___/ 
+____            __   _____         _   _               ____                       _   
+|  _ \ ___ _ __ / _| |_   _|__  ___| |_(_)_ __   __ _  |  _ \ ___ _ __   ___  _ __| |_ 
+| |_) / _ \ '__| |_    | |/ _ \/ __| __| | '_ \ / _` | | |_) / _ \ '_ \ / _ \| '__| __|
+|  __/  __/ |  |  _|   | |  __/\__ \ |_| | | | | (_| | |  _ <  __/ |_) | (_) | |  | |_ 
+|_|   \___|_|  |_|     |_|\___||___/\__|_|_| |_|\__, | |_| \_\___| .__/ \___/|_|   \__|
+                                                |___/            |_|                   
+"
 
-$FormattedBucket = (Get-UriVariable -Uri $SourceUri -Var "var-Bucketname").Replace('.', '\.')
-$FormattedYear = (Get-UriVariable -Uri $SourceUri -Var "var-Year").Replace('.', '\.')
-$FormattedMonth = (Get-UriVariable -Uri $SourceUri -Var "var-Month").Replace('.', '\.')
-$FormattedDocumentName = (Get-UriVariable -Uri $SourceUri -Var "var-DocumentName").Replace('.', '\.')
-$FormattedComment = (Get-UriVariable -Uri $SourceUri -Var "var-Comment").Replace('.', '\.')
-$FormattedTestname = (Get-UriVariable -Uri $SourceUri -Var "var-Testname").Replace('.', '\.')
-$FormattedTestRun = (Get-UriVariable -Uri $SourceUri -Var "var-Run").Replace('.', '\.')
-Write-Screen -Message "Finished Parsing Uri Variable Information"
+# Display the selected options selected back to the user
+Write-Host "
+--------------------------------------------------------------------------------------------------------"
+Write-Host "Report Title:                  $($ReportTitle)"
+Write-Host "Sections Selected"
+Write-Host "BootInfo:                      $($BootInfo)"
+Write-Host "Login Enterprise Results:      $($LoginEnterpriseResults)"
+Write-Host "Host Resources:                $($HostResources)"
+Write-Host "Cluster Resources:             $($ClusterResources)"
+Write-Host "Login Times:                   $($LoginTimes)"
+Write-Host "Individual Runs:               $($IndividualRuns)"
+Write-Host "Applications:                  $($Applications)"
+Write-Host "Vsi Eux Measurements:          $($VsiEuxMeasurements)"
+Write-Host "Nutanix Files:                 $($NutanixFiles)"
+Write-Host "Citrix NetScaler:              $($CitrixNetScaler)"
+Write-Host "
+--------------------------------------------------------------------------------------------------------"
 
-# Build Body
+# Ask for confirmation to start the build - if no the quit
+Do { $confirmationStart = Read-Host "Ready to run the report? [y/n]" } Until (($confirmationStart -eq "y") -or ($confirmationStart -eq "n"))
+
+if ($confirmationStart -eq 'n') { 
+    Write-Host (Get-Date) ":Confirmation denied, quitting"
+    exit 
+} else {
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Functions
+    # -----------------------------------------------------------------------------------------------------------------------
+
+    # Write formatted output to screen
+    Write-Host "Setup Script Functions"
+
+    function Write-Screen {
+        param
+        (
+            $Message
+        )
+
+        Write-Host "$(get-date -format "dd/MM/yyyy HH:mm") - $($Message)"
+    }
+
+    # Get Uri Variable Information
+    function Get-UriVariable {
+        param(
+            $Uri,
+            $Var
+        )
+
+        $SourceSplit = $Uri.Split("&") 
+
+        $i = 0
+        foreach($Line in $SourceSplit){
+            $LineSplit = $Line.Split("=")
+            if($LineSplit[0] -eq "$($Var)"){
+                If($i -eq 0){
+                    $Return = $LineSplit[1]
+                    $i++
+                } else {
+                    $Return = $Return + "|" + $LineSplit[1]
+                }
+            }
+        }
+
+        Write-Screen -Message "Getting Uri Variable $($Var): $($Return)"
+        Return $Return
+    }
+
+    # Get Test Detail Order Index
+    function Get-PayloadIndex {
+        param(
+            $TestDetails
+        )
+
+        $TestDetailSplit = $TestDetails.Split("`n")
+        Write-Screen -Message "Split Test Detail Into Array"
+
+        # Set up PSCustom Object for Array Index
+        $Return = New-Object -TypeName psobject 
+        $Headers = ($TestDetailSplit[0]).Split(",")
+        for ($i = 3; $i -le (($Headers).Count - 1) ; $i++)
+        {    
+            [string]$Value = ($Headers[$i]).Trim()
+            $Return | Add-Member -MemberType NoteProperty -Name $i -Value $Value
+        
+        }
+
+        Write-Screen -Message "Return Test Payload Index"
+        Return $Return
+    }
+
+    # Get the Test Detail Results
+    function Get-PayloadResults {
+        param(
+            $TestDetails
+        )
+
+        $TestDetailSplit = $TestDetails.Split("`n")
+        Write-Screen -Message "Split Test Detail Into Array"
+
+        $Return = @()
+        $i = 0
+        foreach($TestLine in $TestDetailSplit){
+            if(!($i -eq 0)){
+                $Line = $TestLine.Split(",")
+                if(!($null -eq $Line[3])){
+                    $Item = New-Object -TypeName psobject 
+                    for ($x = 3; $x -le (($Line).Count - 1) ; $x++)
+                    {    
+                        [string]$Value = $Line[$x]
+                        $TrimmedValue = $Value.Trim()
+                        [string]$Name = $Order.$x
+                        $TrimmedName = $Name.Trim()
+                        $Item | Add-Member -MemberType NoteProperty -Name $TrimmedName -Value $TrimmedValue
+                    }
+                    $Return += $item
+                }
+            }
+            $i++
+        }
+
+        Write-Screen -Message "Return Test Payload Results"
+        Return $Return
+    }
+
+    # Download a file from Uri
+    function Get-UriFile{
+        param (
+            $Uri,
+            $OutFile
+        )
+
+        $ProgressPreference = 'SilentlyContinue' 
+
+        Write-Screen -Message "Downloading $($OutFile)"
+        try {
+            $Result = Invoke-WebRequest -Uri $Uri -outfile $OutFile
+            Write-Screen -Message "Download Complete"
+        } catch {
+            Write-Screen -Message "Download $($OutFile) Failed"
+        }
+    }
+
+    # Get Grafana Graphs
+    function Get-Graphs {
+        param (
+            $Panels,
+            $EndTime,
+            $SourceUri,
+            $imagePath
+        )
+
+        foreach($Panel in $Panels){
+
+            # Build Uri to download image
+            $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
+            $Uri = $UpdatedUri + "&from=1672534800000&to=$($EndTime)&panelId=$($Panel)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
+
+            # Get output Filename
+            switch ($Panel)
+            {
+                85 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time.png"}
+                84 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_individual_runs.png"}
+                86 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_cpu.png"}
+                94 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_cpu_individual_runs.png"}
+                92 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_power_usage.png"}
+                96 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_power_usage_individual_runs.png"}
+                89 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_iops.png"}
+                95 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_iops_individual_runs.png"}
+                93 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_latency.png"}
+                97 {$OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_latency_individual_runs.png"}
+                2 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_vsi_max.png"}
+                5 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_vsi_max_individual_runs.png"}
+                8 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_base.png"}
+                4 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_base_individual_runs.png"}
+                7 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score.png"}
+                6 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_individual_runs.png"}
+                99 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_steady_state.png"}
+                100 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_steady_state_individual_runs.png"}
+                10 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_overlay.png"}
+                101 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_timer_scores.png"}
+                13 {$OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_cpu_usage.png"}
+                83 {$OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_cpu_usage_with_eux_score.png"}
+                14 {$OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_power_usage.png"}
+                9 {$OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_memory_usage.png"}
+                53 {$OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_cpu_usage.png"}
+                54 {$OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_memory_usage.png"}
+                57 {$OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_controller_iops.png"}
+                58 {$OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_controller_latency.png"}
+                61 {$OutFile = Join-Path -Path $imagePath -ChildPath "login_times_average.png"}
+                98 {$OutFile = Join-Path -Path $imagePath -ChildPath "login_times_logon_rate_per_minute.png"}
+                16 {$OutFile = Join-Path -Path $imagePath -ChildPath "login_times_total_logon_time.png"}
+                28 {$OutFile = Join-Path -Path $imagePath -ChildPath "login_times_group_policies.png"}
+                27 {$OutFile = Join-Path -Path $imagePath -ChildPath "login_times_user_profile_load.png"}
+                29 {$OutFile = Join-Path -Path $imagePath -ChildPath "login_times_connection.png"}
+                66 {$OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_eux_score.png"}
+                67 {$OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_host_cpu_usage.png"}
+                68 {$OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_controller_iops.png"}
+                70 {$OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_total_logon_time.png"}
+                69 {$OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_controller_latency.png"}
+                31 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_start.png"}
+                32 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_open_doc.png"}
+                33 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_save_file.png"}
+                34 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_open_window.png"}
+                37 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint_start.png"}
+                38 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint_save_file.png"}
+                39 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint_open_window.png"}
+                40 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint__open_file.png"}
+                36 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_start.png"}
+                42 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_save_file.png"}
+                44 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_open_window.png"}
+                43 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_open_file.png"}
+                35 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_microsoft_edge_logon.png"}
+                41 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_outlook_start.png"}
+                102 {$OutFile = Join-Path -Path $imagePath -ChildPath "applications_microsoft_edge_page_load.png"}
+                15 {$OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_high_compression.png"}
+                30 {$OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_cpu_speed.png"}
+                45 {$OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_app_speed.png"}
+                46 {$OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_app_speed_user_input.png"}
+                47 {$OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_appdata.png"}
+                48 {$OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_appdata_latency.png"}
+                49 {$OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_my_docs.png"}
+                50 {$OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_my_docs_latency.png"}
+                71 {$OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_iops.png"}
+                77 {$OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_latency.png"}
+                78 {$OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_throughput.png"}
+                79 {$OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_connections_and_number_of_files.png"}
+                80 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_management_cpu.png"}
+                81 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_packet_engine_cpu.png"}
+                82 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_memory_usage.png"}
+                104 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_network_throughput.png"}
+                105 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_packets.png"}
+                103 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_connections.png"}
+                106 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_request_and_response.png"}
+            }
+
+            # Download the image
+            Get-UriFile -Uri $Uri -outfile $OutFile
+        }
+    }
+
+    # Add Table Headers
+    function Add-TableHeaders {
+        param (
+            $mdFullFile,
+            $TableTitle,
+            $TableData,
+            $TableImage
+        )
+
+        # Add the table title
+        Write-Screen -Message "Adding Table Header for $($TableTitle)"
+        Add-Content $mdFullFile "### $($TableTitle)"
+
+        # Add the Table Headers
+        $HeaderLine = ""
+        $TableLine = ""
+        for ($i = 0; $i -lt (($TableData).Count + 1) ; $i++)
+        {    
+            if($i -eq 0){
+                $HeaderLine = "| $($TableImage) "
+                $TableLine = "| --- "
+            } else {
+                $Comment = ($TableData[$i - 1].comment).replace("_", " ")
+                $HeaderLine = $HeaderLine + "| $($Comment) "
+                $TableLine = $TableLine + "| --- "
+                if($i -eq ($TableData.Count)){
+                    $HeaderLine = $HeaderLine + "|"
+                    $TableLine = $TableLine + "|"
+                }
+            }
+        }
+        Add-Content $mdFullFile $HeaderLine
+        Add-Content $mdFullFile $TableLine
+    }
+
+    # Trim Data Item
+    function Get-CleanData {
+        param (
+            $Data
+        )
+
+        # Trim the Data
+        $TrimmedData = $Data.Trim()
+
+        # Replace Underscores
+        $Return = $TrimmedData.Replace("_", " ")
+
+        # Return the trimmed Data
+        Return $Return
+    }
+
+    # Add Title Text
+    function Add-Title{
+        param(
+            $Title,
+            $mdFullFile
+        )
+
+        Add-Content $mdFullFile "## <span style=""color:#7855FA"">$($Title)</span>"
+    }
+
+    # Add the Graphs
+    function Add-Graphs {
+        param(
+            $Source,
+            $Title,
+            $mdFullFile
+        )
+
+        # Add Section Title
+        Write-Screen -Message "Adding Graphs for $($Title)"
+        Add-Content $mdFullFile "### $($Title)"
+
+        # Loop through each image and insert it into the document
+        foreach($Image in $Source){
+            
+            # Get Image Title and Image Link
+            $TitleRaw = ($Image.BaseName).Replace("_", " ")
+            $Title = (Get-Culture).TextInfo.ToTitleCase($TitleRaw)
+            $Path = "../images/$($Image.BaseName).png"
+            $Link = "<img src=$($Path) alt=$($Title) style=""border: 2px solid #7855FA;"">"
+            Add-Content $mdFullFile "$($Link)"
+        }
+    }
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Script Variables - do not change
+    # -----------------------------------------------------------------------------------------------------------------------
+
+    $influxDbUrl = "http://10.57.64.119:8086/api/v2/query?orgID=bca5b8aeb2b51f2f"
+    $InfluxToken = "b4yxMiQGOAlR3JftuLHuqssnwo-SOisbC2O6-7od7noAE5W1MLsZxLF7e63RzvUoiOHObc9G8_YOk1rnCLNblA=="
+    Write-Screen -Message "Set InfluxDB Uri: $($influxDbUrl)"
+
+    $iconsSource = "http://10.57.64.119:3000/public/img/nutanix/"
+    Write-Screen -Message "Set Icon Uri: $($iconsSource)"
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Get Data From Influx for Report
+    # -----------------------------------------------------------------------------------------------------------------------
+    Write-Screen -Message "Gathering Test Data"
+
+    # Build the Influx DB Web Headers
+    $WebHeaders = @{
+        Authorization = "Token $InfluxToken"
+        "Accept" = "application/csv"
+        "Content-Type" = "application/vnd.flux"
+    }
+    Write-Screen -Message "Build InfluxDB Web Headers"
+
+    $FormattedBucket = (Get-UriVariable -Uri $SourceUri -Var "var-Bucketname").Replace('.', '\.')
+    $FormattedYear = (Get-UriVariable -Uri $SourceUri -Var "var-Year").Replace('.', '\.')
+    $FormattedMonth = (Get-UriVariable -Uri $SourceUri -Var "var-Month").Replace('.', '\.')
+    $FormattedDocumentName = (Get-UriVariable -Uri $SourceUri -Var "var-DocumentName").Replace('.', '\.')
+    $FormattedComment = (Get-UriVariable -Uri $SourceUri -Var "var-Comment").Replace('.', '\.')
+    $FormattedTestname = (Get-UriVariable -Uri $SourceUri -Var "var-Testname").Replace('.', '\.')
+    $FormattedTestRun = (Get-UriVariable -Uri $SourceUri -Var "var-Run").Replace('.', '\.')
+    Write-Screen -Message "Finished Parsing Uri Variable Information"
+
+    # Build Body
 $Body = @"
 from(bucket:"$($FormattedBucket)")
-  |> range(start: 2023-01-01T01:00:00Z, stop: 2023-01-01T02:07:00Z)
-  |> filter(fn: (r) => r["Year"] =~ /^$($FormattedYear)$/ )
-  |> filter(fn: (r) => r["Month"] =~ /^$($FormattedMonth)$/ )
-  |> filter(fn: (r) => r["DocumentName"] =~ /^$($FormattedDocumentName)$/ )
-  |> filter(fn: (r) => r["Comment"] =~ /^$($FormattedComment)$/ )
-  |> filter(fn: (r) => r["_measurement"] =~ /^$($FormattedTestname)$/ )
-  |> filter(fn: (r) => r["InfraTestName"] =~ /^$($FormattedTestRun)$/ )
-  |> filter(fn: (r) => r._field == "EUXScore")
-  |> last()
-  |> map(fn: (r) => ({measurement: r._measurement, run: r.Run, deliverytype: r.DeliveryType, desktopbrokerversion: r.DesktopBrokerVersion, desktopbrokeragentversion: r.DesktopBrokerAgentVersion, clonetype: r.CloneType, sessioncfg: r.SessionCfg, sessionssupport: r.SessionsSupport, nodecount: r.NodeCount, workload: r.Workload, numcpus: r.NumCPUs, numcores: r.NumCores, memorygb: r.MemoryGB, hostgpus: r.HostGPUs, secureboot: r.SecureBoot, vtpm: r.vTPM, credentialguard: r.CredentialGuard, numberofsessions: r.NumberOfSessions, numberofvms: r.NumberOfVMs, targetos: r.TargetOS, targetosversion: r.TargetOSVersion, officeversion: r.OfficeVersion, toolsguestversion: r.ToolsGuestVersion, optimizervendor: r.OptimizerVendor, optimizerversion: r.OptimizationsVersion, gpuprofile: r.GPUProfile, comment: r.Comment, infrassdcount: r.InfraSSDCount, infrasinglenodetest: r.InfraSingleNodeTest, infrahardwaretype: r.InfraHardwareType, infrafullversion: r.InfraFullVersion, infracpubrand: r.InfraCPUBrand, infracputype: r.InfraCPUType, infraaosversion: r.InfraAOSVersion, infrahypervisorbrand: r.InfraHypervisorBrand, infrahypervisorversion: r.InfraHypervisorVersion, infrahypervisortype: r.InfraHypervisorType, infrabios: r.InfraBIOS, infratotalnodes: r.InfraTotalNodes, infracpucores: r.InfraCPUCores, infracputhreadcount: r.InfraCPUThreadCount, infracpusocketcount: r.InfraCPUSocketCount, infracpuspeed: r.InfraCPUSpeed, inframemorygb: r.InfraMemoryGB, bootstart: r.BootStart, boottime: r.BootTime, maxabsoluteactiveactions: r.MaxAbsoluteActiveActions, maxabsolutenewactionsperminute: r.MaxAbsoluteNewActionsPerMinute, maxpercentageactiveactions: r.MaxPercentageActiveActions, vsiproductversion: r.VSIproductVersion, euxversion: r.VSIEUXversion, vsiactivesessioncount: r.VSIactivesessionCount, vsieuxscore: r.VSIEUXscore, vsieuxstate: r.VSIEUXstate, vsivsimax: r.VSIvsiMax, vsivsimaxstate: r.VSIvsiMaxstate, vsivsimaxversion: r.VSIvsiMaxversion}))
-  |> sort(columns: ["desktopbrokerversion", "desktopbrokeragentversion", "nodecount", "numberofsessions", "numberofvms", "targetos", "targetosversion", "officeversion", "toolsguestversion", "optimizervendor", "optimizerversion", "gpuprofile", "comment", "infracpubrand", "infracputype", "infraaosversion", "infrahypervisorbrand", "infrahypervisorversion", "infrahypervisortype", "infratotalnodes", "run"])
+|> range(start: 2023-01-01T01:00:00Z, stop: 2023-01-01T02:07:00Z)
+|> filter(fn: (r) => r["Year"] =~ /^$($FormattedYear)$/ )
+|> filter(fn: (r) => r["Month"] =~ /^$($FormattedMonth)$/ )
+|> filter(fn: (r) => r["DocumentName"] =~ /^$($FormattedDocumentName)$/ )
+|> filter(fn: (r) => r["Comment"] =~ /^$($FormattedComment)$/ )
+|> filter(fn: (r) => r["_measurement"] =~ /^$($FormattedTestname)$/ )
+|> filter(fn: (r) => r["InfraTestName"] =~ /^$($FormattedTestRun)$/ )
+|> filter(fn: (r) => r._field == "EUXScore")
+|> last()
+|> map(fn: (r) => ({measurement: r._measurement, run: r.Run, deliverytype: r.DeliveryType, desktopbrokerversion: r.DesktopBrokerVersion, desktopbrokeragentversion: r.DesktopBrokerAgentVersion, clonetype: r.CloneType, sessioncfg: r.SessionCfg, sessionssupport: r.SessionsSupport, nodecount: r.NodeCount, workload: r.Workload, numcpus: r.NumCPUs, numcores: r.NumCores, memorygb: r.MemoryGB, hostgpus: r.HostGPUs, secureboot: r.SecureBoot, vtpm: r.vTPM, credentialguard: r.CredentialGuard, numberofsessions: r.NumberOfSessions, numberofvms: r.NumberOfVMs, targetos: r.TargetOS, targetosversion: r.TargetOSVersion, officeversion: r.OfficeVersion, toolsguestversion: r.ToolsGuestVersion, optimizervendor: r.OptimizerVendor, optimizerversion: r.OptimizationsVersion, gpuprofile: r.GPUProfile, comment: r.Comment, infrassdcount: r.InfraSSDCount, infrasinglenodetest: r.InfraSingleNodeTest, infrahardwaretype: r.InfraHardwareType, infrafullversion: r.InfraFullVersion, infracpubrand: r.InfraCPUBrand, infracputype: r.InfraCPUType, infraaosversion: r.InfraAOSVersion, infrahypervisorbrand: r.InfraHypervisorBrand, infrahypervisorversion: r.InfraHypervisorVersion, infrahypervisortype: r.InfraHypervisorType, infrabios: r.InfraBIOS, infratotalnodes: r.InfraTotalNodes, infracpucores: r.InfraCPUCores, infracputhreadcount: r.InfraCPUThreadCount, infracpusocketcount: r.InfraCPUSocketCount, infracpuspeed: r.InfraCPUSpeed, inframemorygb: r.InfraMemoryGB, bootstart: r.BootStart, boottime: r.BootTime, maxabsoluteactiveactions: r.MaxAbsoluteActiveActions, maxabsolutenewactionsperminute: r.MaxAbsoluteNewActionsPerMinute, maxpercentageactiveactions: r.MaxPercentageActiveActions, vsiproductversion: r.VSIproductVersion, euxversion: r.VSIEUXversion, vsiactivesessioncount: r.VSIactivesessionCount, vsieuxscore: r.VSIEUXscore, vsieuxstate: r.VSIEUXstate, vsivsimax: r.VSIvsiMax, vsivsimaxstate: r.VSIvsiMaxstate, vsivsimaxversion: r.VSIvsiMaxversion}))
+|> sort(columns: ["desktopbrokerversion", "desktopbrokeragentversion", "nodecount", "numberofsessions", "numberofvms", "targetos", "targetosversion", "officeversion", "toolsguestversion", "optimizervendor", "optimizerversion", "gpuprofile", "comment", "infracpubrand", "infracputype", "infraaosversion", "infrahypervisorbrand", "infrahypervisorversion", "infrahypervisortype", "infratotalnodes", "run"])
 "@
-Write-Screen -Message "Build Body Payload based on Uri Variables"
-
-# Get the test details table from Influx and Split into individual lines
-try{
-    Write-Screen -Message "Get Test Details from Influx API"
-    $TestDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $Body
-} catch {
-    Write-Screen -Message "Error Getting Test Details from Influx API"
-    break
-}
+    Write-Screen -Message "Build Body Payload based on Uri Variables"
+
+    # Get the test details table from Influx and Split into individual lines
+    try{
+        Write-Screen -Message "Get Test Details from Influx API"
+        $TestDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $Body
+    } catch {
+        Write-Screen -Message "Error Getting Test Details from Influx API"
+        break
+    }
 
-# Get Test Detail Payload Index
-$Order = Get-PayloadIndex -TestDetails $TestDetails
+    # Get Test Detail Payload Index
+    $Order = Get-PayloadIndex -TestDetails $TestDetails
 
-# Build the Test Detail Results Array
-$TestDetailResults = Get-PayloadResults -TestDetails $TestDetails
+    # Build the Test Detail Results Array
+    $TestDetailResults = Get-PayloadResults -TestDetails $TestDetails
 
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Create Directory
-# -----------------------------------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Create Directory
+    # -----------------------------------------------------------------------------------------------------------------------
 
-# Convert the Report Title to PascalCase and Create Report Output Directory
-Write-Screen -Message "Checking Output Directory"
-$Directory = (Get-Culture).TextInfo.ToTitleCase($ReportTitle) -Replace " "
-if(!(Test-Path -Path $Directory)){
-    Write-Screen -Message "Directory: $($Directory) Does Not Exist, Creating"
-    $dir = New-Item $Directory -type Directory
-    $md = New-Item  (Join-Path -Path $Directory -ChildPath "md") -type Directory
-    $images = New-Item  (Join-Path -Path $Directory -ChildPath "images") -type Directory
-    $imagePath = Join-Path -Path $dir.Name -ChildPath $images.Name
-    $mdPath = Join-Path -Path $dir.Name -ChildPath $md.Name
-    Write-Screen -Message "Created Images Directory: $($imagePath)"
-    Write-Screen -Message "Created Markdown Directory $($mdPath)"
-} else {
-    Write-Screen -Message "Directory: $($Directory) Already Exists, Please Change Report Title"
-    break 
-}
+    # Convert the Report Title to PascalCase and Create Report Output Directory
+    Write-Screen -Message "Checking Output Directory"
+    $Directory = (Get-Culture).TextInfo.ToTitleCase($ReportTitle) -Replace " "
+    if(!(Test-Path -Path $Directory)){
+        Write-Screen -Message "Directory: $($Directory) Does Not Exist, Creating"
+        $dir = New-Item $Directory -type Directory
+        $md = New-Item  (Join-Path -Path $Directory -ChildPath "md") -type Directory
+        $images = New-Item  (Join-Path -Path $Directory -ChildPath "images") -type Directory
+        $imagePath = Join-Path -Path $dir.Name -ChildPath $images.Name
+        $mdPath = Join-Path -Path $dir.Name -ChildPath $md.Name
+        Write-Screen -Message "Created Images Directory: $($imagePath)"
+        Write-Screen -Message "Created Markdown Directory $($mdPath)"
+    } else {
+        Write-Screen -Message "Directory: $($Directory) Already Exists, Please Change Report Title"
+        break 
+    }
 
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Download Icons
-# -----------------------------------------------------------------------------------------------------------------------
-Write-Screen -Message "Downloading Icons"
-$icons = @('Nutanix-Logo','bootinfo','hardware','infrastructure','broker','targetvm','loginenterprise','testicon','leresults','hostresources','clusterresources','logintimes','individualruns','appresults','euxmeasurements','filesicon','citrixnetscaler','base_image','sample-eux-score-graph','sample-login-enterprise-graph')   
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Download Icons
+    # -----------------------------------------------------------------------------------------------------------------------
+    Write-Screen -Message "Downloading Icons"
+    $icons = @('Nutanix-Logo','bootinfo','hardware','infrastructure','broker','targetvm','loginenterprise','testicon','leresults','hostresources','clusterresources','logintimes','individualruns','appresults','euxmeasurements','filesicon','citrixnetscaler','base_image','sample-eux-score-graph','sample-login-enterprise-graph')   
 
-# Loop through the icons and download the images
-foreach($icon in $icons){
-    Get-UriFile -Uri ($iconsSource + "$($icon).png") -OutFile (Join-Path -Path $imagePath -ChildPath "$($icon).png")
-}
+    # Loop through the icons and download the images
+    foreach($icon in $icons){
+        Get-UriFile -Uri ($iconsSource + "$($icon).png") -OutFile (Join-Path -Path $imagePath -ChildPath "$($icon).png")
+    }
 
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Boot Info
-# -----------------------------------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Boot Info
+    # -----------------------------------------------------------------------------------------------------------------------
 
-# Execute if Option Enabled
-if($BootInfo){
+    # Execute if Option Enabled
+    if($BootInfo){
 
-    Write-Screen -Message "Downloading Boot Info Graphs"
+        Write-Screen -Message "Downloading Boot Info Graphs"
 
-    # Build the PanelID Array 
-    $Panels = @('85','84','86','94','92','96','89','95','93','97')   
-    [int]$maxboottime = (($testDetailResults.boottime | measure -Maximum).maximum + 30) * 1000
-    $endtime = 1672534800000 + $maxboottime
+        # Build the PanelID Array 
+        $Panels = @('85','84','86','94','92','96','89','95','93','97')   
+        [int]$maxboottime = (($testDetailResults.boottime | measure -Maximum).maximum + 30) * 1000
+        $endtime = 1672534800000 + $maxboottime
 
-    Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 
-} else {
+    } else {
 
-    Write-Screen -Message "Boot Info Download Skipped"
-}
+        Write-Screen -Message "Boot Info Download Skipped"
+    }
 
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Login Enterprise Results
-# -----------------------------------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Login Enterprise Results
+    # -----------------------------------------------------------------------------------------------------------------------
 
-# Execute if Option Enabled
-if($LoginEnterpriseResults){
+    # Execute if Option Enabled
+    if($LoginEnterpriseResults){
 
-    Write-Screen -Message "Downloading Login Enterprise Graphs"
+        Write-Screen -Message "Downloading Login Enterprise Graphs"
 
-    # Build the PanelID Array 
-    $Panels = @('2','5','8','4','7','6','99','100','10','101')  
-    $endtime = "1672538820000"
-    
-    Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        # Build the PanelID Array 
+        $Panels = @('2','5','8','4','7','6','99','100','10','101')  
+        $endtime = "1672538820000"
+        
+        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 
-} else {
+    } else {
 
-    Write-Screen -Message "Login Enterprise Results Download Skipped"
-}
+        Write-Screen -Message "Login Enterprise Results Download Skipped"
+    }
 
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Host Resources Results
-# -----------------------------------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Host Resources Results
+    # -----------------------------------------------------------------------------------------------------------------------
 
-# Execute if Option Enabled
-if($HostResources){
+    # Execute if Option Enabled
+    if($HostResources){
 
-    Write-Screen -Message "Downloading Host Resources Graphs"
+        Write-Screen -Message "Downloading Host Resources Graphs"
 
-    # Build the PanelID Array 
-    $Panels = @('13','83','14','9')  
-    $endtime = "1672538820000"
+        # Build the PanelID Array 
+        $Panels = @('13','83','14','9')  
+        $endtime = "1672538820000"
 
-    Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 
-} else {
+    } else {
 
-    Write-Screen -Message "Host Resources Download Skipped"
+        Write-Screen -Message "Host Resources Download Skipped"
 
-}
+    }
 
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Cluster Resources Results
-# -----------------------------------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Cluster Resources Results
+    # -----------------------------------------------------------------------------------------------------------------------
 
-# Execute if Option Enabled
-if($ClusterResources){
+    # Execute if Option Enabled
+    if($ClusterResources){
 
-    Write-Screen -Message "Downloading Cluster Resources Graphs"
+        Write-Screen -Message "Downloading Cluster Resources Graphs"
 
-    # Build the PanelID Array 
-    $Panels = @('53','54','57','58')  
-    $endtime = "1672538820000"
+        # Build the PanelID Array 
+        $Panels = @('53','54','57','58')  
+        $endtime = "1672538820000"
 
-    Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 
-} else {
+    } else {
 
-    Write-Screen -Message "Cluster Resources Download Skipped"
-    
-}
+        Write-Screen -Message "Cluster Resources Download Skipped"
+        
+    }
 
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Login Times Results
-# -----------------------------------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Login Times Results
+    # -----------------------------------------------------------------------------------------------------------------------
 
-# Execute if Option Enabled
-if($LoginTimes){
+    # Execute if Option Enabled
+    if($LoginTimes){
 
-    Write-Screen -Message "Downloading Login Times Graphs"
+        Write-Screen -Message "Downloading Login Times Graphs"
 
-    # Build the PanelID Array 
-    $Panels = @('61','98','16','28','27','29')  
-    $endtime = "1672538820000"
+        # Build the PanelID Array 
+        $Panels = @('61','98','16','28','27','29')  
+        $endtime = "1672538820000"
 
-    Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 
-} else {
+    } else {
 
-    Write-Screen -Message "Login Times Download Skipped"
-    
-}
+        Write-Screen -Message "Login Times Download Skipped"
+        
+    }
 
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Individual Runs Results
-# -----------------------------------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Individual Runs Results
+    # -----------------------------------------------------------------------------------------------------------------------
 
-# Execute if Option Enabled
-if($IndividualRuns){
+    # Execute if Option Enabled
+    if($IndividualRuns){
 
-    Write-Screen -Message "Downloading Individual Runs Graphs"
+        Write-Screen -Message "Downloading Individual Runs Graphs"
 
-    # Build the PanelID Array 
-    $Panels = @('66','67','68','70','69')  
-    $endtime = "1672538820000"
+        # Build the PanelID Array 
+        $Panels = @('66','67','68','70','69')  
+        $endtime = "1672538820000"
 
-    Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 
-} else {
+    } else {
 
-    Write-Screen -Message "Individual Runs Download Skipped"
-    
-}
+        Write-Screen -Message "Individual Runs Download Skipped"
+        
+    }
 
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Applications Results
-# -----------------------------------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Applications Results
+    # -----------------------------------------------------------------------------------------------------------------------
 
-# Execute if Option Enabled
-if($Applications){
+    # Execute if Option Enabled
+    if($Applications){
 
-    Write-Screen -Message "Downloading Applications Graphs"
+        Write-Screen -Message "Downloading Applications Graphs"
 
-    # Build the PanelID Array 
-    $Panels = @('31','32','33','34','37','38','39','40','36','42','44','43','35','41','102')  
-    $endtime = "1672538820000"
+        # Build the PanelID Array 
+        $Panels = @('31','32','33','34','37','38','39','40','36','42','44','43','35','41','102')  
+        $endtime = "1672538820000"
 
-    Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 
-} else {
+    } else {
 
-    Write-Screen -Message "Applications Download Skipped"
-    
-}
+        Write-Screen -Message "Applications Download Skipped"
+        
+    }
 
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - VSI EUX Measurements Results
-# -----------------------------------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - VSI EUX Measurements Results
+    # -----------------------------------------------------------------------------------------------------------------------
 
-# Execute if Option Enabled
-if($VsiEuxMeasurements){
+    # Execute if Option Enabled
+    if($VsiEuxMeasurements){
 
-    Write-Screen -Message "Downloading VSI EUX Measurements Graphs"
+        Write-Screen -Message "Downloading VSI EUX Measurements Graphs"
 
-    # Build the PanelID Array 
-    $Panels = @('15','30','45','46','47','48','49','50')  
-    $endtime = "1672538820000"
+        # Build the PanelID Array 
+        $Panels = @('15','30','45','46','47','48','49','50')  
+        $endtime = "1672538820000"
 
-    Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 
-} else {
+    } else {
 
-    Write-Screen -Message "VSI EUX Measurements Download Skipped"
-    
-}
+        Write-Screen -Message "VSI EUX Measurements Download Skipped"
+        
+    }
 
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Nutanix Files Results
-# -----------------------------------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Nutanix Files Results
+    # -----------------------------------------------------------------------------------------------------------------------
 
-# Execute if Option Enabled
-if($NutanixFiles){
+    # Execute if Option Enabled
+    if($NutanixFiles){
 
-    Write-Screen -Message "Downloading Nutanix Files Graphs"
+        Write-Screen -Message "Downloading Nutanix Files Graphs"
 
-    # Build the PanelID Array 
-    $Panels = @('71','77','78','79')  
-    $endtime = "1672538820000"
+        # Build the PanelID Array 
+        $Panels = @('71','77','78','79')  
+        $endtime = "1672538820000"
 
-    Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 
-} else {
+    } else {
 
-    Write-Screen -Message "Nutanix Files Download Skipped"
-    
-}
+        Write-Screen -Message "Nutanix Files Download Skipped"
+        
+    }
 
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Citrix NetScaler Results
-# -----------------------------------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Citrix NetScaler Results
+    # -----------------------------------------------------------------------------------------------------------------------
 
-# Execute if Option Enabled
-if($CitrixNetScaler){
+    # Execute if Option Enabled
+    if($CitrixNetScaler){
 
-    Write-Screen -Message "Downloading Citrix NetScaler Graphs"
+        Write-Screen -Message "Downloading Citrix NetScaler Graphs"
 
-    # Build the PanelID Array 
-    $Panels = @('80','81','82','104','105','103','106')
-    $endtime = "1672538820000"
+        # Build the PanelID Array 
+        $Panels = @('80','81','82','104','105','103','106')
+        $endtime = "1672538820000"
 
-    Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 
-} else {
+    } else {
 
-    Write-Screen -Message "Citrix NetScaler Download Skipped"
-    
-}
+        Write-Screen -Message "Citrix NetScaler Download Skipped"
+        
+    }
 
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Create Report
-# -----------------------------------------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Create Report
+    # -----------------------------------------------------------------------------------------------------------------------
 
-# Create the File path and initial file
-$mdFullFile = Join-Path -Path $mdPath -ChildPath "README.MD"
-$mdFile = "README.MD"
-if(!(Test-Path -Path $mdFullFile)){
-    Write-Screen -Message "Creating Markdown File: $($mdFile)"
-    $mdOutput = New-Item -Path $mdPath -Name $mdFile -ItemType File
-} else {
-    Write-Screen -Message "Markdown File: $($mdFile) Already Exists, Please Delete and Re-run Script"
-    break
-}
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Create Header
-# -----------------------------------------------------------------------------------------------------------------------
-
-# Add Nutanix Logo
-Write-Screen -Message "Adding Nutanix Logo and Header Image"
-$Link = "<img src=../images/Nutanix-Logo.png alt=Nutanix>"
-Add-Content $mdFullFile "$($Link)"
-$Link = "<img src=../images/base_image.png alt=Nutanix>"
-Add-Content $mdFullFile "$($Link)"
-
-# Create the Title 
-Write-Screen -Message "Adding Report Title"
-Add-Content $mdFullFile "# $($ReportTitle)"
-
-# Create the Exec Summary
-Write-Screen -Message "Adding Executive Summary"
-Add-Title -mdFullFile $mdFullFile -Title "Executive Summary"
-Add-Content $mdFullFile "$($BoilerPlateExecSummary)"
-
-# Create the Introduction
-Write-Screen -Message "Adding Introduction"
-Add-Title -mdFullFile $mdFullFile -Title "Introduction"
-Add-Content $mdFullFile "### Audience"
-Add-Content $mdFullFile "$($BoilerPlateIntroduction)"
-Add-Content $mdFullFile "### Purpose"
-Add-Content $mdFullFile "This document covers the following subject areas:"
-Add-Content $mdFullFile " - Test Detail Specifics."
-Add-Content $mdFullFile " - Test Results for $($ReportTitle)."
-Add-Content $mdFullFile "### Document Version History "
-Add-Content $mdFullFile "| Version Number | Published | Notes |"
-Add-Content $mdFullFile "| :---: | --- | --- |"
-$Month = get-date -format "MM"
-$ReportMonth = (Get-Culture).DateTimeFormat.GetMonthName($Month)  
-$ReportYear = get-date -format "yyyy" 
-Add-Content $mdFullFile "| 1.0 | $($ReportMonth) $($ReportYear) | Original publication. |"
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Test Detail Specifics
-# -----------------------------------------------------------------------------------------------------------------------
-Write-Screen -Message "Add Test Detail Header"
-Add-Title -mdFullFile $mdFullFile -Title "Test Details"
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Hardware Specifics Section
-# -----------------------------------------------------------------------------------------------------------------------
-$Title = "Hardware Specifics"
-Write-Screen -Message "Adding $($Title)"
-
-# Get Filtered Data
-$HardwareFiltered = $TestDetailResults | Select measurement, infrahardwaretype, infracpubrand, infracputype, infracpuspeed, infracpucores, inframemorygb, infracpusocketcount, nodecount, infratotalnodes, infrassdcount, infrabios, hostgpus, comment | Sort-Object measurement | Get-Unique -AsString
-
-# Add the Table Header
-Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/hardware.png alt=$($Title)>"
-
-# Build the Table Dataset
-Write-Screen -Message "Building $($Title) Data"
-[string]$HardwareType = "| **Hardware Type** | "
-[string]$CPUBrand = "| **CPU Brand** | "
-[string]$CPUType = "| **CPU Type** | "
-[string]$CPUSpeed = "| **CPU Speed** | "
-[string]$CPUCores = "| **CPU Cores Per Node** | "
-[string]$Memory = "| **Memory Per Node** | "
-[string]$Sockets = "| **Socket Count** | "
-[string]$Nodes = "| **Nodes In Test** | "
-[string]$TotalNodes = "| **Nodes In Cluster** | "
-[string]$SSD = "| **SSD Count Per Node** | "
-[string]$Bios = "| **BIOS Version** | "
-[string]$HostGPU = "| **Host GPU Type** | "
-
-foreach($Record in $HardwareFiltered){
-    $HardwareType = $HardwareType + "$(Get-CleanData -Data ($Record.infrahardwaretype)) | "
-    $CPUBrand = $CPUBrand + "$(Get-CleanData -Data ($Record.infracpubrand)) | "
-    $CPUSpeed = $CPUSpeed + "$(Get-CleanData -Data ($Record.infracpuspeed)) GHz | "
-    $Sockets = $Sockets + "$(Get-CleanData -Data ($Record.infracpusocketcount)) | "
-    $CPUCores = $CPUCores + "$(Get-CleanData -Data ($Record.infracpucores)) | "
-    $Memory = $Memory + "$(Get-CleanData -Data ($Record.inframemorygb)) GB | "
-    $Nodes = $Nodes + "$(Get-CleanData -Data ($Record.nodecount)) | "
-    $TotalNodes = $TotalNodes + "$(Get-CleanData -Data ($Record.infratotalnodes)) | "
-    $SSD = $SSD + "$(Get-CleanData -Data ($Record.infrassdcount)) | "
-    $Bios = $Bios + "$(Get-CleanData -Data ($Record.infrabios)) | "
-    $HostGPU = $HostGPU + "$(Get-CleanData -Data ($Record.hostgpus)) | "
-    $CPUType = $CPUType + "$(Get-CleanData -Data ($Record.infracputype)) | "
-}
-
-# Add the Table
-Write-Screen -Message "Adding $($Title) Data"
-Add-Content $mdFullFile $HardwareType
-Add-Content $mdFullFile $Bios
-Add-Content $mdFullFile $CPUBrand
-Add-Content $mdFullFile $CPUType
-Add-Content $mdFullFile $CPUSpeed
-Add-Content $mdFullFile $CPUBrand
-Add-Content $mdFullFile $Sockets
-Add-Content $mdFullFile $CPUCores
-Add-Content $mdFullFile $Memory
-Add-Content $mdFullFile $SSD
-Add-Content $mdFullFile $HostGPU
-Add-Content $mdFullFile $Nodes
-Add-Content $mdFullFile $TotalNodes
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Infrastructure Software specifics
-# -----------------------------------------------------------------------------------------------------------------------
-$Title = "Infrastructure Specifics"
-Write-Screen -Message "Adding $($Title)"
-
-# Get Filtered Data
-$InfraFiltered = $TestDetailResults | Select measurement, infraaosversion, infrafullversion, infrahypervisorbrand, infrahypervisortype, infrahypervisorversion, comment | Sort-Object measurement | Get-Unique -AsString
-
-# Add the Table Header
-Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/infrastructure.png alt=$($Title)>"
-
-# Build the Table Dataset
-Write-Screen -Message "Building $($Title) Data"
-[string]$infraaosversion = "| **OS Version** | "
-[string]$infrafullversion = "| **OS Full Version** | "
-[string]$infrahypervisorbrand = "| **Hypervisor Brand** | "
-[string]$infrahypervisortype = "| **Hypervisor Type** | "
-[string]$infrahypervisorversion = "| **Hypervisor Version** | "
-
-foreach($Record in $InfraFiltered){
-    $infraaosversion = $infraaosversion + "$(Get-CleanData -Data ($Record.infraaosversion)) | "
-    $infrafullversion = $infrafullversion + "$(Get-CleanData -Data ($Record.infrafullversion)) | "
-    $infrahypervisorbrand = $infrahypervisorbrand + "$(Get-CleanData -Data ($Record.infrahypervisorbrand)) | "
-    $infrahypervisortype = $infrahypervisortype + "$(Get-CleanData -Data ($Record.infrahypervisortype)) | "
-    $infrahypervisorversion = $infrahypervisorversion + "$(Get-CleanData -Data ($Record.infrahypervisorversion)) | "
-}
-
-# Add the Table
-Write-Screen -Message "Adding $($Title) Data"
-Add-Content $mdFullFile $infraaosversion
-Add-Content $mdFullFile $infrafullversion
-Add-Content $mdFullFile $infrahypervisorbrand
-Add-Content $mdFullFile $infrahypervisortype
-Add-Content $mdFullFile $infrahypervisorversion
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Brokering Specifics
-# -----------------------------------------------------------------------------------------------------------------------
-$Title = "Broker Specifics"
-Write-Screen -Message "Adding $($Title)"
-
-# Get Filtered Data
-$BrokerFiltered = $TestDetailResults | Select measurement, deliverytype, desktopbrokerversion, sessionssupport, sessioncfg, comment | Sort-Object measurement | Get-Unique -AsString
-
-# Add the Table Header
-Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/broker.png alt=$($Title)>"
-
-# Build the Table Dataset
-Write-Screen -Message "Building $($Title) Data"
-[string]$deliverytype = "| **Delivery Type** | "
-[string]$desktopbrokerversion = "| **Desktop Broker Version** | "
-[string]$sessionssupport = "| **Session Type** | "
-[string]$sessioncfg = "| **Session Config** | "
-
-foreach($Record in $BrokerFiltered){
-    $deliverytype = $deliverytype + "$(Get-CleanData -Data ($Record.deliverytype)) | "
-    $desktopbrokerversion = $desktopbrokerversion + "$(Get-CleanData -Data ($Record.desktopbrokerversion)) | "
-    $sessionssupport = $sessionssupport + "$(Get-CleanData -Data ($Record.sessionssupport)) | "
-    $sessioncfg = $sessioncfg + "$(Get-CleanData -Data ($Record.sessioncfg)) | "
-}
-
-# Add the Table
-Write-Screen -Message "Adding $($Title) Data"
-Add-Content $mdFullFile $deliverytype
-Add-Content $mdFullFile $desktopbrokerversion
-Add-Content $mdFullFile $sessionssupport
-Add-Content $mdFullFile $sessioncfg
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Target VM Specifics
-# -----------------------------------------------------------------------------------------------------------------------
-$Title = "Target VM Specifics"
-Write-Screen -Message "Adding $($Title)"
-
-# Get Filtered Data
-$TargetVMFiltered = $TestDetailResults | Select measurement, numcpus, numcores, memorygb, gpuprofile, secureboot, vtpm, credentialguard, targetos, targetosversion, desktopbrokeragentversion, officeversion, clonetype, toolsguestversion, optimizervendor, optimizerversion, comment | Sort-Object measurement | Get-Unique -AsString
-
-# Add the Table Header
-Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/targetvm.png alt=$($Title)>"
-
-# Build the Table Dataset
-Write-Screen -Message "Building $($Title) Data"
-[string]$numcpus = "| **CPU Sockets** | "
-[string]$numcores = "| **Cores per Socket** | "
-[string]$memorygb = "| **Memory** | "
-[string]$gpuprofile = "| **GPU profile** | "
-[string]$secureboot = "| **Secure Boot** | "
-[string]$vtpm = "| **Virtual TPM** | "
-[string]$credentialguard = "| **Credential Guard** | "
-[string]$targetos = "| **Operating System** | "
-[string]$targetosversion = "| **Operating System Version** | "
-[string]$desktopbrokeragentversion = "| **Desktop Broker Agent Version** | "
-[string]$officeversion = "| **Office Version** | "
-[string]$clonetype = "| **Clone Type** | "
-[string]$toolsguestversion = "| **Guest Tools Version** | "
-[string]$optimizervendor = "| **Optimizer Vendor** | "
-[string]$optimizerversion = "| **Optimizer Version** | "
-
-foreach($Record in $TargetVMFiltered){
-    $numcpus = $numcpus + "$(Get-CleanData -Data ($Record.numcpus)) | "
-    $numcores = $numcores + "$(Get-CleanData -Data ($Record.numcores)) | "
-    $memorygb = $memorygb + "$(Get-CleanData -Data ($Record.memorygb)) GB | "
-    $gpuprofile = $gpuprofile + "$(Get-CleanData -Data ($Record.gpuprofile)) | "
-    $secureboot = $secureboot + "$(Get-CleanData -Data ($Record.secureboot)) | "
-    $vtpm = $vtpm + "$(Get-CleanData -Data ($Record.vtpm)) | "
-    $credentialguard = $credentialguard + "$(Get-CleanData -Data ($Record.credentialguard)) | "
-    $targetos = $targetos + "$(Get-CleanData -Data ($Record.targetos)) | "
-    $targetosversion = $targetosversion + "$(Get-CleanData -Data ($Record.targetosversion)) | "
-    $desktopbrokeragentversion = $desktopbrokeragentversion + "$(Get-CleanData -Data ($Record.desktopbrokeragentversion)) | "
-    $officeversion = $officeversion + "$(Get-CleanData -Data ($Record.officeversion)) | "
-    $clonetype = $clonetype + "$(Get-CleanData -Data ($Record.clonetype)) | "
-    $toolsguestversion = $toolsguestversion + "$(Get-CleanData -Data ($Record.toolsguestversion)) | "
-    $optimizervendor = $optimizervendor + "$(Get-CleanData -Data ($Record.optimizervendor)) | "
-    $optimizerversion = $optimizerversion + "$(Get-CleanData -Data ($Record.optimizerversion)) | "
-}
-
-# Add the Table
-Write-Screen -Message "Adding $($Title) Data"
-Add-Content $mdFullFile $numcpus
-Add-Content $mdFullFile $numcores
-Add-Content $mdFullFile $memorygb
-Add-Content $mdFullFile $gpuprofile
-Add-Content $mdFullFile $secureboot
-Add-Content $mdFullFile $vtpm
-Add-Content $mdFullFile $credentialguard
-Add-Content $mdFullFile $targetos
-Add-Content $mdFullFile $targetosversion
-Add-Content $mdFullFile $desktopbrokeragentversion
-Add-Content $mdFullFile $officeversion
-Add-Content $mdFullFile $clonetype
-Add-Content $mdFullFile $toolsguestversion
-Add-Content $mdFullFile $optimizervendor
-Add-Content $mdFullFile $optimizerversion
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Login Enterprise Specifics
-# -----------------------------------------------------------------------------------------------------------------------
-$Title = "Login Enterprise Specifics"
-Write-Screen -Message "Adding $($Title)"
-
-# Get Filtered Data
-$LEspecsFiltered = $TestDetailResults | Select measurement, vsiproductversion, euxversion, vsivsimaxversion, workload, comment | Sort-Object measurement | Get-Unique -AsString
-
-# Add the Table Header
-Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/loginenterprise.png alt=$($Title)>"
-
-# Build the Table Dataset
-Write-Screen -Message "Building $($Title) Data"
-[string]$vsiproductversion = "| **Product Version** | "
-[string]$euxversion = "| **EUX Version** | "
-[string]$vsivsimaxversion = "| **VSIMax Version** | "
-[string]$workload = "| **Workload** | "
-
-foreach($Record in $LEspecsFiltered){
-    $vsiproductversion = $vsiproductversion + "$(Get-CleanData -Data ($Record.vsiproductversion)) | "
-    $euxversion = $euxversion + "$(Get-CleanData -Data ($Record.euxversion)) | "
-    $vsivsimaxversion = $vsivsimaxversion + "$(Get-CleanData -Data ($Record.vsivsimaxversion)) | "
-    $workload = $workload + "$(Get-CleanData -Data ($Record.workload)) | "
-}
-
-# Add the Table
-Write-Screen -Message "Adding $($Title) Data"
-Add-Content $mdFullFile $vsiproductversion
-Add-Content $mdFullFile $euxversion
-Add-Content $mdFullFile $vsivsimaxversion
-Add-Content $mdFullFile $workload
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Test Specifics
-# -----------------------------------------------------------------------------------------------------------------------
-$Title = "Test Specifics"
-Write-Screen -Message "Adding $($Title)"
-
-# Get Filtered Data
-$TestFiltered = $TestDetailResults | Select measurement, infrasinglenodetest, numberofvms, numberofsessions, comment | Sort-Object measurement | Get-Unique -AsString
-
-# Add the Table Header
-Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/testicon.png alt=$($Title)>"
-
-# Build the Table Dataset
-Write-Screen -Message "Building $($Title) Data"
-[string]$infrasinglenodetest = "| **Single Node Test** | "
-[string]$numberofvms = "| **Number Of VMs** | "
-[string]$numberofsessions = "| **Number Of Sessions** | "
-
-foreach($Record in $TestFiltered){
-    $infrasinglenodetest = $infrasinglenodetest + "$(Get-CleanData -Data ($Record.infrasinglenodetest)) | "
-    $numberofvms = $numberofvms + "$(Get-CleanData -Data ($Record.numberofvms)) | "
-    $numberofsessions = $numberofsessions + "$(Get-CleanData -Data ($Record.numberofsessions)) | "
-}
-
-# Add the Table
-Write-Screen -Message "Adding $($Title) Data"
-Add-Content $mdFullFile $infrasinglenodetest
-Add-Content $mdFullFile $numberofvms
-Add-Content $mdFullFile $numberofsessions
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Test Results
-# -----------------------------------------------------------------------------------------------------------------------
-Add-Title -mdFullFile $mdFullFile -Title "Test Results"
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Boot Information
-# -----------------------------------------------------------------------------------------------------------------------
-if($BootInfo){
-
-    # Add Boot Information Table
-    $Title = "Boot Parmeters"
+    # Create the File path and initial file
+    $mdFullFile = Join-Path -Path $mdPath -ChildPath "README.MD"
+    $mdFile = "README.MD"
+    if(!(Test-Path -Path $mdFullFile)){
+        Write-Screen -Message "Creating Markdown File: $($mdFile)"
+        $mdOutput = New-Item -Path $mdPath -Name $mdFile -ItemType File
+    } else {
+        Write-Screen -Message "Markdown File: $($mdFile) Already Exists, Please Delete and Re-run Script"
+        break
+    }
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Create Header
+    # -----------------------------------------------------------------------------------------------------------------------
+
+    # Center Section
+    Add-Content $mdFullFile "<div style=""text-align: center;"">"
+
+    # Add Nutanix Logo
+    Write-Screen -Message "Adding Nutanix Logo and Header Image"
+    $Link = "<img src=../images/Nutanix-Logo.png alt=Nutanix>"
+    Add-Content $mdFullFile "$($Link)"
+
+    # Add Team Title
+    Add-Content $mdFullFile "<h1> Solutions and Performance Engineering - EUC </h1>"
+
+    # Add Boiler Plate Image
+    $Link = "<img src=../images/base_image.png alt=Nutanix>"
+    Add-Content $mdFullFile "$($Link)"
+
+    # Create the Title 
+    Write-Screen -Message "Adding Report Title"
+    Add-Content $mdFullFile "<h1> $($ReportTitle) </h1>"
+
+    # End Centering
+    Add-Content $mdFullFile "</div>"
+
+    # Create the Exec Summary
+    Write-Screen -Message "Adding Executive Summary"
+    Add-Title -mdFullFile $mdFullFile -Title "Executive Summary"
+    Add-Content $mdFullFile "$($BoilerPlateExecSummary)"
+
+    # Create the Introduction
+    Write-Screen -Message "Adding Introduction"
+    Add-Title -mdFullFile $mdFullFile -Title "Introduction"
+    Add-Content $mdFullFile "### Audience"
+    Add-Content $mdFullFile "$($BoilerPlateIntroduction)"
+    Add-Content $mdFullFile "### Purpose"
+    Add-Content $mdFullFile "This document covers the following subject areas:"
+    Add-Content $mdFullFile " - Test Detail Specifics."
+    Add-Content $mdFullFile " - Test Results for $($ReportTitle)."
+    Add-Content $mdFullFile "### Document Version History "
+    Add-Content $mdFullFile "| Version Number | Published | Notes |"
+    Add-Content $mdFullFile "| :---: | --- | --- |"
+    $Month = get-date -format "MM"
+    $ReportMonth = (Get-Culture).DateTimeFormat.GetMonthName($Month)  
+    $ReportYear = get-date -format "yyyy" 
+    Add-Content $mdFullFile "| 1.0 | $($ReportMonth) $($ReportYear) | Original publication. |"
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Test Detail Specifics
+    # -----------------------------------------------------------------------------------------------------------------------
+    Write-Screen -Message "Add Test Detail Header"
+    Add-Title -mdFullFile $mdFullFile -Title "Test Details"
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Hardware Specifics Section
+    # -----------------------------------------------------------------------------------------------------------------------
+    $Title = "Hardware Specifics"
     Write-Screen -Message "Adding $($Title)"
 
     # Get Filtered Data
-    $BootFiltered = $TestDetailResults | Select measurement, maxabsoluteactiveactions, maxabsolutenewactionsperminute, maxpercentageactiveactions, comment | Sort-Object measurement | Get-Unique -AsString
+    $HardwareFiltered = $TestDetailResults | Select measurement, infrahardwaretype, infracpubrand, infracputype, infracpuspeed, infracpucores, inframemorygb, infracpusocketcount, nodecount, infratotalnodes, infrassdcount, infrabios, hostgpus, comment | Sort-Object measurement | Get-Unique -AsString
 
     # Add the Table Header
-    Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/bootinfo.png alt=$($Title)>"
+    Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/hardware.png alt=$($Title)>"
 
     # Build the Table Dataset
     Write-Screen -Message "Building $($Title) Data"
-    [string]$maxabsoluteactiveactions = "| **Max Absolute Active Actions** | "
-    [string]$maxabsolutenewactionsperminute = "| **Max Absolute Actions Per Minute** | "
-    [string]$maxpercentageactiveactions = "| **Max Percentage Active Actions** | "
+    [string]$HardwareType = "| **Hardware Type** | "
+    [string]$CPUBrand = "| **CPU Brand** | "
+    [string]$CPUType = "| **CPU Type** | "
+    [string]$CPUSpeed = "| **CPU Speed** | "
+    [string]$CPUCores = "| **CPU Cores Per Node** | "
+    [string]$Memory = "| **Memory Per Node** | "
+    [string]$Sockets = "| **Socket Count** | "
+    [string]$Nodes = "| **Nodes In Test** | "
+    [string]$TotalNodes = "| **Nodes In Cluster** | "
+    [string]$SSD = "| **SSD Count Per Node** | "
+    [string]$Bios = "| **BIOS Version** | "
+    [string]$HostGPU = "| **Host GPU Type** | "
 
-    foreach($Record in $BootFiltered){
-        $maxabsoluteactiveactions = $maxabsoluteactiveactions + "$(Get-CleanData -Data ($Record.maxabsoluteactiveactions)) | "
-        $maxabsolutenewactionsperminute = $maxabsolutenewactionsperminute + "$(Get-CleanData -Data ($Record.maxabsolutenewactionsperminute)) | "
-        $maxpercentageactiveactions = $maxpercentageactiveactions + "$(Get-CleanData -Data ($Record.maxpercentageactiveactions)) | "
+    foreach($Record in $HardwareFiltered){
+        $HardwareType = $HardwareType + "$(Get-CleanData -Data ($Record.infrahardwaretype)) | "
+        $CPUBrand = $CPUBrand + "$(Get-CleanData -Data ($Record.infracpubrand)) | "
+        $CPUSpeed = $CPUSpeed + "$(Get-CleanData -Data ($Record.infracpuspeed)) GHz | "
+        $Sockets = $Sockets + "$(Get-CleanData -Data ($Record.infracpusocketcount)) | "
+        $CPUCores = $CPUCores + "$(Get-CleanData -Data ($Record.infracpucores)) | "
+        $Memory = $Memory + "$(Get-CleanData -Data ($Record.inframemorygb)) GB | "
+        $Nodes = $Nodes + "$(Get-CleanData -Data ($Record.nodecount)) | "
+        $TotalNodes = $TotalNodes + "$(Get-CleanData -Data ($Record.infratotalnodes)) | "
+        $SSD = $SSD + "$(Get-CleanData -Data ($Record.infrassdcount)) | "
+        $Bios = $Bios + "$(Get-CleanData -Data ($Record.infrabios)) | "
+        $HostGPU = $HostGPU + "$(Get-CleanData -Data ($Record.hostgpus)) | "
+        $CPUType = $CPUType + "$(Get-CleanData -Data ($Record.infracputype)) | "
     }
 
     # Add the Table
     Write-Screen -Message "Adding $($Title) Data"
-    Add-Content $mdFullFile $maxabsoluteactiveactions
-    Add-Content $mdFullFile $maxabsolutenewactionsperminute
-    Add-Content $mdFullFile $maxpercentageactiveactions
+    Add-Content $mdFullFile $HardwareType
+    Add-Content $mdFullFile $Bios
+    Add-Content $mdFullFile $CPUBrand
+    Add-Content $mdFullFile $CPUType
+    Add-Content $mdFullFile $CPUSpeed
+    Add-Content $mdFullFile $CPUBrand
+    Add-Content $mdFullFile $Sockets
+    Add-Content $mdFullFile $CPUCores
+    Add-Content $mdFullFile $Memory
+    Add-Content $mdFullFile $SSD
+    Add-Content $mdFullFile $HostGPU
+    Add-Content $mdFullFile $Nodes
+    Add-Content $mdFullFile $TotalNodes
 
-    $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "boot_time*")} | Sort-Object CreationTime
-    Add-Graphs -Source $Source -Title "Boot Information" -mdFullFile $mdFullFile
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Infrastructure Software specifics
+    # -----------------------------------------------------------------------------------------------------------------------
+    $Title = "Infrastructure Specifics"
+    Write-Screen -Message "Adding $($Title)"
 
+    # Get Filtered Data
+    $InfraFiltered = $TestDetailResults | Select measurement, infraaosversion, infrafullversion, infrahypervisorbrand, infrahypervisortype, infrahypervisorversion, comment | Sort-Object measurement | Get-Unique -AsString
+
+    # Add the Table Header
+    Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/infrastructure.png alt=$($Title)>"
+
+    # Build the Table Dataset
+    Write-Screen -Message "Building $($Title) Data"
+    [string]$infraaosversion = "| **OS Version** | "
+    [string]$infrafullversion = "| **OS Full Version** | "
+    [string]$infrahypervisorbrand = "| **Hypervisor Brand** | "
+    [string]$infrahypervisortype = "| **Hypervisor Type** | "
+    [string]$infrahypervisorversion = "| **Hypervisor Version** | "
+
+    foreach($Record in $InfraFiltered){
+        $infraaosversion = $infraaosversion + "$(Get-CleanData -Data ($Record.infraaosversion)) | "
+        $infrafullversion = $infrafullversion + "$(Get-CleanData -Data ($Record.infrafullversion)) | "
+        $infrahypervisorbrand = $infrahypervisorbrand + "$(Get-CleanData -Data ($Record.infrahypervisorbrand)) | "
+        $infrahypervisortype = $infrahypervisortype + "$(Get-CleanData -Data ($Record.infrahypervisortype)) | "
+        $infrahypervisorversion = $infrahypervisorversion + "$(Get-CleanData -Data ($Record.infrahypervisorversion)) | "
+    }
+
+    # Add the Table
+    Write-Screen -Message "Adding $($Title) Data"
+    Add-Content $mdFullFile $infraaosversion
+    Add-Content $mdFullFile $infrafullversion
+    Add-Content $mdFullFile $infrahypervisorbrand
+    Add-Content $mdFullFile $infrahypervisortype
+    Add-Content $mdFullFile $infrahypervisorversion
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Brokering Specifics
+    # -----------------------------------------------------------------------------------------------------------------------
+    $Title = "Broker Specifics"
+    Write-Screen -Message "Adding $($Title)"
+
+    # Get Filtered Data
+    $BrokerFiltered = $TestDetailResults | Select measurement, deliverytype, desktopbrokerversion, sessionssupport, sessioncfg, comment | Sort-Object measurement | Get-Unique -AsString
+
+    # Add the Table Header
+    Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/broker.png alt=$($Title)>"
+
+    # Build the Table Dataset
+    Write-Screen -Message "Building $($Title) Data"
+    [string]$deliverytype = "| **Delivery Type** | "
+    [string]$desktopbrokerversion = "| **Desktop Broker Version** | "
+    [string]$sessionssupport = "| **Session Type** | "
+    [string]$sessioncfg = "| **Session Config** | "
+
+    foreach($Record in $BrokerFiltered){
+        $deliverytype = $deliverytype + "$(Get-CleanData -Data ($Record.deliverytype)) | "
+        $desktopbrokerversion = $desktopbrokerversion + "$(Get-CleanData -Data ($Record.desktopbrokerversion)) | "
+        $sessionssupport = $sessionssupport + "$(Get-CleanData -Data ($Record.sessionssupport)) | "
+        $sessioncfg = $sessioncfg + "$(Get-CleanData -Data ($Record.sessioncfg)) | "
+    }
+
+    # Add the Table
+    Write-Screen -Message "Adding $($Title) Data"
+    Add-Content $mdFullFile $deliverytype
+    Add-Content $mdFullFile $desktopbrokerversion
+    Add-Content $mdFullFile $sessionssupport
+    Add-Content $mdFullFile $sessioncfg
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Target VM Specifics
+    # -----------------------------------------------------------------------------------------------------------------------
+    $Title = "Target VM Specifics"
+    Write-Screen -Message "Adding $($Title)"
+
+    # Get Filtered Data
+    $TargetVMFiltered = $TestDetailResults | Select measurement, numcpus, numcores, memorygb, gpuprofile, secureboot, vtpm, credentialguard, targetos, targetosversion, desktopbrokeragentversion, officeversion, clonetype, toolsguestversion, optimizervendor, optimizerversion, comment | Sort-Object measurement | Get-Unique -AsString
+
+    # Add the Table Header
+    Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/targetvm.png alt=$($Title)>"
+
+    # Build the Table Dataset
+    Write-Screen -Message "Building $($Title) Data"
+    [string]$numcpus = "| **CPU Sockets** | "
+    [string]$numcores = "| **Cores per Socket** | "
+    [string]$memorygb = "| **Memory** | "
+    [string]$gpuprofile = "| **GPU profile** | "
+    [string]$secureboot = "| **Secure Boot** | "
+    [string]$vtpm = "| **Virtual TPM** | "
+    [string]$credentialguard = "| **Credential Guard** | "
+    [string]$targetos = "| **Operating System** | "
+    [string]$targetosversion = "| **Operating System Version** | "
+    [string]$desktopbrokeragentversion = "| **Desktop Broker Agent Version** | "
+    [string]$officeversion = "| **Office Version** | "
+    [string]$clonetype = "| **Clone Type** | "
+    [string]$toolsguestversion = "| **Guest Tools Version** | "
+    [string]$optimizervendor = "| **Optimizer Vendor** | "
+    [string]$optimizerversion = "| **Optimizer Version** | "
+
+    foreach($Record in $TargetVMFiltered){
+        $numcpus = $numcpus + "$(Get-CleanData -Data ($Record.numcpus)) | "
+        $numcores = $numcores + "$(Get-CleanData -Data ($Record.numcores)) | "
+        $memorygb = $memorygb + "$(Get-CleanData -Data ($Record.memorygb)) GB | "
+        $gpuprofile = $gpuprofile + "$(Get-CleanData -Data ($Record.gpuprofile)) | "
+        $secureboot = $secureboot + "$(Get-CleanData -Data ($Record.secureboot)) | "
+        $vtpm = $vtpm + "$(Get-CleanData -Data ($Record.vtpm)) | "
+        $credentialguard = $credentialguard + "$(Get-CleanData -Data ($Record.credentialguard)) | "
+        $targetos = $targetos + "$(Get-CleanData -Data ($Record.targetos)) | "
+        $targetosversion = $targetosversion + "$(Get-CleanData -Data ($Record.targetosversion)) | "
+        $desktopbrokeragentversion = $desktopbrokeragentversion + "$(Get-CleanData -Data ($Record.desktopbrokeragentversion)) | "
+        $officeversion = $officeversion + "$(Get-CleanData -Data ($Record.officeversion)) | "
+        $clonetype = $clonetype + "$(Get-CleanData -Data ($Record.clonetype)) | "
+        $toolsguestversion = $toolsguestversion + "$(Get-CleanData -Data ($Record.toolsguestversion)) | "
+        $optimizervendor = $optimizervendor + "$(Get-CleanData -Data ($Record.optimizervendor)) | "
+        $optimizerversion = $optimizerversion + "$(Get-CleanData -Data ($Record.optimizerversion)) | "
+    }
+
+    # Add the Table
+    Write-Screen -Message "Adding $($Title) Data"
+    Add-Content $mdFullFile $numcpus
+    Add-Content $mdFullFile $numcores
+    Add-Content $mdFullFile $memorygb
+    Add-Content $mdFullFile $gpuprofile
+    Add-Content $mdFullFile $secureboot
+    Add-Content $mdFullFile $vtpm
+    Add-Content $mdFullFile $credentialguard
+    Add-Content $mdFullFile $targetos
+    Add-Content $mdFullFile $targetosversion
+    Add-Content $mdFullFile $desktopbrokeragentversion
+    Add-Content $mdFullFile $officeversion
+    Add-Content $mdFullFile $clonetype
+    Add-Content $mdFullFile $toolsguestversion
+    Add-Content $mdFullFile $optimizervendor
+    Add-Content $mdFullFile $optimizerversion
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Login Enterprise Specifics
+    # -----------------------------------------------------------------------------------------------------------------------
+    $Title = "Login Enterprise Specifics"
+    Write-Screen -Message "Adding $($Title)"
+
+    # Get Filtered Data
+    $LEspecsFiltered = $TestDetailResults | Select measurement, vsiproductversion, euxversion, vsivsimaxversion, workload, comment | Sort-Object measurement | Get-Unique -AsString
+
+    # Add the Table Header
+    Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/loginenterprise.png alt=$($Title)>"
+
+    # Build the Table Dataset
+    Write-Screen -Message "Building $($Title) Data"
+    [string]$vsiproductversion = "| **Product Version** | "
+    [string]$euxversion = "| **EUX Version** | "
+    [string]$vsivsimaxversion = "| **VSIMax Version** | "
+    [string]$workload = "| **Workload** | "
+
+    foreach($Record in $LEspecsFiltered){
+        $vsiproductversion = $vsiproductversion + "$(Get-CleanData -Data ($Record.vsiproductversion)) | "
+        $euxversion = $euxversion + "$(Get-CleanData -Data ($Record.euxversion)) | "
+        $vsivsimaxversion = $vsivsimaxversion + "$(Get-CleanData -Data ($Record.vsivsimaxversion)) | "
+        $workload = $workload + "$(Get-CleanData -Data ($Record.workload)) | "
+    }
+
+    # Add the Table
+    Write-Screen -Message "Adding $($Title) Data"
+    Add-Content $mdFullFile $vsiproductversion
+    Add-Content $mdFullFile $euxversion
+    Add-Content $mdFullFile $vsivsimaxversion
+    Add-Content $mdFullFile $workload
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Test Specifics
+    # -----------------------------------------------------------------------------------------------------------------------
+    $Title = "Test Specifics"
+    Write-Screen -Message "Adding $($Title)"
+
+    # Get Filtered Data
+    $TestFiltered = $TestDetailResults | Select measurement, infrasinglenodetest, numberofvms, numberofsessions, comment | Sort-Object measurement | Get-Unique -AsString
+
+    # Add the Table Header
+    Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/testicon.png alt=$($Title)>"
+
+    # Build the Table Dataset
+    Write-Screen -Message "Building $($Title) Data"
+    [string]$infrasinglenodetest = "| **Single Node Test** | "
+    [string]$numberofvms = "| **Number Of VMs** | "
+    [string]$numberofsessions = "| **Number Of Sessions** | "
+
+    foreach($Record in $TestFiltered){
+        $infrasinglenodetest = $infrasinglenodetest + "$(Get-CleanData -Data ($Record.infrasinglenodetest)) | "
+        $numberofvms = $numberofvms + "$(Get-CleanData -Data ($Record.numberofvms)) | "
+        $numberofsessions = $numberofsessions + "$(Get-CleanData -Data ($Record.numberofsessions)) | "
+    }
+
+    # Add the Table
+    Write-Screen -Message "Adding $($Title) Data"
+    Add-Content $mdFullFile $infrasinglenodetest
+    Add-Content $mdFullFile $numberofvms
+    Add-Content $mdFullFile $numberofsessions
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Test Results
+    # -----------------------------------------------------------------------------------------------------------------------
+    Add-Title -mdFullFile $mdFullFile -Title "Test Results"
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Boot Information
+    # -----------------------------------------------------------------------------------------------------------------------
+    if($BootInfo){
+
+        # Add Boot Information Table
+        $Title = "Boot Parmeters"
+        Write-Screen -Message "Adding $($Title)"
+
+        # Get Filtered Data
+        $BootFiltered = $TestDetailResults | Select measurement, maxabsoluteactiveactions, maxabsolutenewactionsperminute, maxpercentageactiveactions, comment | Sort-Object measurement | Get-Unique -AsString
+
+        # Add the Table Header
+        Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/bootinfo.png alt=$($Title)>"
+
+        # Build the Table Dataset
+        Write-Screen -Message "Building $($Title) Data"
+        [string]$maxabsoluteactiveactions = "| **Max Absolute Active Actions** | "
+        [string]$maxabsolutenewactionsperminute = "| **Max Absolute Actions Per Minute** | "
+        [string]$maxpercentageactiveactions = "| **Max Percentage Active Actions** | "
+
+        foreach($Record in $BootFiltered){
+            $maxabsoluteactiveactions = $maxabsoluteactiveactions + "$(Get-CleanData -Data ($Record.maxabsoluteactiveactions)) | "
+            $maxabsolutenewactionsperminute = $maxabsolutenewactionsperminute + "$(Get-CleanData -Data ($Record.maxabsolutenewactionsperminute)) | "
+            $maxpercentageactiveactions = $maxpercentageactiveactions + "$(Get-CleanData -Data ($Record.maxpercentageactiveactions)) | "
+        }
+
+        # Add the Table
+        Write-Screen -Message "Adding $($Title) Data"
+        Add-Content $mdFullFile $maxabsoluteactiveactions
+        Add-Content $mdFullFile $maxabsolutenewactionsperminute
+        Add-Content $mdFullFile $maxpercentageactiveactions
+
+        $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "boot_time*")} | Sort-Object CreationTime
+        Add-Graphs -Source $Source -Title "Boot Information" -mdFullFile $mdFullFile
+
+    }
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Login Enterprise Results
+    # -----------------------------------------------------------------------------------------------------------------------
+    if($LoginEnterpriseResults){
+
+        $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "le_results*")} | Sort-Object CreationTime
+        Add-Graphs -Source $Source -Title "Login Enterprise" -mdFullFile $mdFullFile
+
+    }
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Host Resources Results
+    # -----------------------------------------------------------------------------------------------------------------------
+    if($HostResources){
+
+        $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "host_resources*")} | Sort-Object CreationTime
+        Add-Graphs -Source $Source -Title "Host Resources" -mdFullFile $mdFullFile
+
+    }
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Cluster Resources Results
+    # -----------------------------------------------------------------------------------------------------------------------
+    if($ClusterResources){
+
+        $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "cluster_resources*")} | Sort-Object CreationTime
+        Add-Graphs -Source $Source -Title "Cluster Resources" -mdFullFile $mdFullFile
+
+    }
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Login Times Results
+    # -----------------------------------------------------------------------------------------------------------------------
+    if($LoginTimes){
+
+        $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "login_times*")} | Sort-Object CreationTime
+        Add-Graphs -Source $Source -Title "Login Times" -mdFullFile $mdFullFile
+
+    }
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Individual Runs Results
+    # -----------------------------------------------------------------------------------------------------------------------
+    if($IndividualRuns){
+
+        $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "individual_runs*")} | Sort-Object CreationTime
+        Add-Graphs -Source $Source -Title "Individual Runs" -mdFullFile $mdFullFile
+
+    }
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Applications Results
+    # -----------------------------------------------------------------------------------------------------------------------
+    if($Applications){
+
+        $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "applications*")} | Sort-Object CreationTime
+        Add-Graphs -Source $Source -Title "Applications" -mdFullFile $mdFullFile
+
+    }
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - VSI EUX Measurements Results
+    # -----------------------------------------------------------------------------------------------------------------------
+    if($VsiEuxMeasurements){
+
+        $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "vsi_eux*")} | Sort-Object CreationTime
+        Add-Graphs -Source $Source -Title "VSI EUX Measurements" -mdFullFile $mdFullFile
+        
+    }
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Nutanix Files Results
+    # -----------------------------------------------------------------------------------------------------------------------
+    if($NutanixFiles){
+
+        $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "nutanix_files*")} | Sort-Object CreationTime
+        Add-Graphs -Source $Source -Title "Nutanix Files" -mdFullFile $mdFullFile
+
+    }
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Citrix NetScaler Results
+    # -----------------------------------------------------------------------------------------------------------------------
+    if($CitrixNetScaler){
+
+        $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "citrix_netscaler*")} | Sort-Object CreationTime
+        Add-Graphs -Source $Source -Title "Citrix NetScaler" -mdFullFile $mdFullFile
+
+    }
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Conclusion
+    # -----------------------------------------------------------------------------------------------------------------------
+    Write-Screen -Message "Adding Conclusion"
+    Add-Title -mdFullFile $mdFullFile -Title "Conclusion"
+    Add-Content $mdFullFile "$($BoilerPlateConclusion)"
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Appendix
+    # -----------------------------------------------------------------------------------------------------------------------
+    Write-Screen -Message "Adding Appendix"
+    Add-Title -mdFullFile $mdFullFile -Title "Appendix"
+    Add-Content $mdFullFile "$($BoilerPlateAppendix)"
 }
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Login Enterprise Results
-# -----------------------------------------------------------------------------------------------------------------------
-if($LoginEnterpriseResults){
-
-    $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "le_results*")} | Sort-Object CreationTime
-    Add-Graphs -Source $Source -Title "Login Enterprise" -mdFullFile $mdFullFile
-
-}
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Host Resources Results
-# -----------------------------------------------------------------------------------------------------------------------
-if($HostResources){
-
-    $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "host_resources*")} | Sort-Object CreationTime
-    Add-Graphs -Source $Source -Title "Host Resources" -mdFullFile $mdFullFile
-
-}
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Cluster Resources Results
-# -----------------------------------------------------------------------------------------------------------------------
-if($ClusterResources){
-
-    $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "cluster_resources*")} | Sort-Object CreationTime
-    Add-Graphs -Source $Source -Title "Cluster Resources" -mdFullFile $mdFullFile
-
-}
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Login Times Results
-# -----------------------------------------------------------------------------------------------------------------------
-if($LoginTimes){
-
-    $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "login_times*")} | Sort-Object CreationTime
-    Add-Graphs -Source $Source -Title "Login Times" -mdFullFile $mdFullFile
-
-}
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Individual Runs Results
-# -----------------------------------------------------------------------------------------------------------------------
-if($IndividualRuns){
-
-    $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "individual_runs*")} | Sort-Object CreationTime
-    Add-Graphs -Source $Source -Title "Individual Runs" -mdFullFile $mdFullFile
-
-}
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Applications Results
-# -----------------------------------------------------------------------------------------------------------------------
-if($Applications){
-
-    $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "applications*")} | Sort-Object CreationTime
-    Add-Graphs -Source $Source -Title "Applications" -mdFullFile $mdFullFile
-
-}
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - VSI EUX Measurements Results
-# -----------------------------------------------------------------------------------------------------------------------
-if($VsiEuxMeasurements){
-
-    $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "vsi_eux*")} | Sort-Object CreationTime
-    Add-Graphs -Source $Source -Title "VSI EUX Measurements" -mdFullFile $mdFullFile
-    
-}
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Nutanix Files Results
-# -----------------------------------------------------------------------------------------------------------------------
-if($NutanixFiles){
-
-    $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "nutanix_files*")} | Sort-Object CreationTime
-    Add-Graphs -Source $Source -Title "Nutanix Files" -mdFullFile $mdFullFile
-
-}
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Citrix NetScaler Results
-# -----------------------------------------------------------------------------------------------------------------------
-if($CitrixNetScaler){
-
-    $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "citrix_netscaler*")} | Sort-Object CreationTime
-    Add-Graphs -Source $Source -Title "Citrix NetScaler" -mdFullFile $mdFullFile
-
-}
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Conclusion
-# -----------------------------------------------------------------------------------------------------------------------
-Write-Screen -Message "Adding Conclusion"
-Add-Title -mdFullFile $mdFullFile -Title "Conclusion"
-Add-Content $mdFullFile "$($BoilerPlateConclusion)"
-
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Appendix
-# -----------------------------------------------------------------------------------------------------------------------
-Write-Screen -Message "Adding Appendix"
-Add-Title -mdFullFile $mdFullFile -Title "Appendix"
-Add-Content $mdFullFile "$($BoilerPlateAppendix)"
