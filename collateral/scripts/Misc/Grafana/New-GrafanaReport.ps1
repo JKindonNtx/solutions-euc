@@ -250,7 +250,8 @@ if ($confirmationStart -eq 'n') {
     # Get the Test Detail Results
     function Get-PayloadResults {
         param(
-            $TestDetails
+            $TestDetails,
+            $Order
         )
 
         $TestDetailSplit = $TestDetails.Split("`n")
@@ -513,6 +514,7 @@ if ($confirmationStart -eq 'n') {
     $FormattedComment = (Get-UriVariable -Uri $SourceUri -Var "var-Comment").Replace('.', '\.')
     $FormattedTestname = (Get-UriVariable -Uri $SourceUri -Var "var-Testname").Replace('.', '\.')
     $FormattedTestRun = (Get-UriVariable -Uri $SourceUri -Var "var-Run").Replace('.', '\.')
+    $FormattedNaming = (Get-UriVariable -Uri $SourceUri -Var "var-Naming").Replace('.', '\.')
     Write-Screen -Message "Finished Parsing Uri Variable Information"
 
     # Build Body
@@ -545,7 +547,150 @@ from(bucket:"$($FormattedBucket)")
     $Order = Get-PayloadIndex -TestDetails $TestDetails
 
     # Build the Test Detail Results Array
-    $TestDetailResults = Get-PayloadResults -TestDetails $TestDetails
+    $TestDetailResults = Get-PayloadResults -TestDetails $TestDetails -Order $Order
+
+# Build Body EUXBase score
+$EUXBaseBody = @"
+newNaming = if "$($FormattedNaming)" == "_measurement" then "" else "$($FormattedNaming)"
+from(bucket:"$($FormattedBucket)")
+|> range(start: 2023-01-01T01:00:00Z, stop: 2023-01-01T02:07:00Z)
+|> filter(fn: (r) => r["Year"] =~ /^$($FormattedYear)$/ )
+|> filter(fn: (r) => r["Month"] =~ /^$($FormattedMonth)$/ )
+|> filter(fn: (r) => r["DocumentName"] =~ /^$($FormattedDocumentName)$/ )
+|> filter(fn: (r) => r["Comment"] =~ /^$($FormattedComment)$/ )
+|> filter(fn: (r) => r["_measurement"] =~ /^$($FormattedTestname)$/ )
+|> filter(fn: (r) => r["InfraTestName"] =~ /^$($FormattedTestRun)$/ )
+|> filter(fn: (r) => r._field == "EUXScore")
+|> group(columns: ["_measurement", "InfraTestName", newNaming])
+|> top(n: 5)
+|> mean()
+|> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
+|> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, VSIBase: r._value}))
+|> sort(columns: ["Name", "measurement"])
+"@
+    Write-Screen -Message "Build Body Payload based on Uri Variables"
+
+    # Get the test details table from Influx and Split into individual lines
+    try{
+        Write-Screen -Message "Get Test Details from Influx API"
+        $EUXBaseDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $EUXBaseBody
+    } catch {
+        Write-Screen -Message "Error Getting Test Details from Influx API"
+        break
+    }
+
+    # Get Test Detail Payload Index
+    $EUXBaseOrder = Get-PayloadIndex -TestDetails $EUXBaseDetails
+
+    # Build the Test Detail Results Array
+    $EUXBaseResults = Get-PayloadResults -TestDetails $EUXBaseDetails -Order $EUXBaseOrder
+
+# Build Body Steady state EUX score
+$SSEUXBody = @"
+newNaming = if "$($FormattedNaming)" == "_measurement" then "" else "$($FormattedNaming)"
+from(bucket:"$($FormattedBucket)")
+|> range(start: 2023-01-01T01:52:00Z, stop: 2023-01-01T02:07:00Z)
+|> filter(fn: (r) => r["Year"] =~ /^$($FormattedYear)$/ )
+|> filter(fn: (r) => r["Month"] =~ /^$($FormattedMonth)$/ )
+|> filter(fn: (r) => r["DocumentName"] =~ /^$($FormattedDocumentName)$/ )
+|> filter(fn: (r) => r["Comment"] =~ /^$($FormattedComment)$/ )
+|> filter(fn: (r) => r["_measurement"] =~ /^$($FormattedTestname)$/ )
+|> filter(fn: (r) => r["InfraTestName"] =~ /^$($FormattedTestRun)$/ )
+|> filter(fn: (r) => r._field == "EUXScore")
+|> group(columns: ["_measurement", "InfraTestName", newNaming])
+|> mean()
+|> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
+|> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, sseux: r._value}))
+|> sort(columns: ["Name", "measurement"])
+"@
+    Write-Screen -Message "Build Body Payload based on Uri Variables"
+
+    # Get the test details table from Influx and Split into individual lines
+    try{
+        Write-Screen -Message "Get Test Details from Influx API"
+        $SSEUXDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $SSEUXBody
+    } catch {
+        Write-Screen -Message "Error Getting Test Details from Influx API"
+        break
+    }
+
+    # Get Test Detail Payload Index
+    $SSEUXOrder = Get-PayloadIndex -TestDetails $SSEUXDetails
+
+    # Build the Test Detail Results Array
+    $SSEUXResults = Get-PayloadResults -TestDetails $SSEUXDetails -Order $SSEUXOrder
+
+# Build Body Steady state average Host CPU
+$SSHostCPUBody = @"
+newNaming = if "$($FormattedNaming)" == "_measurement" then "" else "$($FormattedNaming)"
+from(bucket:"$($FormattedBucket)")
+|> range(start: 2023-01-01T01:52:00Z, stop: 2023-01-01T02:07:00Z)
+|> filter(fn: (r) => r["Year"] =~ /^$($FormattedYear)$/ )
+|> filter(fn: (r) => r["Month"] =~ /^$($FormattedMonth)$/ )
+|> filter(fn: (r) => r["DocumentName"] =~ /^$($FormattedDocumentName)$/ )
+|> filter(fn: (r) => r["Comment"] =~ /^$($FormattedComment)$/ )
+|> filter(fn: (r) => r["_measurement"] =~ /^$($FormattedTestname)$/ )
+|> filter(fn: (r) => r["InfraTestName"] =~ /^$($FormattedTestRun)$/ )
+|> filter(fn: (r) => r["DataType"] == "Host_Raw")
+|> filter(fn: (r) => r["_field"] == "hypervisor_cpu_usage_ppm")
+|> group(columns: ["_measurement", "InfraTestName", newNaming])
+|> mean()
+|> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
+|> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, "Host CPU": r._value}))
+|> group(columns: ["Name", "measurement"])
+"@
+    Write-Screen -Message "Build Body Payload based on Uri Variables"
+
+    # Get the test details table from Influx and Split into individual lines
+    try{
+        Write-Screen -Message "Get Test Details from Influx API"
+        $SSHostCPUDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $SSHostCPUBody
+    } catch {
+        Write-Screen -Message "Error Getting Test Details from Influx API"
+        break
+    }
+
+    # Get Test Detail Payload Index
+    $SSHostCPUOrder = Get-PayloadIndex -TestDetails $SSHostCPUDetails
+
+    # Build the Test Detail Results Array
+    $SSHostCPUResults = Get-PayloadResults -TestDetails $SSHostCPUDetails -Order $SSHostCPUOrder
+
+# Build Body Steady state average Cluster CPU
+$SSClusterCPUBody = @"
+newNaming = if "$($FormattedNaming)" == "_measurement" then "" else "$($FormattedNaming)"
+from(bucket:"$($FormattedBucket)")
+|> range(start: 2023-01-01T01:52:00Z, stop: 2023-01-01T02:07:00Z)
+|> filter(fn: (r) => r["Year"] =~ /^$($FormattedYear)$/ )
+|> filter(fn: (r) => r["Month"] =~ /^$($FormattedMonth)$/ )
+|> filter(fn: (r) => r["DocumentName"] =~ /^$($FormattedDocumentName)$/ )
+|> filter(fn: (r) => r["Comment"] =~ /^$($FormattedComment)$/ )
+|> filter(fn: (r) => r["_measurement"] =~ /^$($FormattedTestname)$/ )
+|> filter(fn: (r) => r["InfraTestName"] =~ /^$($FormattedTestRun)$/ )
+|> filter(fn: (r) => r["DataType"] == "Cluster_Raw")
+|> filter(fn: (r) => r["_field"] == "hypervisor_cpu_usage_ppm")
+|> group(columns: ["_measurement", "InfraTestName", newNaming])
+|> mean()
+|> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
+|> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, "Cluster CPU": r._value}))
+|> group(columns: ["Name", "measurement"])
+"@
+    Write-Screen -Message "Build Body Payload based on Uri Variables"
+
+    # Get the test details table from Influx and Split into individual lines
+    try{
+        Write-Screen -Message "Get Test Details from Influx API"
+        $SSClusterCPUDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $SSClusterCPUBody
+    } catch {
+        Write-Screen -Message "Error Getting Test Details from Influx API"
+        break
+    }
+
+    # Get Test Detail Payload Index
+    $SSClusterCPUOrder = Get-PayloadIndex -TestDetails $SSClusterCPUDetails
+
+    # Build the Test Detail Results Array
+    $SSClusterCPUResults = Get-PayloadResults -TestDetails $SSClusterCPUDetails -Order $SSClusterCPUOrder
 
     # -----------------------------------------------------------------------------------------------------------------------
     # Section - Create Directory
