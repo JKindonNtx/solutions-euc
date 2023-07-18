@@ -29,15 +29,15 @@ if($ReportTitle -eq ""){
 
 # Default Sections On
 $LoginEnterpriseResults = $true
-$HostResources = $false
+$HostResources = $true
 $ClusterResources = $true
 $LoginTimes = $true
-$Applications = $false
-$VsiEuxMeasurements = $false
+$Applications = $true
+$VsiEuxMeasurements = $true
 
 # Default Sections Off
 $BootInfo = $true
-$IndividualRuns = $false
+$IndividualRuns = $true
 $NutanixFiles = $true
 $CitrixNetScaler = $false
 
@@ -238,7 +238,7 @@ if ($confirmationStart -eq 'n') {
         $Headers = ($TestDetailSplit[0]).Split(",")
         for ($i = 3; $i -le (($Headers).Count - 1) ; $i++)
         {    
-            [string]$Value = ($Headers[$i]).Trim()
+            $Value = ($Headers[$i]).Trim()
             $Return | Add-Member -MemberType NoteProperty -Name $i -Value $Value
         
         }
@@ -469,7 +469,6 @@ if ($confirmationStart -eq 'n') {
 
         # Add Section Title
         Write-Screen -Message "Adding Graphs for $($Title)"
-        Add-Content $mdFullFile "### $($Title)"
 
         # Loop through each image and insert it into the document
         foreach($Image in $Source){
@@ -572,10 +571,10 @@ from(bucket:"$($FormattedBucket)")
 
     # Get the test details table from Influx and Split into individual lines
     try{
-        Write-Screen -Message "Get Test Details from Influx API"
+        Write-Screen -Message "Get EUX Base Details from Influx API"
         $EUXBaseDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $EUXBaseBody
     } catch {
-        Write-Screen -Message "Error Getting Test Details from Influx API"
+        Write-Screen -Message "Error Getting EUX Base Details from Influx API"
         break
     }
 
@@ -607,10 +606,10 @@ from(bucket:"$($FormattedBucket)")
 
     # Get the test details table from Influx and Split into individual lines
     try{
-        Write-Screen -Message "Get Test Details from Influx API"
+        Write-Screen -Message "Get Steady State EUX Details from Influx API"
         $SSEUXDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $SSEUXBody
     } catch {
-        Write-Screen -Message "Error Getting Test Details from Influx API"
+        Write-Screen -Message "Error Getting Steady State EUX Details from Influx API"
         break
     }
 
@@ -637,16 +636,15 @@ from(bucket:"$($FormattedBucket)")
 |> mean()
 |> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
 |> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, "Host CPU": r._value}))
-|> group(columns: ["Name", "measurement"])
 "@
     Write-Screen -Message "Build Body Payload based on Uri Variables"
 
     # Get the test details table from Influx and Split into individual lines
     try{
-        Write-Screen -Message "Get Test Details from Influx API"
+        Write-Screen -Message "Get Steady State Host CPU Details from Influx API"
         $SSHostCPUDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $SSHostCPUBody
     } catch {
-        Write-Screen -Message "Error Getting Test Details from Influx API"
+        Write-Screen -Message "Error Getting Steady State Host CPU Details from Influx API"
         break
     }
 
@@ -673,16 +671,15 @@ from(bucket:"$($FormattedBucket)")
 |> mean()
 |> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
 |> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, "Cluster CPU": r._value}))
-|> group(columns: ["Name", "measurement"])
 "@
     Write-Screen -Message "Build Body Payload based on Uri Variables"
 
     # Get the test details table from Influx and Split into individual lines
     try{
-        Write-Screen -Message "Get Test Details from Influx API"
+        Write-Screen -Message "Get Steady State Cluster CPU Details from Influx API"
         $SSClusterCPUDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $SSClusterCPUBody
     } catch {
-        Write-Screen -Message "Error Getting Test Details from Influx API"
+        Write-Screen -Message "Error Getting Steady State Cluster CPU Details from Influx API"
         break
     }
 
@@ -1009,7 +1006,7 @@ from(bucket:"$($FormattedBucket)")
     Write-Screen -Message "Adding $($Title)"
 
     # Get Filtered Data
-    $HardwareFiltered = $TestDetailResults | Select measurement, infrahardwaretype, infracpubrand, infracputype, infracpuspeed, infracpucores, inframemorygb, infracpusocketcount, nodecount, infratotalnodes, infrassdcount, infrabios, hostgpus, comment | Sort-Object measurement | Get-Unique -AsString
+    $HardwareFiltered = $TestDetailResults | Select measurement, infrahardwaretype, infracpubrand, infracputype, infracpuspeed, infracpucores, inframemorygb, infracpusocketcount, nodecount, infratotalnodes, infrassdcount, infrabios, hostgpus, comment | Sort-Object comment | Get-Unique -AsString
 
     # Add the Table Header
     Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/hardware.png alt=$($Title)>"
@@ -1067,7 +1064,7 @@ from(bucket:"$($FormattedBucket)")
     Write-Screen -Message "Adding $($Title)"
 
     # Get Filtered Data
-    $InfraFiltered = $TestDetailResults | Select measurement, infraaosversion, infrafullversion, infrahypervisorbrand, infrahypervisortype, infrahypervisorversion, comment | Sort-Object measurement | Get-Unique -AsString
+    $InfraFiltered = $TestDetailResults | Select measurement, infraaosversion, infrafullversion, infrahypervisorbrand, infrahypervisortype, infrahypervisorversion, comment | Sort-Object comment | Get-Unique -AsString
 
     # Add the Table Header
     Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/infrastructure.png alt=$($Title)>"
@@ -1103,7 +1100,7 @@ from(bucket:"$($FormattedBucket)")
     Write-Screen -Message "Adding $($Title)"
 
     # Get Filtered Data
-    $BrokerFiltered = $TestDetailResults | Select measurement, deliverytype, desktopbrokerversion, sessionssupport, sessioncfg, comment | Sort-Object measurement | Get-Unique -AsString
+    $BrokerFiltered = $TestDetailResults | Select measurement, deliverytype, desktopbrokerversion, sessionssupport, sessioncfg, comment | Sort-Object comment | Get-Unique -AsString
 
     # Add the Table Header
     Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/broker.png alt=$($Title)>"
@@ -1136,7 +1133,7 @@ from(bucket:"$($FormattedBucket)")
     Write-Screen -Message "Adding $($Title)"
 
     # Get Filtered Data
-    $TargetVMFiltered = $TestDetailResults | Select measurement, numcpus, numcores, memorygb, gpuprofile, secureboot, vtpm, credentialguard, targetos, targetosversion, desktopbrokeragentversion, officeversion, clonetype, toolsguestversion, optimizervendor, optimizerversion, comment | Sort-Object measurement | Get-Unique -AsString
+    $TargetVMFiltered = $TestDetailResults | Select measurement, numcpus, numcores, memorygb, gpuprofile, secureboot, vtpm, credentialguard, targetos, targetosversion, desktopbrokeragentversion, officeversion, clonetype, toolsguestversion, optimizervendor, optimizerversion, comment | Sort-Object comment | Get-Unique -AsString
 
     # Add the Table Header
     Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/targetvm.png alt=$($Title)>"
@@ -1202,7 +1199,7 @@ from(bucket:"$($FormattedBucket)")
     Write-Screen -Message "Adding $($Title)"
 
     # Get Filtered Data
-    $LEspecsFiltered = $TestDetailResults | Select measurement, vsiproductversion, euxversion, vsivsimaxversion, workload, comment | Sort-Object measurement | Get-Unique -AsString
+    $LEspecsFiltered = $TestDetailResults | Select measurement, vsiproductversion, euxversion, vsivsimaxversion, workload, comment | Sort-Object comment | Get-Unique -AsString
 
     # Add the Table Header
     Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/loginenterprise.png alt=$($Title)>"
@@ -1235,7 +1232,7 @@ from(bucket:"$($FormattedBucket)")
     Write-Screen -Message "Adding $($Title)"
 
     # Get Filtered Data
-    $TestFiltered = $TestDetailResults | Select measurement, infrasinglenodetest, numberofvms, numberofsessions, comment | Sort-Object measurement | Get-Unique -AsString
+    $TestFiltered = $TestDetailResults | Select measurement, infrasinglenodetest, numberofvms, numberofsessions, comment | Sort-Object comment | Get-Unique -AsString
 
     # Add the Table Header
     Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/testicon.png alt=$($Title)>"
@@ -1268,12 +1265,15 @@ from(bucket:"$($FormattedBucket)")
     # -----------------------------------------------------------------------------------------------------------------------
     if($BootInfo){
 
+        $Title = "Boot Information"
+        Add-Content $mdFullFile "### $($Title)"
+
         # Add Boot Information Table
         $Title = "Boot Parmeters"
         Write-Screen -Message "Adding $($Title)"
 
         # Get Filtered Data
-        $BootFiltered = $TestDetailResults | Select measurement, maxabsoluteactiveactions, maxabsolutenewactionsperminute, maxpercentageactiveactions, comment | Sort-Object measurement | Get-Unique -AsString
+        $BootFiltered = $TestDetailResults | Select measurement, maxabsoluteactiveactions, maxabsolutenewactionsperminute, maxpercentageactiveactions, comment | Sort-Object comment | Get-Unique -AsString
 
         # Add the Table Header
         Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/bootinfo.png alt=$($Title)>"
@@ -1306,9 +1306,50 @@ from(bucket:"$($FormattedBucket)")
     # -----------------------------------------------------------------------------------------------------------------------
     if($LoginEnterpriseResults){
 
+        $Title = "Login Enterprise"
+        Add-Content $mdFullFile "### $($Title)"
+
+        Add-Content $mdFullFile " "
+        Add-Content $mdFullFile "|  | **EUX Base** | **Difference in %** |"
+        Add-Content $mdFullFile "| --- | --- | --- |"
+
+        [decimal]$MaxValue = [math]::Round(($EUXBaseResults.VSIBase | measure -Maximum).maximum,1)
+
+        foreach($Result in $EUXBaseResults){
+            $Name = $(Get-CleanData -Data ($Result.Name))
+            [decimal]$VSIBase = [math]::Round($(Get-CleanData -Data ($Result.VSIBase)),1).ToString("#.0")
+            [decimal]$Percent = [math]::Round((100 - (($VSIBase / $MaxValue) * 100)),1)
+            if($Percent -eq 0){
+                $PercentValue = "Highest EUX Base"
+            } else {
+                $PercentValue = "-$($Percent)% from Highest EUX Base"
+            }
+            $Line = "| $($Name) | $($VSIBase) | $($PercentValue) |"
+            Add-Content $mdFullFile $Line
+        }
+        Add-Content $mdFullFile " "
+
+        Add-Content $mdFullFile "|  | **EUX Score (Steady State)** | **Difference in %** |"
+        Add-Content $mdFullFile "| --- | --- | --- |"
+
+        [decimal]$MaxValue = [math]::Round(($SSEUXResults.sseux | measure -Maximum).maximum,1)
+
+        foreach($Result in $SSEUXResults){
+            $Name = $(Get-CleanData -Data ($Result.Name))
+            [decimal]$SSEUXBase = [math]::Round($(Get-CleanData -Data ($Result.sseux)),1).ToString("#.0")
+            [decimal]$Percent = [math]::Round((100 - (($SSEUXBase / $MaxValue) * 100)),1)
+            if($Percent -eq 0){
+                $PercentValue = "Highest EUX Score"
+            } else {
+                $PercentValue = "-$($Percent)% from Highest EUX Score"
+            }
+            $Line = "| $($Name) | $($SSEUXBase) | $($PercentValue) |"
+            Add-Content $mdFullFile $Line
+        }
+        Add-Content $mdFullFile " "
+
         $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "le_results*")} | Sort-Object CreationTime
         Add-Graphs -Source $Source -Title "Login Enterprise" -mdFullFile $mdFullFile
-
     }
 
     # -----------------------------------------------------------------------------------------------------------------------
@@ -1316,9 +1357,32 @@ from(bucket:"$($FormattedBucket)")
     # -----------------------------------------------------------------------------------------------------------------------
     if($HostResources){
 
+        $Title = "Host Resources"
+        Add-Content $mdFullFile "### $($Title)"
+
+        Add-Content $mdFullFile " "
+        Add-Content $mdFullFile "|  | **Host CPU (Steady State)** | **Difference in %** |"
+        Add-Content $mdFullFile "| --- | --- | --- |"
+
+        [decimal]$MinValue = [math]::Round(($SSHostCPUResults."Host CPU" | measure -Minimum).minimum,1)
+
+        foreach($Result in $SSHostCPUResults){
+            $Name = $(Get-CleanData -Data ($Result.Name))
+            [decimal]$SSHostCPU = [math]::Round($(Get-CleanData -Data ($Result."Host CPU")),1).ToString("#.0")
+            [decimal]$Percent = [math]::Round(($SSHostCPU - $MinValue),1)
+            if($Percent -eq 0){
+                $PercentValue = "Lowest CPU Value"
+            } else {
+                $PercentValue = "$($Percent)% Higher CPU Usage"
+            }
+            $Line = "| $($Name) | $($SSHostCPU) % | $($PercentValue) |"
+            Add-Content $mdFullFile $Line
+        }
+        Add-Content $mdFullFile " "
+
         $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "host_resources*")} | Sort-Object CreationTime
         Add-Graphs -Source $Source -Title "Host Resources" -mdFullFile $mdFullFile
-
+        
     }
 
     # -----------------------------------------------------------------------------------------------------------------------
@@ -1326,15 +1390,41 @@ from(bucket:"$($FormattedBucket)")
     # -----------------------------------------------------------------------------------------------------------------------
     if($ClusterResources){
 
+        $Title = "Cluster Resources"
+        Add-Content $mdFullFile "### $($Title)"
+
+        Add-Content $mdFullFile " "
+        Add-Content $mdFullFile "|  | **Cluster CPU (Steady State)** | **Difference in %** |"
+        Add-Content $mdFullFile "| --- | --- | --- |"
+
+        [decimal]$MinValue = [math]::Round(($SSClusterCPUResults."Cluster CPU" | measure -Minimum).minimum,1)
+
+        foreach($Result in $SSClusterCPUResults){
+            $Name = $(Get-CleanData -Data ($Result.Name))
+            [decimal]$SSClusterCPU = [math]::Round($(Get-CleanData -Data ($Result."Cluster CPU")),1).ToString("#.0")
+            [decimal]$Percent = [math]::Round(($SSClusterCPU - $MinValue),1)
+            if($Percent -eq 0){
+                $PercentValue = "Lowest CPU Value"
+            } else {
+                $PercentValue = "$($Percent)% Higher CPU Usage"
+            }
+            $Line = "| $($Name) | $($SSClusterCPU) % | $($PercentValue) |"
+            Add-Content $mdFullFile $Line
+        }
+        Add-Content $mdFullFile " "
+
         $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "cluster_resources*")} | Sort-Object CreationTime
         Add-Graphs -Source $Source -Title "Cluster Resources" -mdFullFile $mdFullFile
-
+        
     }
 
     # -----------------------------------------------------------------------------------------------------------------------
     # Section - Login Times Results
     # -----------------------------------------------------------------------------------------------------------------------
     if($LoginTimes){
+
+        $Title = "Login Times"
+        Add-Content $mdFullFile "### $($Title)"
 
         $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "login_times*")} | Sort-Object CreationTime
         Add-Graphs -Source $Source -Title "Login Times" -mdFullFile $mdFullFile
@@ -1346,6 +1436,9 @@ from(bucket:"$($FormattedBucket)")
     # -----------------------------------------------------------------------------------------------------------------------
     if($IndividualRuns){
 
+        $Title = "Individual Runs"
+        Add-Content $mdFullFile "### $($Title)"
+
         $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "individual_runs*")} | Sort-Object CreationTime
         Add-Graphs -Source $Source -Title "Individual Runs" -mdFullFile $mdFullFile
 
@@ -1355,6 +1448,9 @@ from(bucket:"$($FormattedBucket)")
     # Section - Applications Results
     # -----------------------------------------------------------------------------------------------------------------------
     if($Applications){
+
+        $Title = "Applications"
+        Add-Content $mdFullFile "### $($Title)"
 
         $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "applications*")} | Sort-Object CreationTime
         Add-Graphs -Source $Source -Title "Applications" -mdFullFile $mdFullFile
@@ -1366,6 +1462,9 @@ from(bucket:"$($FormattedBucket)")
     # -----------------------------------------------------------------------------------------------------------------------
     if($VsiEuxMeasurements){
 
+        $Title = "VSI EUX Measurements"
+        Add-Content $mdFullFile "### $($Title)"
+
         $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "vsi_eux*")} | Sort-Object CreationTime
         Add-Graphs -Source $Source -Title "VSI EUX Measurements" -mdFullFile $mdFullFile
         
@@ -1376,6 +1475,9 @@ from(bucket:"$($FormattedBucket)")
     # -----------------------------------------------------------------------------------------------------------------------
     if($NutanixFiles){
 
+        $Title = "Nutanix Files"
+        Add-Content $mdFullFile "### $($Title)"
+
         $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "nutanix_files*")} | Sort-Object CreationTime
         Add-Graphs -Source $Source -Title "Nutanix Files" -mdFullFile $mdFullFile
 
@@ -1385,6 +1487,9 @@ from(bucket:"$($FormattedBucket)")
     # Section - Citrix NetScaler Results
     # -----------------------------------------------------------------------------------------------------------------------
     if($CitrixNetScaler){
+
+        $Title = "Citrix NetScaler"
+        Add-Content $mdFullFile "### $($Title)"
 
         $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "citrix_netscaler*")} | Sort-Object CreationTime
         Add-Graphs -Source $Source -Title "Citrix NetScaler" -mdFullFile $mdFullFile
