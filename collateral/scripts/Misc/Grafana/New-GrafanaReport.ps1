@@ -28,18 +28,18 @@ if($ReportTitle -eq ""){
 # Sections - Set the sections that you want in your report to $true 
 
 # Default Sections On
-$LoginEnterpriseResults = $true
-$HostResources = $true
+$LoginEnterpriseResults = $false
+$HostResources = $false
 $ClusterResources = $true
-$LoginTimes = $true
-$Applications = $true
-$VsiEuxMeasurements = $true
+$LoginTimes = $false
+$Applications = $false
+$VsiEuxMeasurements = $false
 
 # Default Sections Off
-$BootInfo = $true
-$IndividualRuns = $true
-$NutanixFiles = $true
-$CitrixNetScaler = $false
+$BootInfo = $false
+$IndividualRuns = $false
+$NutanixFiles = $false
+$CitrixNetScaler = $true
 
 # -----------------------------------------------------------------------------------------------------------------------
 # Section - Boiler Plates

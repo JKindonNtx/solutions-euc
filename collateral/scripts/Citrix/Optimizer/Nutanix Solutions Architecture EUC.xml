@@ -1,0 +1,5252 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <metadata>
+    <schemaversion>2.0</schemaversion>
+    <version>1.0</version>
+    <id>2222B80D-B671-4632-9346-44C8FC17FC43</id>
+    <displayname>Nutanix Solutions Architecture EUC</displayname>
+    <description>Citrix Optimizer Template used for the Nutanix Solutions Architecture Team to run Performance Tests</description>
+    <category>OS Optimizations</category>
+    <author>Solutions EUC</author>
+    <lastupdatedate>07/20/2023</lastupdatedate>
+  </metadata>
+  <group>
+    <id>Security - Defender Antivirus</id>
+    <displayname>Security - Defender Antivirus</displayname>
+    <description>Security - Defender Antivirus</description>
+  </group>
+  <group>
+    <id>Security - Firewall</id>
+    <displayname>Security - Firewall</displayname>
+    <description>Security - Firewall</description>
+  </group>
+  <group>
+    <id>Security - HVCI</id>
+    <displayname>Security - HVCI</displayname>
+    <description>Security - HVCI</description>
+  </group>
+  <group>
+    <id>Security - Security Center</id>
+    <displayname>Security - Security Center</displayname>
+    <description>Security - Security Center</description>
+  </group>
+  <group>
+    <id>Security - SmartScreen</id>
+    <displayname>Security - SmartScreen</displayname>
+    <description>Security - SmartScreen</description>
+    <entry>
+      <name>Disable SmartScreen Filter for Store Apps - User Registry</name>
+      <description>Disable SmartScreen Filter for Store Apps - changed to selected</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnableWebContentEvaluation</name>
+          <path>HKDU\SOFTWARE\Microsoft\Windows\CurrentVersion\AppHost</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable SmartScreen - Machine Policy</name>
+      <description>Disable WIndows SmartScreen</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnableSmartScreen</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\System</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Windows Defender SmartScreen - Machine Policy</name>
+      <description>Disable Windows Defender SmartScreen</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ShellSmartScreenLevel</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\System</path>
+          <value>CTXOE_DeleteValue</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable SmartScreenSpecific AppID - Scheduled Task</name>
+      <description>Disable AppID - SmartScreenSpecific</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>SmartScreenSpecific</name>
+          <path>\Microsoft\Windows\AppID\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Prevent managing Edge SmartScreen Filter - HKLM Registry</name>
+      <description>If the user is not prompted to turn on SmartScreen Filter. All website addresses that are not on the filter´s allow list are sent automatically to Microsoft without prompting the user.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnabledV9</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\PhishingFilter</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>Security - Telemetry and Privacy</id>
+    <displayname>Security - Telemetry and Privacy</displayname>
+    <description>Security - Telemetry and Privacy</description>
+    <entry>
+      <name>Turn off handwriting personalization data sharing - Machine Policy</name>
+      <description>Enable this policy, Tablet PC users cannot choose to share writing samples from the handwriting recognition personalization tool with Microsoft.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>PreventHandwritingDataSharing</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\TabletPC</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off handwriting recognition error reporting - Machine Policy</name>
+      <description>Enable this policy, users cannot start the handwriting recognition error reporting tool or send error reports to Microsoft.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>PreventHandwritingErrorReports</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\HandwritingErrorReports</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off the Windows Messenger Customer Experience Improvement Program - Machine Policy</name>
+      <description>Enable this policy, these tasks are removed from the File and Folder tasks in Windows folders.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>CEIP</name>
+          <path>HKLM\Software\Policies\Microsoft\Messenger\Client</path>
+          <value>2</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Windows Customer Experience Improvement Program - Machine Policy</name>
+      <description>Enable this policy, all users are opted out of the Windows Customer Experience Improvement Program.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>CEIPEnable</name>
+          <path>HKLM\Software\Policies\Microsoft\SQMClient\Windows</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Windows Error Reporting - Machine Policy</name>
+      <description>Enable this policy, users are not given the option to report errors.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DoReport</name>
+          <path>HKLM\Software\Policies\Microsoft\PCHealth\ErrorReporting</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Windows should ask for my feedback - HKCU Registry</name>
+      <description>Never let windows ask for my feedback.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NumberOfSIUFInPeriod</name>
+          <path>HKDU\SOFTWARE\Microsoft\Siuf\Rules</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn Off Find My Device - Machine Policy</name>
+      <description>When Find My Device is off, the device and its location are not registered and the Find My Device feature will not work.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AllowFindMyDevice</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\FindMyDevice</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Windows Error Reporting - Service</name>
+      <description>Error reporting services leveraged by Applications when they crash to send reports to Microsoft.  If using DER within VDI consider alternate configuration.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Services</plugin>
+        <params>
+          <name>WerSvc</name>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable QueueReporting - Scheduled Task</name>
+      <description>Disable QueueReporting</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>QueueReporting</name>
+          <path>\Microsoft\Windows\Windows Error Reporting\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable DmClient - Scheduled Task</name>
+      <description>Disable DmClient</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>DmClient</name>
+          <path>\Microsoft\Windows\Feedback\Siuf\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Send Windows Error Reports - Machine Policy</name>
+      <description>Disable send additional info with error reports</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DontSendAdditionalData</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Last Logon Info - Machine Policy</name>
+      <description>Disable displaying information about previous logons and logon failures to the user.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisplayLastLogonInfo</name>
+          <path>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Find My Device - HKLM Regsitry</name>
+      <description>Turn off find my device.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>LocationSyncEnabled</name>
+          <path>HKLM\SOFTWARE\Microsoft\Settings\FindMyDevice</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Stop automatically sending memory dumps for OS-generated error reports - Machine Policy</name>
+      <description>Stop automatically sending memory dumps for OS-generated error reports</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AutoApproveOSDumps</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off the advertising ID - Machine Policy</name>
+      <description>Prevent apps from using the ID for experiences across apps</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisabledByGroupPolicy</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Inventory Collector - Machine Policy</name>
+      <description>Inventory Collector will be turned off and data will not be sent to Microsoft</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableInventory</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\AppCompat</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Let websites provide locally relevant content by accessing my language list - HKCU Registry</name>
+      <description>Turn off Let websites provide locally relevant content by accessing my language list.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>HttpAcceptLanguageOptout</name>
+          <path>HKDU\Control Panel\International\User Profile</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Let your apps automatically share and sync info with wireless devices that don’t explicitly pair with your PC, tablet, or phone - HKCU Registry</name>
+      <description>Turn off Let your apps automatically share and sync info with wireless devices that don’t explicitly pair with your PC, tablet, or phone.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Value</name>
+          <path>HKDU\SOFTWARE\Microsoft\Windows\CurrentVersion\DeviceAccess\Global\LooselyCoupled</path>
+          <value>Deny</value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Use sign-in info to auto finish setting up device - Machine Policy</name>
+      <description>Disable Use sign-in info to auto finish setting up device</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableAutomaticRestartSignOn</name>
+          <path>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Privacy Experience - Machine Policy</name>
+      <description>Disable Privacy Experience</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisablePrivacyExperience</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\OOBE</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Let apps use advertising ID to make ads more interesting to you based on your app usage - HKCU Registry</name>
+      <description>Turn off Let apps use advertising ID.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Enabled</name>
+          <path>HKDU\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Edge sending history - Machine Policy</name>
+      <description>Do not allow Edge sending intranet or internet history</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>MicrosoftEdgeDataOptIn</name>
+          <path>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Do not harvest contacts - HKCU Registry</name>
+      <description>Do not scan contact informations.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>HarvestContacts</name>
+          <path>HKDU\SOFTWARE\Microsoft\InputPersonalization\TrainedDataStore</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Text Collection - Machine Policy</name>
+      <description>Turn Off Inking and Typing Personalization(1/2)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>RestrictImplicitTextCollection</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\InputPersonalization</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Ink Collection - Machine Policy</name>
+      <description>Turn Off Inking and Typing Personalization(2/2)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>RestrictImplicitInkCollection</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\InputPersonalization</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable sending a specific set of diagnostic data to Microsoft - Machine Policy</name>
+      <description>Disable organizations to send Microsoft a specific set of diagnostic data via Windows Analytics services</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>LimitEnhancedDiagnosticDataWindowsAnalytics</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Do not show feedback notifications - Machine Policy</name>
+      <description>Enable this policy, users will no longer see feedback notifications through the Windows Feedback app.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DoNotShowFeedbackNotifications</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\DataCollection</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Linguistic Collection - Machine Policy</name>
+      <description>This policy setting controls the ability to send inking and typing data to Microsoft to improve the language recognition</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AllowLinguisticDataCollection</name>
+          <path>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\TextInput</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Automatically send memory dumps for OS-generated error reports - Machine Policy</name>
+      <description>Disable this policy, then all memory dumps are uploaded according to the default consent and notification settings.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AutoApproveOSDumps</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Windows Error Reporting - Machine Policy</name>
+      <description>Enable this policy, Windows Error Reporting does not send any problem information to Microsoft. Additionally, solution information is not available in Security and Maintenance in Control Panel.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Disabled</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable extended telemetry for the Books tab - Machine Policy</name>
+      <description>Microsoft Edge only sends basic telemetry data</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnableExtendedBooksTelemetry</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\BooksLibrary</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Office Telemetry Agent FallBack 2016 - Scheduled Task</name>
+      <description>Disable Office Telemetry Agent FallBack 2016</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>OfficeTelemetryAgentFallBack2016</name>
+          <path>\Microsoft\Office\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Microsoft Compatibility Telemetry - Scheduled Task</name>
+      <description>Disable Microsoft Compatibility Telemetry</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Microsoft Compatibility Appraiser</name>
+          <path>\Microsoft\Windows\Application Experience\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Office Telemetry Agent LogOn 2016 - Scheduled Task</name>
+      <description>Disable Office Telemetry Agent LogOn 2016</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>OfficeTelemetryAgentLogOn2016</name>
+          <path>\Microsoft\Office\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Application Telemetry - Machine Policy</name>
+      <description>Turn off Application Telemetry</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AITEnable</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\AppCompat</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Telemetry Collection - Machine Policy</name>
+      <description>Disable Telemetry Collection</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AllowTelemetry</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Do not Accept Privacy Policy - HKCU Registry</name>
+      <description>Not accepted privacy policy.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AcceptedPrivacyPolicy</name>
+          <path>HKDU\SOFTWARE\Microsoft\Personalization\Settings</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>Security - Windows Update</id>
+    <displayname>Security - Windows Update</displayname>
+    <description>Security - Windows Update</description>
+    <entry>
+      <name>Disable pre-release features or settings - Machine Policy</name>
+      <description>Disable this policy, all experimentations will be turned off.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnableConfigFlighting</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\PreviewBuilds</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable user control over Insider builds - Machine Policy</name>
+      <description>Disable this policy, Windows Insider Program settings will be unavailable to users through the Settings app.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AllowBuildPreview</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\PreviewBuilds</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable scanning for updates as user - Scheduled Task</name>
+      <description>Disable Scanning for updates as User</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>ScanForUpdatesAsUser</name>
+          <path>\Microsoft\Windows\InstallService\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable scan For Updates - Scheduled Task</name>
+      <description>Disable Scan For Updates</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>ScanForUpdates</name>
+          <path>\Microsoft\Windows\InstallService\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Install Service Smart Retry - Scheduled Task</name>
+      <description>Disable Install Service Smart Retry</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>SmartRetry</name>
+          <path>\Microsoft\Windows\InstallService\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Windows Update - Service</name>
+      <description>Disable Windows Update Service</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Services</plugin>
+        <params>
+          <name>wuauserv</name>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Automatic Update - Machine Policy</name>
+      <description>Disable Automatic Update - important for non persistent VMs</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NoAutoUpdate</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Windows Update scan access - Machine Policy</name>
+      <description>Enable this policy, Windows Update scan access is removed.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>SetDisableUXWUAccess</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\WindowsUpdate</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off access to all Windows Update features - Machine Policy</name>
+      <description>Enable this policy setting, all Windows Update features are removed.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableWindowsUpdateAccess</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Do not connect to any Windows Update Internet locations - Machine Policy</name>
+      <description>This policy applies only when this PC is configured to connect to an intranet update service using the specify intranet Microsoft update service location policy.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DoNotConnectToWindowsUpdateInternetLocations</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Sending Windows Updates to other machines - HKLM Registry</name>
+      <description>Disable using your machine for sending windows updates to others</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DownloadMode</name>
+          <path>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Automatic App Update - Scheduled Task</name>
+      <description>Disable Automatic App Update</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Automatic App Update</name>
+          <path>\Microsoft\Windows\WindowsUpdate\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Office 2016 Update Feature - Machine Policy</name>
+      <description>Disable Office 2016 Update Feature</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnableAutomaticUpdates</name>
+          <path>HKLM\Software\Policies\Microsoft\Office\16.0\Common\OfficeUpdate</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Office 2019 Update Feature - Scheduled Task</name>
+      <description>Disable Office 2019 Update Feature</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Office Automatic Updates 2.0</name>
+          <path>\Microsoft\Office\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Defer receiving quality updates - Machine Policy</name>
+      <description>Defer receiving quality updates(1/3)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DeferQualityUpdates</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Defer receiving quality updates Days - Machine Policy</name>
+      <description>Defer receiving quality updates(2/3)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DeferQualityUpdatesPeriodInDays</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate</path>
+          <value>30</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Defer receiving quality updates Start Time - Machine Policy</name>
+      <description>Defer receiving quality updates(3/3)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>PauseQualityUpdatesStartTime</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate</path>
+          <value>2021-10-31</value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Software Notifications - Machine Policy</name>
+      <description>Turn off Software Notifications</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnableFeaturedSoftware</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Performance Remediation - Scheduled Task</name>
+      <description>Disable Performance Remediation</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>PerformRemediation</name>
+          <path>\Microsoft\Windows\WaaSMedic\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable UpdateOrchestrator - Service</name>
+      <description>Disable UpdateOrchestrator Service</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Start</name>
+          <path>HKLM\SYSTEM\CurrentControlSet\Services\UsoSvc</path>
+          <value>4</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable UpdateOrchestrator Schedule Scan - Scheduled Task</name>
+      <description>UpdateOrchestrator Schedule Scan</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Schedule Scan</name>
+          <path>\Microsoft\Windows\UpdateOrchestrator\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable UpdateOrchestrator Schedule Retry Scan - Scheduled Task</name>
+      <description>UpdateOrchestrator Schedule Retry Scan</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Schedule Retry Scan</name>
+          <path>\Microsoft\Windows\UpdateOrchestrator\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable UpdateOrchestrator MusUx_LogonUpdateResults - Scheduled Task</name>
+      <description>UpdateOrchestrator MusUx_LogonUpdateResults</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>MusUx_LogonUpdateResults</name>
+          <path>\Microsoft\Windows\UpdateOrchestrator\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable UpdateOrchestrator USO_UxBroker - Scheduled Task</name>
+      <description>UpdateOrchestrator USO_UxBroker</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>USO_UxBroker</name>
+          <path>\Microsoft\Windows\UpdateOrchestrator\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable UpdateOrchestrator Backup Scan - Scheduled Task</name>
+      <description>UpdateOrchestrator Backup Scan</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Backup Scan</name>
+          <path>\Microsoft\Windows\UpdateOrchestrator\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Windows Update Scheduled Start - Scheduled Task</name>
+      <description>Disable WindowsUpdate Scheduled Start</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Scheduled Start</name>
+          <path>\Microsoft\Windows\WindowsUpdate\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Windows Update server-initiated healing - Scheduled Task</name>
+      <description>Disable WindowsUpdate sih (server-initiated healing)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>sih</name>
+          <path>\Microsoft\Windows\WindowsUpdate\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Windows Update Medic - Service</name>
+      <description>Disable Windows Update Medic Service</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Start</name>
+          <path>HKLM\SYSTEM\CurrentControlSet\Services\WaasMedicSvc</path>
+          <value>4</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Windows Update device driver searching - Machine Policy</name>
+      <description>Enable this policy, Windows Update is not searched when a new device is installed.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DontSearchWindowsUpdate</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\DriverSearching</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Allow Automatic Updates immediate installation - Machine Policy</name>
+      <description>Enable this policy, Automatic Updates will immediately install these updates once they are downloaded and ready to install.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AutoInstallMinorUpdates</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\WindowsUpdate\AU</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Defer Feature Updates - Machine Policy</name>
+      <description>Stop Preview Builds and Feature Updates receiving</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DeferFeatureUpdates</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Take Feature Updates from Semi-Annual Channel - Machine Policy</name>
+      <description>Stop Preview Builds and Feature Updates receiving</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>BranchReadinessLevel</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate</path>
+          <value>32</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Defer Feature Updates for 365 days - Machine Policy</name>
+      <description>Stop Preview Builds and Feature Updates receiving</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DeferFeatureUpdatesPeriodInDays</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate</path>
+          <value>365</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Pause Feature Updates StartTime - Machine Policy</name>
+      <description>Stop Preview Builds and Feature Updates receiving</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>PauseFeatureUpdatesStartTime</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate</path>
+          <value>2021-10-15</value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable preview builds - Machine Policy</name>
+      <description>It will prevent preview builds from installing on the device</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ManagePreviewBuilds</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable preview builds Policy - Machine Policy</name>
+      <description>It will prevent preview builds from installing on the device</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ManagePreviewBuildsPolicyValue</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>User Experience - Background</id>
+    <displayname>User Experience - Background</displayname>
+    <description>User Experience - Background</description>
+    <entry>
+      <name>Set wallpaper to solid color - HKCU Registry</name>
+      <description>Set wallpaper to solid color for current user (default value is blue).</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Background</name>
+          <path>HKDU\Control Panel\Colors</path>
+          <value>0 100 177</value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set solid color to theme file - HKCU Registry</name>
+      <description>Set solid color to theme file</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>CurrentTheme</name>
+          <path>HKEY_USERS\temp\Software\Microsoft\Windows\CurrentVersion\Themes</path>
+          <value>C:\Windows\Resources\Themes\SolidColor.theme</value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable default build-in wallpaper - User Policy</name>
+      <description>Set wallpaper to solid color for current user.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>WallPaper</name>
+          <path>HKDU\Software\Microsoft\Windows\CurrentVersion\Policies\System</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Lock Screen to solid color - Machine Policy</name>
+      <description>Set Lock Screen to solid color.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>LockScreenImage</name>
+          <path>HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Personalization</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Sign-in screen acrylic (blur) background - Machine Policy</name>
+      <description>Disable Sign-in screen acrylic (blur) background</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableAcrylicBackgroundOnLogon</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\System</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Logon Background Image - Machine Policy</name>
+      <description>Disable Logon BackgroundImage</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableLogonBackgroundImage</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\System</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Background Layout Service - HKLM Registry</name>
+      <description>Disable Background Layout Service</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnableAutoLayout</name>
+          <path>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\OptimalLayout</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Use solid color for Start background - Machine Policy</name>
+      <description>Enable this policy, Start background will use a solid color.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableAccentGradient</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\DWM</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Prevent changing theme - User Policy</name>
+      <description>Prevent changing theme for current user</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NoThemesTab</name>
+          <path>HKDU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>User Experience - Notifications</id>
+    <displayname>User Experience - Notifications</displayname>
+    <description>User Experience - Notifications</description>
+    <entry>
+      <name>Turn off news and interests - Machine Policy</name>
+      <description>Turn off news and interests</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnableFeeds</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off news and interests - HKCU Registry</name>
+      <description>Turn off news and interests</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ShellFeedsTaskbarViewMode</name>
+          <path>HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Feeds</path>
+          <value>2</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Location Notifications - Scheduled Task</name>
+      <description>Disable Location - Notifications</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Notifications</name>
+          <path>\Microsoft\Windows\Location\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off toast notifications on the lock screen - User Policy</name>
+      <description>Applications will not be able to raise toast notifications on the lock screen.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NoToastApplicationNotificationOnLockScreen</name>
+          <path>HKDU\Software\Policies\Microsoft\Windows\CurrentVersion\PushNotifications</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off notifications from apps and other senders - HKCU Registry</name>
+      <description>Turn off notifications from apps and other senders.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ToastEnabled</name>
+          <path>HKDU\SOFTWARE\Microsoft\Windows\CurrentVersion\PushNotifications</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Do not show notifications on the lock screen - HKCU Registry</name>
+      <description>Turn off Show notifications on the lock screen.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NOC_GLOBAL_SETTING_ALLOW_TOASTS_ABOVE_LOCK</name>
+          <path>HKDU\SOFTWARE\Microsoft\Windows\CurrentVersion\Notifications\Settings</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off show alarms, reminders, and incoming VoIP calls on the lock screen - HKCU Registry</name>
+      <description>Turn off Show alarms,reminders,and incoming VoIP calls on the lock screen.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NOC_GLOBAL_SETTING_ALLOW_CRITICAL_TOASTS_ABOVE_LOCK</name>
+          <path>HKDU\SOFTWARE\Microsoft\Windows\CurrentVersion\Notifications\Settings</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off feature advertisement balloon notifications - User Policy</name>
+      <description>Turn off feature advertisement balloon notifications</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NoBalloonFeatureAdvertisements</name>
+          <path>HKDU\Software\Policies\Microsoft\Windows\Explorer</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off add-on performance notifications - HKLM Registry</name>
+      <description>Enable this policy, users are not notified when the average time to load all the user's enabled add-ons exceeds the threshold.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableAddonLoadTimePerformanceNotifications</name>
+          <path>HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\Ext</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off app notifications on the lock screen - Machine Policy</name>
+      <description>No app notifications are displayed on the lock screen.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableLockScreenAppNotifications</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\System</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>User Experience - Sounds</id>
+    <displayname>User Experience - Sounds</displayname>
+    <description>User Experience - Sounds</description>
+    <entry>
+      <name>Disable Startup Sound - Machine Policy</name>
+      <description>Disable Startup Sound</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableStartupSound</name>
+          <path>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Asterisk Sound to None - HKCU Registry</name>
+      <description>Set Asterisk sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\SystemAsterisk\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Calendar Reminder Sound to None - HKCU Registry</name>
+      <description>Set Calendar Reminder sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\Notification.Reminder\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Critical Battery Alarm Sound to None - HKCU Registry</name>
+      <description>Set Critical Battery Alarm sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\CriticalBatteryAlarm\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Critical Stop Sound to None - HKCU Registry</name>
+      <description>Set Critical Stop sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\SystemHand\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Default Beep Sound to None - HKCU Registry</name>
+      <description>Set Default Beep sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\.Default\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Desktop Mail Notification Sound to None - HKCU Registry</name>
+      <description>Set Desktop Mail Notification sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\MailBeep\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Device Connect Sound to None - HKCU Registry</name>
+      <description>Set Device Connect sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\DeviceConnect\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Device Disconnect Sound to None - HKCU Registry</name>
+      <description>Set Device Disconnect sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\DeviceDisconnect\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Device Failed to Connect Sound to None - HKCU Registry</name>
+      <description>Set Device Failed to Connect sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\DeviceFail\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Exclamation Sound to None - HKCU Registry</name>
+      <description>Set Exclamation sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\SystemExclamation\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Exit Windows Sound to None - HKCU Registry</name>
+      <description>Set Exit Windows sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\SystemExit\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Instant Message Notification Sound to None - HKCU Registry</name>
+      <description>Set Instant Message Notification sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\Notification.IM\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Low Battery Alarm Sound to None - HKCU Registry</name>
+      <description>Set Low Battery Alarm sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\LowBatteryAlarm\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Messsage Nudge Sound to None - HKCU Registry</name>
+      <description>Set Message Nudge sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\MessageNudge\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set New Fax Notification Sound to None - HKCU Registry</name>
+      <description>Set New Fax Notification sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\FaxBeep\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set New Mail Notification Sound to None - HKCU Registry</name>
+      <description>Set New Mail Notification sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\Notification.Mail\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set New Text Message Notification Sound to None - HKCU Registry</name>
+      <description>Set New Text Message Notification sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\Notification.SMS\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set NFP Completion Sound to None - HKCU Registry</name>
+      <description>Set NFP Completion sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\Notification.Proximity\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set NFP Connection Sound to None - HKCU Registry</name>
+      <description>Set NFP Connection sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\ProximityConnection\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Change Sound Scheme to No Sounds - HKCU Registry</name>
+      <description>Change Sound Scheme to No Sounds</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes</path>
+          <value>.None</value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Notification Sound to None - HKCU Registry</name>
+      <description>Set Notification sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\Notification.Default\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set System Notification Sound to None - HKCU Registry</name>
+      <description>Set System Notification sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\SystemNotification\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Windows Explorer Search Provider Discovered Sound to None - HKCU Registry</name>
+      <description>Set Explorer Search Provider Discovered sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\Explorer\SearchProviderDiscovered\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Windows Logoff Sound to None - HKCU Registry</name>
+      <description>Set Windows Logoff sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\WindowsLogoff\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Windows Logon Sound to None - HKCU Registry</name>
+      <description>Set Windows Logon sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\WindowsLogon\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Windows Startup Sound to None - HKCU Registry</name>
+      <description>Disable play windows startup sound</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableStartupSound</name>
+          <path>HKDU\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\LogonUI\BootAnimation</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Windows User Account Control Sound to None - HKCU Registry</name>
+      <description>Set Windows User Account Control sound to none</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>(Default)</name>
+          <path>HKDU\AppEvents\Schemes\Apps\.Default\WindowsUAC\.Current</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>User Experience - Features</id>
+    <displayname>User Experience - Features</displayname>
+    <description>User Experience - Features</description>
+  </group>
+  <group>
+    <id>User Experience - Hardware Acceleration</id>
+    <displayname>User Experience - Hardware Acceleration</displayname>
+    <description>User Experience - Hardware Acceleration</description>
+    <entry>
+      <name>Disable Hardware Acceleration (GPU Rendering) for Microsoft Office 2010 - HKCU Registry</name>
+      <description>Disable Hardware Acceleration (GPU Rendering) for Microsoft Office 2010 if there's no hardware GPU</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableHardware</name>
+          <path>HKDU\Software\Microsoft\Office\14.0\Gfx</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Edge hardware acceleration - Machine Policy</name>
+      <description>Disable Edge hardware acceleration</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>HardwareAccelerationModeEnabled</name>
+          <path>HKLM\Software\Policies\Microsoft\Edge</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Hardware Acceleration (GPU Rendering) for Microsoft Internet Explorer - HKCU Registry</name>
+      <description>Disable Hardware Acceleration (GPU Rendering) for Microsoft Internet Explorer if there's no hardware GPU</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>UseSWRender</name>
+          <path>HKDU\Software\Microsoft\Internet Explorer\Main</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Hardware Acceleration (GPU Rendering) for Office 2016/2019/2021/365 - User Policy</name>
+      <description>Disable Hardware Acceleration (GPU Rendering) for Office 2016/2019/2021/365</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>disablehardwareacceleration</name>
+          <path>HKDU\Software\Policies\Microsoft\office\16.0\common\graphics</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Hardware Acceleration (GPU Rendering) for Office 2013 - User Policy</name>
+      <description>Disable Hardware Acceleration (GPU Rendering) for Office 2013</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>disablehardwareacceleration</name>
+          <path>HKDU\Software\Policies\Microsoft\office\15.0\common\graphics</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Force software rendering in Adobe Reader 11 - HKCU Registry</name>
+      <description>Force software rendering in Adobe Reader 11 - Current User</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>t3DPreferredRenderer</name>
+          <path>HKDU\Software\Adobe\Acrobat Reader\11.0\3D</path>
+          <value>Software</value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Force software rendering in Adobe Reader DC - HKCU Registry</name>
+      <description>Force software rendering in Adobe Reader DC - Current User</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>t3DPreferredRenderer</name>
+          <path>HKDU\Software\Adobe\Acrobat Reader\DC\3D</path>
+          <value>Software</value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>User Experience - Visual Effects</id>
+    <displayname>User Experience - Visual Effects</displayname>
+    <description>User Experience - Visual Effects</description>
+  </group>
+  <group>
+    <id>Programs - .Net</id>
+    <displayname>Programs - .Net</displayname>
+    <description>Programs - .Net</description>
+    <entry>
+      <name>Remove DOTNETFRAMEWORKS Setup - HKLM Registry</name>
+      <description>Remove DOTNETFRAMEWORKS setup from Personalized Settings. Optimize this item will shorten new user first login time.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>StubPath</name>
+          <path>HKLM\SOFTWARE\Microsoft\Active Setup\Installed Components\{89B4C1CD-B018-4511-B0A1-5476DBF70820}</path>
+          <value>CTXOE_DeleteValue</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable .NET Framework NGEN v4.0.30319 - Scheduled Task</name>
+      <description>Disable .NET Framework NGEN v4.0.30319</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>.NET Framework NGEN v4.0.30319</name>
+          <path>\Microsoft\Windows\.NET Framework\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable .NET Framework NGEN v4.0.30319 64 - Scheduled Task</name>
+      <description>Disable .NET Framework NGEN v4.0.30319 64</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>.NET Framework NGEN v4.0.30319 64</name>
+          <path>\Microsoft\Windows\.NET Framework\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable .NET Framework NGEN v4.0.30319 Critical - Scheduled Task</name>
+      <description>Disable .NET Framework NGEN v4.0.30319 Critical</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>.NET Framework NGEN v4.0.30319 Critical</name>
+          <path>\Microsoft\Windows\.NET Framework\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable .NET Framework NGEN v4.0.30319 64 Critical - Scheduled Task</name>
+      <description>Disable .NET Framework NGEN v4.0.30319 64 Critical</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>.NET Framework NGEN v4.0.30319 64 Critical</name>
+          <path>\Microsoft\Windows\.NET Framework\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>Programs - Internet Explorer</id>
+    <displayname>Programs - Internet Explorer</displayname>
+    <description>Programs - Internet Explorer</description>
+    <entry>
+      <name>Turn off suggestions for all user-installed providers - Machine Policy</name>
+      <description>Turn off suggestions for all user-installed providers</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ShowSearchSuggestionsGlobal</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Internet Explorer\SearchScopes</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Internet Explorer Enhanced Security - HKLM Registry</name>
+      <description>Disable Internet Explorer Enhanced Security.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>IsInstalled</name>
+          <path>HKLM\Software\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable IE Customization Wizard - Machine Policy</name>
+      <description>Removes the customization wizard upon first launch of Internet Explorer</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableFirstRunCustomize</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Internet Explorer\Main</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Background Synchronization - Machine Policy</name>
+      <description>Turn off background synchronization for feeds and Web Slices</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>BackgroundSyncStatus</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Internet Explorer\Feeds</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off the next pre-loaded page of a website - Machine Policy</name>
+      <description>Turn off the flip ahead with page prediction feature</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Enabled</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Internet Explorer\FlipAhead</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name> Disable animations in web pages - Machine Policy</name>
+      <description>Only animated GIF files are affected by this setting</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Play_Animations</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Internet Explorer\Main</path>
+          <value>no</value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>AutoRecover 2s delay - Machine Policy</name>
+      <description>Specify idle time to 2s before AutoRecover saved</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AutoRecover</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Internet Explorer\Recovery</path>
+          <value>2</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Specify blank page for a new tab of IE - Machine Policy</name>
+      <description>Specify blank page as IE default behavior for a new tab</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NewTabPageShow</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Internet Explorer\TabbedBrowsing</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off loading websites and content in the background - Machine Policy</name>
+      <description>IE doesn´t load any websites or content in the background, speeding up performance such that when the user clicks a hyperlink, the background page seamlessly switches into view.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Enabled</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Internet Explorer\PrefetchPrerender</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Periodic Check for Internet Explorer software updates - Machine Policy</name>
+      <description>Enable this policy, it prevents Internet Explorer from checking to see whether it is the latest available browser version and notifying users if a new version is available.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NoUpdateCheck</name>
+          <path>HKLM\Software\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable showing the splash screen - Machine Policy</name>
+      <description>Enable this policy, the splash screen, which displays the program name, licensing, and copyright information, is not displayed.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NoSplash</name>
+          <path>HKLM\Software\Policies\Microsoft\Internet Explorer\Infodelivery\Restrictions</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable install new versions of Internet Explorer automatically - Machine Policy</name>
+      <description>Disable this policy, automatic upgrade of Internet Explorer will be turned off.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnableAutoUpgrade</name>
+          <path>HKLM\Software\Policies\Microsoft\Internet Explorer\Main</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Prevent participation in the Customer Experience Improvement Program - Machine Policy</name>
+      <description>Enable this policy, the user cannot participate in the CEIP, and the Customer Feedback Options command does not appear on the Help menu.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableCustomerImprovementProgram</name>
+          <path>HKLM\Software\Policies\Microsoft\Internet Explorer\SQM</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set tab process growth to low - Machine Policy</name>
+      <description>Enable this policy, set the rate at which Internet Explorer creates new tab processes to low.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>TabProcGrowth</name>
+          <path>HKLM\Software\Policies\Microsoft\Internet Explorer\Main</path>
+          <value>low</value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Suggested Sites - Machine Policy</name>
+      <description>Disable this policy, the entry points and functionality associated with this feature are turned off.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Enabled</name>
+          <path>HKLM\Software\Policies\Microsoft\Internet Explorer\Suggested Sites</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Prevent automatic discovery of feeds and Web Slices - Machine Policy</name>
+      <description>Enable this policy, the user does not receive a notification on the toolbar that a feed or Web Slice is available.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Enabled</name>
+          <path>HKLM\Software\Policies\Microsoft\Internet Explorer\Feed Discovery</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set home page to be blank for IE - Current User(1/2) - Machine Policy</name>
+      <description>Set home page to be blank for IE - Current User(1/2)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Start Page</name>
+          <path>HKDU\Software\Microsoft\Internet Explorer\Main</path>
+          <value>about:blank</value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set home page to be blank for IE - Current User(2/2) - Machine Policy</name>
+      <description>Set home page to be blank for IE - Current User(2/2)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Default_Page_URL</name>
+          <path>HKDU\Software\Microsoft\Internet Explorer\Main</path>
+          <value>about:blank</value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Remove Microsoft Internet Explorer ClearIconCache Setup - HKLM Registry</name>
+      <description>Remove Microsoft Internet Explorer ClearIconCache setup from Personlized Settings. Optimize this item will shorten new user first login time.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>StubPath</name>
+          <path>HKLM\SOFTWARE\Microsoft\Active Setup\Installed Components\{2D46B6DC-2207-486B-B523-A557E6D54B47}</path>
+          <value>CTXOE_DeleteValue</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Remove Microsoft Internet Explorer Initializer Setup - HKLM Registry</name>
+      <description>Remove Microsoft Internet Explorer Initializer setup from Personalized Settings. Optimize this item will shorten new user first login time. - changed</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>StubPath</name>
+          <path>HKLM\SOFTWARE\Microsoft\Active Setup\Installed Components\{89820200-ECBD-11cf-8B85-00AA005B4383}</path>
+          <value>CTXOE_DeleteValue</value>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>Programs - Media Player</id>
+    <displayname>Programs - Media Player</displayname>
+    <description>Programs - Media Player</description>
+    <entry>
+      <name>Do Not Show First Use Dialog Boxes - Machine Policy</name>
+      <description>Enable this policy, the anchor window is hidden when the Player is in skin mode.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>GroupPrivacyAcceptance</name>
+          <path>HKLM\Software\Policies\Microsoft\WindowsMediaPlayer</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Prevent Media Sharing - Machine Policy</name>
+      <description>Enable this policy, any user on this computer is prevented from sharing digital media content from Windows Media Player with other computers and devices that are on the same network.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>PreventLibrarySharing</name>
+          <path>HKLM\Software\Policies\Microsoft\WindowsMediaPlayer</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Remove Microsoft Windows Media Player 7 or later Setup - HKLM Registry</name>
+      <description>Remove Microsoft Windows Media Player 7 or later setup from Personalized Settings. Optimize this item will shorten new user first login time. - changed</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>StubPath</name>
+          <path>HKLM\SOFTWARE\Microsoft\Active Setup\Installed Components\{6BF52A52-394A-11d3-B153-00C04F79FAA6}</path>
+          <value>CTXOE_DeleteValue</value>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>Programs - Microsoft Edge</id>
+    <displayname>Programs - Microsoft Edge</displayname>
+    <description>Programs - Microsoft Edge</description>
+    <entry>
+      <name>Disable Microsoft Edge Updates - Machine Policy</name>
+      <description>Disable All periodic network traffic by Microsoft Edge Update</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Update{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5} AutoUpdateCheckPeriodMinutes InstallDefault UpdatesSuppressedStartHour UpdatesSuppressedStartMin UpdatesSuppressedDurationMin</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate</path>
+          <value>0 0 0 0 0 0x005A0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Edge autoplay - HKLM Registry</name>
+      <description>Disable Edge autoplay - HKLM</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>MediaAutoPlayOption</name>
+          <path>HKLM\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\Main</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set blank page as Edge home page(1/3) - Machine Policy</name>
+      <description>Set blank page as Edge home page(1/3)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ProvisionedHomePages</name>
+          <path>HKLM\Software\Policies\Microsoft\MicrosoftEdge\Internet Settings</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set blank page as Edge home page(2/3) - Machine Policy</name>
+      <description>Set blank page as Edge home page(2/3)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NewTabPageURL</name>
+          <path>HKLM\Software\Policies\Microsoft\MicrosoftEdge\Internet Settings</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set blank page as Edge home page(3/3) - Machine Policy</name>
+      <description>Set blank page as Edge home page(3/3)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ConfigureOpenMicrosoftEdgeWith</name>
+          <path>HKLM\Software\Policies\Microsoft\MicrosoftEdge\Internet Settings</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable web conent on new tab page for Edge - Machine Policy</name>
+      <description>Disable web conent on new tab page for Edge</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AllowWebContentOnNewTabPage</name>
+          <path>HKLM\Software\Policies\Microsoft\MicrosoftEdge\ServiceUI</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Microsoft Edge to pre-launch at Windows startup - Machine Policy</name>
+      <description>Disable Microsoft Edge to pre-launch at Windows startup</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AllowPrelaunch</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\Main</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Microsoft Edge to start and load the Start and New Tab page at Windows startup - Machine Policy</name>
+      <description>Disable Microsoft Edge to start and load the Start and New Tab page at Windows startup</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AllowTabPreloading</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\TabPreloader</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable updates for the Books Library - Machine Policy</name>
+      <description>Disable updates for the Books Library</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AllowConfigurationUpdateForBooksLibrary</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\BooksLibrary</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Edge website lists from Microsoft - Machine Policy</name>
+      <description>Microsoft-provided website lists are not active</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>MSCompatibilityMode</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\BrowserEmulation</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Prevent the First Run webpage from opening on Microsoft Edge - Machine Policy</name>
+      <description>This policy setting lets you decide whether employees see Microsoft´s First Run webpage when opening Microsoft Edge for the first time.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>PreventFirstRunPage</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\Main</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Edge autoplay - HKCU Registry</name>
+      <description>Disable Edge autoplay - Current User</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>MediaAutoPlayOption</name>
+          <path>HKDU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\Main</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable the Edge First Run Experience - Machine Policy</name>
+      <description>Prevents the Edge first run experience wizard from running.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>HideFirstRunExperience</name>
+          <path>HKLM\Software\Policies\Microsoft\Edge</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Set blank page as Edge new tab - Machine Policy</name>
+      <description>Set new tabs in Edge to open a blank page.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NewTabPageLocation</name>
+          <path>HKLM\Software\Policies\Microsoft\Edge</path>
+          <value>about:blank</value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable background in new tab - Machine Policy</name>
+      <description>Disable background in new tab.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NewTabPageAllowedBackgroundTypes</name>
+          <path>HKLM\Software\Policies\Microsoft\Edge</path>
+          <value>3</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable quick links in new tab - Machine Policy</name>
+      <description>Disable quick links in new tab.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NewTabPageQuickLinksEnabled</name>
+          <path>HKLM\Software\Policies\Microsoft\Edge</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable web content in new tab - Machine Policy</name>
+      <description>Disable web content in new tab.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NewTabPageContentEnabled</name>
+          <path>HKLM\Software\Policies\Microsoft\Edge</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>Programs - Office</id>
+    <displayname>Programs - Office</displayname>
+    <description>Programs - Office</description>
+    <entry>
+      <name>Disable start screen for Office 2016/2019/2021/365 - User Policy</name>
+      <description>Disable start screen for Office 2016/2019/2021/365(1/3)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>disableboottoofficestart</name>
+          <path>HKDU\Software\Policies\Microsoft\office\16.0\common\general</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable first run movie for Office 2016/2019/2021/365 - User Policy</name>
+      <description>Disable start screen for Office 2016/2019/2021/365(2/3)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>disablemovie</name>
+          <path>HKDU\Software\Policies\Microsoft\office\16.0\firstrun</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable first run sign in for Office 2016/2019/2021/365 - User Policy</name>
+      <description>Disable start screen for Office 2016/2019/2021/365(3/3)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>bootedrtm</name>
+          <path>HKDU\Software\Policies\Microsoft\office\16.0\firstrun</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable start screen for Office 2013 - User Policy</name>
+      <description>Disable start screen for Office 2013(1/3)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>disableboottoofficestart</name>
+          <path>HKDU\Software\Policies\Microsoft\office\15.0\common\general</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable first run movie for Office 2013 - User Policy</name>
+      <description>Disable start screen for Office 2013(2/3)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>disablemovie</name>
+          <path>HKDU\Software\Policies\Microsoft\office\15.0\firstrun</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable first run sign in for Office 2013 - User Policy</name>
+      <description>Disable start screen for Office 2013(3/3)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>bootedrtm</name>
+          <path>HKDU\Software\Policies\Microsoft\office\15.0\firstrun</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Office Background Task Handler Logon - Scheduled Task</name>
+      <description>Disable Office Background Task Handler Logon</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>OfficeBackgroundTaskHandlerLogon</name>
+          <path>\Microsoft\Office\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Office Background Task Handler Registration - Scheduled Task</name>
+      <description>Disable Office Background Task Handler Registration</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>OfficeBackgroundTaskHandlerRegistration</name>
+          <path>\Microsoft\Office\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Office ClickToRun Service Monitor - Scheduled Task</name>
+      <description>Disable Office ClickToRun Service Monitor</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Office ClickToRun Service Monitor</name>
+          <path>\Microsoft\Office\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off account privacy notifications on Office 365 and Office 2019 - HKCU Registry</name>
+      <description>Turn off account privacy notifications in Office 365 and Office 2019.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>PrivacyNoticeShown</name>
+          <path>HKDU\Software\Microsoft\Office\16.0\Common</path>
+          <value>2</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>Programs - OneDrive</id>
+    <displayname>Programs - OneDrive</displayname>
+    <description>Programs - OneDrive</description>
+    <entry>
+      <name>Remove OneDrive Icon from Navigation Pane of This PC - HKCU Registry</name>
+      <description>Remove OneDrive Icon from Navigation Pane of This PC.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>System.IsPinnedToNameSpaceTree</name>
+          <path>HKDU\Software\Classes\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Remove OneDrive Icon from 'Browser' dialog box - HKCU Registry</name>
+      <description>Remove OneDrive Icon from 'Browser' dialog box such as Save, Save as or Open in some 3rd party 32-bit programs.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>System.IsPinnedToNameSpaceTree</name>
+          <path>HKDU\Software\Classes\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Microsoft OneDrive startup run - HKCU Registry</name>
+      <description>Disable Microsoft OneDrive startup run</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>OneDrive</name>
+          <path>HKDU\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run</path>
+          <value>0300000064A102EF4C3ED101</value>
+          <valuetype>Binary</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Remove OneDrive - HKCU Registry</name>
+      <description>Remove OneDrive.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>OneDrive</name>
+          <path>HKDU\Software\Microsoft\Windows\CurrentVersion\Run</path>
+          <value>CTXOE_DeleteValue</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Remove OneDrive Setup - HKCU Registry</name>
+      <description>Remove OneDrive Setup.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>OneDriveSetup</name>
+          <path>HKDU\Software\Microsoft\Windows\CurrentVersion\Run</path>
+          <value>CTXOE_DeleteValue</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Prevent the usage of OneDrive for file storage - Machine Policy</name>
+      <description>Enable this policy, apps and features can not work with OneDrive file storage.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableFileSyncNGSC</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\OneDrive</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Save documents to OneDrive by default - Machine Policy</name>
+      <description>Disable this policy, files will be saved locally by default.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableLibrariesDefaultSaveToOneDrive</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\OneDrive</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Prevent OneDrive network traffic - HKLM Registry</name>
+      <description>Prevent OneDrive from generating network traffic until the user signs in to OneDrive.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>PreventNetworkTrafficPreUserSignIn</name>
+          <path>HKLM\SOFTWARE\Microsoft\OneDrive</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>Programs - Server Manager</id>
+    <displayname>Programs - Server Manager</displayname>
+    <description>Programs - Server Manager</description>
+    <entry>
+      <name>Stop Server Manager at logon - HKCU Registry</name>
+      <description>Stop Server Manager at logon.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DoNotOpenServerManagerAtLogon</name>
+          <path>HKDU\Software\Microsoft\ServerManager</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Server Manager - Machine Policy</name>
+      <description>Disable Server Manager.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DoNotOpenAtLogon</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\Server\ServerManager</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>Programs - Store Apps</id>
+    <displayname>Programs - Store Apps</displayname>
+    <description>Programs - Store Apps</description>
+    <entry>
+      <name>Turn off the offer to update to the latest version of Windows - Machine Policy</name>
+      <description>Enable this policy, the Store application will not offer updates to the latest version of Windows.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableOSUpgrade</name>
+          <path>HKLM\Software\Policies\Microsoft\WindowsStore</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Automatic Download of updates - Machine Policy</name>
+      <description>If you enable this setting, automatic download of updates is turned off.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AutoDownload</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\WindowsStore</path>
+          <value>2</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Let Windows apps run in the background(1/4) - Machine Policy</name>
+      <description>Let Windows apps run in the background(1/4)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>LetAppsRunInBackground</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy</path>
+          <value>2</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Let Windows apps run in the background(2/4) - Machine Policy</name>
+      <description>Let Windows apps run in the background(2/4)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>LetAppsRunInBackground_UserInControlOfTheseApps</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy</path>
+          <value>
+          </value>
+          <valuetype>MultiString</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Let Windows apps run in the background(3/4) - Machine Policy</name>
+      <description>Let Windows apps run in the background(3/4)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>LetAppsRunInBackground_ForceAllowTheseApps</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy</path>
+          <value>
+          </value>
+          <valuetype>MultiString</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Let Windows apps run in the background(4/4) - Machine Policy</name>
+      <description>Let Windows apps run in the background(4/4)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>LetAppsRunInBackground_ForceDenyTheseApps</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy</path>
+          <value>
+          </value>
+          <valuetype>MultiString</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>Programs - VMware Tools</id>
+    <displayname>Programs - VMware Tools</displayname>
+    <description>Programs - VMware Tools</description>
+  </group>
+  <group>
+    <id>System - Application Experience</id>
+    <displayname>System - Application Experience</displayname>
+    <description>System - Application Experience</description>
+    <entry>
+      <name>Disable Microsoft Compatibility Appraiser - Scheduled Task</name>
+      <description>Disable Application Experience - Microsoft Compatibility Appraiser</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Microsoft Compatibility Appraiser</name>
+          <path>\Microsoft\Windows\Application Experience\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable ProgramDataUpdator - Scheduled Task</name>
+      <description>Disable Application Experience - ProgramDataUpdator</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>ProgramDataUpdater</name>
+          <path>\Microsoft\Windows\Application Experience\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable StartupAppTask - Scheduled Task</name>
+      <description>Disable Application Experience - StartupAppTask</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>StartupAppTask</name>
+          <path>\Microsoft\Windows\Application Experience\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable PcaPatchDBTask - Scheduled Task</name>
+      <description>Disable Application Experience - PcaPatchDBTask</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>PcaPatchDBTask</name>
+          <path>\Microsoft\Windows\Application Experience\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>System - Autologger</id>
+    <displayname>System - Autologger</displayname>
+    <description>System - Autologger</description>
+  </group>
+  <group>
+    <id>System - Customer Experience Improvement Program</id>
+    <displayname>System - Customer Experience Improvement Program</displayname>
+    <description>System - Customer Experience Improvement Program</description>
+    <entry>
+      <name>Disable CEIP Consolidator - Scheduled Task</name>
+      <description>Disable Customer Experience Improvement Program (CEIP) scheduled task</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Consolidator</name>
+          <path>\Microsoft\Windows\Customer Experience Improvement Program\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable CEIP Kernel - Scheduled Task</name>
+      <description>Disable Customer Exeprience Improvement Program (CEIP) scheduled task</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>KernelCeipTask</name>
+          <path>\Microsoft\Windows\Customer Experience Improvement Program\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable CEIP USB- Scheduled Task</name>
+      <description>Disable Customer Exeprience Improvement Program (CEIP) scheduled task</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>UsbCeip</name>
+          <path>\Microsoft\Windows\Customer Experience Improvement Program\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>System - Devices</id>
+    <displayname>System - Devices</displayname>
+    <description>System - Devices</description>
+    <entry>
+      <name>Do not send a Windows error report when a generic driver is installed on a device - Machine Policy</name>
+      <description>Enable this policy, an error report is not sent  when a generic driver is installed.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableSendGenericDriverNotFoundToWER</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\DeviceInstall\Settings</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Prevent creation of a system restore point during device activity that would normally prompt creation of a restore point - Machine Policy</name>
+      <description>Enable this policy, Windows does not create a system restore point when one would normally be created.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableSystemRestore</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\DeviceInstall\Settings</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Prevent device metadata retrieval from the Internet - Machine Policy</name>
+      <description>Enable this policy, Windows does not retrieve device metadata for installed devices from the Internet.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>PreventDeviceMetadataFromNetwork</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\Device Metadata</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Prevent Windows from sending an error report when a device driver requests additional software during installation - Machine Policy</name>
+      <description>Enable this Policy, Windows does not send an error report to request additional software even if this is specified by the device driver.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableSendRequestAdditionalSoftwareToWER</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\DeviceInstall\Settings</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off "Found New Hardware" balloons during device installation - Machine Policy</name>
+      <description>Enable this policy, "Found New Hardware" balloons do not appear while a device is being installed.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableBalloonTips</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\DeviceInstall\Settings</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Payments and NFC/SE Manager - Service</name>
+      <description>Disable Payments and NFC/SE Manager Service</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Services</plugin>
+        <params>
+          <name>SEMgrSvc</name>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Use WDDM graphics display driver for Remote Desktop Connections - Machine Policy</name>
+      <description>This policy setting lets you enable WDDM graphics display driver for Remote Desktop Connections.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>fEnableWddmDriver</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable USB Notifications - Scheduled Task</name>
+      <description>Disable Usb Notifications</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Usb-Notifications</name>
+          <path>\Microsoft\Windows\USB\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>System - Network</id>
+    <displayname>System - Network</displayname>
+    <description>System - Network</description>
+    <entry>
+      <name>Maximum size of Active Directory searches - User Policy</name>
+      <description>Enable this policy, set Number of objects returned to 5000.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>QueryLimit</name>
+          <path>HKDU\Software\Policies\Microsoft\Windows\Directory UI</path>
+          <value>5000</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Prevent the computer from joining a homegroup - Machine Policy</name>
+      <description>Enable this policy, users cannot add computers to a homegroup. This policy setting does not affect other network sharing features.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableHomeGroup</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\HomeGroup</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Automatic Download and Update of Map Data - Machine Policy</name>
+      <description>Enable this policy, the automatic download and update of map data is turned off.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AutoDownloadAndUpdateMapData</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\Maps</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off unsolicited network traffic on the Offline Maps settings page - Machine Policy</name>
+      <description>Enable this policy, features that generate network traffic on the Offline Maps settings page are turned off. Note: This may turn off the entire settings page.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AllowUntriggeredNetworkTrafficOnSettingsPage</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\Maps</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Don't allow Message Service Cloud Sync - Machine Policy</name>
+      <description>Don't allow backup and restore of cellular text messages to Microsoft´s cloud services. </description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AllowMessageSync</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\Messaging</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Delivery Optimization downloads using HTTP only - Machine Policy</name>
+      <description>Delivery Optimization downloads using HTTP only</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DODownloadMode</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization</path>
+          <value>99</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Event Viewer "Events.asp" links - Machine Policy</name>
+      <description>Enable this policy, event description hyperlinks are not activated and the text "More Information" is not displayed at the end of the description.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>MicrosoftEventVwrDisableLinks</name>
+          <path>HKLM\Software\Policies\Microsoft\EventViewer</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Help and Support Center "Did you know?" content - Machine Policy</name>
+      <description>Enable this policy, Help and Support Center no longer retrieves nor displays "Did you know?" content. </description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Headlines</name>
+          <path>HKLM\Software\Policies\Microsoft\PCHealth\HelpSvc</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Help and Support Center Microsoft Knowledge Base search - Machine Policy</name>
+      <description>Enable this policy, it removes the Knowledge Base section from the Help and Support Center "Set search options" page, and only Help content on the local computer is searched.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>MicrosoftKBSearch</name>
+          <path>HKLM\Software\Policies\Microsoft\PCHealth\HelpSvc</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Internet Connection Wizard if URL connection is referring to Microsoft.com - Machine Policy</name>
+      <description>Enable this policy, the "Choose a list of Internet Service Providers" path in the Internet Connection Wizard causes the wizard to exit. This prevents users from retrieving the list of ISPs, which resides on Microsoft servers.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ExitOnMSICW</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\Internet Connection Wizard</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Internet download for Web publishing and online ordering wizards - Machine Policy</name>
+      <description>Enable this policy, Windows does not download providers, and only the service providers that are cached in the local registry are displayed.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NoWebServices</name>
+          <path>HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Internet File Association service - Machine Policy</name>
+      <description>Enable this policy, the link and the dialog for using the Web service to open an unhandled file association are removed.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NoInternetOpenWith</name>
+          <path>HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Registration if URL connection is referring to Microsoft.com - Machine Policy</name>
+      <description>Enable this policy, it blocks users from connecting to Microsoft.com for online registration and users cannot register their copy of Windows online.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NoRegistration</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\Registration Wizard Control</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off the "Order Prints" picture task - Machine Policy</name>
+      <description>Enable this policy, the task "Order Prints Online" is removed from Picture Tasks in File Explorer folders.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NoOnlinePrintsWizard</name>
+          <path>HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off the "Publish to Web" task for files and folders - Machine Policy</name>
+      <description>Enable this policy, these tasks are removed from the File and Folder tasks in Windows folders.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NoPublishingWizard</name>
+          <path>HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn on BranchCache - Machine Policy</name>
+      <description>Disable this policy, turn off BranchCache for all client computers where the policy is applied.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Enable</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\PeerDist\Service</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Enable Hotspot Authentication - Machine Policy</name>
+      <description>Disable this policy, WLAN hotspots are not probed for WISPr protocol support, and users can only authenticate with WLAN hotspots using a web browser.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Enabled</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\HotspotAuthentication</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Microsoft Peer-to-Peer Networking Services - Machine Policy</name>
+      <description>Enable this policy, Turn off peer-to-peer protocols.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Disabled</name>
+          <path>HKLM\Software\policies\Microsoft\Peernet</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Windows Filtering Platform BfeonServiceStartTypeChange - Scheduled Task</name>
+      <description>Disable BfeonServiceStartTypeChange</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>BfeonServiceStartTypeChange</name>
+          <path>\Microsoft\Windows\Windows Filtering Platform\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable WWAN Notification - Scheduled Task</name>
+      <description>Disable Notification Task</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>NotificationTask</name>
+          <path>\Microsoft\Windows\WwanSvc\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Windows Mobile Hotspot - Service</name>
+      <description>Provides the ability to share a cellular data connection with another device.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Services</plugin>
+        <params>
+          <name>icssvc</name>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Data Usage - Service</name>
+      <description>Network data usage, data limit, restrict background data, metered networks.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Services</plugin>
+        <params>
+          <name>DusmSvc</name>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable WiFi - Scheduled Task</name>
+      <description>Disable WiFi Task</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>WiFiTask</name>
+          <path>\Microsoft\Windows\WCM\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable UPnPHostConfig - Scheduled Task</name>
+      <description>Disable UPnP - UPnPHostConfig</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>UPnPHostConfig</name>
+          <path>\Microsoft\Windows\UPnP\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Cellular - Scheduled Task</name>
+      <description>Disable Provisioning Cellular</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Cellular</name>
+          <path>\Microsoft\Windows\Management\Provisioning\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Mobile Broadband Accounts MNO Metadata Parser - Scheduled Task</name>
+      <description>Disable Mobile Broadband Accounts - MNO Metadata Parser</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>MNO Metadata Parser</name>
+          <path>\Microsoft\Windows\Mobile Broadband Accounts\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Ras MobilityManager - Scheduled Task</name>
+      <description>Disable Ras - MobilityManager</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>MobilityManager</name>
+          <path>\Microsoft\Windows\Ras\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Autochk Proxy - Scheduled Task</name>
+      <description>Disable Autochk - Proxy</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Proxy</name>
+          <path>\Microsoft\Windows\Autochk\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turns off Windows Network Isolation´s automatic discovery - Machine Policy</name>
+      <description>Turns off Windows Network Isolation´s automatic discovery</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DSubnetsAuthoritive</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\NetworkIsolation</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable CIFS Change Notifications - Machine Policy</name>
+      <description>Disable CIFS Change Notifications</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NoRemoteRecursiveEvents</name>
+          <path>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable IPv6 - HKLM Registry</name>
+      <description>Disable IPv6</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisabledComponents</name>
+          <path>HKLM\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters</path>
+          <value>255</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Choose Network Location - HKLM Registry</name>
+      <description>Creates a blank key that disables the "Choose default network location" prompt.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>
+          </name>
+          <path>HKLM\System\CurrentControlSet\Control\Network\NewNetworkWindowOff</path>
+          <value>
+          </value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Automatically connect to suggested open hotspots - HKLM Registry</name>
+      <description>Turn off Automatically connect to suggested open hotspots.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AutoConnectAllowedOEM</name>
+          <path>HKLM\Software\Microsoft\wcmsvc\wifinetworkmanager\config</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Enable Network Category ReadOnly - Machine Policy</name>
+      <description>Enable Network Category ReadOnly</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>CategoryReadOnly</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows NT\CurrentVersion\NetworkList\Signatures\EveryNetwork</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off KMS Client Online AVS Validation - Machine Policy</name>
+      <description>Turn off KMS Client Online AVS Validation</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NoGenTicket</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows NT\CurrentVersion\Software Protection Platform</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Don't allow Windows apps access cellular data - Machine Policy</name>
+      <description>Don't allow Windows apps access cellular data</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>LetAppsAccessCellularData</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WwanSvc\CellularDataAccess</path>
+          <value>2</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>System - Other</id>
+    <displayname>System - Other</displayname>
+    <description>System - Other</description>
+    <entry>
+      <name>Disable Retail Demo - Service</name>
+      <description>The Retail Demo service controls device activity while the device is in retail demo mode.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Services</plugin>
+        <params>
+          <name>RetailDemo</name>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Remove Microsoft Outlook MailNews Express Setup - HKLM Registry</name>
+      <description>Remove Microsoft Outlook MailNews Express setup from Personalized Settings. Optimize this item will shorten new user first login time.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>StubPath</name>
+          <path>HKLM\SOFTWARE\Microsoft\Active Setup\Installed Components\{44BBA840-CC51-11CF-AAFA-00AA00B6015C}</path>
+          <value>CTXOE_DeleteValue</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Remove Windows Desktop Update Setup - HKLM Registry</name>
+      <description>Remove Windows Desktop Update setup from Personalized Settings. Optimize this item will shorten new user first login time.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>StubPath</name>
+          <path>HKLM\SOFTWARE\Microsoft\Active Setup\Installed Components\{89820200-ECBD-11cf-8B85-00AA005B4340}</path>
+          <value>CTXOE_DeleteValue</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable File History - Scheduled Task</name>
+      <description>Disable FileHistory - File History</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>File History (maintenance mode)</name>
+          <path>\Microsoft\Windows\FileHistory\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Location WindowsActionDialog - Scheduled Task</name>
+      <description>Disable Location - WindowsActionDialog </description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>WindowsActionDialog</name>
+          <path>\Microsoft\Windows\Location\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off Active Help - Machine Policy</name>
+      <description>Turn off Active Help</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>NoActiveHelp</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Assistance\Client\1.0</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>System - Power Management</id>
+    <displayname>System - Power Management</displayname>
+    <description>System - Power Management</description>
+    <entry>
+      <name>Prevent Windows automatically transitioning to sleep - Machine Policy</name>
+      <description>Do not prevent Windows from automatically transitioning to sleep</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ACSettingIndex</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Power\PowerSettings\309dce9b-bef4-4119-9921-a851fb12f0f4</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable turn off hard disk after - HKLM Regsitry</name>
+      <description>Remove turn off hard disk after</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Attributes</name>
+          <path>HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\0012ee47-9041-4b5d-9b77-535fba8b1442\6738e2c4-e8a5-4a42-b16a-e040e769756e</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Select an active power plan - Machine Policy</name>
+      <description>Enable this policy, specify the High Performance power plan.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ActivePowerScheme</name>
+          <path>HKLM\Software\Policies\Microsoft\Power\PowerSettings</path>
+          <value>8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c</value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Power Management Policy(1/5) - Machine Policy</name>
+      <description>Power Management Policy(1/5)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ACSettingIndex</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Power\PowerSettings\29F6C1DB-86DA-48C5-9FDB-F2B67B1F44DA</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Power Management Policy(2/5) - Machine Policy</name>
+      <description>Power Management Policy(2/5)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ACSettingIndex</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Power\PowerSettings\3C0BC021-C8A8-4E07-A973-6B14CBCB2B7E</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Power Management Policy(3/5) - Machine Policy</name>
+      <description>Power Management Policy(3/5)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ACSettingIndex</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Power\PowerSettings\6738E2C4-E8A5-4A42-B16A-E040E769756E</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Power Management Policy(4/5) - Machine Policy</name>
+      <description>Power Management Policy(4/5)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ACSettingIndex</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Power\PowerSettings\94ac6d29-73ce-41a6-809f-6363ba21b47e</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Power Management Policy(5/5) - Machine Policy</name>
+      <description>Power Management Policy(5/5)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ACSettingIndex</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Power\PowerSettings\9D7815A6-7EE4-497E-8888-515A05F02364</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>System - Profile</id>
+    <displayname>System - Profile</displayname>
+    <description>System - Profile</description>
+    <entry>
+      <name>Disable first login animation - Machine Policy</name>
+      <description>Disable first login animation.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnableFirstLogonAnimation</name>
+          <path>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable deployment operations in special profiles - Machine Policy</name>
+      <description>Disable deployment operations in special profiles</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AllowDeploymentInSpecialProfiles</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\Appx</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable logon optimization - Machine Policy</name>
+      <description>Disable logon optimization</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnableLogonOptimization</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\System</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable sync logon script delay - Machine Policy</name>
+      <description>Disable logon script delay(1/2)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnableLogonScriptDelay</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\System</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable async logon script delay - Machine Policy</name>
+      <description>Disable logon script delay(2/2)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AsyncScriptDelay</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\System</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Shorten timeout of desktop session switch to 1s - Machine Policy</name>
+      <description>Shorten timeout of desktop session switch</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DelayedDesktopSwitchTimeout</name>
+          <path>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Shorten wait time of folder redirection to 0s  - Machine Policy</name>
+      <description>Shorten wait time of folder redirection</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>FolderRedirectionWait</name>
+          <path>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Hide entry points for Fast User Switching - Machine Policy</name>
+      <description>Hide entry points for Fast User Switching</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>HideFastUserSwitching</name>
+          <path>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Allow Microsoft accounts to be optional - Machine Policy</name>
+      <description>Allow Microsoft accounts to be optional</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>MSAOptional</name>
+          <path>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Do not check for user ownership of Roaming Profile Folders - Machine Policy</name>
+      <description>Do not check for user ownership of Roaming Profile Folders</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>CompatibleRUPSecurity</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\System</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>System - Storage</id>
+    <displayname>System - Storage</displayname>
+    <description>System - Storage</description>
+    <entry>
+      <name>Delete User App Containers On Log off - HKLM Registry</name>
+      <description>Addresses an issue that slows server performance or causes the server to stop responding because of numerous Windows firewall rules.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DeleteUserAppContainersOnLogoff</name>
+          <path>HKLM\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Superfetch - Service</name>
+      <description>Service is leveraged to optimize loading of applications over time.  In a non persistent or commodity based VDI environment this service may impact performance.  Depends on use and organization.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Services</plugin>
+        <params>
+          <name>SysMain</name>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Space Agent - Scheduled Task</name>
+      <description>Disable Space Agent Task</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>SpaceAgentTask</name>
+          <path>\Microsoft\Windows\SpacePort\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Space Manager - Scheduled Task</name>
+      <description>Disable Space Manager Task</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>SpaceManagerTask</name>
+          <path>\Microsoft\Windows\SpacePort\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Distributed Link Tracking Client - Service</name>
+      <description>Disable Distributed Link Tracking Client Service</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Services</plugin>
+        <params>
+          <name>TrkWks</name>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Don't allow downloading updates to the Disk Failure Prediction Model - Machine Policy</name>
+      <description>Updates would not be downloaded for the Disk Failure Prediction Failure Model.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AllowDiskHealthModelUpdates</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\StorageHealth</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Do not allow restore of system to default state - Machine Policy</name>
+      <description>Enable this policy, allow the user to restore the computer to the original state or from a user-created system image.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableSetup</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WinRE</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Syspart Repair - Command</name>
+      <description>Disable Syspart Repair</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>SyspartRepair</name>
+          <path>\Microsoft\Windows\Chkdsk\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable disk footprint diagnostics - Scheduled Task</name>
+      <description>Disable disk footprint diagnostics</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Diagnostics</name>
+          <path>\Microsoft\Windows\DiskFootprint\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable DiskFootprint StorageSense - Scheduled Task</name>
+      <description>Disable StorageSense</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>StorageSense</name>
+          <path>\Microsoft\Windows\DiskFootprint\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Setup Cleanup Task - Scheduled Task</name>
+      <description>Disable Setup Cleanup Task</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>SetupCleanupTask</name>
+          <path>\Microsoft\Windows\Setup\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable DiskCleanup SilentCleanup - Scheduled Task</name>
+      <description>Disable DiskCleanup - SilentCleanup</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>SilentCleanup</name>
+          <path>\Microsoft\Windows\DiskCleanup\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Defrag Schedule - Scheduled Task</name>
+      <description>Disable Defrag Schedule</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>ScheduledDefrag</name>
+          <path>\Microsoft\Windows\Defrag\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Chkdsk ProactiveScan - Scheduled Task</name>
+      <description>Disable Chkdsk - ProactiveScan</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>ProactiveScan</name>
+          <path>\Microsoft\Windows\Chkdsk\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable reset base for DISM - HKLM Registry</name>
+      <description>Disable reset base for DISM</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableResetbase</name>
+          <path>HKLM\Software\Microsoft\Windows\CurrentVersion\SideBySide\Configuration</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Boot Optimize Function - HKLM Registry</name>
+      <description>Disable windows automatically optimizes the file location for boot optimization.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>Enable</name>
+          <path>HKLM\SOFTWARE\Microsoft\Dfrg\BootOptimizeFunction</path>
+          <value>N</value>
+          <valuetype>String</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable creation of Crash Dump - HKLM Registry</name>
+      <description>Removes the creation of a Crash Dump file</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>CrashDumpEnabled</name>
+          <path>HKLM\SYSTEM\CurrentControlSet\Control\CrashControl</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Increase Service Startup Timeout - HKLM Registry</name>
+      <description>Allows up to 120 seconds before timing out waiting for a service</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ServicesPipeTimeout</name>
+          <path>HKLM\System\CurrentControlSet\Control</path>
+          <value>120000</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Reserved Storage - HKLM Registry</name>
+      <description>Disable Reserved Storage</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ShippedWithReserves</name>
+          <path>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\ReserveManager</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Storage Sense - Machine Policy</name>
+      <description>Disable Storage Sense.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AllowStorageSenseGlobal</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\StorageSense</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off System Restore - Machine Policy</name>
+      <description>System Restore is turned off, and the System Restore Wizard cannot be accessed.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>DisableSR</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows NT\SystemRestore</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>System - Troubleshooting and Maintenance</id>
+    <displayname>System - Troubleshooting and Maintenance</displayname>
+    <description>System - Troubleshooting and Maintenance</description>
+    <entry>
+      <name>Disable Reliability WMI Providers - Machine Policy</name>
+      <description>Disable this policy, Reliability Monitor will not display system reliability information, and WMI-capable applications will be unable to access reliability information from the listed providers.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>WMIEnable</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\Reliability Analysis\WMI</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Windows Standby/Resume Performance Diagnostics - Machine Policy</name>
+      <description>Windows cannot detect, troubleshoot, and attempt to resolve automatically Windows Standby/Resume Performance Diagnostics problems that are handled by the DPS.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnabledScenarioExecutionLevel</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WDI\{ffc42108-4920-4acf-a4fc-8abdcc68ada4}</path>
+          <value>CTXOE_DeleteValue</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Configure Scenario Execution Level 1/6 - Machine Policy</name>
+      <description>Disable this policy, Windows will not be able to detect, troubleshoot or resolve any Windows Resource Exhaustion problems that are handled by the DPS.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ScenarioExecutionEnabled</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WDI\{3af8b24a-c441-4fa4-8c5c-bed591bfa867}</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Configure Scenario Execution Level 2/6 - Machine Policy</name>
+      <description>Disable this policy, Windows will not be able to detect, troubleshoot or resolve any Windows Shutdown Performance problems that are handled by the DPS.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ScenarioExecutionEnabled</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WDI\{2698178D-FDAD-40AE-9D3C-1371703ADC5B}</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Configure Scenario Execution Level 3/6 - Machine Policy</name>
+      <description>Disable this policy, Windows will not be able to detect, troubleshoot or resolve any Windows Standby/Resume Performance problems that are handled by the DPS.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ScenarioExecutionEnabled</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WDI\{ffc42108-4920-4acf-a4fc-8abdcc68ada4}</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Lower Scenario Execution Level 5/6 - Machine Policy</name>
+      <description>Windows cannot detect, troubleshoot, and attempt to resolve automatically any heap corruption problems that are handled by the DPS.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ScenarioExecutionEnabled</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WDI\{186f47ef-626c-4670-800a-4a30756babad}</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Configure Scenario Execution Level 6/6 - Machine Policy</name>
+      <description>Disable this policy, the DPS is not able to diagnose memory leak problems.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ScenarioExecutionEnabled</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WDI\{eb73b633-3f4e-4ba0-8f60-8f3c6f53168f}</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Configure Scenario Execution Level - Machine Policy</name>
+      <description>Disable this policy, Windows will not be able to detect, troubleshoot or resolve any Windows Boot Performance problems that are handled by the DPS.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ScenarioExecutionEnabled</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WDI\{86432a0b-3c7d-4ddf-a89c-172faa90485d}</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Windows Boot Performance Diagnostics(1/2) - Machine Policy</name>
+      <description>Windows cannot detect, troubleshoot, and attempt to resolve automatically Windows Boot Performance Diagnostics problems that are handled by the DPS.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ScenarioExecutionEnabled</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WDI\{67144949-5132-4859-8036-a737b43825d8}</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Windows Boot Performance Diagnostics(2/2) - Machine Policy</name>
+      <description>Windows cannot detect, troubleshoot, and attempt to resolve automatically Windows Boot Performance Diagnostics problems that are handled by the DPS.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnabledScenarioExecutionLevel</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WDI\{67144949-5132-4859-8036-a737b43825d8}</path>
+          <value>CTXOE_DeleteValue</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Scheduled Maintenance Diagnostics - Machine Policy</name>
+      <description>Disable this policy, Windows will not be able to detect, troubleshoot or resolve problems on a scheduled basis.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnabledExecution</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\ScheduledDiagnostics</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable scheduled diagnostics - Machine Policy</name>
+      <description>Windows will not be able to detect, troubleshoot or resolve problems on a scheduled basis.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnabledExecutionLevel</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\ScheduledDiagnostics</path>
+          <value>CTXOE_DeleteValue</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Windows Diagnostic Infrastructure Resolution host - Scheduled Task</name>
+      <description>Disable WDI - ResolutionHost</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>ResolutionHost</name>
+          <path>\Microsoft\Windows\WDI\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Microsoft (R) Diagnostics Hub Standard Collector - Service</name>
+      <description>Diagnostics Hub Standard Collector Service. When running, this service collects real time ETW events and processes them.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Services</plugin>
+        <params>
+          <name>diagnosticshub.standardcollector.service</name>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable WsSwapAssessmentTask - Scheduled Task</name>
+      <description>Disable WsSwapAssessmentTask</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>WsSwapAssessmentTask</name>
+          <path>\Microsoft\Windows\Sysmain\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Work Folders Maintenance Work - Scheduled Task</name>
+      <description>Disable Work Folders Maintenance Work</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Work Folders Maintenance Work</name>
+          <path>\Microsoft\Windows\Work Folders\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable BgTaskRegistrationMaintenanceTask - Scheduled Task</name>
+      <description>Maintains registrations for background tasks for Universal Windows Platform applications</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>BgTaskRegistrationMaintenanceTask</name>
+          <path>\Microsoft\Windows\BrokerInfrastructure\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Resource Monitor - Service</name>
+      <description>Disable Resource Monitor service</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Services</plugin>
+        <params>
+          <name>RmSvc</name>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Maintenance Tasks - Scheduled Task</name>
+      <description>Disable Maintenance Tasks</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>MaintenanceTasks</name>
+          <path>\Microsoft\Windows\StateRepository\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable WIM-Hash-Management - Scheduled Task</name>
+      <description>Disable WIM-Hash-Management</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>WIM-Hash-Management</name>
+          <path>\Microsoft\Windows\WOF\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable WIM-Hash-Validation - Scheduled Task</name>
+      <description>Disable WIM-Hash-Validation</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>WIM-Hash-Validation</name>
+          <path>\Microsoft\Windows\WOF\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable XblGameSave  - Scheduled Task</name>
+      <description>Disable XblGameSave Standby Task - XblGameSaveTask</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>XblGameSaveTask</name>
+          <path>\Microsoft\XblGameSave\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Data Integrity Scan - Scheduled Task</name>
+      <description>Disable Data Integrity Scan</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Data Integrity Scan</name>
+          <path>\Microsoft\Windows\Data Integrity Scan\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Data Integrity Check - Scheduled Task</name>
+      <description>Disable Data Integrity Check</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Data Integrity Check And Scan</name>
+          <path>\Microsoft\Windows\Data Integrity Scan\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Provisioning Logon - Scheduled Task</name>
+      <description>Disable Provisioning Logon</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Logon</name>
+          <path>\Microsoft\Windows\Management\Provisioning\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Update Library - Scheduled Task</name>
+      <description>Disable Update Library</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>UpdateLibrary</name>
+          <path>\Microsoft\Windows\Windows Media Sharing\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable verify appUriHandler host registrations - Scheduled Task</name>
+      <description>Disable verifies appUriHandler host registrations.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>appuriverifierdaily</name>
+          <path>\Microsoft\Windows\ApplicationData\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Bluetooth UninstallDeviceTask - Scheduled Task</name>
+      <description>Disable Bluetooth - UninstallDeviceTask</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>UninstallDeviceTask</name>
+          <path>\Microsoft\Windows\Bluetooth\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Refresh Cache - Scheduled Task</name>
+      <description>Disable Refresh Cache</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>RefreshCache</name>
+          <path>\Microsoft\Windows\Flighting\OneSettings\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Synchronize Language Settings - Scheduled Task</name>
+      <description>Disable Synchronize Language Settings</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Synchronize Language Settings</name>
+          <path>\Microsoft\Windows\International\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Registry Idle Backup Task - Scheduled Task</name>
+      <description>Disable Registry Idle Backup Task</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>RegIdleBackup</name>
+          <path>\Microsoft\Windows\Registry\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Servicing - StartComponentCleanup - Scheduled Task</name>
+      <description>Disable Servicing - StartComponentCleanup</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>StartComponentCleanup</name>
+          <path>\Microsoft\Windows\Servicing\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Shell FamilySafetyMonitor - Scheduled Task</name>
+      <description>Disable Shell - FamilySafetyMonitor</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>FamilySafetyMonitor</name>
+          <path>\Microsoft\Windows\Shell\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Shell FamilySafetyRefreshTask - Scheduled Task</name>
+      <description>Disable Shell - FamilySafetyRefreshTask</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>FamilySafetyRefreshTask</name>
+          <path>\Microsoft\Windows\Shell\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Shell IndexerAutomaticMaintenance - Scheduled Task</name>
+      <description>Disable Shell - IndexerAutomaticMaintenance</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>IndexerAutomaticMaintenance</name>
+          <path>\Microsoft\Windows\Shell\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Maintenance WinSAT - Scheduled Task</name>
+      <description>Disable Maintenance - WinSAT</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>WinSAT</name>
+          <path>\Microsoft\Windows\Maintenance\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable MapsToastTask - Scheduled Task</name>
+      <description>Disable Maps - MapsToastTask</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>MapsToastTask</name>
+          <path>\Microsoft\Windows\Maps\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable System Restore Schedule - Scheduled Task</name>
+      <description>Disable System Restore Schedule</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>SR</name>
+          <path>\Microsoft\Windows\SystemRestore\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable ProcessMemoryDiagnosticEvents - Scheduled Task</name>
+      <description>Disable MemoryDiagnostic - ProcessMemoryDiagnosticEvents</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>ProcessMemoryDiagnosticEvents</name>
+          <path>\Microsoft\Windows\MemoryDiagnostic\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable RunFullMemoryDiagnostic - Scheduled Task</name>
+      <description>Disable MemoryDiagnostic - RunFullMemoryDiagnostic</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>RunFullMemoryDiagnostic</name>
+          <path>\Microsoft\Windows\MemoryDiagnostic\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Power Efficiency Diagnostics AnalyzeSystem - Scheduled Task</name>
+      <description>Disable Power Efficiency Diagnostics - AnalyzeSystem</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>AnalyzeSystem</name>
+          <path>\Microsoft\Windows\Power Efficiency Diagnostics\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable RecoveryEnvironment VerifyWinRE - Scheduled Task</name>
+      <description>Disable RecoveryEnvironment - VerifyWinRE</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>VerifyWinRE</name>
+          <path>\Microsoft\Windows\RecoveryEnvironment\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Windows Error Reporting - Scheduled Task</name>
+      <description>Disable Windows Error Reporting</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>QueueReporting</name>
+          <path>\Microsoft\Windows\Windows Error Reporting\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable performing maintenance for the DataSharingService - Scheduled Task</name>
+      <description>Disable performs maintenance for the Data Sharing Service.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>DsSvcCleanup</name>
+          <path>\Microsoft\Windows\ApplicationData\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Recommended Troubleshooting Scanner - Scheduled Task</name>
+      <description>Disable Recommended Troubleshooting Scanner</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>RecommendedTroubleshootingScanner</name>
+          <path>\Microsoft\Windows\Diagnosis\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Diagnostic Policy - Service</name>
+      <description>Disable Diagnostic Policy Service</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Services</plugin>
+        <params>
+          <name>DPS</name>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Scheduled Diagnosis - Scheduled Task</name>
+      <description>Disable Diagnosis - Scheduled</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Scheduled</name>
+          <path>\Microsoft\Windows\Diagnosis\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable ReconcileFeatures - Scheduled Task</name>
+      <description>Disable ReconcileFeature</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>ReconcileFeatures</name>
+          <path>\Microsoft\Windows\Flighting\FeatureConfig\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable DiskDiagnostic DataCollector - Scheduled Task</name>
+      <description>Disable DiskDiagnostic - DataCollector</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Microsoft-Windows-DiskDiagnosticDataCollector</name>
+          <path>\Microsoft\Windows\DiskDiagnostic\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable ResPriStaticDbSync - Scheduled Task</name>
+      <description>Disable ResPriStaticDbSync</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>ResPriStaticDbSync</name>
+          <path>\Microsoft\Windows\Sysmain\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Sqm Tasks - Scheduled Task</name>
+      <description>Disable Sqm-Tasks</description>
+      <execute>1</execute>
+      <action>
+        <plugin>SchTasks</plugin>
+        <params>
+          <name>Sqm-Tasks</name>
+          <path>\Microsoft\Windows\PI\</path>
+          <value>Disabled</value>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>System - Windows Installer</id>
+    <displayname>System - Windows Installer</displayname>
+    <description>System - Windows Installer</description>
+    <entry>
+      <name>Control maximum size of baseline file cache - Machine Policy</name>
+      <description>Enable this policy, set the maximum size of the Windows Installer baseline file cache to 5.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>MaxPatchCacheSize</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\Installer</path>
+          <value>5</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Turn off creation of System Restore checkpoints - Machine Policy</name>
+      <description>Enable this policy, the Windows Installer does not generate System Restore checkpoints when installing applications.</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>LimitSystemRestoreCheckpointing</name>
+          <path>HKLM\Software\Policies\Microsoft\Windows\Installer</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable MSI Corrupted File Recovery(1/7) - Machine Policy</name>
+      <description>Disable MSI Corrupted File Recovery(1/7)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnabledScenarioExecutionLevel</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WDI\{2698178D-FDAD-40AE-9D3C-1371703ADC5B}</path>
+          <value>CTXOE_DeleteValue</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable MSI Corrupted File Recovery(2/7) - Machine Policy</name>
+      <description>Disable MSI Corrupted File Recovery(2/7)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnabledScenarioExecutionLevel</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WDI\{3af8b24a-c441-4fa4-8c5c-bed591bfa867}</path>
+          <value>CTXOE_DeleteValue</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable MSI Corrupted File Recovery(3/7) - Machine Policy</name>
+      <description>Disable MSI Corrupted File Recovery(3/7)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ScenarioExecutionEnabled</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WDI\{9c5a40da-b965-4fc3-8781-88dd50a6299d}</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable MSI Corrupted File Recovery(4/7) - Machine Policy</name>
+      <description>Disable MSI Corrupted File Recovery(4/7)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ScenarioExecutionEnabled</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WDI\{a7a5847a-7511-4e4e-90b1-45ad2a002f51}</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable MSI Corrupted File Recovery(5/7) - Machine Policy</name>
+      <description>Disable MSI Corrupted File Recovery(5/7)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnabledScenarioExecutionLevel</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WDI\{a7a5847a-7511-4e4e-90b1-45ad2a002f51}</path>
+          <value>CTXOE_DeleteValue</value>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable MSI Corrupted File Recovery(6/7) - Machine Policy</name>
+      <description>Disable MSI Corrupted File Recovery(6/7)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>EnabledScenarioExecutionLevel</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WDI\{eb73b633-3f4e-4ba0-8f60-8f3c6f53168f}</path>
+          <value>1</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable MSI Corrupted File Recovery(7/7) - Machine Policy</name>
+      <description>Disable MSI Corrupted File Recovery(7/7)</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ScenarioExecutionEnabled</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\Windows\WDI\{ecfb03d1-58ee-4cc7-a1b5-9bc6febcb915}</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+  <group>
+    <id>Finalize</id>
+    <displayname>Finalize</displayname>
+    <description>Final Tasks to complete before image seal</description>
+    <entry>
+      <name>Clear Scheduled Tasks</name>
+      <description>Clear out any remaining Scheduled Tasks</description>
+      <execute>1</execute>
+      <action>
+        <plugin>PowerShell</plugin>
+        <executeparams>
+          <value><![CDATA[	try {
+		Get-ScheduledTask -TaskName 'OneDrive*' | Disable-ScheduledTask
+		Get-ScheduledTask -TaskName 'MicrosoftEdge*' | Disable-ScheduledTask
+		Get-ScheduledTask -TaskName 'Google*' | Disable-ScheduledTask
+		Get-ScheduledTask -TaskName 'Chrome*' | Disable-ScheduledTask
+		$Global:CTXOE_Details = "Complete";
+		$Global:CTXOE_Result = $True;
+	} catch {
+		$Global:CTXOE_Details = "Errored";
+		$Global:CTXOE_Result = $False;
+	}
+]]></value>
+        </executeparams>
+      </action>
+    </entry>
+    <entry>
+      <name>Remove AppX Packages</name>
+      <description>Removes the AppX Packages for All Users</description>
+      <execute>1</execute>
+      <action>
+        <plugin>PowerShell</plugin>
+        <executeparams>
+          <value><![CDATA[	try {
+		Get-AppxPackage -AllUsers | Where-Object { ($_.IsFramework -eq $False) -and (!($_.packageFullName -like "Microsoft.StorePurchaseApp*")) -and (!($_.packageFullName -like "Microsoft.WindowsCalculator*")) -and (!($_.packageFullName -like "Microsoft.WindowsStore*")) } | Remove-AppxPackage -ErrorAction SilentlyContinue
+		Get-AppxProvisionedPackage -Online | Where-Object { (!($_.DisplayName -like "Microsoft.StorePurchaseApp*")) -and (!($_.DisplayName -like "Microsoft.WindowsCalculator*")) -and (!($_.DisplayName -like "Microsoft.WindowsStore*")) } | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+		$Global:CTXOE_Details = "Complete";
+		$Global:CTXOE_Result = $True;
+	} catch {
+		$Global:CTXOE_Details = "Errored";
+		$Global:CTXOE_Result = $False;
+	}
+]]></value>
+        </executeparams>
+      </action>
+    </entry>
+    <entry>
+      <name>Set Power Plan</name>
+      <description>Sets the Power Plan to High Performance</description>
+      <execute>1</execute>
+      <action>
+        <plugin>PowerShell</plugin>
+        <executeparams>
+          <value><![CDATA[	try {
+		$PowerPlan = "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c"
+		PowerCfg /SetActive $PowerPlan
+		$Global:CTXOE_Details = "Complete";
+		$Global:CTXOE_Result = $True;
+	} catch {
+		$Global:CTXOE_Details = "Errored";
+		$Global:CTXOE_Result = $False;
+	}
+]]></value>
+        </executeparams>
+      </action>
+    </entry>
+    <entry>
+      <name>Run NGEN Update</name>
+      <description>Runs the .NET NGEN Update Routines</description>
+      <execute>1</execute>
+      <action>
+        <plugin>PowerShell</plugin>
+        <executeparams>
+          <value><![CDATA[	try {
+		. $Env:WinDir\Microsoft.Net\Framework\v4.0.30319\ngen.exe Update
+		If ($(Test-Path $Env:WinDir\Microsoft.Net\Framework64\v4.0.30319\ngen.exe) -eq $True) {
+		    . $Env:WinDir\Microsoft.Net\Framework64\v4.0.30319\ngen.exe Update;
+		
+		}
+		$Global:CTXOE_Details = "Complete";
+		$Global:CTXOE_Result = $True;
+	} catch {
+		$Global:CTXOE_Details = "Errored";
+		$Global:CTXOE_Result = $False;
+	}
+]]></value>
+        </executeparams>
+      </action>
+    </entry>
+    <entry>
+      <name>Clear Event Logs</name>
+      <description>Clears the System Event Logs</description>
+      <execute>1</execute>
+      <action>
+        <plugin>PowerShell</plugin>
+        <executeparams>
+          <value><![CDATA[	try {
+		$EventLogs = wevtutil enum-logs
+		ForEach ($EventLog in $EventLogs) {
+		    wevtutil cl "$EventLog" 2> $null
+		}
+		wevtutil cl "System"
+		$Global:CTXOE_Details = "Complete";
+		$Global:CTXOE_Result = $True;
+	} catch {
+		$Global:CTXOE_Details = "Errored";
+		$Global:CTXOE_Result = $False;
+	}
+]]></value>
+        </executeparams>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Show Dynamic Content</name>
+      <description>Diable the Dynamic Content in the Search Box</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>ShowDynamicContent</name>
+          <path>HKDU\Software\Microsoft\Windows\CurrentVersion\Feeds\DSB</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Dynamic Search Box</name>
+      <description>Diable the Dynamic Search Box</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>IsDynamicSearchBoxEnabled</name>
+          <path>HKCU\Software\Microsoft\Windows\CurrentVersion\SearchSettings</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+  </group>
+</root>
