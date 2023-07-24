@@ -134,7 +134,7 @@ function Start-NTNXInfluxUpload {
                 foreach($Header in $Headers){
                     if(($header -ne "Timestamp")){
 
-                        if(($header -like "*Id*") -or ($header -like "*Name*") -or ($header -like "*timer*")){
+                        if(($header -like "*Id") -or ($header -like "*Name*") -or ($header -like "*timer*")){
                             $Data = $($line.$($Header))
                             $tag = $tag + ",$($Header)=$($Data)"
                         } else {
