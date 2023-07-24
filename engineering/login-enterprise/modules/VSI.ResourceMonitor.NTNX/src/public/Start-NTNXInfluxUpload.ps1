@@ -56,7 +56,7 @@ function Start-NTNXInfluxUpload {
     $CurrentMonth = get-date -Format MM
 
     foreach($File in $Files){
-        if(($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*")){
+        if(($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*")){
             $TopLevelTag = $File.BaseName
             $Tag = ("Run=$($Run)," +
                     "DataType=$($TopLevelTag)," +
@@ -144,6 +144,7 @@ function Start-NTNXInfluxUpload {
                     }
                 }
                 $Fields = $Fields.TrimEnd(",")
+                $Fields = $Fields.Replace('null', '0')
                 $tag = $tag.replace(' ','_')
                 $CSVDate = $($line.Timestamp)
                 $UnixDate = Get-Date -Date $CSVDate -UFormat %s

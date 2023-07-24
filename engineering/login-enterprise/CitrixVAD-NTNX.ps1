@@ -272,6 +272,16 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #Stop and cleanup monitoring job Boot phase
         $monitoringJob | Stop-Job | Remove-Job
 
+        #Set RDA Source and Destination files and clean out source files if they still exist
+        $RDADestination = "$OutputFolder\RDA.csv"
+        $RDASource = "\\ws-files.wsperf.nutanix.com\Automation\RDA-logging\$($VSI_Users_BaseName)0001.csv"
+        if(Test-Path -Path $RDASource){
+            Write-Host (Get-Date) "Removing RDA Source File $($RDASource)"
+            Remove-Item -Path $RDASource -ErrorAction SilentlyContinue
+        } else {
+            Write-Host (Get-Date) "RDA Source File $($RDASource) does not exist"
+        }
+
         Write-Host (Get-Date) "Waiting for $VSI_Target_MinutesToWaitAfterIdleVMs minutes before starting test"
         Start-sleep -Seconds $($VSI_Target_MinutesToWaitAfterIdleVMs * 60)
         # Stop Curator
@@ -306,13 +316,23 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $NTNXInfra.Testinfra.VMCPUCount = [Int]$VSI_Target_NumCPUs * [Int]$VSI_Target_NumCores
         $NTNXInfra.Testinfra.Testname = $FolderName
         $NTNXInfra | ConvertTo-Json -Depth 20 | Set-Content -Path $OutputFolder\Testconfig.json -Force
+        Write-Host (Get-Date) "Exporting LE Measurements to output folder"
         Export-LEMeasurements -Folder $OutputFolder -TestRun $TestRun -DurationInMinutes $VSI_Target_DurationInMinutes
-        $XLSXPath = "$OutputFolder\$FolderName.xlsx"
-        ConvertTo-VSINTNXExcelDocument -SourceFolder $OutputFolder -OutputFile $XLSXPath
+
+        #Check for RDA File and if exists then move it to the output folder
+        if(Test-Path -Path $RDASource){
+            $csvData = get-content $RDASource | ConvertFrom-String -Delimiter "," -PropertyNames Timestamp,screenResolutionid,encoderid,movingImageCompressionConfigurationid,preferredColorDepthid,videoCodecid,VideoCodecUseid,VideoCodecTextOptimizationid,VideoCodecColorspaceid,VideoCodecTypeid,HardwareEncodeEnabledid,VisualQualityid,FramesperSecond,RDHSMaxFPS,currentCPU,currentRAM,totalCPU,currentFps,totalFps,currentRTT,NetworkLatency,NetworkLoss,CurrentBandwidthEDT,totalBandwidthusageEDT,averageBandwidthusageEDT,currentavailableEDTBandwidth,EDTInUse,currentBandwithoutput,currentLatency,currentavailableBandwidth,totalBandwidthusage,averageBandwidthUsage,averageBandwidthAvailable,GPUusage,GPUmemoryusage,GPUmemoryInUse,GPUvideoEncoderusage,GPUvideoDecoderusage,GPUtotalUsage,GPUVideoEncoderSessions,GPUVideoEncoderAverageFPS,GPUVideoEncoderLatency | Select -Skip 1
+            $csvData | Export-Csv -Path $RDADestination -NoTypeInformation
+            Remove-Item -Path $RDASource -ErrorAction SilentlyContinue
+        }
+
+        #$XLSXPath = "$OutputFolder\$FolderName.xlsx"
+        #ConvertTo-VSINTNXExcelDocument -SourceFolder $OutputFolder -OutputFile $XLSXPath
         #if (-not ($SkipPDFExport)) {
         #    Export-LEPDFReport -XLSXFile $XLSXPath -ReportConfigurationFile $ReportConfigFile
         #}
 
+        Write-Host (Get-Date) "Uploading results to Influx DB"
         # Upload Config to Influx
         if($NTNXInfra.Test.UploadResults) {
             Start-NTNXInfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -Boot $true
