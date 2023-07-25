@@ -274,7 +274,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #Set RDA Source and Destination files and clean out source files if they still exist
         $RDADestination = "$OutputFolder\RDA.csv"
-        $RDASource = "\\ws-files.wsperf.nutanix.com\Automation\RDA-logging\$($VSI_Users_BaseName)0001.csv"
+        $RDASource = Join-Path -Path "$($NTNXInfra.TestInfra.RDAPath)" -ChildPath "$($VSI_Users_BaseName)0001.csv"
         if(Test-Path -Path $RDASource){
             Write-Host (Get-Date) "Removing RDA Source File $($RDASource)"
             Remove-Item -Path $RDASource -ErrorAction SilentlyContinue

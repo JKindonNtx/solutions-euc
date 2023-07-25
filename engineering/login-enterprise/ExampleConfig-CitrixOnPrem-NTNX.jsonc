@@ -133,6 +133,7 @@
         "Boottime":   null, // Autofilled
         "Slack":  "https://hooks.slack.com/services/xxxxxxxxx", // Enter the Slack hook for reporting purposes.
         "InfluxDBurl": "MANDATORY_TO_DEFINE",
-        "InfluxToken": "Enter Token Here"
+        "InfluxToken": "Enter Token Here",
+        "RDAPath": "\\\\ws-files.wsperf.nutanix.com\\automation\\RDA-Logging"
     }
 }
