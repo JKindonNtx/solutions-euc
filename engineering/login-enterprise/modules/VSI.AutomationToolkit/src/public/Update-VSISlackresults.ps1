@@ -25,7 +25,7 @@ Function Update-VSISlackresults {
         [string]$TestName,
         [string]$Path
     )
-    $configfile = "$($Path)\testresults\$TestName\Testconfig.json"
+    $configfile = "$($Path)\Testconfig.json"
     $config = Get-Content -Path $configFile -Raw | ConvertFrom-Json
     $body = ConvertTo-Json -Depth 4 @{
         username = "LoginVSI - $($config.TestInfra.Datacenter)"

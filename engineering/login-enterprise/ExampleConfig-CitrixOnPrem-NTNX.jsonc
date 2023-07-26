@@ -134,6 +134,10 @@
         "Slack":  "https://hooks.slack.com/services/xxxxxxxxx", // Enter the Slack hook for reporting purposes.
         "InfluxDBurl": "MANDATORY_TO_DEFINE",
         "InfluxToken": "Enter Token Here",
-        "RDAPath": "\\\\ws-files.wsperf.nutanix.com\\automation\\RDA-Logging"
+        "RDAPath": "\\\\ws-files.wsperf.nutanix.com\\automation\\RDA-Logging",
+        "GrafanaUriDocs": "MANDATORY_TO_DEFINE",
+        "GrafanaUriRegression": "MANDATORY_TO_DEFINE",
+        "SlackChannel": "Enter Slack Channel Here",
+        "SlackToken": "Enter Slack Token Here"
     }
 }
