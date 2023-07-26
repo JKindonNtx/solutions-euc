@@ -23,7 +23,7 @@ function Get-VSIGraphs {
             $TestName
         )
 
-        $BucketName = $ntnxinfra.test.BucketName
+        $BucketName = $TestConfig.test.BucketName
         
         if(!($null -eq $RunNumber)){
             # Graph for Single Run

@@ -353,8 +353,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     # Analyze Run results
     Get-VSIResults -TestName $NTNXTestname -Path $ScriptRoot
     # Slack update
+    Update-VSISlackresults -TestName $NTNXTestname -Path $ScriptRoot
     $OutputFolder = "$($ScriptRoot)\testresults\$NTNXTestname"
-    Update-VSISlackresults -TestName $NTNXTestname -Path $OutputFolder
     $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -TestName $NTNXTestname
     if(test-path -path $Filename) {
         Update-VSISlackImage -ImageURL $FileName -SlackToken $NTNXInfra.Testinfra.SlackToken -SlackChannel $NTNXInfra.Testinfra.SlackChannel -Title $NTNXInfra.Target.ImagesToTest[0].Comment
