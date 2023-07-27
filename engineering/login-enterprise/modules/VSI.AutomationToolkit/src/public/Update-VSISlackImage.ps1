@@ -27,7 +27,7 @@ function Update-VSISlackImage {
     )
 
     if(!(get-module | where-object {$_.Name -eq "PSSlack" })) {
-        install-module PSSlack -allowclobber -force
+        install-module PSSlack -Scope CurrentUser -allowclobber -Confirm:$false -Force
         import-module PSSlack
     }
 
