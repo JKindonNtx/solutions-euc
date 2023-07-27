@@ -347,17 +347,17 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -RunNumber $i -TestName $NTNXTestname
         if(test-path -path $Filename) {
-            Update-VSISlackImage -ImageURL $FileName -SlackToken $NTNXInfra.Testinfra.SlackToken -SlackChannel $NTNXInfra.Testinfra.SlackChannel -Title $NTNXInfra.Target.ImagesToTest[0].Comment
+            Update-VSISlackImage -ImageURL $FileName -SlackToken $NTNXInfra.Testinfra.SlackToken -SlackChannel $NTNXInfra.Testinfra.SlackChannel -SlackComment $NTNXInfra.Target.ImagesToTest[0].Comment
         }
     }
     # Analyze Run results
     Get-VSIResults -TestName $NTNXTestname -Path $ScriptRoot
     # Slack update
     Update-VSISlackresults -TestName $NTNXTestname -Path $ScriptRoot
-    $OutputFolder = "$($ScriptRoot)\testresults\$NTNXTestname"
+    $OutputFolder = "$($ScriptRoot)\testresults\$($NTNXTestname)"
     $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -TestName $NTNXTestname
     if(test-path -path $Filename) {
-        Update-VSISlackImage -ImageURL $FileName -SlackToken $NTNXInfra.Testinfra.SlackToken -SlackChannel $NTNXInfra.Testinfra.SlackChannel -Title $NTNXInfra.Target.ImagesToTest[0].Comment
+        Update-VSISlackImage -ImageURL $FileName -SlackToken $NTNXInfra.Testinfra.SlackToken -SlackChannel $NTNXInfra.Testinfra.SlackChannel -SlackComment $NTNXInfra.Target.ImagesToTest[0].Comment
     }
 }
 #endregion
