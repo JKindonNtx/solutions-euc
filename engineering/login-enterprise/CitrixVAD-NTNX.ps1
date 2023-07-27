@@ -347,7 +347,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -RunNumber $i -TestName $NTNXTestname
         if(test-path -path $Filename) {
-            Update-VSISlackImage -ImageURL $FileName -SlackToken $NTNXInfra.Testinfra.SlackToken -SlackChannel $NTNXInfra.Testinfra.SlackChannel -SlackComment $NTNXInfra.Target.ImagesToTest[0].Comment
+            Update-VSISlackImage -ImageURL $FileName -SlackToken $NTNXInfra.Testinfra.SlackToken -SlackChannel $NTNXInfra.Testinfra.SlackChannel -SlackTitle "$($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)" -SlackComment "CPU and EUX score of $($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)"
         }
     }
     # Analyze Run results
@@ -357,7 +357,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     $OutputFolder = "$($ScriptRoot)\testresults\$($NTNXTestname)"
     $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -TestName $NTNXTestname
     if(test-path -path $Filename) {
-        Update-VSISlackImage -ImageURL $FileName -SlackToken $NTNXInfra.Testinfra.SlackToken -SlackChannel $NTNXInfra.Testinfra.SlackChannel -SlackComment $NTNXInfra.Target.ImagesToTest[0].Comment
+        Update-VSISlackImage -ImageURL $FileName -SlackToken $NTNXInfra.Testinfra.SlackToken -SlackChannel $NTNXInfra.Testinfra.SlackChannel -SlackTitle "$($NTNXInfra.Target.ImagesToTest[0].Comment)" -SlackComment "CPU and EUX scores of $($NTNXInfra.Target.ImagesToTest[0].Comment) - All Runs"
     }
 }
-#endregion
+#endregion  

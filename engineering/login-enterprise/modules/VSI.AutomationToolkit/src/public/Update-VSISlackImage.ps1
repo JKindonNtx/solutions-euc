@@ -10,19 +10,23 @@ function Update-VSISlackImage {
         Image to Post
     
         .PARAMETER SlackToken
-        The Path to the test results
+        The Token for posting the image
 
         .PARAMETER SlackChannel
-        The Path to the test results
+        The Channel to post the image to
+
+        .PARAMETER SlackTitle
+        The Title for the file
 
         .PARAMETER SlackComment
-        The Path to the test results
+        The Comment on the file in the Slack message
     #>
     
     Param(
         $ImageURL,
         $SlackToken,
         $SlackChannel,
+        $SlackTitle,
         $SlackComment
     )
 
@@ -31,6 +35,6 @@ function Update-VSISlackImage {
         import-module PSSlack
     }
 
-    Send-SlackFile -Channel $SlackChannel -path $ImageURL -Token $SlackToken -Title $SlackComment
+    Send-SlackFile -Channel $SlackChannel -path $ImageURL -Token $SlackToken -Title $SlackTitle -Comment $SlackComment
 } 
     
