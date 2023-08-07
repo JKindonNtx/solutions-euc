@@ -7,7 +7,7 @@
 	"VMwareCluster": {
 		"ip": "10.10.10.10",
 		"user": "Administrator",
-      	"password": password",
+      	"password": "password",
 		"ClusterName": "ClusterName"
 	},
 	"VM": {
