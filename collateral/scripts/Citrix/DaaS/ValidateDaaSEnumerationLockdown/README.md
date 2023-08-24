@@ -19,19 +19,19 @@ The following parameters exist to drive the behaviour of the script:
 
 #### Mandatory and recommended parameters:
 
-- **`Region`**: Mandatory **`String`**. The Citrix Cloud DaaS Tenant Region. Either AP-S (Asia Pacific), US (USA), EU (Europe) or JP (Japan).
-- **`CustomerID`**: Mandatory **`String`**. The Citrix Cloud Customer ID.
-- **`SecureClientFile`**: Optional **`String`**. The path to the Citrix Cloud Secure Client CSV. Cannot be used with `ClientID` or `ClientSecret` parameters.
+- `Region`: Mandatory **`String`**. The Citrix Cloud DaaS Tenant Region. Either AP-S (Asia Pacific), US (USA), EU (Europe) or JP (Japan).
+- `CustomerID`: Mandatory **`String`**. The Citrix Cloud Customer ID.
+- `SecureClientFile`: Optional **`String`**. The path to the Citrix Cloud Secure Client CSV. Cannot be used with `ClientID` or `ClientSecret` parameters.
 
 #### Optional Parameters
 
-- **`LockdownOpenDeliveryGroups`**: Optional **`switch`**. If specified, will disable any Delivery Group that does not have an Smart Access Control defined. Will Tag the Delivery Group with a `DisabledBySecurityScript` Tag. The Tag will be created if it does not exist.
-- **`RemediateDisabledDeliveryGroups`**: Optional **`switch`**. If specified, will re-enable any Delivery Group that is tagged with `DisabledBySecurityScript` and now has an appropriate Smart Access Control defined.
-- **`ClientID`**: Optional **`String`**. The Citrix Cloud Secure Client ID. Cannot be used with the `SecureClientFile` Parameter. Must be combined with the `ClientSecret` parameter.
-- **`ClientSecret`**: Optional **`String`**. The Citrix Cloud Secure Client Secret. Cannot be used with the `SecureClientFile` Parameter. Must be used with the `ClientID` parameter.
-- **`LogPath`**: Optional **`String`**. Log path output for all operations. The default is `C:\Logs\UpdateDaaSHostedMachineId.log`
-- **`LogRollover`**: Optional **`Int`**.Number of days before log files are rolled over. Default is 5.
-- **`Whatif`**: Optional. **`Switch`**. Will action the script in a whatif processing mode only.
+- `LockdownOpenDeliveryGroups`: Optional **`switch`**. If specified, will disable any Delivery Group that does not have an Smart Access Control defined. Will Tag the Delivery Group with a `DisabledBySecurityScript` Tag. The Tag will be created if it does not exist.
+- `RemediateDisabledDeliveryGroups`: Optional **`switch`**. If specified, will re-enable any Delivery Group that is tagged with `DisabledBySecurityScript` and now has an appropriate Smart Access Control defined.
+- `ClientID`: Optional **`String`**. The Citrix Cloud Secure Client ID. Cannot be used with the `SecureClientFile` Parameter. Must be combined with the `ClientSecret` parameter.
+- `ClientSecret`: Optional **`String`**. The Citrix Cloud Secure Client Secret. Cannot be used with the `SecureClientFile` Parameter. Must be used with the `ClientID` parameter.
+- `LogPath`: Optional **`String`**. Log path output for all operations. The default is `C:\Logs\UpdateDaaSHostedMachineId.log`
+- `LogRollover`: Optional **`Int`**.Number of days before log files are rolled over. Default is 5.
+- `Whatif`: Optional. **`Switch`**. Will action the script in a whatif processing mode only.
 
 ## Examples
 
