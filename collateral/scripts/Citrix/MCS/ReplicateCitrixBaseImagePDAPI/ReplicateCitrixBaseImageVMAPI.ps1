@@ -729,10 +729,13 @@ function GetPrismv2Task {
         Write-Log -Message "$($Phase) Monitoring task: $($TaskId)"
         while ($TaskStatus.progress_status -ne "SUCCEEDED") {
             if ($TaskStatus.progress_status -ne "FAILED") {
-                Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.progress_status)" -level Warn
-                Break
+                Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.progress_status). Waiting for Task completion. Status: $($TaskStatus.percentage_complete)% complete" -Level Info
             }
-            Write-Log -Message "$($Phase) Task Status is: $($TaskStatus.progress_status). Waiting for Task completion. Status: $($TaskStatus.percentage_complete)% complete" -Level Info
+            elseif ($TaskStatus.progress_status -eq "FAILED"){
+                Write-Log -Message "$($Phase) Task Status is: FAILED" -level Warn
+                StopIteration
+                Exit 1
+            }
             Start-Sleep $SleepTime
             $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $Credential -ErrorAction Stop
         }
@@ -742,7 +745,8 @@ function GetPrismv2Task {
     }
     catch {
         Write-Log -Message "$($Phase) Failed to get task status for task ID: $($TaskId)" -Level Warn
-        Break
+        StopIteration
+        Exit 1
     }     
 }
 
@@ -1213,11 +1217,11 @@ if ($TriggerPDReplication.IsPresent) {
     
     $CompletionMessageofOOBReplication = $CompletionMessageofOOBReplication.entities | Where-Object {$_.message -like $MessageMatchString} | Sort-Object created_time_stamp_in_usecs -Descending | Where-Object {$_.context_values[2] -eq $SnapID -and $_.context_values[1] -in $ProtectionDomain.entities.remote_site_names}
 
-    if ($CompletionMessageofOOBReplication.Count -eq $RemoteSites.count) {
-        Write-Log -Message "[PD Replication] Cluster replication complete. Found replication finished events for $($CompletionMessageofOOBReplication.Count) out of $($RemoteSites.count) remote Clusters" -Level Info
+    if ($CompletionMessageofOOBReplication.Id.Count -eq $TotalRemoteClusterCount) {
+        Write-Log -Message "[PD Replication] Cluster replication complete. Found replication finished events for $($CompletionMessageofOOBReplication.Id.Count) out of $($TotalRemoteClusterCount) remote Clusters" -Level Info
     }
     else {
-        while ($CompletionMessageofOOBReplication.Count -ne $RemoteSites.count) {
+        while ($CompletionMessageofOOBReplication.Id.Count -ne $TotalRemoteClusterCount) {
             if ($ReplicationSuccessQueryAttempts -eq $MaxReplicationSuccessQueryAttempts) {
                 Write-Log -Message "[PD Replication] Max Replication Query for Success ($($MaxReplicationSuccessQueryAttempts)) has been reached. Assuming failed replication on the source Cluster: $($SourceCluster)" -Level Warn
                 StopIteration
@@ -1245,12 +1249,12 @@ if ($TriggerPDReplication.IsPresent) {
                 
                 $CompletionMessageofOOBReplication = $CompletionMessageofOOBReplication.entities | Where-Object {$_.message -like $MessageMatchString} | Sort-Object created_time_stamp_in_usecs -Descending | Where-Object {$_.context_values[2] -eq $SnapID -and $_.context_values[1] -in $ProtectionDomain.entities.remote_site_names}
                 
-                Write-Log -Message "[PD Replication] Found replication finished events for $($CompletionMessageofOOBReplication.Count) out of $($RemoteSites.count). Checking again in $($EventCheckInterval) seconds." -Level Info
+                Write-Log -Message "[PD Replication] Found replication finished events for $($CompletionMessageofOOBReplication.Id.Count) out of $($TotalRemoteClusterCount). Checking again in $($EventCheckInterval) seconds." -Level Info
                 $ReplicationSuccessQueryAttempts += 1
                 Start-Sleep $EventCheckInterval
             }
         }
-        Write-Log -Message "[PD Replication] Cluster replication complete. Found replication finished events for $($CompletionMessageofOOBReplication.Count) clusters" -Level Info
+        Write-Log -Message "[PD Replication] Cluster replication complete. Found replication finished events for $($CompletionMessageofOOBReplication.Id.Count) clusters" -Level Info
     }
 }
 #endregion Protection Domain Replication
