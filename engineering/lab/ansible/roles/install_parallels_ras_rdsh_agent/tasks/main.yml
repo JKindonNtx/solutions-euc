@@ -1,36 +1,51 @@
 ---
-# Install Parallels RAS Guest Agent
-- name: Install Parallels RAS Guest Agent
+# Install Parallels RAS RDSH Agent
+- name: Install Parallels RAS RDSH Agent
   win_package:
     path: "{{ sourcefiles_path }}\\Apps\\Parallels\\RAS\\RASInstaller.msi"
     arguments: "ADDLOCAL=F_Agent"
     state: present
     creates_path: C:\Program Files (x86)\Parallels\ApplicationServer
-    product_id: '{C9952FD6-5B9C-4F82-AEE0-0FF3EEECFE3C}'
+    product_id: '{71A0BFC9-9EE0-4432-9ACC-E66786973187}'
   become: yes
   become_method: runas
   become_flags: logon_type=new_credentials logon_flags=net_credentials_only
-  register: rasagent_install
+  register: ras_rdsh_agent_install
+
+- name: Reboot after RDSH Agent Install
+  ansible.windows.win_reboot:
+
+- name: Resume Install Parallels RAS RDSH Agent
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Parallels\\RAS\\RASInstaller.msi"
+    arguments: "ADDLOCAL=F_Agent"
+    state: present
+    creates_path: C:\Program Files (x86)\Parallels\ApplicationServer
+    product_id: '{71A0BFC9-9EE0-4432-9ACC-E66786973187}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  register: ras_rdsh_agent_install
 
 - name: Add Remote Desktop Users
   ansible.windows.win_powershell:
     script: |
       Add-LocalGroupMember -Group "Remote Desktop Users" -Member "NT Authority\Authenticated Users"
 
-- name: Firewall rules for RAS Agent
+- name: Firewall rules for RAS RDSH Agent
   win_firewall_rule:
     name: RAS Guest Agent TCP
-    localport: 30004
+    localport: 30010
     action: allow
     direction: in
     protocol: tcp
     state: present
     enabled: yes
 
-- name: Firewall rules for RAS Agent
+- name: Firewall rules for RAS RDSH Agent
   win_firewall_rule:
     name: RAS Guest Agent UDP
-    localport: 30004
+    localport: 30009
     action: allow
     direction: in
     protocol: udp

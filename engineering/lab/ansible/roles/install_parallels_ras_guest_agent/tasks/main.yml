@@ -6,7 +6,7 @@
     arguments: "ADDLOCAL=F_GuestAgent"
     state: present
     creates_path: C:\Program Files (x86)\Parallels\ApplicationServer
-    product_id: '{C9952FD6-5B9C-4F82-AEE0-0FF3EEECFE3C}'
+    product_id: '{71A0BFC9-9EE0-4432-9ACC-E66786973187}'
   become: yes
   become_method: runas
   become_flags: logon_type=new_credentials logon_flags=net_credentials_only

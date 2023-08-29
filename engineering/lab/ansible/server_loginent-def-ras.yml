@@ -12,6 +12,5 @@
   - install_parallels_ras_guest_agent
   - install_parallels_ras_rdsh_agent
   - run_ms_file_types
-  #- run_optimize 
+  - run_optimize 
   - run_image_tattoo
-
