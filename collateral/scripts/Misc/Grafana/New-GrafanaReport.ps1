@@ -30,16 +30,17 @@ if($ReportTitle -eq ""){
 # Default Sections On
 $LoginEnterpriseResults = $false
 $HostResources = $false
-$ClusterResources = $true
+$ClusterResources = $false
 $LoginTimes = $false
 $Applications = $false
 $VsiEuxMeasurements = $false
+$RDA = $true
 
 # Default Sections Off
 $BootInfo = $false
 $IndividualRuns = $false
 $NutanixFiles = $false
-$CitrixNetScaler = $true
+$CitrixNetScaler = $false
 
 # -----------------------------------------------------------------------------------------------------------------------
 # Section - Boiler Plates
@@ -117,7 +118,7 @@ Steady State EUX Score
 
 ### Login Enterprise Graph
 
-The Login Enterprise graph shows the values obtained during the launch for each desktop session. The following figure is an example graph of the test data. The y-axis on the left side measures the EUX Score, the y-axis on the right side measures the number of active sessions, and the x-axis represents the test duration in minutes. We configured our benchmark test to sign in all sessions in 48 minutes, followed by a steady state of 10 minutes.
+The Login Enterprise graph shows the values obtained during the launch for each desktop session. The following figure is an example graph of the test data. The y-axis on the left side measures the EUX Score, the y-axis on the right side measures the number of active sessions, and the x-axis represents the test duration in minutes. We configured our benchmark test to sign in all sessions in 48 minutes, followed by a steady state of 20 minutes.
 
 ![Sample Login Enterprise Graph](../images/sample-login-enterprise-graph.png "Sample Login Enterprise Graph")
 
@@ -166,6 +167,7 @@ Write-Host "Login Enterprise Results:      $($LoginEnterpriseResults)"
 Write-Host "Host Resources:                $($HostResources)"
 Write-Host "Cluster Resources:             $($ClusterResources)"
 Write-Host "Login Times:                   $($LoginTimes)"
+Write-Host "Remote Desktop Analysis:       $($RDA)"
 Write-Host "Individual Runs:               $($IndividualRuns)"
 Write-Host "Applications:                  $($Applications)"
 Write-Host "Vsi Eux Measurements:          $($VsiEuxMeasurements)"
@@ -391,6 +393,14 @@ if ($confirmationStart -eq 'n') {
                 105 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_packets.png"}
                 103 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_connections.png"}
                 106 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_request_and_response.png"}
+                110 {$OutFile = Join-Path -Path $imagePath -ChildPath "rda_fps.png"}
+                111 {$OutFile = Join-Path -Path $imagePath -ChildPath "rda_latency.png"}
+                112 {$OutFile = Join-Path -Path $imagePath -ChildPath "rda_rtt.png"}
+                115 {$OutFile = Join-Path -Path $imagePath -ChildPath "rda_display_protocol_cpu_usage.png"}
+                113 {$OutFile = Join-Path -Path $imagePath -ChildPath "rda_bandwidth_output.png"}
+                116 {$OutFile = Join-Path -Path $imagePath -ChildPath "rda_display_protocol_ram_usage.png"}
+                117 {$OutFile = Join-Path -Path $imagePath -ChildPath "rda_available_bandwidth.png"}
+                114 {$OutFile = Join-Path -Path $imagePath -ChildPath "rda_available_bandwidth_edt.png"}
             }
 
             # Download the image
@@ -420,8 +430,8 @@ if ($confirmationStart -eq 'n') {
                 $HeaderLine = "| $($TableImage) "
                 $TableLine = "| --- "
             } else {
-                $Comment = ($TableData[$i - 1].comment).replace("_", " ")
-                $HeaderLine = $HeaderLine + "| $($Comment) "
+                $Name = ($TableData[$i - 1].Name).replace("_", " ")
+                $HeaderLine = $HeaderLine + "| $($Name) "
                 $TableLine = $TableLine + "| --- "
                 if($i -eq ($TableData.Count)){
                     $HeaderLine = $HeaderLine + "|"
@@ -456,6 +466,7 @@ if ($confirmationStart -eq 'n') {
             $mdFullFile
         )
 
+        Add-Content $mdFullFile ""
         Add-Content $mdFullFile "## <span style=""color:#7855FA"">$($Title)</span>"
     }
 
@@ -518,6 +529,7 @@ if ($confirmationStart -eq 'n') {
 
     # Build Body
 $Body = @"
+newNaming = if "$($FormattedNaming)" == "_measurement" then "" else "$($FormattedNaming)"
 from(bucket:"$($FormattedBucket)")
 |> range(start: 2023-01-01T01:00:00Z, stop: 2023-01-01T02:07:00Z)
 |> filter(fn: (r) => r["Year"] =~ /^$($FormattedYear)$/ )
@@ -528,8 +540,9 @@ from(bucket:"$($FormattedBucket)")
 |> filter(fn: (r) => r["InfraTestName"] =~ /^$($FormattedTestRun)$/ )
 |> filter(fn: (r) => r._field == "EUXScore")
 |> last()
-|> map(fn: (r) => ({measurement: r._measurement, run: r.Run, deliverytype: r.DeliveryType, desktopbrokerversion: r.DesktopBrokerVersion, desktopbrokeragentversion: r.DesktopBrokerAgentVersion, clonetype: r.CloneType, sessioncfg: r.SessionCfg, sessionssupport: r.SessionsSupport, nodecount: r.NodeCount, workload: r.Workload, numcpus: r.NumCPUs, numcores: r.NumCores, memorygb: r.MemoryGB, hostgpus: r.HostGPUs, secureboot: r.SecureBoot, vtpm: r.vTPM, credentialguard: r.CredentialGuard, numberofsessions: r.NumberOfSessions, numberofvms: r.NumberOfVMs, targetos: r.TargetOS, targetosversion: r.TargetOSVersion, officeversion: r.OfficeVersion, toolsguestversion: r.ToolsGuestVersion, optimizervendor: r.OptimizerVendor, optimizerversion: r.OptimizationsVersion, gpuprofile: r.GPUProfile, comment: r.Comment, infrassdcount: r.InfraSSDCount, infrasinglenodetest: r.InfraSingleNodeTest, infrahardwaretype: r.InfraHardwareType, infrafullversion: r.InfraFullVersion, infracpubrand: r.InfraCPUBrand, infracputype: r.InfraCPUType, infraaosversion: r.InfraAOSVersion, infrahypervisorbrand: r.InfraHypervisorBrand, infrahypervisorversion: r.InfraHypervisorVersion, infrahypervisortype: r.InfraHypervisorType, infrabios: r.InfraBIOS, infratotalnodes: r.InfraTotalNodes, infracpucores: r.InfraCPUCores, infracputhreadcount: r.InfraCPUThreadCount, infracpusocketcount: r.InfraCPUSocketCount, infracpuspeed: r.InfraCPUSpeed, inframemorygb: r.InfraMemoryGB, bootstart: r.BootStart, boottime: r.BootTime, maxabsoluteactiveactions: r.MaxAbsoluteActiveActions, maxabsolutenewactionsperminute: r.MaxAbsoluteNewActionsPerMinute, maxpercentageactiveactions: r.MaxPercentageActiveActions, vsiproductversion: r.VSIproductVersion, euxversion: r.VSIEUXversion, vsiactivesessioncount: r.VSIactivesessionCount, vsieuxscore: r.VSIEUXscore, vsieuxstate: r.VSIEUXstate, vsivsimax: r.VSIvsiMax, vsivsimaxstate: r.VSIvsiMaxstate, vsivsimaxversion: r.VSIvsiMaxversion}))
-|> sort(columns: ["desktopbrokerversion", "desktopbrokeragentversion", "nodecount", "numberofsessions", "numberofvms", "targetos", "targetosversion", "officeversion", "toolsguestversion", "optimizervendor", "optimizerversion", "gpuprofile", "comment", "infracpubrand", "infracputype", "infraaosversion", "infrahypervisorbrand", "infrahypervisorversion", "infrahypervisortype", "infratotalnodes", "run"])
+|> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
+|> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, run: r.Run, deliverytype: r.DeliveryType, desktopbrokerversion: r.DesktopBrokerVersion, desktopbrokeragentversion: r.DesktopBrokerAgentVersion, clonetype: r.CloneType, sessioncfg: r.SessionCfg, sessionssupport: r.SessionsSupport, nodecount: r.NodeCount, workload: r.Workload, numcpus: r.NumCPUs, numcores: r.NumCores, memorygb: r.MemoryGB, hostgpus: r.HostGPUs, secureboot: r.SecureBoot, vtpm: r.vTPM, credentialguard: r.CredentialGuard, numberofsessions: r.NumberOfSessions, numberofvms: r.NumberOfVMs, targetos: r.TargetOS, targetosversion: r.TargetOSVersion, officeversion: r.OfficeVersion, toolsguestversion: r.ToolsGuestVersion, optimizervendor: r.OptimizerVendor, optimizerversion: r.OptimizationsVersion, gpuprofile: r.GPUProfile, comment: r.Comment, infrassdcount: r.InfraSSDCount, infrasinglenodetest: r.InfraSingleNodeTest, infrahardwaretype: r.InfraHardwareType, infrafullversion: r.InfraFullVersion, infracpubrand: r.InfraCPUBrand, infracputype: r.InfraCPUType, infraaosversion: r.InfraAOSVersion, infrahypervisorbrand: r.InfraHypervisorBrand, infrahypervisorversion: r.InfraHypervisorVersion, infrahypervisortype: r.InfraHypervisorType, infrabios: r.InfraBIOS, infratotalnodes: r.InfraTotalNodes, infracpucores: r.InfraCPUCores, infracputhreadcount: r.InfraCPUThreadCount, infracpusocketcount: r.InfraCPUSocketCount, infracpuspeed: r.InfraCPUSpeed, inframemorygb: r.InfraMemoryGB, bootstart: r.BootStart, boottime: r.BootTime, maxabsoluteactiveactions: r.MaxAbsoluteActiveActions, maxabsolutenewactionsperminute: r.MaxAbsoluteNewActionsPerMinute, maxpercentageactiveactions: r.MaxPercentageActiveActions, vsiproductversion: r.VSIproductVersion, euxversion: r.VSIEUXversion, vsiactivesessioncount: r.VSIactivesessionCount, vsieuxscore: r.VSIEUXscore, vsieuxstate: r.VSIEUXstate, vsivsimax: r.VSIvsiMax, vsivsimaxstate: r.VSIvsiMaxstate, vsivsimaxversion: r.VSIvsiMaxversion}))
+|> sort(columns: ["Name", "desktopbrokerversion", "desktopbrokeragentversion", "nodecount", "numberofsessions", "numberofvms", "targetos", "targetosversion", "officeversion", "toolsguestversion", "optimizervendor", "optimizerversion", "gpuprofile", "comment", "infracpubrand", "infracputype", "infraaosversion", "infrahypervisorbrand", "infrahypervisorversion", "infrahypervisortype", "infratotalnodes", "run"])
 "@
     Write-Screen -Message "Build Body Payload based on Uri Variables"
 
@@ -689,6 +702,40 @@ from(bucket:"$($FormattedBucket)")
     # Build the Test Detail Results Array
     $SSClusterCPUResults = Get-PayloadResults -TestDetails $SSClusterCPUDetails -Order $SSClusterCPUOrder
 
+    # Build Body RDA Data
+$RDABody = @"
+newNaming = if "$($FormattedNaming)" == "_measurement" then "" else "$($FormattedNaming)"
+from(bucket:"$($FormattedBucket)")
+|> range(start: 2023-01-01T01:52:00Z, stop: 2023-01-01T02:07:00Z)
+|> filter(fn: (r) => r["Year"] =~ /^$($FormattedYear)$/ )
+|> filter(fn: (r) => r["Month"] =~ /^$($FormattedMonth)$/ )
+|> filter(fn: (r) => r["Comment"] =~ /^$($FormattedComment)$/ )
+|> filter(fn: (r) => r["_measurement"] =~ /^$($FormattedTestname)$/ )
+|> filter(fn: (r) => r["DataType"] == "RDA")
+
+|> group(columns: ["_measurement", newNaming, "screenResolutionid","movingImageCompressionConfigurationid","preferredColorDepthid","videoCodecid","VideoCodecUseid","VideoCodecTextOptimizationid","VideoCodecColorspaceid","VideoCodecTypeid","HardwareEncodeEnabledid","VisualQualityid","FramesperSecondid","EDTInUseId"])
+|> last()
+|> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
+|> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, "Screen Resolution": r.screenResolutionid,"Moving Image Compression": r.movingImageCompressionConfigurationid,"Preferred ColorDepth": r.preferredColorDepthid,"Video Codec": r.videoCodecid,"Video Codec Use": r.VideoCodecUseid,"Video Codec Text Optimization": r.VideoCodecTextOptimizationid,"Video Codec Colorspace": r.VideoCodecColorspaceid,"Video Codec Type": r.VideoCodecTypeid,"Hardware Encode Enabled": r.HardwareEncodeEnabledid,"Visual Quality": r.VisualQualityid,"Max FPS": r.FramesperSecondid,"EDT In Use": r.EDTInUseId}))
+"@
+
+    Write-Screen -Message "Build Body Payload based on Uri Variables"
+
+    # Get the test details table from Influx and Split into individual lines
+    try{
+        Write-Screen -Message "Get Remote Display Analytics Details from Influx API"
+        $RDADetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $RDABody
+    } catch {
+        Write-Screen -Message "Error Getting Remote Display Analytics Details from Influx API"
+        break
+    }
+
+    # Get Test Detail Payload Index
+    $RDADetailsOrder = Get-PayloadIndex -TestDetails $RDADetails
+
+    # Build the Test Detail Results Array
+    $RDADetailsResults = Get-PayloadResults -TestDetails $RDADetails -Order $RDADetailsOrder
+
     # -----------------------------------------------------------------------------------------------------------------------
     # Section - Create Directory
     # -----------------------------------------------------------------------------------------------------------------------
@@ -714,7 +761,7 @@ from(bucket:"$($FormattedBucket)")
     # Section - Download Icons
     # -----------------------------------------------------------------------------------------------------------------------
     Write-Screen -Message "Downloading Icons"
-    $icons = @('Nutanix-Logo','bootinfo','hardware','infrastructure','broker','targetvm','loginenterprise','testicon','leresults','hostresources','clusterresources','logintimes','individualruns','appresults','euxmeasurements','filesicon','citrixnetscaler','base_image','sample-eux-score-graph','sample-login-enterprise-graph')   
+    $icons = @('Nutanix-Logo','bootinfo','hardware','infrastructure','broker','targetvm','loginenterprise','testicon','leresults','hostresources','clusterresources','logintimes','individualruns','appresults','euxmeasurements','filesicon','citrixnetscaler','base_image','sample-eux-score-graph','sample-login-enterprise-graph','rdainfo')   
 
     # Loop through the icons and download the images
     foreach($icon in $icons){
@@ -822,6 +869,27 @@ from(bucket:"$($FormattedBucket)")
     } else {
 
         Write-Screen -Message "Login Times Download Skipped"
+        
+    }
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Remote Display Analytics Results
+    # -----------------------------------------------------------------------------------------------------------------------
+
+    # Execute if Option Enabled
+    if($RDA){
+
+        Write-Screen -Message "Downloading Remote Display Analytics Graphs"
+
+        # Build the PanelID Array 
+        $Panels = @('110','111','112','115','113','116','117','114')  
+        $endtime = "1672538820000"
+
+        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+
+    } else {
+
+        Write-Screen -Message "Remote Display Analytics Download Skipped"
         
     }
 
@@ -1006,7 +1074,7 @@ from(bucket:"$($FormattedBucket)")
     Write-Screen -Message "Adding $($Title)"
 
     # Get Filtered Data
-    $HardwareFiltered = $TestDetailResults | Select measurement, infrahardwaretype, infracpubrand, infracputype, infracpuspeed, infracpucores, inframemorygb, infracpusocketcount, nodecount, infratotalnodes, infrassdcount, infrabios, hostgpus, comment | Sort-Object comment | Get-Unique -AsString
+    $HardwareFiltered = $TestDetailResults | Select Name, measurement, infrahardwaretype, infracpubrand, infracputype, infracpuspeed, infracpucores, inframemorygb, infracpusocketcount, nodecount, infratotalnodes, infrassdcount, infrabios, hostgpus, comment | Sort-Object Name | Get-Unique -AsString
 
     # Add the Table Header
     Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/hardware.png alt=$($Title)>"
@@ -1032,7 +1100,9 @@ from(bucket:"$($FormattedBucket)")
         $CPUSpeed = $CPUSpeed + "$(Get-CleanData -Data ($Record.infracpuspeed)) GHz | "
         $Sockets = $Sockets + "$(Get-CleanData -Data ($Record.infracpusocketcount)) | "
         $CPUCores = $CPUCores + "$(Get-CleanData -Data ($Record.infracpucores)) | "
-        $Memory = $Memory + "$(Get-CleanData -Data ($Record.inframemorygb)) GB | "
+        [int]$Mem = Get-CleanData -Data ($Record.inframemorygb)
+        $MemoryFormatted = '{0:N0}' -f $Mem
+        $Memory = $Memory + "$($MemoryFormatted) GB | "
         $Nodes = $Nodes + "$(Get-CleanData -Data ($Record.nodecount)) | "
         $TotalNodes = $TotalNodes + "$(Get-CleanData -Data ($Record.infratotalnodes)) | "
         $SSD = $SSD + "$(Get-CleanData -Data ($Record.infrassdcount)) | "
@@ -1064,7 +1134,7 @@ from(bucket:"$($FormattedBucket)")
     Write-Screen -Message "Adding $($Title)"
 
     # Get Filtered Data
-    $InfraFiltered = $TestDetailResults | Select measurement, infraaosversion, infrafullversion, infrahypervisorbrand, infrahypervisortype, infrahypervisorversion, comment | Sort-Object comment | Get-Unique -AsString
+    $InfraFiltered = $TestDetailResults | Select Name, measurement, infraaosversion, infrafullversion, infrahypervisorbrand, infrahypervisortype, infrahypervisorversion, comment | Sort-Object Name | Get-Unique -AsString
 
     # Add the Table Header
     Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/infrastructure.png alt=$($Title)>"
@@ -1100,7 +1170,7 @@ from(bucket:"$($FormattedBucket)")
     Write-Screen -Message "Adding $($Title)"
 
     # Get Filtered Data
-    $BrokerFiltered = $TestDetailResults | Select measurement, deliverytype, desktopbrokerversion, sessionssupport, sessioncfg, comment | Sort-Object comment | Get-Unique -AsString
+    $BrokerFiltered = $TestDetailResults | Select Name, measurement, deliverytype, desktopbrokerversion, sessionssupport, sessioncfg, comment | Sort-Object Name | Get-Unique -AsString
 
     # Add the Table Header
     Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/broker.png alt=$($Title)>"
@@ -1133,7 +1203,7 @@ from(bucket:"$($FormattedBucket)")
     Write-Screen -Message "Adding $($Title)"
 
     # Get Filtered Data
-    $TargetVMFiltered = $TestDetailResults | Select measurement, numcpus, numcores, memorygb, gpuprofile, secureboot, vtpm, credentialguard, targetos, targetosversion, desktopbrokeragentversion, officeversion, clonetype, toolsguestversion, optimizervendor, optimizerversion, comment | Sort-Object comment | Get-Unique -AsString
+    $TargetVMFiltered = $TestDetailResults | Select Name, measurement, numcpus, numcores, memorygb, gpuprofile, secureboot, vtpm, credentialguard, targetos, targetosversion, desktopbrokeragentversion, officeversion, clonetype, toolsguestversion, optimizervendor, optimizerversion, comment | Sort-Object Name | Get-Unique -AsString
 
     # Add the Table Header
     Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/targetvm.png alt=$($Title)>"
@@ -1199,7 +1269,7 @@ from(bucket:"$($FormattedBucket)")
     Write-Screen -Message "Adding $($Title)"
 
     # Get Filtered Data
-    $LEspecsFiltered = $TestDetailResults | Select measurement, vsiproductversion, euxversion, vsivsimaxversion, workload, comment | Sort-Object comment | Get-Unique -AsString
+    $LEspecsFiltered = $TestDetailResults | Select Name, measurement, vsiproductversion, euxversion, vsivsimaxversion, workload, comment | Sort-Object Name | Get-Unique -AsString
 
     # Add the Table Header
     Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/loginenterprise.png alt=$($Title)>"
@@ -1232,7 +1302,7 @@ from(bucket:"$($FormattedBucket)")
     Write-Screen -Message "Adding $($Title)"
 
     # Get Filtered Data
-    $TestFiltered = $TestDetailResults | Select measurement, infrasinglenodetest, numberofvms, numberofsessions, comment | Sort-Object comment | Get-Unique -AsString
+    $TestFiltered = $TestDetailResults | Select Name, measurement, infrasinglenodetest, numberofvms, numberofsessions, comment | Sort-Object Name | Get-Unique -AsString
 
     # Add the Table Header
     Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/testicon.png alt=$($Title)>"
@@ -1245,8 +1315,12 @@ from(bucket:"$($FormattedBucket)")
 
     foreach($Record in $TestFiltered){
         $infrasinglenodetest = $infrasinglenodetest + "$(Get-CleanData -Data ($Record.infrasinglenodetest)) | "
-        $numberofvms = $numberofvms + "$(Get-CleanData -Data ($Record.numberofvms)) | "
-        $numberofsessions = $numberofsessions + "$(Get-CleanData -Data ($Record.numberofsessions)) | "
+        [int]$VMS = Get-CleanData -Data ($Record.numberofvms)
+        $VMsFormatted = '{0:N0}' -f $VMS
+        $numberofvms = $numberofvms + "$($VMsFormatted) | "
+        [int]$Sessions = Get-CleanData -Data ($Record.numberofsessions)
+        $SessionsFormatted = '{0:N0}' -f $Sessions
+        $numberofsessions = $numberofsessions + "$($SessionsFormatted) | "
     }
 
     # Add the Table
@@ -1273,7 +1347,7 @@ from(bucket:"$($FormattedBucket)")
         Write-Screen -Message "Adding $($Title)"
 
         # Get Filtered Data
-        $BootFiltered = $TestDetailResults | Select measurement, maxabsoluteactiveactions, maxabsolutenewactionsperminute, maxpercentageactiveactions, comment | Sort-Object comment | Get-Unique -AsString
+        $BootFiltered = $TestDetailResults | Select Name, measurement, maxabsoluteactiveactions, maxabsolutenewactionsperminute, maxpercentageactiveactions, comment | Sort-Object Name | Get-Unique -AsString
 
         # Add the Table Header
         Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/bootinfo.png alt=$($Title)>"
@@ -1427,6 +1501,74 @@ from(bucket:"$($FormattedBucket)")
         Add-Content $mdFullFile "### $($Title)"
 
         $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "login_times*")} | Sort-Object CreationTime
+        Add-Graphs -Source $Source -Title "Login Times" -mdFullFile $mdFullFile
+
+    }
+
+    # -----------------------------------------------------------------------------------------------------------------------
+    # Section - Remote Display Analytics Results
+    # -----------------------------------------------------------------------------------------------------------------------
+    if($RDA){
+
+        $Title = "Remote Display Analytics"
+        Add-Content $mdFullFile "### $($Title)"
+
+        # Add Boot Information Table
+        $Title = "Remote Display Specifications"
+        Write-Screen -Message "Adding $($Title)"
+
+        # Get Filtered Data
+        $RDAFiltered = $RDADetailsResults | Select Name, "Screen Resolution", "Moving Image Compression", "Visual Quality", "Video Codec Text Optimization", "EDT In Use", "Video Codec Use", "Video Codec Colorspace", "Video Codec Type", "Max FPS", "Hardware Encode Enabled", "comment", "measurement", "Preferred ColorDepth", "Video Codec" | Sort-Object Name | Get-Unique -AsString
+
+        # Add the Table Header
+        Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $RDAFiltered -TableImage "<img src=../images/rdainfo.png alt=$($Title)>"
+
+        # Build the Table Dataset
+        Write-Screen -Message "Building $($Title) Data"
+        [string]$ScreenResolution = "| **Screen Resolution** | "
+        [string]$MovingImageCompression = "| **Moving Image Compression** | "
+        [string]$VisualQuality = "| **Visual Quality** | "
+        [string]$VideoCodecTextOptimization = "| **Video Codec Text Optimization** | "
+        [string]$EDTInUse = "| **EDT In Use** | "
+        [string]$VideoCodecUse = "| **Video Codec Use** | "
+        [string]$VideoCodecColorspace = "| **Video Codec Colorspace** | "
+        [string]$VideoCodecType = "| **Video Codec Type** | "
+        [string]$MaxFPS = "| **Max FPS** | "
+        [string]$HardwareEncodeEnabled = "| **Hardware Encode Enabled** | "
+        [string]$PreferedColorDepth = "| **Prefered Color Depth** | "
+        [string]$VideoCodec = "| **Video Codec** | "
+
+        foreach($Record in $RDAFiltered){
+            $ScreenResolution = $ScreenResolution + "$(Get-CleanData -Data ($Record."Screen Resolution")) | "
+            $MovingImageCompression = $MovingImageCompression + "$(Get-CleanData -Data ($Record."Moving Image Compression")) | "
+            $VisualQuality = $VisualQuality + "$(Get-CleanData -Data ($Record."Visual Quality")) | "
+            $VideoCodecTextOptimization = $VideoCodecTextOptimization + "$(Get-CleanData -Data ($Record."Video Codec Text Optimization")) | "
+            $EDTInUse = $EDTInUse + "$(Get-CleanData -Data ($Record."EDT In Use")) | "
+            $VideoCodecUse = $VideoCodecUse + "$(Get-CleanData -Data ($Record."Video Codec Use")) | "
+            $VideoCodecColorspace = $VideoCodecColorspace + "$(Get-CleanData -Data ($Record."Video Codec Colorspace")) | "
+            $VideoCodecType = $VideoCodecType + "$(Get-CleanData -Data ($Record."Video Codec Type")) | "
+            $MaxFPS = $MaxFPS + "$(Get-CleanData -Data ($Record."Max FPS")) | "
+            $HardwareEncodeEnabled = $HardwareEncodeEnabled + "$(Get-CleanData -Data ($Record."Hardware Encode Enabled")) | "
+            $PreferedColorDepth = $PreferedColorDepth + "$(Get-CleanData -Data ($Record."Preferred ColorDepth")) | "
+            $VideoCodec = $VideoCodec + "$(Get-CleanData -Data ($Record."Video Codec")) | "
+        }
+
+        # Add the Table
+        Write-Screen -Message "Adding $($Title) Data"
+        Add-Content $mdFullFile $ScreenResolution
+        Add-Content $mdFullFile $MaxFPS
+        Add-Content $mdFullFile $PreferedColorDepth
+        Add-Content $mdFullFile $VisualQuality
+        Add-Content $mdFullFile $EDTInUse
+        Add-Content $mdFullFile $MovingImageCompression
+        Add-Content $mdFullFile $HardwareEncodeEnabled
+        Add-Content $mdFullFile $VideoCodec
+        Add-Content $mdFullFile $VideoCodecUse
+        Add-Content $mdFullFile $VideoCodecType
+        Add-Content $mdFullFile $VideoCodecTextOptimization
+        Add-Content $mdFullFile $VideoCodecColorspace
+
+        $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "rda*")} | Sort-Object CreationTime
         Add-Graphs -Source $Source -Title "Login Times" -mdFullFile $mdFullFile
 
     }
