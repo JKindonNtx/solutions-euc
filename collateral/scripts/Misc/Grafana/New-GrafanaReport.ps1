@@ -29,10 +29,10 @@ if($ReportTitle -eq ""){
 
 # Default Sections On
 $LoginEnterpriseResults = $false
-$HostResources = $false
+$HostResources = $true
 $ClusterResources = $false
-$LoginTimes = $false
-$Applications = $false
+$LoginTimes = $true
+$Applications = $true
 $VsiEuxMeasurements = $false
 $RDA = $true
 
@@ -736,6 +736,81 @@ from(bucket:"$($FormattedBucket)")
     # Build the Test Detail Results Array
     $RDADetailsResults = Get-PayloadResults -TestDetails $RDADetails -Order $RDADetailsOrder
 
+    # Build Body Application score
+$LoginApplicationsBody = @"
+newNaming = if "$($FormattedNaming)" == "_measurement" then "" else "$($FormattedNaming)"
+from(bucket:"$($FormattedBucket)")
+|> range(start: 2023-01-01T01:00:00Z, stop: 2023-01-01T01:52:00Z)
+|> filter(fn: (r) => r["Year"] =~ /^$($FormattedYear)$/ )
+|> filter(fn: (r) => r["Month"] =~ /^$($FormattedMonth)$/ )
+|> filter(fn: (r) => r["DocumentName"] =~ /^$($FormattedDocumentName)$/ )
+|> filter(fn: (r) => r["Comment"] =~ /^$($FormattedComment)$/ )
+|> filter(fn: (r) => r["_measurement"] =~ /^$($FormattedTestname)$/ )
+|> filter(fn: (r) => r["InfraTestName"] =~ /^$($FormattedTestRun)$/ )
+|> filter(fn: (r) => r["DataType"] == "Raw_AppMeasurements")
+|> filter(fn: (r) => r["_field"] == "result")
+|> group(columns: ["_measurement", "InfraTestName", newNaming, "applicationName", "measurementId"])
+|> mean()
+|> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
+|> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, Value: r._value, AppName: r.applicationName, MeasurementId: r.measurementId}))
+|> sort(columns: ["Name", "measurement"])
+"@
+
+    Write-Screen -Message "Build Body Payload based on Uri Variables"
+
+    # Get the test details table from Influx and Split into individual lines
+    try{
+        Write-Screen -Message "Get Login Application Details from Influx API"
+        $LoginApplicationsDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $LoginApplicationsBody
+    } catch {
+        Write-Screen -Message "Error Getting Login Application Details from Influx API"
+        break
+    }
+
+    # Get Test Detail Payload Index
+    $LoginApplicationsOrder = Get-PayloadIndex -TestDetails $LoginApplicationsDetails
+
+    # Build the Test Detail Results Array
+    $LoginApplicationsResults = Get-PayloadResults -TestDetails $LoginApplicationsDetails -Order $LoginApplicationsOrder
+
+
+        # Build Body Steady state Application score
+$SSApplicationsBody = @"
+newNaming = if "$($FormattedNaming)" == "_measurement" then "" else "$($FormattedNaming)"
+from(bucket:"$($FormattedBucket)")
+|> range(start: 2023-01-01T01:52:00Z, stop: 2023-01-01T02:07:00Z)
+|> filter(fn: (r) => r["Year"] =~ /^$($FormattedYear)$/ )
+|> filter(fn: (r) => r["Month"] =~ /^$($FormattedMonth)$/ )
+|> filter(fn: (r) => r["DocumentName"] =~ /^$($FormattedDocumentName)$/ )
+|> filter(fn: (r) => r["Comment"] =~ /^$($FormattedComment)$/ )
+|> filter(fn: (r) => r["_measurement"] =~ /^$($FormattedTestname)$/ )
+|> filter(fn: (r) => r["InfraTestName"] =~ /^$($FormattedTestRun)$/ )
+|> filter(fn: (r) => r["DataType"] == "Raw_AppMeasurements")
+|> filter(fn: (r) => r["_field"] == "result")
+|> group(columns: ["_measurement", "InfraTestName", newNaming, "applicationName", "measurementId"])
+|> mean()
+|> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
+|> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, Value: r._value, AppName: r.applicationName, MeasurementId: r.measurementId}))
+|> sort(columns: ["Name", "measurement"])
+"@
+
+    Write-Screen -Message "Build Body Payload based on Uri Variables"
+
+    # Get the test details table from Influx and Split into individual lines
+    try{
+        Write-Screen -Message "Get Steady State Application Details from Influx API"
+        $SSApplicationsDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $SSApplicationsBody
+    } catch {
+        Write-Screen -Message "Error Getting Steady State Application Details from Influx API"
+        break
+    }
+
+    # Get Test Detail Payload Index
+    $SSApplicationsOrder = Get-PayloadIndex -TestDetails $SSApplicationsDetails
+
+    # Build the Test Detail Results Array
+    $SSApplicationsResults = Get-PayloadResults -TestDetails $SSApplicationsDetails -Order $SSApplicationsOrder
+
     # -----------------------------------------------------------------------------------------------------------------------
     # Section - Create Directory
     # -----------------------------------------------------------------------------------------------------------------------
@@ -761,7 +836,7 @@ from(bucket:"$($FormattedBucket)")
     # Section - Download Icons
     # -----------------------------------------------------------------------------------------------------------------------
     Write-Screen -Message "Downloading Icons"
-    $icons = @('Nutanix-Logo','bootinfo','hardware','infrastructure','broker','targetvm','loginenterprise','testicon','leresults','hostresources','clusterresources','logintimes','individualruns','appresults','euxmeasurements','filesicon','citrixnetscaler','base_image','sample-eux-score-graph','sample-login-enterprise-graph','rdainfo')   
+    $icons = @('Nutanix-Logo','bootinfo','hardware','infrastructure','broker','targetvm','loginenterprise','testicon','leresults','hostresources','clusterresources','logintimes','individualruns','appresults','euxmeasurements','filesicon','citrixnetscaler','base_image','sample-eux-score-graph','sample-login-enterprise-graph','rdainfo','appsperf')   
 
     # Loop through the icons and download the images
     foreach($icon in $icons){
@@ -1593,6 +1668,112 @@ from(bucket:"$($FormattedBucket)")
 
         $Title = "Applications"
         Add-Content $mdFullFile "### $($Title)"
+
+        $TableTitle = "Login Phase Performance Comparison"
+        Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $TableTitle -TableData ($LoginApplicationsResults | select-object -Property Name | Get-Unique -AsString | Sort-Object -Property Name) -TableImage "<img src=../images/appsperf.png alt=$($Title)>"
+
+        $LoginApplicationsList = $LoginApplicationsResults | select-object -Property AppName, MeasurementId -Unique | Sort-Object -Property AppName, MeasurementId
+
+        foreach($Record in $LoginApplicationsList){
+            $AppName = $record.appname
+            $MeasurementId = $record.measurementid
+            $App = (Get-CleanData -Data $record.appname)
+            if($App.StartsWith("(")){
+                $Application = $App.SubString(5, ($App.Length) - 5)
+            } else {
+                $Application = $App
+            }
+            $Act = (Get-CleanData -Data $record.measurementid)
+            $TextInfo = (Get-Culture).TextInfo
+            $Action = $TextInfo.ToTitleCase($Act)
+            $RowHeader = "$($Application) - $($Action)"
+            $Data = "| $($RowHeader) | "
+            $i = 1
+            foreach($Line in $LoginApplicationsResults | Sort-Object -Property Name){
+                if($Line.AppName -eq $AppName){
+                    if($Line.MeasurementId -eq $MeasurementId){
+                        $Seconds = [math]::Round(($Line.value / 1000),2)
+                        $FormattedSeconds = $Seconds.ToString("0.00")
+                        if(!($i -eq 1)){
+                            if($Seconds -gt $BaseNumber){
+                                $Percentage = (($Seconds / $BaseNumber) * 100) - 100
+                                $FormattedPercentage = $Percentage.ToString("0.00")
+                                $PerfTag = "<span style=""color:#E82727"">$($FormattedPercentage) % Slower</span>"
+                            } else {
+                                if($Seconds -eq $BaseNumber){
+                                    $PerfTag = "Equal"
+                                } else {
+                                    $Percentage = 100 - (($Seconds / $BaseNumber) * 100)
+                                    $FormattedPercentage = $Percentage.ToString("0.00")
+                                    $PerfTag = "<span style=""color:#30DC41"">$($FormattedPercentage) % Faster</span>"
+                                }
+                            }
+                            $Data = $Data + "$($FormattedSeconds) seconds - $($PerfTag) | "
+                        } else {
+                            $BaseNumber = $Seconds
+                            $Data = $Data + "$($FormattedSeconds) seconds | "
+                        }
+                        $i++
+                    }
+                }
+            }
+            Add-Content $mdFullFile $Data
+        }
+
+        Add-Content $mdFullFile " "
+
+        $TableTitle = "Steady State Performance Comparison"
+        Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $TableTitle -TableData ($SSApplicationsResults | select-object -Property Name | Get-Unique -AsString | Sort-Object -Property Name) -TableImage "<img src=../images/appsperf.png alt=$($Title)>"
+
+        $SSApplicationsList = $SSApplicationsResults | select-object -Property AppName, MeasurementId -Unique | Sort-Object -Property AppName, MeasurementId
+
+        foreach($Record in $SSApplicationsList){
+            $AppName = $record.appname
+            $MeasurementId = $record.measurementid
+            $App = (Get-CleanData -Data $record.appname)
+            if($App.StartsWith("(")){
+                $Application = $App.SubString(5, ($App.Length) - 5)
+            } else {
+                $Application = $App
+            }
+            $Act = (Get-CleanData -Data $record.measurementid)
+            $TextInfo = (Get-Culture).TextInfo
+            $Action = $TextInfo.ToTitleCase($Act)
+            $RowHeader = "$($Application) - $($Action)"
+            $Data = "| $($RowHeader) | "
+            $i = 1
+            foreach($Line in $SSApplicationsResults | Sort-Object -Property Name){
+                if($Line.AppName -eq $AppName){
+                    if($Line.MeasurementId -eq $MeasurementId){
+                        $Seconds = [math]::Round(($Line.value / 1000),2)
+                        $FormattedSeconds = $Seconds.ToString("0.00")
+                        if(!($i -eq 1)){
+                            if($Seconds -gt $BaseNumber){
+                                $Percentage = (($Seconds / $BaseNumber) * 100) - 100
+                                $FormattedPercentage = $Percentage.ToString("0.00")
+                                $PerfTag = "<span style=""color:#E82727"">$($FormattedPercentage) % Slower</span>"
+                            } else {
+                                if($Seconds -eq $BaseNumber){
+                                    $PerfTag = "Equal"
+                                } else {
+                                    $Percentage = 100 - (($Seconds / $BaseNumber) * 100)
+                                    $FormattedPercentage = $Percentage.ToString("0.00")
+                                    $PerfTag = "<span style=""color:#30DC41"">$($FormattedPercentage) % Faster</span>"
+                                }
+                            }
+                            $Data = $Data + "$($FormattedSeconds) seconds - $($PerfTag) | "
+                        } else {
+                            $BaseNumber = $Seconds
+                            $Data = $Data + "$($FormattedSeconds) seconds | "
+                        }
+                        $i++
+                    }
+                }
+            }
+            Add-Content $mdFullFile $Data
+        }
+
+        Add-Content $mdFullFile " "
 
         $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "applications*")} | Sort-Object CreationTime
         Add-Graphs -Source $Source -Title "Applications" -mdFullFile $mdFullFile
