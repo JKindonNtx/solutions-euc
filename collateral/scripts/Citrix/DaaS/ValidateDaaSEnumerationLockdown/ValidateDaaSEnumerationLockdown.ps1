@@ -430,7 +430,7 @@ if ($LockdownOpenDeliveryGroups) {
     $RequestUri = "https://api-us.cloud.com/cvadapis/$SiteID/Tags/$($TagName)"
     $Payload = $null
     #----------------------------------------------------------------------------------------------------------------------------
-    Write-Log -Message "[Tag] Validating Citrix DaaS Tag $($TagName) exists"
+    Write-Log -Message "[Tag] Validating Citrix DaaS Tag $($TagName) exists" -Level Info
     try {
         $TagExists = Invoke-RestMethod -Method $Method -Headers $headers -Uri $RequestUri -Body $Payload -ContentType "application/json" -ErrorAction Stop
         if ($TagExists) {
@@ -438,7 +438,7 @@ if ($LockdownOpenDeliveryGroups) {
         }
     }
     catch [Microsoft.PowerShell.Commands.HttpResponseException] {
-        Write-Log -Message "[Tag] $($TagName) does not exist. attempting to create" -Level Info
+        Write-Log -Message "[Tag] $($TagName) does not exist. Attempting to create" -Level Info
         if (!$Whatif) {
             # We are executing
             Write-Log -Message "[Tag] Tag $($TagName) does not exist. Attempting to create" -Level Info
