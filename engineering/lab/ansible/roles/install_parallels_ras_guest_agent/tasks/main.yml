@@ -1,0 +1,38 @@
+---
+# Install Parallels RAS Guest Agent
+- name: Install Parallels RAS Guest Agent
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Parallels\\RAS\\RASInstaller.msi"
+    arguments: "ADDLOCAL=F_GuestAgent"
+    state: present
+    creates_path: C:\Program Files (x86)\Parallels\ApplicationServer
+    product_id: '{71A0BFC9-9EE0-4432-9ACC-E66786973187}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  register: rasagent_install
+
+- name: Add Remote Desktop Users
+  ansible.windows.win_powershell:
+    script: |
+      Add-LocalGroupMember -Group "Remote Desktop Users" -Member "NT Authority\Authenticated Users"
+
+- name: Firewall rules for RAS Agent
+  win_firewall_rule:
+    name: RAS Guest Agent TCP
+    localport: 30004
+    action: allow
+    direction: in
+    protocol: tcp
+    state: present
+    enabled: yes
+
+- name: Firewall rules for RAS Agent
+  win_firewall_rule:
+    name: RAS Guest Agent UDP
+    localport: 30004
+    action: allow
+    direction: in
+    protocol: udp
+    state: present
+    enabled: yes
