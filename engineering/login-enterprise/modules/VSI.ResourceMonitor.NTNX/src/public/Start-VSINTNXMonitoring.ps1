@@ -29,6 +29,7 @@ function Start-VSINTNXMonitoring {
             $NTNXCounterConfiguration,
             $StopMonitoringCheckFile
         )
+        Import-Module "$Path\modules\VSI.ResourceMonitor.NTNX\src\internal\Invoke-PublicApiMethodNTNXv1.ps1" -Force
         Import-Module "$Path\modules\VSI.ResourceMonitor.NTNX\src\internal\Invoke-PublicApiMethodNTNX.ps1" -Force
         Import-Module "$Path\modules\VSI.ResourceMonitor.NTNX\src\internal\Invoke-PublicApiMethodRedfish.ps1" -Force
 
@@ -60,6 +61,7 @@ function Start-VSINTNXMonitoring {
             $results = Invoke-PublicApiMethodNTNX -Method "GET" -Path "hosts/$($Hostuuid)/stats/?metrics=hypervisor_cpu_usage_ppm&metrics=hypervisor_memory_usage_ppm"
             $resultsPower = Invoke-PublicApiMethodRedfish -IPMI_ip $IPMI_ip -Method "GET" -Path "Chassis/1/Power"
             $resultsCluster = Invoke-PublicApiMethodNTNX -Method "GET" -Path "cluster/stats/?metrics=hypervisor_cpu_usage_ppm&metrics=hypervisor_cpu_usage_ppm&metrics=hypervisor_memory_usage_ppm&metrics=controller_num_write_iops&metrics=controller_num_read_iops&metrics=controller_num_iops&metrics=controller_avg_io_latency_usecs&metrics=controller_avg_read_io_latency_usecs&metrics=controller_avg_write_io_latency_usecs"
+            $allvms = Invoke-PublicApiMethodNTNXv1 -Method "GET" -Path "vms"
 
             $item = New-Object PSObject  
             $item | Add-Member -MemberType NoteProperty -Name "Timestamp" -Value (Get-Date ($StartTimeStamp.ToUniversalTime()) -Format "o") -Force  
@@ -87,6 +89,8 @@ function Start-VSINTNXMonitoring {
                     $clusteritem | Add-Member Noteproperty $clusterresult.metric $clusterresult.values[0]
                 }
             }
+            $vmsreadytime = ((($allvms.entities | Where-Object {$_.powerState -eq "on"}).stats."hypervisor.cpu_ready_time_ppm" | Measure-Object -average).average) / 10000
+            $clusteritem | Add-Member Noteproperty "avg_cpu_ready_time" $vmsreadytime
             $clusteritem | Export-Csv -Path $Filecluster -NoTypeInformation -Append
 
             $StartTimeStamp = $StartTimeStamp.AddSeconds($SampleSize)
