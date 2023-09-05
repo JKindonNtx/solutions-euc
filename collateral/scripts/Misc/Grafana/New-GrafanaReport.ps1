@@ -30,7 +30,7 @@ if($ReportTitle -eq ""){
 # Default Sections On
 $LoginEnterpriseResults = $false
 $HostResources = $true
-$ClusterResources = $false
+$ClusterResources = $true
 $LoginTimes = $true
 $Applications = $true
 $VsiEuxMeasurements = $false
@@ -344,7 +344,8 @@ if ($confirmationStart -eq 'n') {
                 83 {$OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_cpu_usage_with_eux_score.png"}
                 14 {$OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_power_usage.png"}
                 9 {$OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_memory_usage.png"}
-                53 {$OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_cpu_usage.png"}
+                120 {$OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_cpu_usage.png"}
+                53 {$OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_cpu_ready.png"}
                 54 {$OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_memory_usage.png"}
                 57 {$OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_controller_iops.png"}
                 58 {$OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_controller_latency.png"}
@@ -393,14 +394,14 @@ if ($confirmationStart -eq 'n') {
                 105 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_packets.png"}
                 103 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_connections.png"}
                 106 {$OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_request_and_response.png"}
-                110 {$OutFile = Join-Path -Path $imagePath -ChildPath "rda_fps.png"}
-                111 {$OutFile = Join-Path -Path $imagePath -ChildPath "rda_latency.png"}
-                112 {$OutFile = Join-Path -Path $imagePath -ChildPath "rda_rtt.png"}
-                115 {$OutFile = Join-Path -Path $imagePath -ChildPath "rda_display_protocol_cpu_usage.png"}
-                113 {$OutFile = Join-Path -Path $imagePath -ChildPath "rda_bandwidth_output.png"}
-                116 {$OutFile = Join-Path -Path $imagePath -ChildPath "rda_display_protocol_ram_usage.png"}
-                117 {$OutFile = Join-Path -Path $imagePath -ChildPath "rda_available_bandwidth.png"}
-                114 {$OutFile = Join-Path -Path $imagePath -ChildPath "rda_available_bandwidth_edt.png"}
+                110 {$OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_fps.png"}
+                111 {$OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_latency.png"}
+                112 {$OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_rtt.png"}
+                115 {$OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_display_protocol_cpu_usage.png"}
+                113 {$OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_bandwidth_output.png"}
+                116 {$OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_display_protocol_ram_usage.png"}
+                117 {$OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_available_bandwidth.png"}
+                114 {$OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_available_bandwidth_edt.png"}
             }
 
             # Download the image
@@ -915,7 +916,7 @@ from(bucket:"$($FormattedBucket)")
         Write-Screen -Message "Downloading Cluster Resources Graphs"
 
         # Build the PanelID Array 
-        $Panels = @('53','54','57','58')  
+        $Panels = @('53','120','54','57','58')  
         $endtime = "1672538820000"
 
         Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
@@ -1643,8 +1644,10 @@ from(bucket:"$($FormattedBucket)")
         Add-Content $mdFullFile $VideoCodecTextOptimization
         Add-Content $mdFullFile $VideoCodecColorspace
 
-        $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "rda*")} | Sort-Object CreationTime
-        Add-Graphs -Source $Source -Title "Login Times" -mdFullFile $mdFullFile
+        Add-Content $mdFullFile " "
+
+        $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "rdanalyzer*")} | Sort-Object CreationTime
+        Add-Graphs -Source $Source -Title "Remote Desktop Analytics" -mdFullFile $mdFullFile
 
     }
 
