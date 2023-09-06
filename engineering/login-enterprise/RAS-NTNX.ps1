@@ -152,7 +152,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     
    
     #$VSI_Test_RampupInMinutes = [Math]::Round($VSI_Target_NumberOfSessions / $VSI_Target_LogonsPerMinute, 0, [MidpointRounding]::AwayFromZero)
-    $VSI_Target_RampupInMinutes = 48
+    $VSI_Target_RampupInMinutes = 5
 
 
     for ($i = 1; $i -le $VSI_Target_ImageIterations; $i++) {
@@ -206,6 +206,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
 
         # Update the test params/create test if not exist
+        $CommandLine = """C:\Program Files\Parallels\Client\TSClient.exe"" s!='{host}' t!='443' a!='{resource}' m!='2' o!='0' i!='0' r!='1' d!='{domain}' u!='{username}' q!='{password}'"
+        $Resource = """$($VSI_Target_DesktopPoolName)"""
         $testId = Set-LELoadTest -TestName $VSI_Test_Name `
             -SessionAmount $VSI_Target_NumberOfSessions `
             -RampupInMinutes $VSI_Target_RampupInMinutes `
@@ -213,7 +215,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             -LauncherGroupName $VSI_Launchers_GroupName `
             -AccountGroupName $VSI_Users_GroupName `
             -ConnectorName "Custom Connector" `
-            -ConnectorParams @{host = $VSI_Target_RASURL; commandline = "'C:\Program Files\Parallels\Client\TSClient.exe' s!='{host}' t!='443' a!='{resource}' m!='2' o!='0' i!='0' r!='1' d!='{domain}' u!='{username}' q!='{password}'"; resource = $VSI_Target_DesktopPoolName } `
+            -ConnectorParams @{host = $VSI_Target_RASURL; commandline = $CommandLine; resource = $Resource } `
             -Workload $VSI_Target_Workload
         
         # Wait for VM's to have settled down
@@ -221,9 +223,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             Write-Host (Get-Date) "Wait for VMs to become idle"
             Start-Sleep -Seconds 60
         }
-
-        #Stop and cleanup monitoring job Boot phase
-        $monitoringJob | Stop-Job | Remove-Job
 
         #Set RDA Source and Destination files and clean out source files if they still exist
         $RDADestination = "$OutputFolder\RDA.csv"
