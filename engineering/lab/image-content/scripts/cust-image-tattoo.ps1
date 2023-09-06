@@ -43,9 +43,14 @@ if(Test-Path -Path "C:\OSOT"){
     New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "Optimizer" -Value "VMware Optimizer"
     New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "OptimizerVersion" -Value $VMwareOSOT.VersionInfo.ProductVersion
 } else {
-    $CO = Get-ChildItem -Recurse -Path "C:\Tools\CitrixOptimizer" -Filter "CitrixOptimizerTool.EXE"
-    New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "Optimizer" -Value "Citrix Optimizer"
-    New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "OptimizerVersion" -Value $CO.VersionInfo.ProductVersion
+    if(Test-Path -Path "C:\Tools\CitrixOptimizer"){
+        $CO = Get-ChildItem -Recurse -Path "C:\Tools\CitrixOptimizer" -Filter "CitrixOptimizerTool.EXE"
+        New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "Optimizer" -Value "Citrix Optimizer"
+        New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "OptimizerVersion" -Value $CO.VersionInfo.ProductVersion
+    } else {
+        New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "Optimizer" -Value "None"
+        New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "OptimizerVersion" -Value "N/A"
+    }
 }
 
 # Get VDA Version
@@ -56,10 +61,17 @@ if(Test-Path -Path "C:\Program Files\CITRIX") {
     New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "VdaName" -Value $VdaName[0]
     New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "VdaVersion" -Value $VDA.Version
 } else {
-    New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "VdaType" -Value "VMware"
-    $VDA = Get-Package | Where-Object {$_.Name -like "VMware Horizon*" }
-    New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "VdaName" -Value $VDA.Name
-    New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "VdaVersion" -Value $VDA.Version
+    if(Test-Path -Path "C:\Program Files (x86)\Parallels\ApplicationServer") {
+        New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "VdaType" -Value "RAS"
+        $VDA = Get-Package | Where-Object {$_.Name -like "Parallels Remote Application*" }
+        New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "VdaName" -Value $VDA.Name
+        New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "VdaVersion" -Value $VDA.Version
+    } else {
+        New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "VdaType" -Value "VMware"
+        $VDA = Get-Package | Where-Object {$_.Name -like "VMware Horizon*" }
+        New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "VdaName" -Value $VDA.Name
+        New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "VdaVersion" -Value $VDA.Version
+    }
 }
 
 # Get Guest Tools Version
