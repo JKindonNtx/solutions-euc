@@ -27,9 +27,12 @@
 #    state: present
 #    expected_return_code: [0, 3, 3010]
 #    creates_service: BrokerAgent
+#  become: yes
+#  become_method: runas
+#  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
 #  when: citrix_vda_install.changed
 #  register: citrix_vda_resume
-#
+
 #- name: Reboot after vda install
 #  ansible.windows.win_reboot:
 #  when: citrix_vda_resume.changed

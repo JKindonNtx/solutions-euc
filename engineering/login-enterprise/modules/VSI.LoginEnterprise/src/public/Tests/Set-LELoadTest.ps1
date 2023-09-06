@@ -60,6 +60,7 @@ function Set-LELoadTest {
                 connector      = @{
                     type        = "Custom"
                     host        = $ConnectorParams.host
+                    resource    = $ConnectorParams.resource
                     commandLine = $ConnectorParams.commandLine
                 }
                 accountGroups  = @((Get-LEAccountGroups | Where-Object { $_.Name -eq $AccountGroupName } | Select-Object -ExpandProperty groupId))

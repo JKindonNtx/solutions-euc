@@ -1,0 +1,142 @@
+{
+    "Domain": {
+        "NetBios": "WSPERF",
+        // Alternatively use LDAP://DC=example,DC=loginvsi,DC=com when current machine/user is part of the domain
+        "LDAPPath": "",
+        // leave empty if current machine/user is part of the domain and has rights to create resources in AD
+        "LDAPUsername": "", // remember it's json, so \ needs to be escaped
+        // leave empty if current machine/user is part of the domain and has rights to create resources in AD
+        "LDAPPassword": ""
+    },
+    "Users": {
+        "BaseName": "VSISH", // Use BaseName with your initials.
+        "GroupName": "${Users.BaseName}", // Resolves to "testUser"
+        "Password": "password", // Password of VSI accounts
+        "NetBios": "${Domain.NetBios}", // Resolves to "EXAMPLE"
+        "OU": "OU=Target,OU=Users,OU=LoginEnterprise",
+        "NumberOfDigits": 4 // usernames will be basename + numberofdigits, e.g. testUser001 etc in this example
+    },
+    "LoginEnterprise": {
+        "ApplianceURL": "https://WS-LE1.wsperf.nutanix.com",
+        "ApplianceToken": "token" //Get this from external notifications/public api, make sure to create a system access token with access level: Configuration
+    },
+    "Launchers": {
+        "NamingPattern": "LE1-2023-", // Create your own Launcher VMs and put them in the Launcher AD OU container. Reboot them 2-3 times after creation to set autologin and registering to LE. Use ansible playbook.
+        "GroupName": "LE1-Launchers" // Launcher group name to be used in login enterprise
+    },
+    "Target": {
+        "DeliveryType":  "RAS", // Citrix or VMware (currently only Citrix is functional)
+        "DesktopBrokerVersion":  "19.2", // RAS Server Version version
+        "CloneType":  "Full Clone", // Used for reporting database. Full Clone or Linked Clone
+        "SessionCfg":  "RDP", // ICA, PCoIP or Blast - used for reporting database
+        "SessionsSupport": "SingleSession", // SingleSession or MultiSession
+        "HypervisorConnection": "DRMAMDKB-AHV", // Hypervisor connection as known in the Citrix Host connection. AHV-TRPTEST83-LAN for example
+        "HypervisorNetwork": "VLAN164", // Hypervisor network as known on the cluster and in the Citrix Host connection
+        "NTNXHost": "HOST-1", // The Hostname where you want to test on. DRMAMDKB-1 for example
+        "NodeCount":  1, // Number of nodes you want to test on, usually 1 or 4
+        "CVM": "10.10.10.10", // (cluster)IP of the CVM
+        "CVM_admin": "adminaccount",
+        "CVM_password": "password",
+        "IPMI_admin": "admin", // Used to get power consumption of host
+        "IPMI_password": "password", // Used to get power consumption of host
+        "CVMsshpassword":  "password", // Used to set affinity on VMs
+        "CVM_storage": "VDI", // Storage container where VMs are deployed
+        "Files": "ws-files.wsperf.nutanix.com", // Specify Nutanix Files url if you want to capture files stats. Leave empty if not used.
+        "Files_api": "filesapi", // Specify the Nutanix Files API user, make sure to create this user.
+        "Files_password": "password", // Specify the Nutanix Files API password
+        "NetScaler": "", // The Citrix NetScaler NSIP
+        "NetScaler_Password": "", // The NSROOT password for the Citrix NetScaler
+        "FunctionalLevel": "N/A", // L5, L7, L7_6, L7_7, L7_8, L7_9, L7_20, L7_25
+        "NamingPattern": "W10AMD8LE-####", // Naming pattern of VMs. Also used to set affinity
+        "ADContainer": "OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com",
+        "DomainName": "wsperf.nutanix.com",
+        "RASURL": "ras.wsperf.nutanix.com",
+        "Workload": "Knowledge Worker", // Knowledge Worker or Task Worker
+        "DesktopPoolName": "#2", // Resource ID of target (i.e. #2)
+        "FirstVMInPool": "machine.wsperf.nutanix.com", //First DNS name of the server in the pool you are testing
+        "MinutesToWaitAfterIdleVMs": 40,
+        "SkipImagePrep": true, //Optionally skip imageprep fase of MCS if you image is already generalized.
+        // You can override any variable from the target section within the imagestotest array
+        "ImagesToTest": [
+            {
+                "ParentVM": "W10-22H2-da8c_Snap_Optimized.template", //AHV use: snapshotname.template. ESXi use: "vm-name.vm\\snapshotname.snapshot\\snapshotname2.snapshot"
+                "NumCPUs": 1,
+                "NumCores": 2,
+                "MemoryGB": 4,
+                "SecureBoot": true,
+                "vTPM": false,
+                "CredentialGuard": false,
+                "DurationInMinutes": 10, // Steady state time
+                "AutocalcVMs": true, // Will automatically calculate the number of VMs and sessions based on hardware
+                "Max": true, // Used with AutocalcVMs. If set to true, more sessions will be used to get a VSImax. If set to false, CPU 80% is the target
+                "NumberOfSessions": 220, // This is ignored when Autocalc is set to true
+                "NumberOfVMs": 220, // This is ignored when Autocalc is set to true
+                "PowerOnVMs": 220, // Amount of VMs to poweron initially, set to same value as amount of VM's by default. This is ignored when Autocalc is set to true
+                "TargetOS":  "", // Autofilled
+                "TargetOSVersion":  "", // Autofilled
+                "DesktopBrokerAgentVersion":  "", // Autofilled
+                "OfficeVersion":  "", // Autofilled
+                "ToolsGuestVersion":  "", // Autofilled
+                "OptimizerVendor":  "", // Autofilled
+                "OptimizationsVersion":  "", // Autofilled
+                "GPUProfile":  "None", // GPU profile. T4-B1, A16-B2 for example
+                "Comment": "BL-W10" // A short comment about this test. Will be added to the Login Enterprise database.
+            }
+        ],
+        "ImageIterations": 1 // How many runs per Image?
+    },
+    "Test": {
+        "Name": "LE-SH", // Test name in Login Enterprise. Use your own initials. LE-SH
+        "Uploadresults":  false, // Upload results to the Nutanix database
+        "BucketName": "LoginRegression", // Specify the Bucket Name in Influx to upload to. Can be either 'LoginRegression' or 'LoginDocuments'
+        "DocumentName": "None" // If using LoginDocuments please enter a Document Name starting ENG-, BLOG-, BP-, TN-, RA-.
+    },
+    "TestInfra": {
+        "Datacenter":  "Durham", // Datacenter of this Login Enterprise installation
+        "CVMpresent":  true, // Is a CVM present on the node. In case a test is performed on non-nutanix
+        "CVMDisabled":  false, // Is the CVM disabled? Default is false
+        "SSDCount":  6, // How many SSDs in the node? Manual input for now.
+        "VMCPUCount":  null, // Autofilled
+        "SingleNodeTest":  null, // Autofilled
+        "SetAffinity":  null, // Autofilled to true if testing on single node
+        "TestName":  null, // Autofilled
+        "ClusterName":  null, // Autofilled
+        "HardwareType":  null, // Autofilled
+        "ipmiAddress":  null, // Autofilled
+        "Hostip":  null, // Autofilled
+        "HostCVMip": null, // Autofilled
+        "NodeSerial":  null, // Autofilled
+        "BlockSerial":  null, // Autofilled
+        "FullVersion":  null, // Autofilled
+        "HostGPUs":  [
+                        null
+                     ], // Autofilled
+        "GPUDriver":  null, // Autofilled
+        "CPUBrand":  null, // Autofilled
+        "CPUType":  null, // Autofilled
+        "AOSVersion":  null, // Autofilled
+        "HypervisorBrand": null, // Autofilled
+        "HypervisorType": null, // Autofilled
+        "HypervisorVersion":  null, // Autofilled
+        "BIOS":  null, // Autofilled
+        "TotalNodes":  null, // Autofilled
+        "CPUCores":  null, // Autofilled
+        "CPUThreadCount":  null, // Autofilled
+        "CPUSocketCount":  null, // Autofilled
+        "CPUSpeed":  null, // Autofilled
+        "MemoryGB":  null, // Autofilled
+        "MaxAbsoluteActiveActions": null, // Autofilled
+        "MaxAbsoluteNewActionsPerMinute": null, // Autofilled
+        "MaxPercentageActiveActions": null, // Autofilled
+        "BootStart":   null, // Autofilled
+        "Boottime":   null, // Autofilled
+        "Slack":  "https://hooks.slack.com/services/xxxxxxxxx", // Enter the Slack hook for reporting purposes.
+        "InfluxDBurl": "MANDATORY_TO_DEFINE",
+        "InfluxToken": "Enter Token Here",
+        "RDAPath": "\\\\ws-files.wsperf.nutanix.com\\automation\\RDA-Logging",
+        "GrafanaUriDocs": "MANDATORY_TO_DEFINE",
+        "GrafanaUriRegression": "MANDATORY_TO_DEFINE",
+        "SlackChannel": "Enter Slack Channel Here",
+        "SlackToken": "Enter Slack Token Here"
+    }
+}
