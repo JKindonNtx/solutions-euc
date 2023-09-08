@@ -1,13 +1,12 @@
 <#
 .SYNOPSIS
-    Sadly this script is written to handle RAS leaving duplicate VM instances throughout Nutanix AHV clusters. The idea is that this script will delete the duplicated instance that is not running
+    Sadly this script is written to handle RAS leaving orphaned VM instances throughout Nutanix AHV clusters. The idea is that this script will delete all virtual machines matching the provided naming pattern.
 .DESCRIPTION
-    RAS provisioning is conistently leaving duplicate VMs in Nutanix AHV. 
-    This script will take a name pattern input, query the Nutanix Cluster specified for any machines matching the target names, figure out if there are duplicate instances, if so, will delete the powered off instance.
-    This assumes that the machines that should not be duplicated are powered on in RAS.
-    Once the duplicate machine is deleted, RAS provisioner will handle the removal of the duplicate from it's database.
+    RAS provisioning is conistently leaving oprhaned VMs in Nutanix AHV. 
+    This script will take a name pattern input, query the Nutanix Cluster specified for any machines matching the target names and will delete the powered instances.
+    Once the machine is deleted, RAS provisioner will handle the removal of the vm from it's database if it's still there.
 .PARAMETER LogPath
-    Optional. Logpath output for all operations. Default is C:\Logs\FixRASDuplicateMachines.log
+    Optional. Logpath output for all operations. Default is C:\Logs\DeleteRASProvisionedMachines.log
 .PARAMETER LogRollover
     Optional. Number of days before logfiles are rolled over. Default is 5.
 .PARAMETER UseCustomCredentialFile
@@ -23,20 +22,21 @@
 .PARAMETER APICallVerboseLogging
     Optional. Will output all API calls with verbose detail.
 .EXAMPLE
-    & '.\FixRASDuplicateMachines.ps1' -SourceCluster 10.56.68.195 -NamePattern "W10-RAS-LC*" -APICallVerboseLogging -Whatif
+    & '.\DeleteRASProvisionedMachines.ps1' -SourceCluster 10.56.68.195 -NamePattern "W10-RAS-LC*" -APICallVerboseLogging -Whatif
     Process the 10.56.68.195 Prism Element, match machines based on W10-RAS-LC* (the RAS naming standard), operating in whatif mode and output all API Calls for the nerds that are interested. It will prompt for credentials.
 .EXAMPLE
-    & '.\FixRASDuplicateMachines.ps1' -SourceCluster 10.56.68.195 -NamePattern "W10-RAS-LC*" -APICallVerboseLogging
+    & '.\DeleteRASProvisionedMachines.ps1' -SourceCluster 10.56.68.195 -NamePattern "W10-RAS-LC*" -APICallVerboseLogging
     Process the 10.56.68.195 Prism Element, match machines based on W10-RAS-LC* (the RAS naming standard) and output all API Calls for the nerds that are interested. This WILL execute the deletion of duplicated VMs. It will prompt for credentials.
 .EXAMPLE
-    & '.\FixRASDuplicateMachines.ps1' -SourceCluster 10.56.68.195 -NamePattern "W10-RAS-LC*" -APICallVerboseLogging -UseCustomCredentialFile
+    & '.\DeleteRASProvisionedMachines.ps1' -SourceCluster 10.56.68.195 -NamePattern "W10-RAS-LC*" -APICallVerboseLogging -UseCustomCredentialFile
     Process the 10.56.68.195 Prism Element, match machines based on W10-RAS-LC* (the RAS naming standard) and output all API Calls for the nerds that are interested. This WILL execute the deletion of duplicated VMs. It will use a custom credential file (if not found, will prompt and create)
 .NOTES
     Author: James Kindon
-    Date: 07.09.2023
+    Date: 08.09.2023
     Motivation: Sadness at RAS failure
     Expected Use: Performance Testing Team
     Guidance: RTFM
+    Extra Guidance: RTFM again.
 #>
 
 #region Params
@@ -45,7 +45,7 @@
 # ============================================================================
 Param(
     [Parameter(Mandatory = $false)]
-    [string]$LogPath = "C:\Logs\FixRASDuplicateMachines.log", # Where we log to
+    [string]$LogPath = "C:\Logs\DeleteRASProvisionedMachines.log", # Where we log to
 
     [Parameter(Mandatory = $false)]
     [int]$LogRollover = 5, # Number of days before logfile rollover occurs
@@ -335,7 +335,6 @@ function Get-CustomCredentials {
     }
 } #this function is used to retrieve saved credentials for the current user
 
-
 function InvokePrismAPI {
     param (
         [parameter(mandatory = $true)]
@@ -481,6 +480,51 @@ function Set-PoshTls {
 
     }
 } #this function is used to make sure we use the proper Tls version (1.2 only required for connection to Prism)
+
+function Write-CustomPrompt {
+    <#
+    .SYNOPSIS
+    Creates a user prompt with a yes/no/skip response. Returns the response.
+
+    .DESCRIPTION
+    Creates a user prompt with a yes/no/skip response. Returns the response in lowercase. Valid responses are "y" for yes, "n" for no, "s" for skip.
+
+    .NOTES
+    Author: Stephane Bourdeaud (sbourdeaud@nutanix.com)
+
+    .EXAMPLE
+    .\Write-CustomPrompt
+    Creates the prompt.
+
+    .LINK
+    https://github.com/sbourdeaud
+    #>
+    [CmdletBinding(DefaultParameterSetName = 'None')] #make this function advanced
+
+    param 
+    (
+        [Switch]$skip
+    )
+
+    begin {
+        [String]$userChoice = "" #initialize our returned variable
+    }
+    process {
+        if ($skip) {
+            do { $userChoice = Read-Host -Prompt "Do you want to continue? (Y[es]/N[o]/S[kip])" } #display the user prompt
+            while ($userChoice -notmatch '[ynsYNS]') #loop until the user input is valid
+        }
+        else {
+            do { $userChoice = Read-Host -Prompt "Do you want to continue? (Y[es]/N[o])" } #display the user prompt
+            while ($userChoice -notmatch '[ynYN]') #loop until the user input is valid
+        }
+        $userChoice = $userChoice.ToLower() #change to lowercase
+    }
+    end {
+        return $userChoice
+    }
+
+} #this function is used to prompt the user for a yes/no/skip response in order to control the workflow of a script
 
 #endregion
 
@@ -639,114 +683,82 @@ $VirtualMachines = $VirtualMachines.entities
 
 #endregion Get Virtual Machines
 
-#region Sort and Filter Duplicate Virtual Machines
+#region Sort and Filter Virtual Machines
 
 Write-Log -Message "[VM] Filtering Machines based on name pattern: $($NamePattern)" -Level Info
-$ScopedVirtualMachines = $VirtualMachines | Where-Object {$_.name -like $NamePattern}
+$ScopedVirtualMachines = $VirtualMachines | Where-Object { $_.name -like $NamePattern }
 Write-Log -Message "[VM] There are $($ScopedVirtualMachines.Count) machines matching name pattern: $($NamePattern)" -Level Info
 
-# Create an array to store the virtual machines that appear more than once
-$Duplicates = @()
-# Create a hashtable to track counts of virtual machine names
-$NameCounts = @{}
+$ScopedVirtualMachines = $ScopedVirtualMachines | Sort-Object -Property name
 
-# Iterate through $VirtualMachines and count the occurrences of each name
-foreach ($vm in $ScopedVirtualMachines) {
-    $name = $vm.Name
-
-    if ($NameCounts.ContainsKey($name)) {
-        $NameCounts[$name]++
-    } else {
-        $NameCounts[$name] = 1
-    }
-}
-
-# Iterate through $ScopedVirtualMachines and check if the name appears more than once in $VirtualMachines
-foreach ($vm in $ScopedVirtualMachines) {
-    $name = $vm.Name
-
-    if ($NameCounts.ContainsKey($name) -and $NameCounts[$name] -gt 1) {
-        $Duplicates += $vm
-    }
-}
-
-# Display the virtual machines that appear more than once
-if ($Duplicates.Count -gt 0) {
-    $DuplicateCount = $Duplicates.Count / 2
-    Write-Log -Message "[VM] There are $($DuplicateCount) duplicated machines" -Level Info
-    Write-Log -Message "[VM] Virtual machines that appear more than once:" -Level Info
-    foreach ($VM in $Duplicates) {
-        Write-Log -Message "[VM: $($VM.name)] Is duplicated by RAS" -Level Warn
-    }
-} else {
-    Write-Log -Message "[VM] No virtual machines are duplicated"  -Level Info
-}
-
-#endregion Sort and Filter Duplicate Virtual Machines
+#endregion Sort and Filter Virtual Machines
 
 #region Delete Virtual Machines
+$DeleteInstancesCount = 0
 
-#Filter the VM by Powerstate
-Write-Log -Message "[VM] Filtering VMs by Power State" -Level Info
-$TargetVirtualMachinesForDeletion = $Duplicates | Where-Object {$_.power_state -eq "Off"}
-
-$TargetVirtualMachinesForDeletion = $TargetVirtualMachinesForDeletion | Sort-Object -Property name
-
-if ($TargetVirtualMachinesForDeletion) {
-    $DeleteInstancesCount = 0
-    foreach ($TargetVM in $TargetVirtualMachinesForDeletion) {
-        $vm_name = $TargetVM.name
-        $vm_uuid = $TargetVM.uuid
-        if (!$Whatif) {
-            #we are processing
-            Write-Log -Message "[VM: $($vm_name)] With uuid: $($vm_uuid) will be deleted" -Level Info
-            #----------------------------------------------------------------------------------------------------------------------------
-            # Set API call detail
-            #----------------------------------------------------------------------------------------------------------------------------
-            $Method = "DELETE"
-            $RequestUri = "https://$($SourceCluster):9440/PrismGateway/services/rest/v2.0/vms/$($vm_uuid)?delete_snapshots=true"
-            $Payload = $null # we are on a delete run
-            #----------------------------------------------------------------------------------------------------------------------------
-            try {
-                Write-Log -Message "[VM: $($vm_name)] Trying to delete VM on source Cluster: $($SourceCluster)" -Level Info
-                $DeleteVM = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
-
-                #Get the status of the task above
-                $TaskId = $DeleteVM.task_uuid
-                $Phase = "[VM: $($vm_name)]"
-                $PhaseSuccessMessage = "VM: $($vm_name) has been deleted"
-
-                GetPrismv2Task -TaskID $TaskId -Cluster $SourceCluster -Credential $PrismCredentials
-
-                $DeleteInstancesCount += 1
-            }
-            catch {
-                Write-Log -Message "[VM: $($vm_name)] failed to delete the VM on source Cluster: $($SourceCluster) " -Level Warn
-                Write-Log -Message $_ -Level Warn
-            }
+#Add an extra special deletion confirmation check
+if ($ScopedVirtualMachines.Count -gt 0) {
+    if (!$Whatif) {
+        Write-Log -Message "[VM DELETION WARNING] VM deletion Will occur. Are you sure about this?" -Level Info
+        $myvar_user_choice = Write-CustomPrompt
+        if ($myvar_user_choice -ieq "n") { 
+            Write-Log -Message "[VM DELETION WARNING] VM deletion has not been confirmed. Good call." -Level Info
+            StopIteration
+            Exit 0 
         }
         else {
-            #We are in whatif mode
-            Write-Log -Message "[WHATIF: VM: $($vm_name)] With uuid: $($vm_uuid) would be deleted" -Level Info
-            $DeleteInstancesCount += 1
+            Write-Log -Message "[VM DELETION WARNING] VM deletion has been confirmed. It shall be so" -Level Info
         }
     }
 }
-else {
-    Write-Log -Message "[VM] No virtual machines in the Off state targeted for deletion"  -Level Warn
-    StopIteration
-    Exit 0
+
+foreach ($TargetVM in $ScopedVirtualMachines) {
+    $vm_name = $TargetVM.name
+    $vm_uuid = $TargetVM.uuid
+    if (!$Whatif) {
+        #we are processing
+        Write-Log -Message "[VM: $($vm_name)] With uuid: $($vm_uuid) will be deleted" -Level Info
+        #----------------------------------------------------------------------------------------------------------------------------
+        # Set API call detail
+        #----------------------------------------------------------------------------------------------------------------------------
+        $Method = "DELETE"
+        $RequestUri = "https://$($SourceCluster):9440/PrismGateway/services/rest/v2.0/vms/$($vm_uuid)?delete_snapshots=true"
+        $Payload = $null # we are on a delete run
+        #----------------------------------------------------------------------------------------------------------------------------
+        try {
+            Write-Log -Message "[VM: $($vm_name)] Trying to delete VM on source Cluster: $($SourceCluster)" -Level Info
+            $DeleteVM = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
+
+            #Get the status of the task above
+            $TaskId = $DeleteVM.task_uuid
+            $Phase = "[VM: $($vm_name)]"
+            $PhaseSuccessMessage = "VM: $($vm_name) has been deleted"
+
+            GetPrismv2Task -TaskID $TaskId -Cluster $SourceCluster -Credential $PrismCredentials
+
+            $DeleteInstancesCount += 1
+        }
+        catch {
+            Write-Log -Message "[VM: $($vm_name)] failed to delete the VM on source Cluster: $($SourceCluster) " -Level Warn
+            Write-Log -Message $_ -Level Warn
+        }
+    }
+    else {
+        #We are in whatif mode
+        Write-Log -Message "[WHATIF: VM: $($vm_name)] With uuid: $($vm_uuid) would be deleted" -Level Info
+        $DeleteInstancesCount += 1
+    }
 }
 
 #endregion Delete Virtual Machines
 
 if (!$Whatif) {
     #we are processing
-    Write-Log -Message "[Summary] Deleted $($DeleteInstancesCount) duplicated machines from source Cluster $($SourceCluster)" -Level Info
+    Write-Log -Message "[Summary] Deleted $($DeleteInstancesCount) machines from source Cluster $($SourceCluster)" -Level Info
 }
 else {
     #we are in whatif mode
-    Write-Log -Message "[WHATIF: Summary] Would have deleted $($DeleteInstancesCount) duplicated machines from source Cluster $($SourceCluster)" -Level Info
+    Write-Log -Message "[WHATIF: Summary] Would have deleted $($DeleteInstancesCount) machines from source Cluster $($SourceCluster)" -Level Info
 
 }
 

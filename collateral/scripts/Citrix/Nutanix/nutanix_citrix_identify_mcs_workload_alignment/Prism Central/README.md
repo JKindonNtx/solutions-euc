@@ -1,4 +1,4 @@
-# Identify MCS Provisioned Machines which are co-located with general workload VMs in Nutanix AHV
+# Identify Citrix Provisioned Machines which are co-located with general workload VMs in Nutanix AHV
 
 ## Objective
 
