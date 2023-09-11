@@ -42,6 +42,7 @@ The following parameters exist to drive the behaviour of the script:
 - `UseCustomCredentialFile`: Optional. **`switch`**. Will call the `Get-CustomCredentials` function which keeps outputs and inputs a secure credential file base on Stephane Bourdeaud from Nutanix functions.
 - `CredPath`: Optional **`String`**. Used if using the `UseCustomCredentialFile` parameter. Defines the location of the credential file. The default is `"$Env:USERPROFILE\Documents\WindowsPowerShell\CustomCredentials"`.
 - `AdvancedInfo`:  Optional **`Switch`**. Will verbose output detection and criteria matchingdetail.
+- `ShowDetailedVMAlignment`: Optional **`Array`**. Defines which VM types will be shows in the Host tree output (General, MCS, PVS, All, None). Default is All.
 
 ## Examples
 
@@ -51,8 +52,9 @@ The following parameters exist to drive the behaviour of the script:
 
 The script will:
 
-- Will Query Prism Element at 1.1.1.1 using a custom credential file (if it doesn't exist, it will be prompted for and saved for next time). 
-- Logs all output to C:\Logs\PrismElementVDIAlignment.log
+-  Will Query Prism Element at 1.1.1.1 using a custom credential file (if it doesn't exist, it will be prompted for and saved for next time). 
+-  Logs all output to C:\Logs\PrismElementVDIAlignment.log
+-  Will output all VM details under the VM to host alignment.
 
 ```
 .\PrismElementVDIAlignment.ps1 -pe_source 1.1.1.1
@@ -63,6 +65,29 @@ The script will:
 -  Will Query Prism Element at 1.1.1.1. 
 -  Credentials will be prompted for. 
 -  Logs all output to C:\Logs\PrismElementVDIAlignment.log
+-  Will output all VM details under the VM to host alignment.
+
+```
+.\PrismElementVDIAlignment.ps1 -pe_source 1.1.1.1 -ShowDetailedVMAlignment None
+```
+
+The script will:
+
+-  Will Query Prism Element at 1.1.1.1.
+-  Credentials will be prompted for. 
+-  Logs all output to C:\Logs\PrismElementVDIAlignment.log
+-  Will output only a summary view under the vm to host alignment.
+
+```
+.\PrismElementVDIAlignment.ps1 -pe_source 1.1.1.1 -ShowDetailedVMAlignment MCS,PVS
+```
+
+The script will:
+
+-  Will Query Prism Element at 1.1.1.1.
+-  Credentials will be prompted for. 
+-  Logs all output to C:\Logs\PrismElementVDIAlignment.log
+-  Will output only PVS and MCS workloads under the vm to host alignment.
 
 ```
 .\PrismElementVDIAlignment.ps1 -pe_source 1.1.1.1 -AdvancedInfo
@@ -70,7 +95,8 @@ The script will:
 
 The script will:
 
-- Will Query Prism Element at 1.1.1.1. 
-- Credentials will be prompted for. 
-- Will verbose output Identity Disk and Provisioning Services identification info to console and log file. 
-- Logs all output to C:\Logs\PrismElementVDIAlignment.log
+-  Will Query Prism Element at 1.1.1.1. 
+-  Credentials will be prompted for. 
+-  Will verbose output Identity Disk and Provisioning Services identification info to console and log file. 
+-  Logs all output to C:\Logs\PrismElementVDIAlignment.log
+-  Will output all VM details under the VM to host alignment.

@@ -11,10 +11,32 @@
     Mandatory. The source Nutanix PE instance which holds the Citrix base image VM.
 .PARAMETER AdvancedInfo
     Optional. Outputs Verbose info around MCS Identity Disk
+.PARAMETER ShowDetailedVMAlignment
+    Optional. Defines which VM types will be shows in the Host tree output (General, MCS, PVS, All, None). Default is All.
 .PARAMETER UseCustomCredentialFile
     Optional. Will call the Get-CustomCredentials function which keeps outputs and inputs a secure credential file base on Stephane Bourdeaud from Nutanix functions.
 .PARAMETER CredPath
     Optional. Used if using the UseCustomCredentialFile parameter. Defines the location of the credential file. The default is "$Env:USERPROFILE\Documents\WindowsPowerShell\CustomCredentials".
+.EXAMPLE
+    .\PrismElementVDIAlignment.ps1 -pc_source 1.1.1.1 -UseCustomCredentialFile
+    Will Query Prism Central at 1.1.1.1 using a custom credential file (if it doesn't exist, it will be prompted for and saved for next time).Logs all output to C:\Logs\PrismElementVDIAlignment.log
+    All workloas will be displayed under the the host alignment output.
+.EXAMPLE
+    .\PrismElementVDIAlignment.ps1 -pc_source 1.1.1.1 -UseCustomCredentialFile -ShowDetailedVMAlignment None
+    Will Query Prism Central at 1.1.1.1 using a custom credential file (if it doesn't exist, it will be prompted for and saved for next time). Logs all output to C:\Logs\PrismElementVDIAlignment.log. 
+    Only VM Summary counts will be shown under the Host alignment output.
+.EXAMPLE
+    .\PrismElementVDIAlignment.ps1 -pc_source 1.1.1.1 -UseCustomCredentialFile -ShowDetailedVMAlignment MCS,PVS
+    Will Query Prism Central at 1.1.1.1 using a custom credential file (if it doesn't exist, it will be prompted for and saved for next time). Logs all output to C:\Logs\PrismElementVDIAlignment.log. 
+    Both MCS and PVS workloads will be displayed under the Host alignment output.
+.EXAMPLE
+    .\PrismElementVDIAlignment.ps1 -pc_source 1.1.1.1
+    Will Query Prism Central at 1.1.1.1. Credentials will be prompted for. Logs all output to C:\Logs\PrismElementVDIAlignment.log
+    All workloas will be displayed under the the host alignment output.
+.EXAMPLE
+    .\PrismElementVDIAlignment.ps1 -pc_source 1.1.1.1 -AdvancedInfo
+    Will Query Prism Central at 1.1.1.1. Credentials will be prompted for. Will verbose output Identity Disk info to console and log file. Logs all output to C:\Logs\PrismElementVDIAlignment.log
+    All workloas will be displayed under the the host alignment output.
 #>
 
 #region Params
@@ -38,8 +60,11 @@ Param(
     [String]$CredPath = "$Env:USERPROFILE\Documents\WindowsPowerShell\CustomCredentials", # Default path for custom credential file
 
     [Parameter(Mandatory = $false)]
-    [switch]$AdvancedInfo #Shows MCS identified machines and associated disk ID
-    
+    [switch]$AdvancedInfo, #Shows MCS identified machines and associated disk ID
+
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("General","MCS","PVS","All","None")]
+    [Array]$ShowDetailedVMAlignment = "All" # Defines which VM types will be shows in the Host tree output (General, MCS, PVS, All). Default is All.
 )
 #endregion
 
@@ -445,11 +470,30 @@ Write-Log -Message "[Script Params] Script LogPath = $($LogPath)" -Level Info
 Write-Log -Message "[Script Params] Script LogRollover = $($LogRollover)" -Level Info
 Write-Log -Message "[Script Params] Nutanix pe_source = $($pe_source)" -Level Info
 Write-Log -Message "[Script Params] Script Advanced Info = $($AdvancedInfo)" -Level Info
+Write-Log -Message "[Script Params] Script Detailed VM Alignment is = $($ShowDetailedVMAlignment)" -Level Info
 
 #endregion script parameter reporting
 
 #check PoSH version
 if ($PSVersionTable.PSVersion.Major -lt 5) { throw "$(get-date) [ERROR] Please upgrade to Powershell v5 or above (https://www.microsoft.com/en-us/download/details.aspx?id=50395)" }
+
+#region Param Validation
+if (($ShowDetailedVMAlignment -contains "All") -and ($ShowDetailedVMAlignment -contains "None")) {
+    Write-Log -Message "[PARAM ERROR]: You cannot specify both All and None when using ShowDetailedVMAlignment" -Level Warn
+    StopIteration
+    Exit 0
+}
+if (($ShowDetailedVMAlignment -contains "None") -and ($ShowDetailedVMAlignment -contains "MCS" -or $ShowDetailedVMAlignment -contains "PVS" -or $ShowDetailedVMAlignment -contains "General")) {
+    Write-Log -Message "[PARAM ERROR]: You cannot specify both None and a another filter value when using ShowDetailedVMAlignment" -Level Warn
+    StopIteration
+    Exit 0
+}
+if (($ShowDetailedVMAlignment -contains "All") -and ($ShowDetailedVMAlignment -contains "MCS" -or $ShowDetailedVMAlignment -contains "PVS" -or $ShowDetailedVMAlignment -contains "General")) {
+    Write-Log -Message "[PARAM ERROR]: You cannot specify both All and a another filter value when using ShowDetailedVMAlignment" -Level Warn
+    StopIteration
+    Exit 0
+}
+#endregion Param Validation
 
 #region SSL Handling
 #------------------------------------------------------------
@@ -752,8 +796,32 @@ foreach ($Cluster in $NtxClusters) {
                 }
             }
         }
+
+        # Output Status Messages
         if (($ntx_host_citrix_mcs_machines.count -gt 0 -or $ntx_host_citrix_pvs_machines.count -gt 0) -and $ntx_host_general_workload_machines.Count -lt 1) {
-            Write-Log -Message "---> [Host] [$($ntx_host_name)] contains $($ntx_host_citrix_mcs_machines.count) Citrix MCS and $($ntx_host_citrix_pvs_machines.count) (Potential) Citrix PVS provisioned machines and no general workload machines" -Level OK
+            Write-Log -Message "---> [Host] [$($ntx_host_name)] contains only Citrix Provisioned Workloads" -Level OK
+        } 
+        elseif ($ntx_host_general_workload_machines.Count -gt 0 -and ($ntx_host_citrix_mcs_machines.count -lt 1 -or $ntx_host_citrix_pvs_machines.count -lt 1)) {
+            Write-Log -Message "---> [Host] [$($ntx_host_name)] contains only General workload Machines" -Level OK
+        } 
+        elseif (($ntx_host_citrix_mcs_machines.count -gt 0 -or $ntx_host_citrix_pvs_machines.count -gt 0) -and $ntx_host_general_workload_machines.Count -gt 0) {
+            Write-Log -Message "---> [Host] [$($ntx_host_name)] contains a mix of Citrix provisioned machines and general workload machines" -Level Warn
+        }
+
+        # Output General Counts
+        Write-Log -Message "---> [Host] [$($ntx_host_name)] contains $($ntx_host_general_workload_machines.count) general workload machines" -Level Info
+        Write-Log -Message "---> [Host] [$($ntx_host_name)] contains $($ntx_host_citrix_mcs_machines.count) Citrix MCS provisioned machines" -Level Info
+        Write-Log -Message "---> [Host] [$($ntx_host_name)] contains $($ntx_host_citrix_pvs_machines.count) Citrix PVS provisioned machines" -Level Info
+
+        # Output Detailed VM to Host info
+        if ($ShowDetailedVMAlignment -contains "None") {
+            Write-Log -Message "---> [Host] [$($ntx_host_name)] No VM to host mapping output selected" -Level Info
+        }
+        if ($ShowDetailedVMAlignment -contains "All") {
+            foreach ($vm in $ntx_host_general_workload_machines) {
+                $vm_name = $vm.name
+                Write-Log -Message "------> [VM] [$($vm_name)] is not a Citrix provisioned machine based on available checks" -Level Info
+            }
             foreach ($vm in $ntx_host_citrix_mcs_machines) {
                 $vm_name = $vm.name
                 Write-Log -Message "------> [VM] [$($vm_name)] is a Citrix MCS provisioned machine" -Level MCS_Info
@@ -762,27 +830,23 @@ foreach ($Cluster in $NtxClusters) {
                 $vm_name = $vm.name
                 Write-Log -Message "------> [VM] [$($vm_name)] is a potentially a Citrix PVS provisioned machine based on boot config (network or cd-rom with iso)" -Level PVS_Info
             }
-        } 
-        elseif ($ntx_host_general_workload_machines.Count -gt 0 -and ($ntx_host_citrix_mcs_machines.count -lt 1 -or $ntx_host_citrix_pvs_machines.count -lt 1)) {
-            Write-Log -Message "---> [Host] [$($ntx_host_name)] contains $($ntx_host_general_workload_machines.count) General workload Machines and no Citrix provisioned machines" -Level OK
+        }
+        if ($ShowDetailedVMAlignment -contains "General") {
             foreach ($vm in $ntx_host_general_workload_machines) {
                 $vm_name = $vm.name
-                Write-Log -Message "------> [VM] [$($vm_name)] is not a Citrix provisioned machine based on available checks" -Level Info
+                Write-Log -Message "------> [VM] [$($vm_name)] is a general workload machine based on available checks" -Level Info
             }
-        } 
-        elseif (($ntx_host_citrix_mcs_machines.count -gt 0 -or $ntx_host_citrix_pvs_machines.count -gt 0) -and $ntx_host_general_workload_machines.Count -gt 0) {
-            Write-Log -Message "---> [Host] [$($ntx_host_name)] contains a mix of $($ntx_host_citrix_mcs_machines.count) Citrix MCS and $($ntx_host_citrix_pvs_machines.count) (Potential) Citrix PVS provisioned machines and $($ntx_host_general_workload_machines.Count) general workload machines" -Level Warn
+        }
+        if ($ShowDetailedVMAlignment -contains "MCS") {
             foreach ($vm in $ntx_host_citrix_mcs_machines) {
                 $vm_name = $vm.name
                 Write-Log -Message "------> [VM] [$($vm_name)] is a Citrix MCS provisioned machine" -Level MCS_Info
             }
-            foreach ($vm in $ntx_host_general_workload_machines) {
-                $vm_name = $vm.name
-                Write-Log -Message "------> [VM] [$($vm_name)] is not a Citrix MCS provisioned machine" -Level Info
-            }
+        }
+        if ($ShowDetailedVMAlignment -contains "PVS") {
             foreach ($vm in $ntx_host_citrix_pvs_machines) {
                 $vm_name = $vm.name
-                Write-Log -Message "------> [VM] [$($vm_name)] is potentially a Citrix PVS provisioned machine based on boot config (network or cd-rom with iso)" -Level PVS_Info
+                Write-Log -Message "------> [VM] [$($vm_name)] is a potentially a Citrix PVS provisioned machine based on boot config (network or cd-rom with iso)" -Level PVS_Info
             }
         }
     }
