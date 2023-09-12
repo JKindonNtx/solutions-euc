@@ -672,11 +672,14 @@ foreach ($vm in $ScopedVirtualMachines) {
 
 # Display the virtual machines that appear more than once
 if ($Duplicates.Count -gt 0) {
-    $DuplicateCount = $Duplicates.Count / 2
-    Write-Log -Message "[VM] There are $($DuplicateCount) duplicated machines" -Level Info
+    # give the number of actual duplicated machines
+    $DuplicateMachines = $Duplicates | Sort-Object -Unique
+    Write-Log -Message "[VM] There are $($DuplicateMachines.Count) duplicated machines" -Level Info
     Write-Log -Message "[VM] Virtual machines that appear more than once:" -Level Info
-    foreach ($VM in $Duplicates) {
-        Write-Log -Message "[VM: $($VM.name)] Is duplicated by RAS" -Level Warn
+    # Get the number of times the machine is duplicated
+    foreach ($VM in ($Duplicates | Sort-Object -Unique)) {
+        $DuplicateCount = ($Duplicates | Where-Object {$_.name -eq $vm.name}).Count
+        Write-Log -Message "[VM: $($VM.name)] Is duplicated by RAS $($DuplicateCount) times." -Level Warn
     }
 } else {
     Write-Log -Message "[VM] No virtual machines are duplicated"  -Level Info

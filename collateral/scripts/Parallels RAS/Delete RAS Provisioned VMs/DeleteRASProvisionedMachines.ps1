@@ -427,7 +427,7 @@ function GetPrismv2Task {
                 StopIteration
                 Exit 1
             }
-            Start-Sleep $SleepTime
+            Start-Sleep -Seconds 3
             $TaskStatus = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $Credential -ErrorAction Stop
         }
         if ($TaskStatus.progress_status -eq "SUCCEEDED") {
