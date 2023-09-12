@@ -9,8 +9,8 @@
     Optional. Number of days before logfiles are rolled over. Default is 5.
 .PARAMETER pc_source
     Mandatory. The Prism Central Source to target.
-.PARAMETER VMCount
-    Optional. The number of virtual machine entities to retrieve from PC. Defaults to 1000.
+.PARAMETER ExcludeClusters
+    Optional. Cluster names to exclude from processing.
 .PARAMETER AdvancedInfo
     Optional. Outputs Verbose info around the discovery and categorization process
 .PARAMETER ShowDetailedVMAlignment
@@ -21,23 +21,28 @@
     Optional. Used if using the UseCustomCredentialFile parameter. Defines the location of the credential file. The default is "$Env:USERPROFILE\Documents\WindowsPowerShell\CustomCredentials".
 .EXAMPLE
     .\PrismCentralVDIAlignment.ps1 -pc_source 1.1.1.1 -UseCustomCredentialFile
-    Will Query Prism Central at 1.1.1.1 using a custom credential file (if it doesn't exist, it will be prompted for and saved for next time). Defaults to 1000 VMS. Logs all output to C:\Logs\PrismCentralVDIAlignment.log
+    Will Query Prism Central at 1.1.1.1 using a custom credential file (if it doesn't exist, it will be prompted for and saved for next time). Logs all output to C:\Logs\PrismCentralVDIAlignment.log
     All workloas will be displayed under the the host alignment output.
 .EXAMPLE
     .\PrismCentralVDIAlignment.ps1 -pc_source 1.1.1.1 -UseCustomCredentialFile -ShowDetailedVMAlignment None
-    Will Query Prism Central at 1.1.1.1 using a custom credential file (if it doesn't exist, it will be prompted for and saved for next time). Defaults to 1000 VMS. Logs all output to C:\Logs\PrismCentralVDIAlignment.log. 
+    Will Query Prism Central at 1.1.1.1 using a custom credential file (if it doesn't exist, it will be prompted for and saved for next time). Logs all output to C:\Logs\PrismCentralVDIAlignment.log. 
     Only VM Summary counts will be shown under the Host alignment output.
 .EXAMPLE
     .\PrismCentralVDIAlignment.ps1 -pc_source 1.1.1.1 -UseCustomCredentialFile -ShowDetailedVMAlignment MCS,PVS
-    Will Query Prism Central at 1.1.1.1 using a custom credential file (if it doesn't exist, it will be prompted for and saved for next time). Defaults to 1000 VMS. Logs all output to C:\Logs\PrismCentralVDIAlignment.log. 
+    Will Query Prism Central at 1.1.1.1 using a custom credential file (if it doesn't exist, it will be prompted for and saved for next time). Logs all output to C:\Logs\PrismCentralVDIAlignment.log. 
     Both MCS and PVS workloads will be displayed under the Host alignment output.
 .EXAMPLE
+    .\PrismCentralVDIAlignment.ps1 -pc_source 1.1.1.1 -UseCustomCredentialFile -ShowDetailedVMAlignment MCS,PVS -ExcludeClusters "NaughtyCluster"
+    Will Query Prism Central at 1.1.1.1 using a custom credential file (if it doesn't exist, it will be prompted for and saved for next time). Logs all output to C:\Logs\PrismCentralVDIAlignment.log. 
+    Both MCS and PVS workloads will be displayed under the Host alignment output.
+    The Cluster NaughtCluster will be excluded from processing.
+.EXAMPLE
     .\PrismCentralVDIAlignment.ps1 -pc_source 1.1.1.1
-    Will Query Prism Central at 1.1.1.1. Credentials will be prompted for. Defaults to 1000 VMS. Logs all output to C:\Logs\PrismCentralVDIAlignment.log
+    Will Query Prism Central at 1.1.1.1. Credentials will be prompted for. Logs all output to C:\Logs\PrismCentralVDIAlignment.log
     All workloas will be displayed under the the host alignment output.
 .EXAMPLE
-    .\PrismCentralVDIAlignment.ps1 -pc_source 1.1.1.1 -AdvancedInfo -VMCount 2000
-    Will Query Prism Central at 1.1.1.1. Credentials will be prompted for. Will verbose output Identity Disk info to console and log file. Will query for 2000 vms against PC. Logs all output to C:\Logs\PrismCentralVDIAlignment.log
+    .\PrismCentralVDIAlignment.ps1 -pc_source 1.1.1.1 -AdvancedInfo
+    Will Query Prism Central at 1.1.1.1. Credentials will be prompted for. Will verbose output Identity Disk info to console and log file. Logs all output to C:\Logs\PrismCentralVDIAlignment.log
     All workloas will be displayed under the the host alignment output.
 #>
 
@@ -56,7 +61,7 @@ Param(
     [string]$pc_source, # The Prism Central Instance hosting the Source VM and associated Protection Policy
 
     [Parameter(Mandatory = $false)]
-    [int]$VMCount = 1000, # number of VMS to retrieve from PC
+    [array]$ExcludeClusters,
 
     [Parameter(Mandatory = $false)]
     [switch]$UseCustomCredentialFile, # specifies that a credential file should be used
@@ -68,7 +73,7 @@ Param(
     [switch]$AdvancedInfo, #Shows MCS identified machines and associated disk ID
 
     [Parameter(Mandatory = $false)]
-    [ValidateSet("General","MCS","PVS","All","None")]
+    [ValidateSet("General", "MCS", "PVS", "All", "None")]
     [Array]$ShowDetailedVMAlignment = "All" # Defines which VM types will be shows in the Host tree output (General, MCS, PVS, All). Default is All.
 
 )
@@ -458,6 +463,39 @@ function InvokePrismAPI {
     }
 }
 
+function GetPCVMIncrements {
+    param (
+        [parameter(mandatory = $true)]
+        [int]$offset
+    )
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Set API call detail
+    #----------------------------------------------------------------------------------------------------------------------------
+    $Method = "POST"
+    $RequestUri = "https://$($pc_source):9440/api/nutanix/v3/vms/list"
+    $PayloadContent = @{
+        kind   = "vm"
+        length = 500
+        offset = $offset
+    }
+    $Payload = (ConvertTo-Json $PayloadContent)
+    #----------------------------------------------------------------------------------------------------------------------------
+    Write-Log -Message "[VM Retrieval] Retrieving machines from offset $($offset) under PC: $($pc_source)" -Level Info
+    try {
+        $vm_list = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
+        $vm_list = $vm_list.entities
+        Write-Log -Message "[VM Retrieval] Retrieved $($vm_list.Count) from offset $($Offset) virtual machines under PC: $($pc_source)" -Level Info
+        #Now we need to add them to the existing $VirtualMachinesArray
+        $Global:VirtualMachines = ($Global:VirtualMachines + $vm_list)
+        Write-Log -Message "[VM Retrieval] Retrieved VM Count is $($Global:VirtualMachines.Count) under PC: $($pc_source)" -Level Info
+    }
+    catch {
+        Write-Log -Message "[VM Retrieval] Failed to retrieve virtual machines from $($pc_source)" -Level Warn
+        StopIteration
+        Exit 1
+    }
+}
+
 #endregion
 
 #Region Execute
@@ -474,10 +512,9 @@ Write-Log -Message "[Script Params] Logging Script Parameter configurations" -Le
 Write-Log -Message "[Script Params] Script LogPath = $($LogPath)" -Level Info
 Write-Log -Message "[Script Params] Script LogRollover = $($LogRollover)" -Level Info
 Write-Log -Message "[Script Params] Nutanix pc_source = $($pc_source)" -Level Info
-Write-Log -Message "[Script Params] VM Retrievel Count = $($VMCount)" -Level Info
+Write-Log -Message "[Script Params] Nutanix Cluster exclusion list = $($ExcludeClusters)" -Level Info
 Write-Log -Message "[Script Params] Script Advanced Info = $($AdvancedInfo)" -Level Info
 Write-Log -Message "[Script Params] Script Detailed VM Alignment is = $($ShowDetailedVMAlignment)" -Level Info
-
 
 #endregion script parameter reporting
 
@@ -578,7 +615,7 @@ else {
 $Method = "POST"
 $RequestUri = "https://$($pc_source):9440/api/nutanix/v3/clusters/list"
 $PayloadContent = @{
-    kind   = "cluster"
+    kind = "cluster"
 }
 $Payload = (ConvertTo-Json $PayloadContent)
 #----------------------------------------------------------------------------------------------------------------------------
@@ -593,7 +630,7 @@ catch {
     Exit 1
 }
 
-$NtxClusters = $Clusters.entities | Where-Object {$_.status.name -ne "Unnamed"}
+$NtxClusters = $Clusters.entities | Where-Object { $_.status.name -ne "Unnamed" -and $_.status.name -notin $ExcludeClusters }
 
 if ($null -ne $NtxClusters) {
     Write-Log -Message "[Cluster Retrieval] Identified $($NtxClusters.Count) Clusters under PC: $($pc_source)" -Level Info
@@ -612,7 +649,7 @@ else {
 $Method = "POST"
 $RequestUri = "https://$($pc_source):9440/api/nutanix/v3/hosts/list"
 $PayloadContent = @{
-    kind   = "host"
+    kind = "host"
 }
 $Payload = (ConvertTo-Json $PayloadContent)
 #----------------------------------------------------------------------------------------------------------------------------
@@ -650,7 +687,7 @@ $Method = "POST"
 $RequestUri = "https://$($pc_source):9440/api/nutanix/v3/vms/list"
 $PayloadContent = @{
     kind   = "vm"
-    length = $VMCount
+    length = 500
 
 }
 $Payload = (ConvertTo-Json $PayloadContent)
@@ -659,6 +696,8 @@ $Payload = (ConvertTo-Json $PayloadContent)
 try {
     Write-Log -Message "[Host Retrieval] Attempting to retrieve virtual machines from $($pc_source)" -Level Info
     $VirtualMachines = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
+    # We need to understand if we are above 500 machines, and if we need to loop through incremental pulls
+    $vm_total_entity_count = $VirtualMachines.metadata.total_matches
     Write-Log -Message "[VM Retrieval] Sucessfully retrieved virtual machines from $($pc_source)" -Level Info
 }
 catch {
@@ -678,6 +717,34 @@ else {
     Exit 1
 }
 
+#region bulk machine retrieval from PC
+
+#Configuration Limit reached - bail
+if ($vm_total_entity_count -gt 25000) {
+    Write-Log -Message "[VM Retrieval] 25K VM limit reached. This is not a supported configuration. Exiting script." -Level Warn
+    StopIteration
+    Exit 1
+}
+
+$api_batch_increment = 500
+
+if ($vm_total_entity_count -gt 500) {
+    # Set the variable to Global for this run
+    $Global:VirtualMachines = $VirtualMachines
+    Write-Log -Message "[VM Retrieval] $($vm_total_entity_count) virtual machines exist under PC: $($pc_source). Looping through batch pulls" -Level Info
+    # iterate through increments of 500 until the offset reaches or exceeds the value of $vm_total_entity_count.
+    for ($offset = 500; $offset -lt $vm_total_entity_count; $offset += $api_batch_increment) {
+        $vm_offset = $offset
+        GetPCVMIncrements -offset $vm_offset
+    }
+}
+
+# Set the variable back to normal
+if ($vm_total_entity_count -gt 500) {
+    $VirtualMachines = $Global:VirtualMachines
+}
+#endregion bulk machine retrievale from PC
+
 #endregion Get VM list
 
 #region Categorize Machines
@@ -687,7 +754,7 @@ $General_Workload_Machines = @()
 
 # Attempt to find MCS Machines
 foreach ($VM in $VirtualMachines) {
-    $IdentityDisk = $VM.spec.resources.disk_list | Where-Object {$_.Device_properties.device_type -eq "DISK"} | Where-Object {$_.disk_size_mib -eq "16"}
+    $IdentityDisk = $VM.spec.resources.disk_list | Where-Object { $_.Device_properties.device_type -eq "DISK" } | Where-Object { $_.disk_size_mib -eq "16" }
 
     if ($IdentityDisk) {
         if ($AdvancedInfo) {
@@ -713,7 +780,7 @@ foreach ($VM in $VirtualMachines) {
                     # We have a list of boot devices now
                     if ($vm_boot_device -eq "CDROM") {
                         #We are booting from a CD ROM
-                        $vm_has_iso_attached = ($vm.spec.resources.disk_list | Where-Object {$_.device_properties.device_type -eq "CDROM"} | Where-Object {$_.data_source_reference -ne $null} ).data_source_reference
+                        $vm_has_iso_attached = ($vm.spec.resources.disk_list | Where-Object { $_.device_properties.device_type -eq "CDROM" } | Where-Object { $_.data_source_reference -ne $null } ).data_source_reference
                         if ($null -ne $vm_has_iso_attached) {
                             #We have some info about boot ISO attached
                             if ($AdvancedInfo) {
@@ -749,7 +816,7 @@ foreach ($VM in $VirtualMachines) {
                 if ($AdvancedInfo) {
                     Write-Log -Message "[VM Identification] $($VM.status.name) has a boot type of $($vm_Boot_type). We cannot determine the boot order at the AHV level." -Level Info
                 }
-                $vm_has_iso_attached = ($vm.spec.resources.disk_list | Where-Object {$_.device_properties.device_type -eq "CDROM"} | Where-Object {$_.data_source_reference -ne $null} ).data_source_reference
+                $vm_has_iso_attached = ($vm.spec.resources.disk_list | Where-Object { $_.device_properties.device_type -eq "CDROM" } | Where-Object { $_.data_source_reference -ne $null } ).data_source_reference
                 if ($null -ne $vm_has_iso_attached) {
                     if ($AdvancedInfo) {
                         Write-Log -Message "[VM Identification] $($VM.status.name) has an ISO image attached. This could indicate a Citrix PVS Device depending on boot configuration" -Level Info
@@ -784,8 +851,8 @@ Write-Log -Message "[VM Entity Detail] Identified $($General_Workload_Machines.C
 #endregion Categorize Machines
 
 #region Report on Layout
-$NtxVirtualMachinesOn = ($VirtualMachines | Where-Object {$_.status.resources.power_state -ne "OFF"}).Count
-$NtxVirtualMachinesOff = ($VirtualMachines | Where-Object {$_.status.resources.power_state -eq "OFF"}).Count
+$NtxVirtualMachinesOn = ($VirtualMachines | Where-Object { $_.status.resources.power_state -ne "OFF" }).Count
+$NtxVirtualMachinesOff = ($VirtualMachines | Where-Object { $_.status.resources.power_state -eq "OFF" }).Count
 Write-Log -Message "[Entity Processing] Processing $($NtxVirtualMachinesOn) powered on entities and ignoring $($NtxVirtualMachinesOff) powered off entities" -Level Info
 foreach ($Cluster in $NtxClusters) {
     $ClusterName = $Cluster.status.name
@@ -793,7 +860,7 @@ foreach ($Cluster in $NtxClusters) {
     Write-Log -Message "[Cluster] ---------------------------------------------------------------------------------------------------" -Level Info
     Write-Log -Message "[Cluster] Cluster Details for Cluster: $($ClusterName)" -Level Info
     Write-Log -Message "[Cluster] ---------------------------------------------------------------------------------------------------" -Level Info
-    foreach ($ntxHost in ($NtxHosts | Where-Object {$_.status.cluster_reference.uuid -eq $ClusterUUID})) {
+    foreach ($ntxHost in ($NtxHosts | Where-Object { $_.status.cluster_reference.uuid -eq $ClusterUUID })) {
         $ntx_host_name = $ntxHost.status.name
         $ntx_host_uuid = $ntxHost.metadata.uuid
         $ntx_host_citrix_mcs_machines = @()
@@ -811,7 +878,7 @@ foreach ($Cluster in $NtxClusters) {
                     if ($vm_name -in $Citrix_MCS_Machines.status.name) {
                         $ntx_host_citrix_mcs_machines += $vm
                     }
-                    elseif ($vm_name -in $Citrix_PVS_Machines.status.name)  {
+                    elseif ($vm_name -in $Citrix_PVS_Machines.status.name) {
                         $ntx_host_citrix_pvs_machines += $vm
                     }
                     else {
@@ -824,10 +891,10 @@ foreach ($Cluster in $NtxClusters) {
         if (($ntx_host_citrix_mcs_machines.count -gt 0 -or $ntx_host_citrix_pvs_machines.count -gt 0) -and $ntx_host_general_workload_machines.Count -lt 1) {
             Write-Log -Message "---> [Host] [$($ntx_host_name)] contains only Citrix Provisioned Workloads" -Level OK
         } 
-        elseif ($ntx_host_general_workload_machines.Count -gt 0 -and ($ntx_host_citrix_mcs_machines.count -lt 1 -or $ntx_host_citrix_pvs_machines.count -lt 1)) {
+        if ($ntx_host_general_workload_machines.Count -gt 0 -and $ntx_host_citrix_mcs_machines.count -lt 1 -and $ntx_host_citrix_pvs_machines.count -lt 1) {
             Write-Log -Message "---> [Host] [$($ntx_host_name)] contains only General workload Machines" -Level OK
         } 
-        elseif (($ntx_host_citrix_mcs_machines.count -gt 0 -or $ntx_host_citrix_pvs_machines.count -gt 0) -and $ntx_host_general_workload_machines.Count -gt 0) {
+        if (($ntx_host_citrix_mcs_machines.count -gt 0 -or $ntx_host_citrix_pvs_machines.count -gt 0) -and $ntx_host_general_workload_machines.Count -gt 0) {
             Write-Log -Message "---> [Host] [$($ntx_host_name)] contains a mix of Citrix provisioned machines and general workload machines" -Level Warn
         }
 

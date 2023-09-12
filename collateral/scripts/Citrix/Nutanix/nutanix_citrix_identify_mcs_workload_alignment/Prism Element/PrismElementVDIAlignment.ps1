@@ -801,10 +801,10 @@ foreach ($Cluster in $NtxClusters) {
         if (($ntx_host_citrix_mcs_machines.count -gt 0 -or $ntx_host_citrix_pvs_machines.count -gt 0) -and $ntx_host_general_workload_machines.Count -lt 1) {
             Write-Log -Message "---> [Host] [$($ntx_host_name)] contains only Citrix Provisioned Workloads" -Level OK
         } 
-        elseif ($ntx_host_general_workload_machines.Count -gt 0 -and ($ntx_host_citrix_mcs_machines.count -lt 1 -or $ntx_host_citrix_pvs_machines.count -lt 1)) {
+        if ($ntx_host_general_workload_machines.Count -gt 0 -and $ntx_host_citrix_mcs_machines.count -lt 1 -and $ntx_host_citrix_pvs_machines.count -lt 1) {
             Write-Log -Message "---> [Host] [$($ntx_host_name)] contains only General workload Machines" -Level OK
         } 
-        elseif (($ntx_host_citrix_mcs_machines.count -gt 0 -or $ntx_host_citrix_pvs_machines.count -gt 0) -and $ntx_host_general_workload_machines.Count -gt 0) {
+        if (($ntx_host_citrix_mcs_machines.count -gt 0 -or $ntx_host_citrix_pvs_machines.count -gt 0) -and $ntx_host_general_workload_machines.Count -gt 0) {
             Write-Log -Message "---> [Host] [$($ntx_host_name)] contains a mix of Citrix provisioned machines and general workload machines" -Level Warn
         }
 
