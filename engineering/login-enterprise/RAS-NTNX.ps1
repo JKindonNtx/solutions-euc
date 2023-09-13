@@ -152,7 +152,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     
    
     #$VSI_Test_RampupInMinutes = [Math]::Round($VSI_Target_NumberOfSessions / $VSI_Target_LogonsPerMinute, 0, [MidpointRounding]::AwayFromZero)
-    $VSI_Target_RampupInMinutes = 5
+    $VSI_Target_RampupInMinutes = 48
 
 
     for ($i = 1; $i -le $VSI_Target_ImageIterations; $i++) {
@@ -193,7 +193,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if ($($VSI_Target_SessionCfg.ToLower()) -eq "ica") {
             $SessionsperLauncher = 20
         } else {
-            $SessionsperLauncher = 12
+            $SessionsperLauncher = 16
         }
         if (-not ($SkipLaunchers)) {
             $NumberOfLaunchers = [System.Math]::Ceiling($VSI_Target_NumberOfSessions / $SessionsperLauncher)
@@ -207,7 +207,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Update the test params/create test if not exist
         $CommandLine = """C:\Program Files\Parallels\Client\TSClient.exe"" s!='{host}' t!='443' a!='{resource}' m!='2' o!='0' i!='0' r!='1' d!='{domain}' u!='{username}' q!='{password}'"
-        $Resource = """$($VSI_Target_DesktopPoolName)"""
+        #$Resource = """$($VSI_Target_DesktopPoolName)"""
         $testId = Set-LELoadTest -TestName $VSI_Test_Name `
             -SessionAmount $VSI_Target_NumberOfSessions `
             -RampupInMinutes $VSI_Target_RampupInMinutes `
@@ -215,7 +215,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             -LauncherGroupName $VSI_Launchers_GroupName `
             -AccountGroupName $VSI_Users_GroupName `
             -ConnectorName "Custom Connector" `
-            -ConnectorParams @{host = $VSI_Target_RASURL; commandline = $CommandLine; resource = $Resource } `
+            -ConnectorParams @{host = $VSI_Target_RASURL; commandline = $CommandLine; resource = $VSI_Target_DesktopPoolName } `
             -Workload $VSI_Target_Workload
         
         # Wait for VM's to have settled down
@@ -276,7 +276,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #Check for RDA File and if exists then move it to the output folder
         if(Test-Path -Path $RDASource){
-            $csvData = get-content $RDASource | ConvertFrom-String -Delimiter "," -PropertyNames Timestamp,screenResolutionid,encoderid,movingImageCompressionConfigurationid,preferredColorDepthid,videoCodecid,VideoCodecUseid,VideoCodecTextOptimizationid,VideoCodecColorspaceid,VideoCodecTypeid,HardwareEncodeEnabledid,VisualQualityid,FramesperSecondid,RDHSMaxFPS,currentCPU,currentRAM,totalCPU,currentFps,totalFps,currentRTT,NetworkLatency,NetworkLoss,CurrentBandwidthEDT,totalBandwidthusageEDT,averageBandwidthusageEDT,currentavailableEDTBandwidth,EDTInUseId,currentBandwithoutput,currentLatency,currentavailableBandwidth,totalBandwidthusage,averageBandwidthUsage,averageBandwidthAvailable,GPUusage,GPUmemoryusage,GPUmemoryInUse,GPUvideoEncoderusage,GPUvideoDecoderusage,GPUtotalUsage,GPUVideoEncoderSessions,GPUVideoEncoderAverageFPS,GPUVideoEncoderLatency | Select -Skip 1
+            $csvData = get-content $RDASource | ConvertFrom-String -Delimiter "," -PropertyNames Timestamp,currentLatency,currentavailableBandwidth,currentFps,totalsentrate,totalreceiverate,frameQuality,skippedFramesclient,skippedFramesnetwork,skippedFramesserver,FECrate,Lossrate,Retransmissionrate,totalBandwidthusage,averageBandwidthusage,totalFps,averageBandwidthAvailable,GPUusage,GPUmemoryusage,GPUmemoryInUse,GPUvideoEncoderusage,GPUvideoDecoderusage,GPUtotalUsage,GPUVideoEncoderSessions,GPUVideoEncoderAverageFPS,GPUVideoEncoderLatency | Select -Skip 1
             $csvData | Export-Csv -Path $RDADestination -NoTypeInformation
             Remove-Item -Path $RDASource -ErrorAction SilentlyContinue
         }
