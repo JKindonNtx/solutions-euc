@@ -1,0 +1,74 @@
+{
+    "Test": {
+        "Uploadresults":  true, // Upload results to the Nutanix database
+        "BucketName": "NetScaler", // Specify the Bucket Name in Influx to upload to. 
+        "DocumentName": "ENG-Black-Widow", // If using LoginDocuments please enter a Document Name starting ENG-, BLOG-, BP-, TN-, RA-.
+        "Comment": "vServer Test - SSL"
+    },
+    "NetScaler": {
+        "BlackWidowIP":  "1.2.3.4", // The NetScaler IP (NSIP) for the Black Widow server appliance
+        "BlackWidowUserName":  "nsroot", // The user name for the server appliance
+        "BlackWidowPassword":  "password", // The password for the server appliance
+        "TargetIP": "5.6.7.8", // The NetScaler IP (NSIP) for the Black Widow client appliance
+        "TargetUserName": "nsroot", // The user name for the client appliance
+        "TargetPassword":  "password" // The password for the client appliance
+    },
+    "BlackWidow": {
+        "ServerIP": "2.3.4.5", // A free IP Address to host the Black Widow Server
+        "TargetvServerIP": "3.4.5.6", // The IP Address of the Load Balancer hosted on the Target NetScaler
+        "Threads": "200", // The number of concurrent threads
+        "ParallelConnections": "200", // The Number of parallel connections
+        "TestType": "vServer" // Throughput or vServer
+    },
+    "General": {
+        "NutanixHost": "HOSTNAME", // The hostname of the Nutanix node hosting the NetScaler
+        "ClusterIP": "5.6.7.8", // The Cluster IP Address for the Nutanix Cluster
+        "ClusterUserName": "admin", // The Nutanix Cluster User Name
+        "ClusterPassword": "password", // The Nutanix Cluster password
+        "TestDuration": "60", // Test duration in minutes
+        "CollectionInterval": "30", // Collection Interval in seconds
+        "Slack":  "https://hooks.slack.com/services/GUID", // Enter the Slack hook for reporting purposes.
+        "InfluxDBurl": "http://INFLUXSERVER:8086/api/v2/write?org=BUCKETNAME&precision=s",
+        "InfluxToken": "INFLUX_API_TOKEN",
+        "GrafanaUriNetScaler": "http://GRAFANASERVER:3000/render/d-solo/NETSCALER_RENDER_URL",
+        "SlackChannel": "SLACK_CHANNEL",
+        "SlackToken": "SLACK_TOKEN"
+    },
+    "TestInfra": {
+        "Datacenter":  "Datacenter Name", // Datacenter of this NetScaler Installation
+        "TestName":  null, // Autofilled
+        "ClusterName":  null, // Autofilled
+        "HardwareType":  null, // Autofilled
+        "ipmiAddress":  null, // Autofilled
+        "Hostip":  null, // Autofilled
+        "HostCVMip": null, // Autofilled
+        "NodeSerial":  null, // Autofilled
+        "BlockSerial":  null, // Autofilled
+        "FullVersion":  null, // Autofilled
+        "HostGPUs":  [
+                        null
+                        ], // Autofilled
+        "GPUDriver":  null, // Autofilled
+        "CPUBrand":  null, // Autofilled
+        "CPUType":  null, // Autofilled
+        "AOSVersion":  null, // Autofilled
+        "HypervisorBrand": null, // Autofilled
+        "HypervisorType": null, // Autofilled
+        "HypervisorVersion":  null, // Autofilled
+        "BIOS":  null, // Autofilled
+        "TotalNodes":  null, // Autofilled
+        "CPUCores":  null, // Autofilled
+        "CPUThreadCount":  null, // Autofilled
+        "CPUSocketCount":  null, // Autofilled
+        "CPUSpeed":  null, // Autofilled
+        "MemoryGB":  null // Autofilled
+    },
+    "NetScalerData":{
+        "Host": null, // Autofilled
+        "UUID": null, // Autofilled
+        "Description": null, // Autofilled
+        "Version": null, // Autofilled
+        "vCPU": null, // Autofilles
+        "Memory": null // Autofilled
+    }
+}

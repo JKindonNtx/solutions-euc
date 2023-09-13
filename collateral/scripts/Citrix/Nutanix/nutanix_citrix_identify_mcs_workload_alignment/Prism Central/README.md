@@ -1,4 +1,4 @@
-# Identify MCS Provisioned Machines which are co-located with general workload VMs in Nutanix AHV
+# Identify Citrix Provisioned Machines which are co-located with general workload VMs in Nutanix AHV
 
 ## Objective
 
@@ -41,8 +41,9 @@ The following parameters exist to drive the behaviour of the script:
 - `LogRollover`: Optional **`Int`**. Number of days before log files are rolled over. Default is 5.
 - `UseCustomCredentialFile`: Optional. **`switch`**. Will call the `Get-CustomCredentials` function which keeps outputs and inputs a secure credential file base on Stephane Bourdeaud from Nutanix functions.
 - `CredPath`: Optional **`String`**. Used if using the `UseCustomCredentialFile` parameter. Defines the location of the credential file. The default is `"$Env:USERPROFILE\Documents\WindowsPowerShell\CustomCredentials"`.
-- `AdvancedInfo`:  Optional **`Switch`**. Will verbose output detection and criteria matchingdetail.
-- `VMCount`: Optional **`Int`**. The number of VMs to query for against Nutanix PC. Default is 1000.
+- `AdvancedInfo`:  Optional **`Switch`**. Will verbose output detection and criteria matching detail.
+- `ShowDetailedVMAlignment`: Optional **`Array`**. Defines which VM types will be shows in the Host tree output (General, MCS, PVS, All, None). Default is All.
+- `ExcludedClusters`: Optional **`Array`**. Clusters will be excluded from processing.
 
 ## Examples
 
@@ -52,9 +53,9 @@ The following parameters exist to drive the behaviour of the script:
 
 The script will:
 
-- Will Query Prism Central at 1.1.1.1 using a custom credential file (if it doesn't exist, it will be prompted for and saved for next time). 
-- Defaults to 1000 VMS. 
-- Logs all output to C:\Logs\PrismCentralVDIAlignment.log
+-  Will Query Prism Central at 1.1.1.1 using a custom credential file (if it doesn't exist, it will be prompted for and saved for next time). 
+-  Logs all output to C:\Logs\PrismCentralVDIAlignment.log
+-  Will output all VM details under the VM to host alignment.
 
 ```
 .\PrismCentralVDIAlignment.ps1 -pc_source 1.1.1.1
@@ -64,17 +65,51 @@ The script will:
 
 -  Will Query Prism Central at 1.1.1.1. 
 -  Credentials will be prompted for. 
--  Defaults to 1000 VMS. 
 -  Logs all output to C:\Logs\PrismCentralVDIAlignment.log
+-  Will output all VM details under the VM to host alignment.
 
 ```
-.\PrismCentralVDIAlignment.ps1 -pc_source 1.1.1.1 -AdvancedInfo -VMCount 2000
+.\PrismCentralVDIAlignment.ps1 -pc_source 1.1.1.1 -ShowDetailedVMAlignment None
 ```
 
 The script will:
 
-- Will Query Prism Central at 1.1.1.1. 
-- Credentials will be prompted for. 
-- Will verbose output Identity Disk and Provisioning Services identification info to console and log file. 
-- Will query for 2000 vms against PC. 
-- Logs all output to C:\Logs\PrismCentralVDIAlignment.log
+-  Will Query Prism Central at 1.1.1.1. 
+-  Credentials will be prompted for. 
+-  Logs all output to C:\Logs\PrismCentralVDIAlignment.log
+-  Will output only a summary view under the vm to host alignment.
+
+```
+.\PrismCentralVDIAlignment.ps1 -pc_source 1.1.1.1 -ShowDetailedVMAlignment MCS,PVS
+```
+
+The script will:
+
+-  Will Query Prism Central at 1.1.1.1. 
+-  Credentials will be prompted for. 
+-  Logs all output to C:\Logs\PrismCentralVDIAlignment.log
+-  Will output only PVS and MCS workloads under the vm to host alignment.
+
+```
+.\PrismCentralVDIAlignment.ps1 -pc_source 1.1.1.1 -ShowDetailedVMAlignment MCS,PVS -ExcludeCluster "NaughtyCluster"
+```
+
+The script will:
+
+-  Will Query Prism Central at 1.1.1.1. 
+-  Will Exclude the Cluster "NaughtyCluster"
+-  Credentials will be prompted for. 
+-  Logs all output to C:\Logs\PrismCentralVDIAlignment.log
+-  Will output only PVS and MCS workloads under the vm to host alignment.
+
+```
+.\PrismCentralVDIAlignment.ps1 -pc_source 1.1.1.1 -AdvancedInfo
+```
+
+The script will:
+
+-  Will Query Prism Central at 1.1.1.1. 
+-  Credentials will be prompted for. 
+-  Will verbose output Identity Disk and Provisioning Services identification info to console and log file. 
+-  Logs all output to C:\Logs\PrismCentralVDIAlignment.log
+-  Will output all VM details under the VM to host alignment.
