@@ -30,7 +30,7 @@ function Update-VSISlackImage {
         $SlackComment
     )
 
-    if(!(get-module | where-object {$_.Name -eq "PSSlack" })) {
+    if( -not (Get-InstalledModule PsSlack -ErrorAction silentlycontinue )) {
         install-module PSSlack -Scope CurrentUser -allowclobber -Confirm:$false -Force
         import-module PSSlack
     }

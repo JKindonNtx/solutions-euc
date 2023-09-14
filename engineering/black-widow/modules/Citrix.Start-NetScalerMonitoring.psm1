@@ -68,8 +68,12 @@ function Start-NetScalerMonitoring {
             $item | Add-Member -MemberType NoteProperty -Name "ssltransactionsrate" -Value $NetScalerStats.ssltransactionsrate -Force
             $item | Add-Member -MemberType NoteProperty -Name "ssltotecdhetransactions" -Value $NetScalerStats.ssltotecdhetransactions -Force
             $item | Add-Member -MemberType NoteProperty -Name "sslecdhetransactionsrate" -Value $NetScalerStats.sslecdhetransactionsrate -Force
+            $item | Add-Member -MemberType NoteProperty -Name "tcperrrst" -Value $NetScalerStats.tcperrrst -Force
+            $item | Add-Member -MemberType NoteProperty -Name "errdroppedrxpkts" -Value $NetScalerStats.errdroppedrxpkts -Force
+            $item | Add-Member -MemberType NoteProperty -Name "errdroppedtxpkts" -Value $NetScalerStats.errdroppedtxpkts -Force
+            $item | Add-Member -MemberType NoteProperty -Name "http11requestsrate" -Value $NetScalerStats.http11requestsrate -Force
+            $item | Add-Member -MemberType NoteProperty -Name "http11responsesrate" -Value $NetScalerStats.http11responsesrate -Force
             $item | Export-Csv -Path $NSStats -NoTypeInformation -Append
-
             $StartTimeStamp = $StartTimeStamp.AddSeconds($SampleSize)
             if ((New-TimeSpan -Start $Started -End (Get-Date)).TotalMinutes -ge ($DurationInMinutes)) { $StopMonitoring = $true }
         }

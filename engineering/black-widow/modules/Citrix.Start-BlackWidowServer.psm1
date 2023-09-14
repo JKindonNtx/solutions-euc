@@ -5,7 +5,8 @@ function Start-BlackWidowServer {
         $IP,
         $UserName,
         $Password,
-        $BWServerIP
+        $BWServerIP,
+        $NumberOfServers
     )
     
     write-progress "Starting Black Widow Server on NetScaler $($IP)"
@@ -22,7 +23,7 @@ function Start-BlackWidowServer {
     write-progress -message "Starting Black Widow Server"
     $sshStream.WriteLine("shell")
     $sshStream.WriteLine("cd /var/bw")
-    $Command = "nscsconfig -s server=1 -s serverip=$($BWServerIP) -s ka=100 -s contentlen=100 -s chunked=0 -W /var/bw/Contents -w /var/bw/WL/AllMixed.wl -ye httpsvr"
+    $Command = "nscsconfig -s server=1 -s serverip=$($BWServerIP) -s serverip_range=$($NumberOfServers) -s ka=100 -s contentlen=100 -s chunked=0 -W /var/bw/Contents -w /var/bw/WL/AllMixed.wl -ye httpsvr"
     $sshStream.WriteLine($Command)
     
     write-progress -message "Reading SSH Stream"

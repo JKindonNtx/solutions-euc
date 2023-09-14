@@ -90,8 +90,10 @@ if($BlackWidowNetScaler -and $TargetNetScaler){
     write-progress -message "Waiting 60 seconds to begin test"
     start-sleep -seconds 60
 
-    if(Start-BlackWidowServer -IP $TestConfig.NetScaler.BlackWidowIP -UserName $TestConfig.NetScaler.BlackWidowUserName -Password $TestConfig.NetScaler.BlackWidowPassword -BWServerIP $TestConfig.BlackWidow.ServerIP){
+    if(Start-BlackWidowServer -IP $TestConfig.NetScaler.BlackWidowIP -UserName $TestConfig.NetScaler.BlackWidowUserName -Password $TestConfig.NetScaler.BlackWidowPassword -BWServerIP $TestConfig.BlackWidow.ServerIP -NumberOfServers $TestConfig.BlackWidow.NumberOfServers){
         write-good -message "Black Widow Server running on IP $($TestConfig.BlackWidow.ServerIP)"
+        write-good -message "Waiting for NetScaler vServers to come online"
+        start-sleep -seconds 30
         if(Start-BlackWidowClient -Config $TestConfig -IP $TestConfig.NetScaler.BlackWidowIP -UserName $TestConfig.NetScaler.BlackWidowUserName -Password $TestConfig.NetScaler.BlackWidowPassword -BWTargetIP $TestConfig.BlackWidow.TargetvServerIP){
             write-good -message "Black Widow Client is running targetting $($TestConfig.BlackWidow.TargetvServerIP)"
             write-good -message "Load Test $($TestId) Started for a duration of $($TestConfig.General.TestDuration) minutes"
@@ -127,6 +129,10 @@ if($BlackWidowNetScaler -and $TargetNetScaler){
                 write-error -message "Could not stop the Black Widow Client"
             }
 
+            # Let Test Ramp Down
+            write-progress -message "Allowing test run to ramp down for 90 seconds"
+            start-sleep -seconds 90
+            
             # Stop Monitoring Jobs
             $NetScalerMonitoring | Stop-Job | Remove-Job  
             $VMMonitoring | Stop-Job | Remove-Job  
