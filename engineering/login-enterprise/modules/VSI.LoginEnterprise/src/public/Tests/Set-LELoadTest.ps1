@@ -85,6 +85,12 @@ function Set-LELoadTest {
                     accountGroups  = @((Get-LEAccountGroups | Where-Object { $_.Name -eq $AccountGroupName } | Select-Object -ExpandProperty groupId))
                     launcherGroups = @((Get-LELauncherGroups | Where-Object { $_.Name -eq $LauncherGroupName } | Select-Object -ExpandProperty id))
                 }
+                steps                   = @(
+                    @{
+                    type                = "AppGroupReference"
+                    applicationGroupId  = @((Get-LEApplicationGroups | Where-Object { $_.Name -Like "$($Workload)*" } | Select-Object -ExpandProperty id))
+                    isEnabled           = $true
+                    }
             } | ConvertTo-Json
         }
         "Citrix StoreFront" {
