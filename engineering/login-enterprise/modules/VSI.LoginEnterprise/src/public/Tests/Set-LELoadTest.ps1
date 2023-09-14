@@ -91,6 +91,7 @@ function Set-LELoadTest {
                     applicationGroupId  = @((Get-LEApplicationGroups | Where-Object { $_.Name -Like "$($Workload)*" } | Select-Object -ExpandProperty id))
                     isEnabled           = $true
                     }
+                )   
             } | ConvertTo-Json
         }
         "Citrix StoreFront" {
