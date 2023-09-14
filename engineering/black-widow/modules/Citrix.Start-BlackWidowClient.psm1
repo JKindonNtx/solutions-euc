@@ -27,7 +27,7 @@ function Start-BlackWidowCLient {
         write-progress -message "Starting Black Widow throughput test"
         $Command = "nscsconfig -s client=100 -s cltserverport=443 -s ssl=1 -s ssl_sess_reuse_disable=0 -s ssl_dont_parse_server_cert=1 -s ssl_client_hello_version=12 -s reqperconn=1 -s percentpers=0 -w /var/bw/WL/100konly.wl -s cltserverip=$($BWTargetIP) -s threads=$($Config.BlackWidow.Threads) -s parallelconn=$($Config.BlackWidow.ParallelConnections) -s totalsess=0 -ye start"
     } else {
-        write-progress -message "Starting Black Widow vServer test"
+        write-progress -message "Starting Black Widow transaction test"
         $Command = "nscsconfig -s client=100 -s cltserverport=443 -s ssl=1 -s ssl_sess_reuse_disable=1 -s ssl_dont_parse_server_cert=1 -s ssl_client_hello_version=12 -s reqperconn=1 -s percentpers=0 -w /var/bw/WL/1only.wl -s cltserverip=$($BWTargetIP) -s threads=$($Config.BlackWidow.Threads) -s parallelconn=$($Config.BlackWidow.ParallelConnections) -s totalsess=0 -ye start"
     }
     $sshStream.WriteLine($Command)

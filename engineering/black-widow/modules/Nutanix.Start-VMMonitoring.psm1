@@ -45,7 +45,7 @@ function Start-VMMonitoring {
             
             $Stats = "$($OutputFolder)\VM Raw.csv"
             $VMs = Invoke-PublicApiMethodv1 -Method "GET" -Path "vms" -Cvm $IP -Password $Password -UserName $UserName 
-            $NetScaler = $VMs.entities | Where-Object {$_.ipAddresses -like "*$($TargetVMIP)*" }          
+            $NetScaler = $VMs.entities | Where-Object {$_.vmName -like "*WS-NS1*" }          
             $item = New-Object PSObject  
             $item | Add-Member -MemberType NoteProperty -Name "Timestamp" -Value (Get-Date ($StartTimeStamp.ToUniversalTime()) -Format "o") -Force 
             $CPUReady = $NetScaler.stats."hypervisor.cpu_ready_time_ppm" / 10000
