@@ -484,7 +484,7 @@ function GetPCVMIncrements {
     try {
         $vm_list = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
         $vm_list = $vm_list.entities
-        Write-Log -Message "[VM Retrieval] Retrieved $($vm_list.Count) from offset $($Offset) virtual machines under PC: $($pc_source)" -Level Info
+        Write-Log -Message "[VM Retrieval] Retrieved $($vm_list.Count) virtual machines from offset $($Offset) under PC: $($pc_source)" -Level Info
         #Now we need to add them to the existing $VirtualMachinesArray
         $Global:VirtualMachines = ($Global:VirtualMachines + $vm_list)
         Write-Log -Message "[VM Retrieval] Retrieved VM Count is $($Global:VirtualMachines.Count) under PC: $($pc_source)" -Level Info
@@ -709,7 +709,7 @@ catch {
 $VirtualMachines = $VirtualMachines.entities
 
 if ($null -ne $VirtualMachines) {
-    Write-Log -Message "[VM Retrieval] Identified $($VirtualMachines.Count) virtual machines under PC: $($pc_source)" -Level Info
+    Write-Log -Message "[VM Retrieval] Retrieved $($VirtualMachines.Count) virtual machines under PC: $($pc_source)" -Level Info
 }
 else {
     Write-Log -Message "[VM Retrieval] Failed to retrieve virtual machine info from $($pc_source)" -Level Error
