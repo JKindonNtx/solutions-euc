@@ -779,17 +779,11 @@ if ($vm_total_entity_count -gt 500) {
 
 #region Handle VM Pattern Match
 if ($VM_Pattern_Match) {
-    #$VirtualMachinesPatternMatch = $VirtualMachines.entities | Where-Object { $_.status.name -like "$VM_Pattern_Match*" }
     $VirtualMachinesPatternMatch = $VirtualMachines | Where-Object { $_.status.name -like "$VM_Pattern_Match*" }
-    #$TargetCount = ($VirtualMachinesPatternMatch.status.name).count
     $TargetCount = ($VirtualMachinesPatternMatch.name).count
 }
 elseif ($IncludeList) {
-    #$VirtualMachinesIncludeMatch = $VirtualMachines.entities | Where-Object { $_.status.name -in $IncludeList }
     $VirtualMachinesIncludeMatch = $VirtualMachines | Where-Object { $_.status.name -in $IncludeList }
-    #$VirtualMachinesIncludeMatch = $VirtualMachines | Where-Object { $_.status.name -in $IncludeList }
-    $VirtualMachinesIncludeMatch = $VirtualMachines | Where-Object { $_.status.name -in $IncludeList }
-    #$TargetCount = ($VirtualMachinesIncludeMatch.status.name).count
     $TargetCount = ($VirtualMachinesIncludeMatch.status.name).count
 }
 
