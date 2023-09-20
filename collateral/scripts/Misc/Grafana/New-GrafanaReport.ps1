@@ -28,12 +28,12 @@ if($ReportTitle -eq ""){
 # Sections - Set the sections that you want in your report to $true 
 
 # Default Sections On
-$LoginEnterpriseResults = $false
+$LoginEnterpriseResults = $true
 $HostResources = $true
 $ClusterResources = $true
 $LoginTimes = $true
 $Applications = $true
-$VsiEuxMeasurements = $false
+$VsiEuxMeasurements = $true
 $RDA = $true
 
 # Default Sections Off
@@ -207,7 +207,9 @@ if ($confirmationStart -eq 'n') {
             $Var
         )
 
-        $SourceSplit = $Uri.Split("&") 
+        $SplitURL = $Uri.Split("?")
+        $VariableURL = $SplitURL[1]
+        $SourceSplit = $VariableURL.Split("&") 
 
         $i = 0
         foreach($Line in $SourceSplit){
@@ -449,12 +451,15 @@ if ($confirmationStart -eq 'n') {
         param (
             $Data
         )
+        if(!($null -eq $Data)){
+            # Trim the Data
+            $TrimmedData = $Data.Trim()
 
-        # Trim the Data
-        $TrimmedData = $Data.Trim()
-
-        # Replace Underscores
-        $Return = $TrimmedData.Replace("_", " ")
+            # Replace Underscores
+            $Return = $TrimmedData.Replace("_", " ")
+        } else {
+            $Return = "No Data"
+        }
 
         # Return the trimmed Data
         Return $Return
