@@ -37,6 +37,61 @@ $config = $configFile | ConvertFrom-Json
 $NTNXInfra = Get-NTNXinfo -Config $config
 # End Get Infra-info
 
+#region RAS param validation
+Write-Host "--------------------------------------------------------------------" -ForegroundColor Cyan
+Write-Host "RAS Specifc Setting Confirmation" -ForegroundColor Cyan
+Write-Host "--------------------------------------------------------------------" -ForegroundColor Cyan
+Write-Host "" -ForegroundColor Cyan
+Write-Host "--------------------------------------------------------------------" -ForegroundColor Cyan
+Write-Host "LE Settings" -ForegroundColor Cyan
+Write-Host "--------------------------------------------------------------------" -ForegroundColor Cyan
+Write-Host "Domain:                  $($config.Domain.NetBios)" -ForegroundColor Cyan
+Write-Host "LE Appliance:            $($config.LoginEnterprise.ApplianceURL)" -ForegroundColor Cyan
+Write-Host "LE Launcher Group:       $($config.Launchers.GroupName)" -ForegroundColor Cyan
+Write-Host "LE Launcher Naming:      $($config.Launchers.NamingPattern)" -ForegroundColor Cyan
+Write-Host "LE Test Profile:         $($config.Target.Workload)" -ForegroundColor Cyan
+Write-Host "LE Test Iterations:      $($config.Target.ImageIterations)" -ForegroundColor Cyan
+Write-Host "--------------------------------------------------------------------" -ForegroundColor Cyan
+Write-Host "Nutanix Settings" -ForegroundColor Cyan
+Write-Host "--------------------------------------------------------------------" -ForegroundColor Cyan
+Write-Host "Nutanix Host:            $($config.Target.NTNXHost)" -ForegroundColor Cyan
+Write-Host "Nutanix Node Count:      $($config.Target.NodeCount)" -ForegroundColor Cyan
+Write-Host "--------------------------------------------------------------------" -ForegroundColor Cyan
+Write-Host "RAS Resource Settings" -ForegroundColor Cyan
+Write-Host "--------------------------------------------------------------------" -ForegroundColor Cyan
+Write-Host "RAS Clone Type:          $($config.Target.CloneType)" -ForegroundColor Cyan
+Write-Host "RAS Session Config:      $($config.Target.SessionCfg)" -ForegroundColor Cyan
+Write-Host "RAS Delivery Type:       $($config.Target.DeliveryType)" -ForegroundColor Cyan
+Write-Host "RAS Version:             $($config.Target.DesktopBrokerVersion)" -ForegroundColor Cyan
+Write-Host "RAS Pool Name:           $($config.Target.DesktopPoolName)" -ForegroundColor Cyan
+if ($config.Target.DesktopPoolName -eq "#1") {Write-Host "RAS Resource is:         Windows 10 Full Clone Desktop" -ForegroundColor Cyan}
+if ($config.Target.DesktopPoolName -eq "#2") {Write-Host "RAS Resource is:         Windows 10 Linked Clone Desktop" -ForegroundColor Cyan}
+if ($config.Target.DesktopPoolName -eq "#5") {Write-Host "RAS Resource is:         Windows Server 2022 Full Clone Desktop" -ForegroundColor Cyan}
+if ($config.Target.DesktopPoolName -eq "#6") {Write-host "RAS Resource is:         Windows Server 2022 Linked Clone Desktop" -ForegroundColor Cyan}
+Write-Host "RAS First VM Name:       $($config.Target.FirstVMInPool)" -ForegroundColor Cyan
+Write-Host "--------------------------------------------------------------------" -ForegroundColor Cyan
+Write-Host "Test Sizing Settings and Details" -ForegroundColor Cyan
+Write-Host "--------------------------------------------------------------------" -ForegroundColor Cyan
+Write-Host "Minutes to wait:         $($config.Target.MinutesToWaitAfterIdleVMs)" -ForegroundColor Cyan
+Write-Host "Instance Sizing CPU:     $($config.Target.ImagesToTest.NumCPUs)" -ForegroundColor Cyan
+Write-Host "Instance Sizing Cores:   $($config.Target.ImagesToTest.NumCores)" -ForegroundColor Cyan
+Write-Host "Instance Sizing Memory:  $($config.Target.ImagesToTest.MemoryGB)" -ForegroundColor Cyan
+Write-Host "Test Duration:           $($config.Target.ImagesToTest.DurationInMinutes)" -ForegroundColor Cyan
+Write-Host "Number of Sessions       $($config.Target.ImagesToTest.NumberOfSessions)" -ForegroundColor Cyan
+Write-Host "Number of VMS:           $($config.Target.ImagesToTest.NumberOfVMs)" -ForegroundColor Cyan
+Write-Host "Power on VMS:            $($config.Target.ImagesToTest.PowerOnVMs)" -ForegroundColor Cyan
+Write-Host "Test Comment:            $($config.Target.ImagesToTest.Comment)" -ForegroundColor Cyan
+
+$answer = read-host "RAS details correct for test? yes or no? "
+if ($answer -ne "yes" -and $answer -ne "y") { 
+    Write-Host (Get-Date) "Input not confirmed. Exit" -ForegroundColor Cyan
+    Exit 0
+}
+else {
+    Write-Host (Get-Date) "Input confirmed" -ForegroundColor Cyan
+}
+#endregion RAS param validation
+
 #region RunTest
 #Set the multiplier for the Workloadtype. This adjusts the required MHz per user setting.
 ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
