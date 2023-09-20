@@ -1675,8 +1675,11 @@ from(bucket:"$($FormattedBucket)")
     if($Applications){
 
         $Title = "Applications"
+        Add-Content $mdFullFile " "
         Add-Content $mdFullFile "### $($Title)"
 
+        Add-Content $mdFullFile " "
+        
         $TableTitle = "Login Phase Performance Comparison"
         Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $TableTitle -TableData ($LoginApplicationsResults | select-object -Property Name | Get-Unique -AsString | Sort-Object -Property Name) -TableImage "<img src=../images/appsperf.png alt=$($Title)>"
 
