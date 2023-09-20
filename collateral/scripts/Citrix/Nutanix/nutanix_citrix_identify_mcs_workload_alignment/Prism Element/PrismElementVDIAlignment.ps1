@@ -573,7 +573,7 @@ $Payload = $null # we are on a get run
 try {
     Write-Log -Message "[Cluster Retrieval] Attempting to retrieve Clusters from $($pe_source )" -Level Info
     $Clusters = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
-    Write-Log -Message "[Cluster Retrieval] Sucessfully retrieved Clusters from $($pe_source )" -Level Info
+    Write-Log -Message "[Cluster Retrieval] Successfully retrieved Clusters from $($pe_source )" -Level Info
 }
 catch {
     Write-Log -Message "[Cluster Retrieval] Failed to retrieve Clusters from $($pe_source )" -Level Warn
@@ -604,7 +604,7 @@ $Payload = $null # we are on a get run
 try {
     Write-Log -Message "[Host Retrieval] Attempting to retrieve Hosts from $($pe_source)" -Level Info
     $Hosts = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
-    Write-Log -Message "[Host Retrieval] Sucessfully retrieved Hosts from $($pe_source)" -Level Info
+    Write-Log -Message "[Host Retrieval] Successfully retrieved Hosts from $($pe_source)" -Level Info
 }
 catch {
     Write-Log -Message "[Host Retrieval] Failed to retrieve Hosts from $($pe_source)" -Level Warn
@@ -639,7 +639,7 @@ $Payload = $null # we are on a get run
 try {
     Write-Log -Message "[Host Retrieval] Attempting to retrieve virtual machines from $($pe_source)" -Level Info
     $VirtualMachines = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCredentials -ErrorAction Stop
-    Write-Log -Message "[VM Retrieval] Sucessfully retrieved virtual machines from $($pe_source)" -Level Info
+    Write-Log -Message "[VM Retrieval] Successfully retrieved virtual machines from $($pe_source)" -Level Info
 }
 catch {
     Write-Log -Message "[VM Retrieval] Failed to retrieve virtual machines from $($pe_source)" -Level Warn

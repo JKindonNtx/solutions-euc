@@ -622,7 +622,7 @@ $Payload = (ConvertTo-Json $PayloadContent)
 try {
     Write-Log -Message "[Cluster Retrieval] Attempting to retrieve Clusters from $($pc_source)" -Level Info
     $Clusters = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
-    Write-Log -Message "[Cluster Retrieval] Sucessfully retrieved Clusters from $($pc_source)" -Level Info
+    Write-Log -Message "[Cluster Retrieval] Successfully retrieved Clusters from $($pc_source)" -Level Info
 }
 catch {
     Write-Log -Message "[Cluster Retrieval] Failed to retrieve Clusters from $($pc_source)" -Level Warn
@@ -656,7 +656,7 @@ $Payload = (ConvertTo-Json $PayloadContent)
 try {
     Write-Log -Message "[Host Retrieval] Attempting to retrieve Hosts from $($pc_source)" -Level Info
     $Hosts = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
-    Write-Log -Message "[Host Retrieval] Sucessfully retrieved Hosts from $($pc_source)" -Level Info
+    Write-Log -Message "[Host Retrieval] Successfully retrieved Hosts from $($pc_source)" -Level Info
 }
 catch {
     Write-Log -Message "[Host Retrieval] Failed to retrieve Hosts from $($pc_source)" -Level Warn
@@ -698,7 +698,7 @@ try {
     $VirtualMachines = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
     # We need to understand if we are above 500 machines, and if we need to loop through incremental pulls
     $vm_total_entity_count = $VirtualMachines.metadata.total_matches
-    Write-Log -Message "[VM Retrieval] Sucessfully retrieved virtual machines from $($pc_source)" -Level Info
+    Write-Log -Message "[VM Retrieval] Successfully retrieved virtual machines from $($pc_source)" -Level Info
 }
 catch {
     Write-Log -Message "[VM Retrieval] Failed to retrieve virtual machines from $($pc_source)" -Level Warn

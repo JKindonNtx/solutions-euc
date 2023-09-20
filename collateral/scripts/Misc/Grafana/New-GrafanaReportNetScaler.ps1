@@ -59,12 +59,6 @@ _____ _   _  ____   _____             _                      _
 | |___| |_| | |___  | |___| | | | (_| | | | | |  __/  __/ |  | | | | | (_| |
 |_____|\___/ \____| |_____|_| |_|\__, |_|_| |_|\___|\___|_|  |_|_| |_|\__, |
                                  |___/                                |___/ 
-____            __   _____         _   _               ____                       _   
-|  _ \ ___ _ __ / _| |_   _|__  ___| |_(_)_ __   __ _  |  _ \ ___ _ __   ___  _ __| |_ 
-| |_) / _ \ '__| |_    | |/ _ \/ __| __| | '_ \ / _` | | |_) / _ \ '_ \ / _ \| '__| __|
-|  __/  __/ |  |  _|   | |  __/\__ \ |_| | | | | (_| | |  _ <  __/ |_) | (_) | |  | |_ 
-|_|   \___|_|  |_|     |_|\___||___/\__|_|_| |_|\__, | |_| \_\___| .__/ \___/|_|   \__|
-                                                |___/            |_|                   
 "
 
 # Display the selected options selected back to the user
@@ -238,9 +232,6 @@ if ($confirmationStart -eq 'n') {
                 146 {$OutFile = Join-Path -Path $imagePath -ChildPath "ssl_total_transactions.png"}
                 147 {$OutFile = Join-Path -Path $imagePath -ChildPath "ssl_ecdhe_transaction_rate.png"}
                 148 {$OutFile = Join-Path -Path $imagePath -ChildPath "ssl_ecdhe_total_transactions.png"}
-
-                100 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_steady_state_individual_runs.png"}
-                10 {$OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_overlay.png"}
 
                 151 {$OutFile = Join-Path -Path $imagePath -ChildPath "http_request_rate.png"}
                 152 {$OutFile = Join-Path -Path $imagePath -ChildPath "http_response_rate.png"}
@@ -490,6 +481,9 @@ from(bucket:"$($FormattedBucket)")
     # End Centering
     Add-Content $mdFullFile "</div>"
 
+    # Add Page Break
+    Add-Content $mdFullFile "<div style=""page-break-after: always;""></div>"
+
     # Create the Exec Summary
     Write-Screen -Message "Adding Executive Summary"
     Add-Title -mdFullFile $mdFullFile -Title "Executive Summary"
@@ -511,6 +505,9 @@ from(bucket:"$($FormattedBucket)")
     $ReportMonth = (Get-Culture).DateTimeFormat.GetMonthName($Month)  
     $ReportYear = get-date -format "yyyy" 
     Add-Content $mdFullFile "| 1.0 | $($ReportMonth) $($ReportYear) | Original publication. |"
+
+    # Add Page Break
+    Add-Content $mdFullFile "<div style=""page-break-after: always;""></div>"
 
     # -----------------------------------------------------------------------------------------------------------------------
     # Section - Test Detail Specifics
@@ -623,6 +620,9 @@ from(bucket:"$($FormattedBucket)")
     Add-Content $mdFullFile $TestThreads
     Add-Content $mdFullFile $TestParallelConnections
 
+    # Add Page Break
+    Add-Content $mdFullFile "<div style=""page-break-after: always;""></div>"
+
     # -----------------------------------------------------------------------------------------------------------------------
     # Section - Test Results
     # -----------------------------------------------------------------------------------------------------------------------
@@ -640,7 +640,11 @@ from(bucket:"$($FormattedBucket)")
 
     Add-Content $mdFullFile " "
 
+    # Add Page Break
+    Add-Content $mdFullFile "<div style=""page-break-after: always;""></div>"
+
     $Title = "CPU Detail"
+    Add-Content $mdFullFile " "
     Add-Content $mdFullFile "### $($Title)"
 
     $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "cpu*")} | Sort-Object CreationTime
@@ -648,7 +652,11 @@ from(bucket:"$($FormattedBucket)")
 
     Add-Content $mdFullFile " "
 
+    # Add Page Break
+    Add-Content $mdFullFile "<div style=""page-break-after: always;""></div>"
+
     $Title = "Throughput Detail"
+    Add-Content $mdFullFile " "
     Add-Content $mdFullFile "### $($Title)"
 
     $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "throughput*")} | Sort-Object CreationTime
@@ -656,7 +664,11 @@ from(bucket:"$($FormattedBucket)")
 
     Add-Content $mdFullFile " "
     
+    # Add Page Break
+    Add-Content $mdFullFile "<div style=""page-break-after: always;""></div>"
+
     $Title = "SSL Detail"
+    Add-Content $mdFullFile " "
     Add-Content $mdFullFile "### $($Title)"
 
     $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "ssl*")} | Sort-Object CreationTime
@@ -664,7 +676,11 @@ from(bucket:"$($FormattedBucket)")
 
     Add-Content $mdFullFile " "
 
+    # Add Page Break
+    Add-Content $mdFullFile "<div style=""page-break-after: always;""></div>"
+
     $Title = "HTTP Detail"
+    Add-Content $mdFullFile " "
     Add-Content $mdFullFile "### $($Title)"
 
     $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "http*")} | Sort-Object CreationTime
@@ -672,13 +688,20 @@ from(bucket:"$($FormattedBucket)")
 
     Add-Content $mdFullFile " "
 
+    # Add Page Break
+    Add-Content $mdFullFile "<div style=""page-break-after: always;""></div>"
+
     $Title = "Error Detail"
+    Add-Content $mdFullFile " "
     Add-Content $mdFullFile "### $($Title)"
 
     $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq  '.png') -and ($_.Name -like "error*")} | Sort-Object CreationTime
     Add-Graphs -Source $Source -Title "Error Information" -mdFullFile $mdFullFile
 
     Add-Content $mdFullFile " "
+
+    # Add Page Break
+    Add-Content $mdFullFile "<div style=""page-break-after: always;""></div>"
 
     # -----------------------------------------------------------------------------------------------------------------------
     # Section - Conclusion
