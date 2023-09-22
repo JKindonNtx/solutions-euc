@@ -18,6 +18,8 @@
     Mandatory. The target Nutanix Cluster hosting the machines to target.
 .PARAMETER NamePattern
     Mandatory. The name pattern to match vms against. Eg. W10-RAS-LC*
+.PARAMETER IgnorePowerState
+    Optional. Delete VMs regardless of their power state
 .PARAMETER Whatif
     Optional. Will action the script in a whatif processing mode only.
 .PARAMETER APICallVerboseLogging
@@ -55,6 +57,9 @@ Param(
 
     [Parameter(Mandatory = $true)]
     [string]$NamePattern, # Pattern Match of machines to kill - Eg. W10-RAS-LC*
+
+    [Parameter(Mandatory = $false)] # ignore the Power State of the VM's and just delete
+    [switch]$IgnorePowerState,
 
     [Parameter(Mandatory = $false)]
     [switch]$UseCustomCredentialFile, # specifies that a credential file should be used
@@ -512,6 +517,7 @@ Write-Log -Message "[Script Params] Nutanix Cluster = $($SourceCluster)" -Level 
 Write-Log -Message "[Script Params] Nutanix Custom Credential File = $($UseCustomCredentialFile)" -Level Info
 Write-Log -Message "[Script Params] Nutanix Custom Credential Path = $($CredPath)" -Level Info
 Write-Log -Message "[Script Params] Nutanix VM Name Pattern Match = $($NamePattern) " -Level Info
+Write-Log -Message "[Script Params] Nutanix Ignore Power State = $($IgnorePowerState) " -Level Info
 
 #endregion script parameter reporting
 
@@ -690,8 +696,16 @@ if ($Duplicates.Count -gt 0) {
 #region Delete Virtual Machines
 
 #Filter the VM by Powerstate
-Write-Log -Message "[VM] Filtering VMs by Power State" -Level Info
-$TargetVirtualMachinesForDeletion = $Duplicates | Where-Object {$_.power_state -eq "Off"}
+if ($IgnorePowerState) {
+    # We don't care about power state
+    Write-Log -Message "[VM] We are not Filtering VMs by Power State due to IgnorePowerState being specified" -Level Info
+    $TargetVirtualMachinesForDeletion = $Duplicates
+} else {
+    # We care about power state
+    Write-Log -Message "[VM] Filtering VMs by Power State" -Level Info
+    $TargetVirtualMachinesForDeletion = $Duplicates | Where-Object {$_.power_state -eq "Off"}
+}
+
 
 $TargetVirtualMachinesForDeletion = $TargetVirtualMachinesForDeletion | Sort-Object -Property name
 
