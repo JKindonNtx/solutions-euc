@@ -29,7 +29,10 @@
     25.09.2023: Added a check for image existence. If the file exists, it will no longer be downloaded. This speeds up iterative documentation versions.
     25.09.2023: Fixed Alt Text in image additions, surrounded in "" which helps with longer image names
     25.09.2023: Moved Excluded components to Parameter based
-
+- To Do
+ -> Function this sucker - Inject between section headers
+    # Add Page Break
+    Add-Content $mdFullFile "<div style=""page-break-after: always;""></div>"
 #>
 
 #region Params
