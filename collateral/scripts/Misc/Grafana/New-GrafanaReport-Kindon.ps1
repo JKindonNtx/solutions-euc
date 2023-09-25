@@ -1,21 +1,69 @@
 <#
 .SYNOPSIS
 .DESCRIPTION
+.PARAMETER SourceUri
+    Mandatory String. The URL for the Grafana Report
+.PARAMETER ReportTitle
+    Mandatory String. The name of the report you are running
+.PARAMETER mdFile
+    Optional String. Defaults to README.MD
+.PARAMETER ImageSuffix
+    Optional String. Helps with image namign on multi run. Will add an _suffix value to each image
+.PARAMETER influxDbUrl
+.PARAMETER InfluxToken
+.PARAMETER iconsSource
+.PARAMETER ExcludedComponentList
+    Optional Array. Excludes specific items from processing. Default Exclusion is "BootInfo","IndividualRuns","NutanixFiles","CitrixNetScaler". Include "none" to Exclude none.
+.EXAMPLE
+    .\New-GrafanaReport-Kindon.ps1 -SourceUri "http://grafanareport" -ReportTitle RAS_WinServ2022_Linked_vs_Full_Clone -ImageSuffix 2022_prov
+    Will use the "http://grafanareport" Uri, create a folder structure and report based on the "RAS_WinServ2022_Linked_vs_Full_Clone" input and suffix all images with "2022_prov"
 .NOTES
-- To Do - Kindon
-    -> Fix Try Catch Handling -> Missing an ErrorAction
-    -> Fix MD output for Headings
-    -> Check for Error Handling on Image Download Functions
-    -> Cleanup Section Handling
-Fixed
- - Output Locations
- - Formatting
+- JK Additions
+    22.09.2023: Restructured script for useability
+    22.09.2023: Fixed output location settings and creation logic
+    25.09.2023: Moved inputs to params. SourceUri, ReportTitle, mdFile (defaults to README)
+    25.09.2023: Added an image suffix param which will be appended to each image. Helps with multi run documents when doing comparisons. Each test can now have unique image outputs
+    25.09.2023: Fixed Markdown formatting functions
+    25.09.2023: Fixed Try/Catch runs where they exist (added -ErrorAction handling)
+    25.09.2023: Added iterative readme file logic. If readme.md is detected, a new date stamped version will be created alongside it
+    25.09.2023: Added a check for image existence. If the file exists, it will no longer be downloaded. This speeds up iterative documentation versions.
+    25.09.2023: Fixed Alt Text in image additions, surrounded in "" which helps with longer image names
+    25.09.2023: Moved Excluded components to Parameter based
+
 #>
 
 #region Params
 # ============================================================================
 # Parameters
 # ============================================================================
+Param(
+    [Parameter(Mandatory = $true)]
+    [string]$SourceUri, # The Grafana Source Uri
+
+    [Parameter(Mandatory = $true)]
+    [string]$ReportTitle, # Title for the Report
+
+    [Parameter(Mandatory = $false)]
+    [string]$mdFile = "README.MD", # Markdown output file name
+
+    [Parameter(Mandatory = $false)]
+    [string]$ImageSuffix, #shortname for image ouput - helpful for multi run documentation. moves an image from image_name.png to image_name_suffix.png
+
+    [Parameter(Mandatory = $false)]
+    [string]$influxDbUrl = "http://10.57.64.119:8086/api/v2/query?orgID=bca5b8aeb2b51f2f",
+
+    [Parameter(Mandatory = $false)]
+    [string]$InfluxToken = "b4yxMiQGOAlR3JftuLHuqssnwo-SOisbC2O6-7od7noAE5W1MLsZxLF7e63RzvUoiOHObc9G8_YOk1rnCLNblA==",
+
+    [Parameter(Mandatory = $false)]
+    [string]$iconsSource = "http://10.57.64.119:3000/public/img/nutanix/",
+
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("LoginEnterpriseResults","HostResources","LoginTimes","Applications","VsiEuxMeasurements","VsiEuxMeasurements","RDA","BootInfo","IndividualRuns","NutanixFiles","CitrixNetScaler","None")]
+    [Array]$ExcludedComponentList = ("BootInfo","IndividualRuns","NutanixFiles","CitrixNetScaler") # Items to exclude
+
+)
+
 #endregion Params
 
 #region Functions
@@ -145,93 +193,190 @@ function Get-Graphs {
         $Uri = $UpdatedUri + "&from=1672534800000&to=$($EndTime)&panelId=$($Panel)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
 
         # Get output Filename
-        switch ($Panel) {
-            85 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time.png" }
-            84 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_individual_runs.png" }
-            86 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_cpu.png" }
-            94 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_cpu_individual_runs.png" }
-            92 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_power_usage.png" }
-            96 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_power_usage_individual_runs.png" }
-            89 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_iops.png" }
-            95 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_iops_individual_runs.png" }
-            93 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_latency.png" }
-            97 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_latency_individual_runs.png" }
-            2 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_vsi_max.png" }
-            5 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_vsi_max_individual_runs.png" }
-            8 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_base.png" }
-            4 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_base_individual_runs.png" }
-            7 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score.png" }
-            6 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_individual_runs.png" }
-            99 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_steady_state.png" }
-            100 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_steady_state_individual_runs.png" }
-            10 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_overlay.png" }
-            101 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_timer_scores.png" }
-            13 { $OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_cpu_usage.png" }
-            83 { $OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_cpu_usage_with_eux_score.png" }
-            14 { $OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_power_usage.png" }
-            9 { $OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_memory_usage.png" }
-            120 { $OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_cpu_usage.png" }
-            53 { $OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_cpu_ready.png" }
-            54 { $OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_memory_usage.png" }
-            57 { $OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_controller_iops.png" }
-            58 { $OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_controller_latency.png" }
-            61 { $OutFile = Join-Path -Path $imagePath -ChildPath "login_times_average.png" }
-            98 { $OutFile = Join-Path -Path $imagePath -ChildPath "login_times_logon_rate_per_minute.png" }
-            16 { $OutFile = Join-Path -Path $imagePath -ChildPath "login_times_total_logon_time.png" }
-            28 { $OutFile = Join-Path -Path $imagePath -ChildPath "login_times_group_policies.png" }
-            27 { $OutFile = Join-Path -Path $imagePath -ChildPath "login_times_user_profile_load.png" }
-            29 { $OutFile = Join-Path -Path $imagePath -ChildPath "login_times_connection.png" }
-            66 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_eux_score.png" }
-            67 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_host_cpu_usage.png" }
-            68 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_controller_iops.png" }
-            70 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_total_logon_time.png" }
-            69 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_controller_latency.png" }
-            31 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_start.png" }
-            32 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_open_doc.png" }
-            33 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_save_file.png" }
-            34 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_open_window.png" }
-            37 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint_start.png" }
-            38 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint_save_file.png" }
-            39 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint_open_window.png" }
-            40 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint__open_file.png" }
-            36 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_start.png" }
-            42 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_save_file.png" }
-            44 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_open_window.png" }
-            43 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_open_file.png" }
-            35 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_microsoft_edge_logon.png" }
-            41 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_outlook_start.png" }
-            102 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_microsoft_edge_page_load.png" }
-            15 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_high_compression.png" }
-            30 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_cpu_speed.png" }
-            45 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_app_speed.png" }
-            46 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_app_speed_user_input.png" }
-            47 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_appdata.png" }
-            48 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_appdata_latency.png" }
-            49 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_my_docs.png" }
-            50 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_my_docs_latency.png" }
-            71 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_iops.png" }
-            77 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_latency.png" }
-            78 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_throughput.png" }
-            79 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_connections_and_number_of_files.png" }
-            80 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_management_cpu.png" }
-            81 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_packet_engine_cpu.png" }
-            82 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_memory_usage.png" }
-            104 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_network_throughput.png" }
-            105 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_packets.png" }
-            103 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_connections.png" }
-            106 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_request_and_response.png" }
-            110 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_fps.png" }
-            111 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_latency.png" }
-            112 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_rtt.png" }
-            115 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_display_protocol_cpu_usage.png" }
-            113 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_bandwidth_output.png" }
-            116 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_display_protocol_ram_usage.png" }
-            117 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_available_bandwidth.png" }
-            114 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_available_bandwidth_edt.png" }
+        if (!$ImageSuffix) {
+            # Use default image names
+            switch ($Panel) {
+                85 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time.png" }
+                84 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_individual_runs.png" }
+                86 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_cpu.png" }
+                94 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_cpu_individual_runs.png" }
+                92 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_power_usage.png" }
+                96 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_power_usage_individual_runs.png" }
+                89 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_iops.png" }
+                95 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_iops_individual_runs.png" }
+                93 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_latency.png" }
+                97 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_latency_individual_runs.png" }
+                2 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_vsi_max.png" }
+                5 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_vsi_max_individual_runs.png" }
+                8 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_base.png" }
+                4 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_base_individual_runs.png" }
+                7 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score.png" }
+                6 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_individual_runs.png" }
+                99 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_steady_state.png" }
+                100 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_steady_state_individual_runs.png" }
+                10 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_overlay.png" }
+                101 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_timer_scores.png" }
+                13 { $OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_cpu_usage.png" }
+                83 { $OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_cpu_usage_with_eux_score.png" }
+                14 { $OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_power_usage.png" }
+                9 { $OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_memory_usage.png" }
+                120 { $OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_cpu_usage.png" }
+                53 { $OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_cpu_ready.png" }
+                54 { $OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_memory_usage.png" }
+                57 { $OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_controller_iops.png" }
+                58 { $OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_controller_latency.png" }
+                61 { $OutFile = Join-Path -Path $imagePath -ChildPath "login_times_average.png" }
+                98 { $OutFile = Join-Path -Path $imagePath -ChildPath "login_times_logon_rate_per_minute.png" }
+                16 { $OutFile = Join-Path -Path $imagePath -ChildPath "login_times_total_logon_time.png" }
+                28 { $OutFile = Join-Path -Path $imagePath -ChildPath "login_times_group_policies.png" }
+                27 { $OutFile = Join-Path -Path $imagePath -ChildPath "login_times_user_profile_load.png" }
+                29 { $OutFile = Join-Path -Path $imagePath -ChildPath "login_times_connection.png" }
+                66 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_eux_score.png" }
+                67 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_host_cpu_usage.png" }
+                68 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_controller_iops.png" }
+                70 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_total_logon_time.png" }
+                69 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_controller_latency.png" }
+                31 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_start.png" }
+                32 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_open_doc.png" }
+                33 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_save_file.png" }
+                34 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_open_window.png" }
+                37 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint_start.png" }
+                38 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint_save_file.png" }
+                39 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint_open_window.png" }
+                40 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint__open_file.png" }
+                36 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_start.png" }
+                42 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_save_file.png" }
+                44 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_open_window.png" }
+                43 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_open_file.png" }
+                35 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_microsoft_edge_logon.png" }
+                41 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_outlook_start.png" }
+                102 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_microsoft_edge_page_load.png" }
+                15 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_high_compression.png" }
+                30 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_cpu_speed.png" }
+                45 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_app_speed.png" }
+                46 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_app_speed_user_input.png" }
+                47 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_appdata.png" }
+                48 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_appdata_latency.png" }
+                49 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_my_docs.png" }
+                50 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_my_docs_latency.png" }
+                71 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_iops.png" }
+                77 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_latency.png" }
+                78 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_throughput.png" }
+                79 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_connections_and_number_of_files.png" }
+                80 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_management_cpu.png" }
+                81 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_packet_engine_cpu.png" }
+                82 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_memory_usage.png" }
+                104 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_network_throughput.png" }
+                105 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_packets.png" }
+                103 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_connections.png" }
+                106 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_request_and_response.png" }
+                110 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_fps.png" }
+                111 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_latency.png" }
+                112 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_rtt.png" }
+                115 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_display_protocol_cpu_usage.png" }
+                113 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_bandwidth_output.png" }
+                116 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_display_protocol_ram_usage.png" }
+                117 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_available_bandwidth.png" }
+                114 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_available_bandwidth_edt.png" }
+            }
+        }
+        else {
+            # Use suffixed image names
+            $ImageSuffix = $ImageSuffix.ToLower()
+            switch ($Panel) {
+                85 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_$($ImageSuffix).png" }
+                84 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_individual_runs_$($ImageSuffix).png" }
+                86 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_cpu_$($ImageSuffix).png" }
+                94 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_cpu_individual_runs_$($ImageSuffix).png" }
+                92 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_power_usage_$($ImageSuffix).png" }
+                96 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_host_power_usage_individual_runs_$($ImageSuffix).png" }
+                89 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_iops_$($ImageSuffix).png" }
+                95 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_iops_individual_runs_$($ImageSuffix).png" }
+                93 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_latency_$($ImageSuffix).png" }
+                97 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_latency_individual_runs_$($ImageSuffix).png" }
+                2 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_vsi_max_$($ImageSuffix).png" }
+                5 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_vsi_max_individual_runs_$($ImageSuffix).png" }
+                8 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_base_$($ImageSuffix).png" }
+                4 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_base_individual_runs_$($ImageSuffix).png" }
+                7 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_$($ImageSuffix).png" }
+                6 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_individual_runs_$($ImageSuffix).png" }
+                99 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_steady_state_$($ImageSuffix).png" }
+                100 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_steady_state_individual_runs_$($ImageSuffix).png" }
+                10 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_score_overlay_$($ImageSuffix).png" }
+                101 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_eux_timer_scores_$($ImageSuffix).png" }
+                13 { $OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_cpu_usage_$($ImageSuffix).png" }
+                83 { $OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_cpu_usage_with_eux_score_$($ImageSuffix).png" }
+                14 { $OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_power_usage_$($ImageSuffix).png" }
+                9 { $OutFile = Join-Path -Path $imagePath -ChildPath "host_resources_memory_usage_$($ImageSuffix).png" }
+                120 { $OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_cpu_usage_$($ImageSuffix).png" }
+                53 { $OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_cpu_ready_$($ImageSuffix).png" }
+                54 { $OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_memory_usage_$($ImageSuffix).png" }
+                57 { $OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_controller_iops_$($ImageSuffix).png" }
+                58 { $OutFile = Join-Path -Path $imagePath -ChildPath "cluster_resources_controller_latency_$($ImageSuffix).png" }
+                61 { $OutFile = Join-Path -Path $imagePath -ChildPath "login_times_average_$($ImageSuffix).png" }
+                98 { $OutFile = Join-Path -Path $imagePath -ChildPath "login_times_logon_rate_per_minute_$($ImageSuffix).png" }
+                16 { $OutFile = Join-Path -Path $imagePath -ChildPath "login_times_total_logon_time_$($ImageSuffix).png" }
+                28 { $OutFile = Join-Path -Path $imagePath -ChildPath "login_times_group_policies_$($ImageSuffix).png" }
+                27 { $OutFile = Join-Path -Path $imagePath -ChildPath "login_times_user_profile_load_$($ImageSuffix).png" }
+                29 { $OutFile = Join-Path -Path $imagePath -ChildPath "login_times_connection_$($ImageSuffix).png" }
+                66 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_eux_score_$($ImageSuffix).png" }
+                67 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_host_cpu_usage_$($ImageSuffix).png" }
+                68 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_controller_iops_$($ImageSuffix).png" }
+                70 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_total_logon_time_$($ImageSuffix).png" }
+                69 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_controller_latency_$($ImageSuffix).png" }
+                31 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_start_$($ImageSuffix).png" }
+                32 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_open_doc_$($ImageSuffix).png" }
+                33 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_save_file_$($ImageSuffix).png" }
+                34 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_open_window_$($ImageSuffix).png" }
+                37 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint_start_$($ImageSuffix).png" }
+                38 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint_save_file_$($ImageSuffix).png" }
+                39 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint_open_window_$($ImageSuffix).png" }
+                40 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_powerpoint__open_file_$($ImageSuffix).png" }
+                36 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_start_$($ImageSuffix).png" }
+                42 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_save_file_$($ImageSuffix).png" }
+                44 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_open_window_$($ImageSuffix).png" }
+                43 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_excel_open_file_$($ImageSuffix).png" }
+                35 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_microsoft_edge_logon_$($ImageSuffix).png" }
+                41 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_outlook_start_$($ImageSuffix).png" }
+                102 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_microsoft_edge_page_load_$($ImageSuffix).png" }
+                15 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_high_compression_$($ImageSuffix).png" }
+                30 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_cpu_speed_$($ImageSuffix).png" }
+                45 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_app_speed_$($ImageSuffix).png" }
+                46 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_app_speed_user_input_$($ImageSuffix).png" }
+                47 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_appdata_$($ImageSuffix).png" }
+                48 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_appdata_latency_$($ImageSuffix).png" }
+                49 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_my_docs_$($ImageSuffix).png" }
+                50 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_my_docs_latency_$($ImageSuffix).png" }
+                71 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_iops_$($ImageSuffix).png" }
+                77 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_latency_$($ImageSuffix).png" }
+                78 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_throughput_$($ImageSuffix).png" }
+                79 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_connections_and_number_of_files_$($ImageSuffix).png" }
+                80 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_management_cpu_$($ImageSuffix).png" }
+                81 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_packet_engine_cpu_$($ImageSuffix).png" }
+                82 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_memory_usage_$($ImageSuffix).png" }
+                104 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_network_throughput_$($ImageSuffix).png" }
+                105 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_packets_$($ImageSuffix).png" }
+                103 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_connections_$($ImageSuffix).png" }
+                106 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_load_balancer_request_and_response_$($ImageSuffix).png" }
+                110 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_fps_$($ImageSuffix).png" }
+                111 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_latency_$($ImageSuffix).png" }
+                112 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_rtt_$($ImageSuffix).png" }
+                115 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_display_protocol_cpu_usage_$($ImageSuffix).png" }
+                113 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_bandwidth_output_$($ImageSuffix).png" }
+                116 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_display_protocol_ram_usage_$($ImageSuffix).png" }
+                117 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_available_bandwidth_$($ImageSuffix).png" }
+                114 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_available_bandwidth_edt_$($ImageSuffix).png" }
+            }
         }
 
         # Download the image
-        Get-UriFile -Uri $Uri -outfile $OutFile
+        ## Test it first
+        if (Test-Path -Path $OutFile) {
+            Write-Screen -Message "Image File $($OutFile) already exists. Not downloading. Delete the file if you want to re-download it"
+        }
+        else {
+            Get-UriFile -Uri $Uri -outfile $OutFile
+        }
     }
 } # Get Grafana Graphs
 
@@ -245,7 +390,9 @@ function Add-TableHeaders {
 
     # Add the table title
     Write-Screen -Message "Adding Table Header for $($TableTitle)"
+    Add-Content $mdFullFile " "
     Add-Content $mdFullFile "### $($TableTitle)"
+    Add-Content $mdFullFile " "
 
     # Add the Table Headers
     $HeaderLine = ""
@@ -296,6 +443,7 @@ function Add-Title {
 
     Add-Content $mdFullFile ""
     Add-Content $mdFullFile "## <span style=""color:#7855FA"">$($Title)</span>"
+    Add-Content $mdFullFile ""
 } # Add Title Text
 
 function Add-Graphs {
@@ -315,9 +463,12 @@ function Add-Graphs {
         $TitleRaw = ($Image.BaseName).Replace("_", " ")
         $Title = (Get-Culture).TextInfo.ToTitleCase($TitleRaw)
         $Path = "../images/$($Image.BaseName).png"
-        $Link = "<img src=$($Path) alt=$($Title) style=""border: 2px solid #7855FA;"">"
+        $Link = "<img src=$($Path) alt=""$($Title)"" style=""border: 2px solid #7855FA;"">"
         Add-Content $mdFullFile "$($Link)"
     }
+
+    Add-Content $mdFullFile " "
+
 } # Add the Graphs
 
 #endregion Functions
@@ -326,7 +477,6 @@ function Add-Graphs {
 # ============================================================================
 # Variables
 # ============================================================================
-$mdFile = "README.MD"
 # -----------------------------------------------------------------------------------------------------------------------
 # Section - Define Script Variables - to do - PDF / Logo image / Script Params and Switches for false items
 # -----------------------------------------------------------------------------------------------------------------------
@@ -336,22 +486,21 @@ $maxLength = 65536
 
 #region Report Sections
 # -----------------------------------------------------------------------------------------------------------------------
-# Sections - Set the sections that you want in your report to $true 
+# Sections 
 # -----------------------------------------------------------------------------------------------------------------------
-# Default Sections On
-$LoginEnterpriseResults = $true
-$HostResources = $true
-$ClusterResources = $true
-$LoginTimes = $true
-$Applications = $true
-$VsiEuxMeasurements = $true
-$RDA = $true
 
-# Default Sections Off
-$BootInfo = $false
-$IndividualRuns = $false
-$NutanixFiles = $false
-$CitrixNetScaler = $false
+if ( $ExcludedComponentList -contains "None" ) {$ExcludedComponentList -eq $null} # Include Everything
+
+if ( $ExcludedComponentList -notcontains "LoginEnterpriseResults" ) { $LoginEnterpriseResults = $true } else { $LoginEnterpriseResults = $false }
+if ( $ExcludedComponentList -notcontains "HostResources" ) { $HostResources = $true } else { $HostResources = $false }
+if ( $ExcludedComponentList -notcontains "LoginTimes" ) { $LoginTimes = $true } else { $LoginTimes = $false }
+if ( $ExcludedComponentList -notcontains "Applications" ) { $Applications = $true } else { $Applications = $false }
+if ( $ExcludedComponentList -notcontains "VsiEuxMeasurements" ) { $VsiEuxMeasurements = $true } else { $VsiEuxMeasurements = $false }
+if ( $ExcludedComponentList -notcontains "RDA" ) { $RDA = $true } else { $RDA = $false }
+if ( $ExcludedComponentList -notcontains "BootInfo" ) { $BootInfo = $true } else { $BootInfo = $false }
+if ( $ExcludedComponentList -notcontains "IndividualRuns" ) { $IndividualRuns = $true } else { $IndividualRuns = $false }
+if ( $ExcludedComponentList -notcontains "NutanixFiles" ) { $NutanixFiles = $true } else { $NutanixFiles = $false }
+if ( $ExcludedComponentList -notcontains "CitrixNetScaler" ) { $CitrixNetScaler = $true } else { $CitrixNetScaler = $false }
 
 #endregion Report Sections
 
@@ -363,6 +512,7 @@ $CitrixNetScaler = $false
 #region Boilerplate Intro
 $BoilerPlateIntroduction = @"
 This document is part of the Nutanix Solutions Architecture Artifacts. We wrote it for individuals responsible for designing, building, managing, testing and supporting Nutanix infrastructures. Readers should be familiar with Nutanix and Citrix products as well as familiar with Login Enterprise testing.
+
 "@
 #endregion Boilerplate Intro
 
@@ -460,9 +610,9 @@ This document is part of the Nutanix Solutions Architecture Artifacts. We wrote 
 
 #endregion Boilerplates
 
-$influxDbUrl = "http://10.57.64.119:8086/api/v2/query?orgID=bca5b8aeb2b51f2f"
-$InfluxToken = "b4yxMiQGOAlR3JftuLHuqssnwo-SOisbC2O6-7od7noAE5W1MLsZxLF7e63RzvUoiOHObc9G8_YOk1rnCLNblA=="
-$iconsSource = "http://10.57.64.119:3000/public/img/nutanix/"
+#$influxDbUrl = "http://10.57.64.119:8086/api/v2/query?orgID=bca5b8aeb2b51f2f"
+#$InfluxToken = "b4yxMiQGOAlR3JftuLHuqssnwo-SOisbC2O6-7od7noAE5W1MLsZxLF7e63RzvUoiOHObc9G8_YOk1rnCLNblA=="
+#$iconsSource = "http://10.57.64.119:3000/public/img/nutanix/"
 
 #endregion Variables
 
@@ -470,28 +620,6 @@ $iconsSource = "http://10.57.64.119:3000/public/img/nutanix/"
 # ============================================================================
 # Execute
 # ============================================================================
-Write-Host "Setup Script Parameters"
-
-#region prompt for input
-
-# Source Uri - This is the Uri for the Grafana Dashboard you want the report for
-Write-Host "Enter the Uri from Grafana that you would like the Test Report for"
-$SourceUri = [System.Console]::ReadLine()
-
-if($SourceUri -eq ""){
-    write-host "You MUST enter a Source Uri"
-    break
-}
-
-# Report Title - This is the Title that you want for your report
-Write-Host "Enter the Report Title"
-$ReportTitle = [System.Console]::ReadLine()
-
-if($ReportTitle -eq ""){
-    write-host "You MUST enter a Report Title"
-    break
-}
-#endregion prompt for input
 
 # -----------------------------------------------------------------------------------------------------------------------
 # Section - Display Options and Start Report
@@ -504,7 +632,7 @@ $Directory = (Get-Culture).TextInfo.ToTitleCase($ReportTitle) -Replace " "
 $Directory = "Reports\" + $Directory
 $ImagePath = $Directory + "\images"
 $md = $Directory + "\md"
-$mdFullFile = $md + "\README.MD"
+$mdFullFile = $md + "\" + $mdFile
 
 if (!(Test-Path -Path $Directory)) {
     Write-Screen -Message "Directory: $($Directory) Does Not Exist, Creating"
@@ -542,8 +670,22 @@ if (!(Test-Path -Path $mdFullFile)) {
     }
 }
 else {
-    Write-Screen -Message "Markdown File: $($mdFile) Already Exists, Please Delete and Re-run Script"
-    break
+    ## Create a new one with a date stamp
+    Write-Screen -Message "Markdown File: $($mdFile) Already exists, creating a new file with a date stamp"
+    try {
+        $dateTime = Get-Date
+        $formattedDateTime = $dateTime.ToString("yyyy-MM-dd_HH-mm-ss")
+        $NewMDFile = ($mdFile + "_" + $formattedDateTime + ".MD")
+        $NewMDFile = $NewMDFile -replace "README.MD","README"
+        $mdOutput = New-Item -path $md -Name $NewMDFile -ErrorAction Stop
+        $mdFullFile = $md + "\" + $NewMDFile
+        Write-Screen -Message "Markdown file is $($mdFullFile)"
+    }
+    catch {
+        Write-Warning "Failed to create markdown file"
+        Write-Warning $_
+        Exit 1
+    }
 }
 
 #endregion Create Report File
@@ -570,8 +712,10 @@ ____            __   _____         _   _               ____                     
 Write-Host "
 --------------------------------------------------------------------------------------------------------"
 Write-Host "Report Title:                  $($ReportTitle)"
+Write-Host "Report Source URI:             $($SourceUri)"
 Write-Host "Report Markdown File:          $($mdFullFile)"
 Write-Host "Images Output Path:            $($ImagePath)"
+Write-Host "Images Output Suffix:          $($ImageSuffix)"
 Write-Host "Sections Selected:"
 Write-Host "BootInfo:                      $($BootInfo)"
 Write-Host "Login Enterprise Results:      $($LoginEnterpriseResults)"
@@ -584,6 +728,7 @@ Write-Host "Applications:                  $($Applications)"
 Write-Host "Vsi Eux Measurements:          $($VsiEuxMeasurements)"
 Write-Host "Nutanix Files:                 $($NutanixFiles)"
 Write-Host "Citrix NetScaler:              $($CitrixNetScaler)"
+Write-Host "Sections Excluded by Param     $($ExcludedComponentList)"
 Write-Host "
 --------------------------------------------------------------------------------------------------------"
 #endregion SnazzyHeader
@@ -652,7 +797,7 @@ Write-Screen -Message "Build Body Payload based on Uri Variables"
 # Get the test details table from Influx and Split into individual lines
 try{
     Write-Screen -Message "Get Test Details from Influx API"
-    $TestDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $Body
+    $TestDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $Body -ErrorAction Stop
 } catch {
     Write-Screen -Message "Error Getting Test Details from Influx API"
     break
@@ -694,7 +839,7 @@ Write-Screen -Message "Build Body Payload based on Uri Variables"
 # Get the test details table from Influx and Split into individual lines
 try {
     Write-Screen -Message "Get EUX Base Details from Influx API"
-    $EUXBaseDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $EUXBaseBody
+    $EUXBaseDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $EUXBaseBody -ErrorAction Stop
 }
 catch {
     Write-Screen -Message "Error Getting EUX Base Details from Influx API"
@@ -736,7 +881,7 @@ Write-Screen -Message "Build Body Payload based on Uri Variables"
 # Get the test details table from Influx and Split into individual lines
 try {
     Write-Screen -Message "Get Steady State EUX Details from Influx API"
-    $SSEUXDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $SSEUXBody
+    $SSEUXDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $SSEUXBody -ErrorAction Stop
 }
 catch {
     Write-Screen -Message "Error Getting Steady State EUX Details from Influx API"
@@ -778,7 +923,7 @@ Write-Screen -Message "Build Body Payload based on Uri Variables"
     # Get the test details table from Influx and Split into individual lines
 try {
     Write-Screen -Message "Get Steady State Host CPU Details from Influx API"
-    $SSHostCPUDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $SSHostCPUBody
+    $SSHostCPUDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $SSHostCPUBody -ErrorAction Stop
 }
 catch {
     Write-Screen -Message "Error Getting Steady State Host CPU Details from Influx API"
@@ -820,7 +965,7 @@ Write-Screen -Message "Build Body Payload based on Uri Variables"
 # Get the test details table from Influx and Split into individual lines
 try {
     Write-Screen -Message "Get Steady State Cluster CPU Details from Influx API"
-    $SSClusterCPUDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $SSClusterCPUBody
+    $SSClusterCPUDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $SSClusterCPUBody -ErrorAction Stop
 }
 catch {
     Write-Screen -Message "Error Getting Steady State Cluster CPU Details from Influx API"
@@ -860,7 +1005,7 @@ from(bucket:"$($FormattedBucket)")
     # Get the test details table from Influx and Split into individual lines
     try{
         Write-Screen -Message "Get Remote Display Analytics Details from Influx API"
-        $RDADetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $RDABody
+        $RDADetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $RDABody -ErrorAction Stop
     } catch {
         Write-Screen -Message "Error Getting Remote Display Analytics Details from Influx API"
         break
@@ -902,7 +1047,7 @@ from(bucket:"$($FormattedBucket)")
     # Get the test details table from Influx and Split into individual lines
     try{
         Write-Screen -Message "Get Login Application Details from Influx API"
-        $LoginApplicationsDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $LoginApplicationsBody
+        $LoginApplicationsDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $LoginApplicationsBody -ErrorAction Stop
     } catch {
         Write-Screen -Message "Error Getting Login Application Details from Influx API"
         break
@@ -944,7 +1089,7 @@ from(bucket:"$($FormattedBucket)")
     # Get the test details table from Influx and Split into individual lines
     try{
         Write-Screen -Message "Get Steady State Application Details from Influx API"
-        $SSApplicationsDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $SSApplicationsBody
+        $SSApplicationsDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $SSApplicationsBody -ErrorAction Stop
     } catch {
         Write-Screen -Message "Error Getting Steady State Application Details from Influx API"
         break
@@ -1210,12 +1355,16 @@ Add-Content $mdFullFile "$($BoilerPlateExecSummary)"
 Write-Screen -Message "Adding Introduction"
 Add-Title -mdFullFile $mdFullFile -Title "Introduction"
 Add-Content $mdFullFile "### Audience"
+Add-Content $mdFullFile " "
 Add-Content $mdFullFile "$($BoilerPlateIntroduction)"
 Add-Content $mdFullFile "### Purpose"
+Add-Content $mdFullFile " "
 Add-Content $mdFullFile "This document covers the following subject areas:"
 Add-Content $mdFullFile " - Test Detail Specifics."
 Add-Content $mdFullFile " - Test Results for $($ReportTitle)."
+Add-Content $mdFullFile "  "
 Add-Content $mdFullFile "### Document Version History "
+Add-Content $mdFullFile "  "
 Add-Content $mdFullFile "| Version Number | Published | Notes |"
 Add-Content $mdFullFile "| :---: | --- | --- |"
 $Month = get-date -format "MM"
@@ -1308,7 +1457,7 @@ $InfraFiltered = $TestDetailResults | Select Name, measurement, infraaosversion,
 # Add the Table Header
 Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/infrastructure.png alt=$($Title)>"
 
-    # Build the Table Dataset
+# Build the Table Dataset
 Write-Screen -Message "Building $($Title) Data"
 [string]$infraaosversion = "| **OS Version** | "
 [string]$infrafullversion = "| **OS Full Version** | "
@@ -1480,6 +1629,7 @@ Add-Content $mdFullFile $workload
 # Test Specifics
 # -----------------------------------------------------------------------------------------------------------------------
 $Title = "Test Specifics"
+Add-Content $mdFullFile " " 
 Write-Screen -Message "Adding $($Title)"
 
 # Get Filtered Data
@@ -1526,6 +1676,7 @@ Add-Title -mdFullFile $mdFullFile -Title "Test Results"
 if ($BootInfo) {
 
     $Title = "Boot Information"
+    Add-Content $mdFullFile " " 
     Add-Content $mdFullFile "### $($Title)"
 
     # Add Boot Information Table
@@ -1569,6 +1720,7 @@ if ($BootInfo) {
 if ($LoginEnterpriseResults) {
 
     $Title = "Login Enterprise"
+    Add-Content $mdFullFile " " 
     Add-Content $mdFullFile "### $($Title)"
 
     Add-Content $mdFullFile " "
@@ -1624,6 +1776,7 @@ if ($LoginEnterpriseResults) {
 if ($HostResources) {
 
     $Title = "Host Resources"
+    Add-Content $mdFullFile " " 
     Add-Content $mdFullFile "### $($Title)"
 
     Add-Content $mdFullFile " "
@@ -1711,8 +1864,7 @@ if ($RDA) {
     $Title = "Remote Display Analytics"
     Add-Content $mdFullFile "### $($Title)"
 
-    # Add Boot Information Table
-    $Title = "Remote Display Specifications"
+    # Add Information Table
     Write-Screen -Message "Adding $($Title)"
 
     # Get Filtered Data
