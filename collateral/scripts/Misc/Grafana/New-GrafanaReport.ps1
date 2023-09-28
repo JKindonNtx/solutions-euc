@@ -15,7 +15,7 @@
 .PARAMETER ExcludedComponentList
     Optional Array. Excludes specific items from processing. Default Exclusion is "BootInfo","IndividualRuns","NutanixFiles","CitrixNetScaler". Include "none" to Exclude none.
 .EXAMPLE
-    .\New-GrafanaReport-Kindon.ps1 -SourceUri "http://grafanareport" -ReportTitle RAS_WinServ2022_Linked_vs_Full_Clone -ImageSuffix 2022_prov
+    .\New-GrafanaReport.ps1 -SourceUri "http://grafanareport" -ReportTitle RAS_WinServ2022_Linked_vs_Full_Clone -ImageSuffix 2022_prov
     Will use the "http://grafanareport" Uri, create a folder structure and report based on the "RAS_WinServ2022_Linked_vs_Full_Clone" input and suffix all images with "2022_prov"
 .NOTES
 - JK Additions
