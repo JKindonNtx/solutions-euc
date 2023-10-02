@@ -1000,22 +1000,23 @@ from(bucket:"$($FormattedBucket)")
 |> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, "Screen Resolution": r.screenResolutionid,"Moving Image Compression": r.movingImageCompressionConfigurationid,"Preferred ColorDepth": r.preferredColorDepthid,"Video Codec": r.videoCodecid,"Video Codec Use": r.VideoCodecUseid,"Video Codec Text Optimization": r.VideoCodecTextOptimizationid,"Video Codec Colorspace": r.VideoCodecColorspaceid,"Video Codec Type": r.VideoCodecTypeid,"Hardware Encode Enabled": r.HardwareEncodeEnabledid,"Visual Quality": r.VisualQualityid,"Max FPS": r.FramesperSecondid,"EDT In Use": r.EDTInUseId}))
 "@
 
-    Write-Screen -Message "Build Body Payload based on Uri Variables"
+Write-Screen -Message "Build Body Payload based on Uri Variables"
 
-    # Get the test details table from Influx and Split into individual lines
-    try{
-        Write-Screen -Message "Get Remote Display Analytics Details from Influx API"
-        $RDADetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $RDABody -ErrorAction Stop
-    } catch {
-        Write-Screen -Message "Error Getting Remote Display Analytics Details from Influx API"
-        break
-    }
+# Get the test details table from Influx and Split into individual lines
+try {
+    Write-Screen -Message "Get Remote Display Analytics Details from Influx API"
+    $RDADetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $RDABody -ErrorAction Stop
+}
+catch {
+    Write-Screen -Message "Error Getting Remote Display Analytics Details from Influx API"
+    break
+}
 
-    # Get Test Detail Payload Index
-    $RDADetailsOrder = Get-PayloadIndex -TestDetails $RDADetails
+# Get Test Detail Payload Index
+$RDADetailsOrder = Get-PayloadIndex -TestDetails $RDADetails
 
-    # Build the Test Detail Results Array
-    $RDADetailsResults = Get-PayloadResults -TestDetails $RDADetails -Order $RDADetailsOrder
+# Build the Test Detail Results Array
+$RDADetailsResults = Get-PayloadResults -TestDetails $RDADetails -Order $RDADetailsOrder
 
 #endregion Build Body RDA Data
 
@@ -1042,22 +1043,23 @@ from(bucket:"$($FormattedBucket)")
 |> sort(columns: ["Name", "measurement"])
 "@
 
-    Write-Screen -Message "Build Body Payload based on Uri Variables"
+Write-Screen -Message "Build Body Payload based on Uri Variables"
 
-    # Get the test details table from Influx and Split into individual lines
-    try{
-        Write-Screen -Message "Get Login Application Details from Influx API"
-        $LoginApplicationsDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $LoginApplicationsBody -ErrorAction Stop
-    } catch {
-        Write-Screen -Message "Error Getting Login Application Details from Influx API"
-        break
-    }
+# Get the test details table from Influx and Split into individual lines
+try {
+    Write-Screen -Message "Get Login Application Details from Influx API"
+    $LoginApplicationsDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $LoginApplicationsBody -ErrorAction Stop
+}
+catch {
+    Write-Screen -Message "Error Getting Login Application Details from Influx API"
+    break
+}
 
-    # Get Test Detail Payload Index
-    $LoginApplicationsOrder = Get-PayloadIndex -TestDetails $LoginApplicationsDetails
+# Get Test Detail Payload Index
+$LoginApplicationsOrder = Get-PayloadIndex -TestDetails $LoginApplicationsDetails
 
-    # Build the Test Detail Results Array
-    $LoginApplicationsResults = Get-PayloadResults -TestDetails $LoginApplicationsDetails -Order $LoginApplicationsOrder
+# Build the Test Detail Results Array
+$LoginApplicationsResults = Get-PayloadResults -TestDetails $LoginApplicationsDetails -Order $LoginApplicationsOrder
 
 #endregion Build Body Application score
 
@@ -1084,22 +1086,23 @@ from(bucket:"$($FormattedBucket)")
 |> sort(columns: ["Name", "measurement"])
 "@
 
-    Write-Screen -Message "Build Body Payload based on Uri Variables"
+Write-Screen -Message "Build Body Payload based on Uri Variables"
 
-    # Get the test details table from Influx and Split into individual lines
-    try{
-        Write-Screen -Message "Get Steady State Application Details from Influx API"
-        $SSApplicationsDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $SSApplicationsBody -ErrorAction Stop
-    } catch {
-        Write-Screen -Message "Error Getting Steady State Application Details from Influx API"
-        break
-    }
+# Get the test details table from Influx and Split into individual lines
+try {
+    Write-Screen -Message "Get Steady State Application Details from Influx API"
+    $SSApplicationsDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $SSApplicationsBody -ErrorAction Stop
+}
+catch {
+    Write-Screen -Message "Error Getting Steady State Application Details from Influx API"
+    break
+}
 
-    # Get Test Detail Payload Index
-    $SSApplicationsOrder = Get-PayloadIndex -TestDetails $SSApplicationsDetails
+# Get Test Detail Payload Index
+$SSApplicationsOrder = Get-PayloadIndex -TestDetails $SSApplicationsDetails
 
-    # Build the Test Detail Results Array
-    $SSApplicationsResults = Get-PayloadResults -TestDetails $SSApplicationsDetails -Order $SSApplicationsOrder
+# Build the Test Detail Results Array
+$SSApplicationsResults = Get-PayloadResults -TestDetails $SSApplicationsDetails -Order $SSApplicationsOrder
 
 #endregion Build Body Steady state Application score
 
@@ -1126,22 +1129,23 @@ from(bucket:"$($FormattedBucket)")
 |> sort(columns: ["Name", "measurement"])
 "@
 
-    Write-Screen -Message "Build Body Payload based on Uri Variables"
+Write-Screen -Message "Build Body Payload based on Uri Variables"
 
-    # Get the test details table from Influx and Split into individual lines
-    try{
-        Write-Screen -Message "Get Login Time Details from Influx API"
-        $LoginTimeDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $LoginTimeBody -ErrorAction Stop
-    } catch {
-        Write-Screen -Message "Error Getting Login Time Details from Influx API"
-        break
-    }
+# Get the test details table from Influx and Split into individual lines
+try {
+    Write-Screen -Message "Get Login Time Details from Influx API"
+    $LoginTimeDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $LoginTimeBody -ErrorAction Stop
+}
+catch {
+    Write-Screen -Message "Error Getting Login Time Details from Influx API"
+    break
+}
 
-    # Get Test Detail Payload Index
-    $LoginTimeOrder = Get-PayloadIndex -TestDetails $LoginTimeDetails
+# Get Test Detail Payload Index
+$LoginTimeOrder = Get-PayloadIndex -TestDetails $LoginTimeDetails
 
-    # Build the Test Detail Results Array
-    $LoginTimeResults = Get-PayloadResults -TestDetails $LoginTimeDetails -Order $LoginTimeOrder
+# Build the Test Detail Results Array
+$LoginTimeResults = Get-PayloadResults -TestDetails $LoginTimeDetails -Order $LoginTimeOrder
 
 #endregion Build Body Login Times
 

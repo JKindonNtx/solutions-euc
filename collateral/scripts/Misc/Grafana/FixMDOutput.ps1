@@ -85,7 +85,8 @@ $Table_Images_To_Delete = @(
     "<img src=../images/testicon.png alt=Test Specifics>",
     "<img src=../images/rdainfo.png alt=Remote Display Analytics>",
     "<img src=../images/appsperf.png alt=Applications>"
-    "<img src=../images/infrastructure.png alt=Infrastructure Specifics>"
+    "<img src=../images/infrastructure.png alt=Infrastructure Specifics>",
+    "<img src=../images/logintimes.png alt=Login Times>"
 )
 
 $Reference_To_Convert = "Nested Table Image References"
