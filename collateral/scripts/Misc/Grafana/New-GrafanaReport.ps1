@@ -1103,6 +1103,48 @@ from(bucket:"$($FormattedBucket)")
 
 #endregion Build Body Steady state Application score
 
+#region Build Body Login Times
+# ---------------------------------------------
+# Build Body Login Times
+# ---------------------------------------------
+$LoginTimeBody = @"
+newNaming = if "$($FormattedNaming)" == "_measurement" then "" else "$($FormattedNaming)"
+from(bucket:"$($FormattedBucket)")
+|> range(start: 2023-01-01T01:00:00Z, stop: 2023-01-01T01:52:00Z)
+|> filter(fn: (r) => r["Year"] =~ /^$($FormattedYear)$/ )
+|> filter(fn: (r) => r["Month"] =~ /^$($FormattedMonth)$/ )
+|> filter(fn: (r) => r["DocumentName"] =~ /^$($FormattedDocumentName)$/ )
+|> filter(fn: (r) => r["Comment"] =~ /^$($FormattedComment)$/ )
+|> filter(fn: (r) => r["_measurement"] =~ /^$($FormattedTestname)$/ )
+|> filter(fn: (r) => r["InfraTestName"] =~ /^$($FormattedTestRun)$/ )
+|> filter(fn: (r) => r["DataType"] == "Raw_Login_Times")
+|> filter(fn: (r) => r["_field"] == "result")
+|> group(columns: ["_measurement", newNaming, "id"])
+|> mean()
+|> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
+|> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, Value: r._value, LogonPhase: r.id}))
+|> sort(columns: ["Name", "measurement"])
+"@
+
+    Write-Screen -Message "Build Body Payload based on Uri Variables"
+
+    # Get the test details table from Influx and Split into individual lines
+    try{
+        Write-Screen -Message "Get Login Time Details from Influx API"
+        $LoginTimeDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $LoginTimeBody -ErrorAction Stop
+    } catch {
+        Write-Screen -Message "Error Getting Login Time Details from Influx API"
+        break
+    }
+
+    # Get Test Detail Payload Index
+    $LoginTimeOrder = Get-PayloadIndex -TestDetails $LoginTimeDetails
+
+    # Build the Test Detail Results Array
+    $LoginTimeResults = Get-PayloadResults -TestDetails $LoginTimeDetails -Order $LoginTimeOrder
+
+#endregion Build Body Login Times
+
 #endregion Get Data From Influx
 
 # -----------------------------------------------------------------------------------------------------------------------
@@ -1848,7 +1890,122 @@ if ($ClusterResources) {
 if ($LoginTimes) {
 
     $Title = "Login Times"
+    Add-Content $mdFullFile " " 
     Add-Content $mdFullFile "### $($Title)"
+
+    $TableTitle = "Login Time Comparison"
+    Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $TableTitle -TableData ($LoginTimeResults | select-object -Property Name | Get-Unique -AsString | Sort-Object -Property Name) -TableImage "<img src=../images/logintimes.png alt=$($Title)>"
+
+    $LoginTimeList = $LoginTimeResults | select-object -Property Name, LogonPhase, measurement, Value -Unique | Sort-Object -Property Name, LogonPhase, measurement
+
+    $TotalLoginTime = $LoginTimeList | Where-Object { $_.LogonPhase -like "*total_login_time*" } | Select-Object -property Value
+    [decimal]$TotalLoginTimeMinimum = [math]::Round(($TotalLoginTime.Value | Measure-Object -Minimum).Minimum, 1)
+
+    $UserProfile = $LoginTimeList | Where-Object { $_.LogonPhase -like "*user_profile*" } | Select-Object -property Value
+    [decimal]$UserProfileMinimum = [math]::Round(($UserProfile.Value | Measure-Object -Minimum).Minimum, 1)
+
+    $GroupPolicies = $LoginTimeList | Where-Object { $_.LogonPhase -like "*group_policies*" } | Select-Object -property Value
+    [decimal]$GroupPoliciesMinimum = [math]::Round(($GroupPolicies.Value | Measure-Object -Minimum).Minimum, 1)
+
+    $Connection = $LoginTimeList | Where-Object { $_.LogonPhase -like "*connection*" } | Select-Object -property Value
+    [decimal]$ConnectionMinimum = [math]::Round(($Connection.Value | Measure-Object -Minimum).Minimum, 1)
+
+    $PhaseTotalLogin = "| Total Login | "
+    $PhaseUserProfile = "| User Profile | "
+    $PhaseGroupPolicies = "| Group Policies | "
+    $PhaseConnection = "| Connection | "
+
+    foreach ($Record in $LoginTimeList){
+        $Phase = $Record.LogonPhase
+        [decimal]$Value = [math]::Round($Record.Value, 1)
+
+        if($Phase -eq "total_login_time"){
+            if($Value -gt $TotalLoginTimeMinimum) {
+                $Percentage = (($Value / $TotalLoginTimeMinimum) * 100) - 100
+                $FormattedPercentage = $Percentage.ToString("0.0")
+                $PerfTag = "<span style=""color:#E82727"">$($FormattedPercentage) % Slower</span>"
+                $PhaseTotalLogin = $PhaseTotalLogin + "$($Value.ToString(""0.0"")) seconds - $($PerfTag) | "
+            } else {
+                if($Value -eq $TotalLoginTimeMinimum){
+                    $PhaseTotalLogin = $PhaseTotalLogin + "$($Value.ToString(""0.0"")) seconds | "
+                } else {
+                    if($Value -lt $TotalLoginTimeMinimum){
+                        $Percentage = 100 - (($Value / $TotalLoginTimeMinimum) * 100)
+                        $FormattedPercentage = $Percentage.ToString("0.0")
+                        $PerfTag = "<span style=""color:#30DC41"">$($FormattedPercentage) % Faster</span>"
+                        $PhaseTotalLogin = $PhaseTotalLogin + "$($Value.ToString(""0.0"")) seconds - $($PerfTag) | "
+                    }
+                }
+            }
+        }
+
+        if($Phase -eq "user_profile"){
+            if($Value -gt $UserProfileMinimum) {
+                $Percentage = (($Value / $UserProfileMinimum) * 100) - 100
+                $FormattedPercentage = $Percentage.ToString("0.0")
+                $PerfTag = "<span style=""color:#E82727"">$($FormattedPercentage) % Slower</span>"
+                $PhaseUserProfile = $PhaseUserProfile + "$($Value.ToString(""0.0"")) seconds - $($PerfTag) | "
+            } else {
+                if($Value -eq $UserProfileMinimum){
+                    $PhaseUserProfile = $PhaseUserProfile + "$($Value.ToString(""0.0"")) seconds | "
+                } else {
+                    if($Value -lt $UserProfileMinimum){
+                        $Percentage = 100 - (($Value / $UserProfileMinimum) * 100)
+                        $FormattedPercentage = $Percentage.ToString("0.0")
+                        $PerfTag = "<span style=""color:#30DC41"">$($FormattedPercentage) % Faster</span>"
+                        $PhaseUserProfile = $PhaseUserProfile + "$($Value.ToString(""0.0"")) seconds - $($PerfTag) | "
+                    }
+                }
+            }
+        }
+
+        if($Phase -eq "group_policies"){
+            if($Value -gt $GroupPoliciesMinimum) {
+                $Percentage = (($Value / $GroupPoliciesMinimum) * 100) - 100
+                $FormattedPercentage = $Percentage.ToString("0.0")
+                $PerfTag = "<span style=""color:#E82727"">$($FormattedPercentage) % Slower</span>"
+                $PhaseGroupPolicies = $PhaseGroupPolicies + "$($Value.ToString(""0.0"")) seconds - $($PerfTag) | "
+            } else {
+                if($Value -eq $GroupPoliciesMinimum){
+                    $PhaseGroupPolicies = $PhaseGroupPolicies + "$($Value.ToString(""0.0"")) seconds | "
+                } else {
+                    if($Value -lt $GroupPoliciesMinimum){
+                        $Percentage = 100 - (($Value / $GroupPoliciesMinimum) * 100)
+                        $FormattedPercentage = $Percentage.ToString("0.0")
+                        $PerfTag = "<span style=""color:#30DC41"">$($FormattedPercentage) % Faster</span>"
+                        $PhaseGroupPolicies = $PhaseGroupPolicies + "$($Value.ToString(""0.0"")) seconds - $($PerfTag) | "
+                    }
+                }
+            }
+        }
+
+        if($Phase -eq "connection"){
+            if($Value -gt $ConnectionMinimum) {
+                $Percentage = (($Value / $ConnectionMinimum) * 100) - 100
+                $FormattedPercentage = $Percentage.ToString("0.0")
+                $PerfTag = "<span style=""color:#E82727"">$($FormattedPercentage) % Slower</span>"
+                $PhaseConnection = $PhaseConnection + "$($Value.ToString(""0.0"")) seconds - $($PerfTag) | "
+            } else {
+                if($Value -eq $ConnectionMinimum){
+                    $PhaseConnection = $PhaseConnection + "$($Value.ToString(""0.0"")) seconds | "
+                } else {
+                    if($Value -lt $ConnectionMinimum){
+                        $Percentage = 100 - (($Value / $ConnectionMinimum) * 100)
+                        $FormattedPercentage = $Percentage.ToString("0.0")
+                        $PerfTag = "<span style=""color:#30DC41"">$($FormattedPercentage) % Faster</span>"
+                        $PhaseConnection = $PhaseConnection + "$($Value.ToString(""0.0"")) seconds - $($PerfTag) | "
+                    }
+                }
+            }
+        }
+    }
+
+    Add-Content $mdFullFile $PhaseTotalLogin
+    Add-Content $mdFullFile $PhaseUserProfile
+    Add-Content $mdFullFile $PhaseGroupPolicies
+    Add-Content $mdFullFile $PhaseConnection
+
+    Add-Content $mdFullFile " "
 
     $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq '.png') -and ($_.Name -like "login_times*") } | Sort-Object CreationTime
     Add-Graphs -Source $Source -Title "Login Times" -mdFullFile $mdFullFile
