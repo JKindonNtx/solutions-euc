@@ -198,21 +198,66 @@ The purpose of these tests was to determine the best configuration for Nutanix F
 - Distributed Share with Access Based Enumeration, Continuous Availability and Encryption On
 
 <!--JK: The above bullets don't show a status for each setting - I tried putting into a small table below instead - see what you think? Else will need to update the bullets above to include On/Off for each setting-->
+<!--JK: Wondering to help understand the images below, should we add a reference to the test name in the table? See Below -->
 
-| Share Type | Access Base Enumeration (ABE) | Continuous Availability (CA) | Encryption |
-| --- | --- | --- | --- |
-| Distributed | On | On | Off |
-| Distributed | On | Off | Off |
-| Distributed | Off | On | Off |
-| Distributed | Off | Off | On |
-| Distributed | On | On | On |
+| Share Type | ABE | CA | Encryption | Graph Test Name Reference |
+| --- | --- | --- | --- | --- |
+| Distributed | Off | Off | Off | Windows_10_Profile_Citrix_UPM_-_All_Off |
+| Distributed | On | On | On | Windows_10_Profile_Citrix_UPM_-_All_On |
+| Distributed | On | Off | Off | Windows_10_Profile_Citrix_UPM_-_ABE_On |
+| Distributed | Off | On | Off | Windows_10_Profile_Citrix_UPM_-_CA_On |
+| Distributed | Off | Off | On | Windows_10_Profile_Citrix_UPM_-_Encrypt_On |
+
+<!--JK: Added an example table below, wondering if this would make sense to include? Also, Would be great to have steady state data breakout?-->
+_Table: Baseline Testing Cluster CPU Usage_
+
+| Test | Result (Average) | Difference |
+| --- | --- | --- |
+| Windows_10_Profile_Citrix_UPM_-_All_Off | 50.4 % | Baseline Value |
+| Windows_10_Profile_Citrix_UPM_-_All_On | 51.0 % | 1.19% higher |
+| Windows_10_Profile_Citrix_UPM_-_CA_On | 50.6 % | 0.39 % higher  | 
+| Windows_10_Profile_Citrix_UPM_-_ABE_On | 50.8 % | 0.79 % higher |
+| Windows_10_Profile_Citrix_UPM_-_Encrypt_On | 50.5 % | 0.20 % higher |
 
 ![Cluster CPU Usage](../images/TN-2002-Citrix%20User%20Profile%20Management%20on%20Nutanix_image02.png "Cluster CPU Usage")
 
+<!--JK: Added an example table below, wondering if this would make sense to include?-->
+_Table: Baseline Testing Cluster IOPS Usage_
+
+| Test | Controller IOPS (Average) | Difference |
+| --- | --- | --- |
+| Windows_10_Profile_Citrix_UPM_-_All_Off | 19,772 | Baseline Value |
+| Windows_10_Profile_Citrix_UPM_-_All_On | 20,306 | 2.69 % higher |
+| Windows_10_Profile_Citrix_UPM_-_CA_On | 20,256 | 2.44 % higher | 
+| Windows_10_Profile_Citrix_UPM_-_ABE_On | 20,377 | 3.06 % higher |
+| Windows_10_Profile_Citrix_UPM_-_Encrypt_On | 20,276 | 2.54 % higher |
+
 ![Cluster IOPS Usage](../images/TN-2002-Citrix%20User%20Profile%20Management%20on%20Nutanix_image03.png "Cluster IOPS Usage")
+
+<!--JK: Added an example table below, wondering if this would make sense to include?-->
+_Table: Baseline Testing Logon Time_
+
+| Test | Result (Average) | Difference |
+| --- | --- | --- |
+| Windows_10_Profile_Citrix_UPM_-_All_Off | 8.88 seconds | Baseline Value |
+| Windows_10_Profile_Citrix_UPM_-_All_On | 9.75 seconds | 9.79 % higher |
+| Windows_10_Profile_Citrix_UPM_-_CA_On | 8.95 seconds | 0.79 %  higher | 
+| Windows_10_Profile_Citrix_UPM_-_ABE_On | 8.95 seconds | 0.79 % higher |
+| Windows_10_Profile_Citrix_UPM_-_Encrypt_On | 9.56 seconds | 7.66 % higher |
 
 <!--JK: These graphs are ugly? Some show Total Login Time in the description but Average Login in the graphs-->
 ![Total Login Time](../images/TN-2002-Citrix%20User%20Profile%20Management%20on%20Nutanix_image04.png "Total Login Time")
+
+<!--JK: Added an example table below, wondering if this would make sense to include?-->
+_Table: Baseline Testing Microsoft Edge Logon_
+
+| Test | Result (Average) | Difference |
+| --- | --- | --- |
+| Windows_10_Profile_Citrix_UPM_-_All_Off | 99.0 ms | Baseline Value |
+| Windows_10_Profile_Citrix_UPM_-_All_On | 98.9 ms | 0.10 % lower |
+| Windows_10_Profile_Citrix_UPM_-_CA_On |  98.1 ms | 0.92 % lower  | 
+| Windows_10_Profile_Citrix_UPM_-_ABE_On | 97.2 ms | 1.85 % lower |
+| Windows_10_Profile_Citrix_UPM_-_Encrypt_On | 98.8 ms | 0.20 % lower |
 
 ![Edge Logon](../images/TN-2002-Citrix%20User%20Profile%20Management%20on%20Nutanix_image05.png "Edge Logon")
 
