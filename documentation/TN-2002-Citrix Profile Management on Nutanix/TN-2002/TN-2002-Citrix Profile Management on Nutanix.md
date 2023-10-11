@@ -19,10 +19,13 @@ This document covers the following subject areas:
 - Overview of the Nutanix Files solution.
 - Overview of the Citrix Profile Management solution.
 - Nutanix Files baseline testing.
-- Citrix Profile Management Container testing.
+- Citrix Profile Management Container testing, specifically:
+  - The impacts of `Local Caching for Profile Containers`.
+  - The impacts of `Replicate User Stores`.
+  - The impacts of `VHD Compaction`.
 - Considerations for Citrix Profile Management on Nutanix.
 
-Traditionally in CPM deployments, when dealing with file-based profile configurations, a preference for smaller, tuned profiles exists to ensure user logon times are not impacted. In this scenario, Citrix typically recommends profile streaming is used. Primarily, IO occurs on the local endpoint where the user resides (There are exceptions to this rule, however this is the recommended and most common configuration).
+Traditionally in CPM deployments, when dealing with file-based profile configurations, a preference for smaller, tuned profiles exists to ensure user logon times are not impacted. In this scenario, Citrix typically recommends profile streaming is used. Primarily, IO occurs on the local endpoint where the user resides. There are exceptions to this rule, however this is the recommended and most common configuration.
 
 With the introduction of CPM Container technology, the default considerations change to instead focus on backend Storage Latency and IO capability due to a change in read and write patterns, where all reads and writes by default occur on the backend repository (within the Container which is mounted to the machine hosting the user session). 
 
