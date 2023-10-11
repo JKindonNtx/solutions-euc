@@ -312,7 +312,7 @@ The below graphs shows the Nutanix Files data with both `Enable local caching fo
 ![Caching Files Throughput](../images/TN-2002-Citrix%20User%20Profile%20Management%20on%20Nutanix_image05.png "Caching Files Throughput")
 
 #### Key Takeaways
-
+<!--JK: Added this section - see if you like it-->
 -  `local caching for profile containers` when **Enabled** will move some the IO operations to the local VDA.
 -  `local caching for profile containers` when **Enabled** will slightly increase the overall login time and profile load.
 -  `local caching for profile containers` when **Enabled** will increase both CPU and IOPS cluster usage on the clusters hosting the VDA workloads.
@@ -403,7 +403,7 @@ _Table: Large Profile Data Load Microsoft Word Start_
 | Windows_10_UPM_Container_2303_Large_Profile_No_Cache | Disabled | 861 ms | Baseline |
 
 #### Key Takeaways
-
+<!--JK: Added this section - see if you like it-->
 -  `local caching for profile containers` when **Enabled** will significantly reduce the logon impact in a scenario where large data sets are moved around during the logon phase of the user.
 
 ### Replicate User Stores - Separate Files Cluster
@@ -466,7 +466,7 @@ _Table: Replicate User Stores Microsoft Word Start_
 | Windows_10_UPM_Container_2303_Profile_Replicate_No_Cache | Disabled | 766 ms | Baseline |
 
 #### Key Takeaways
-
+<!--JK: Added this section - see if you like it-->
 -  `Replicate User Stores` when **Enabled** will impact both the logon and logoff phases of the user session.
 -  The heavier impact is the logoff phase as the differencing disk is replicated to both File Server clusters prior to being merged.
 -  There is minimal difference between logon times when using `Replicate User Stores` with either `local caching for profile containers` **Enabled** or **Disabled**
@@ -508,7 +508,7 @@ The below graphs shows the Nutanix Files data with the `Enable VHD Compaction` s
 ![VHD Compaction - Files Latency](../images/TN-2002-Citrix%20User%20Profile%20Management%20on%20Nutanix_image20.png "VHD Compaction - Files Latency")
 
 #### Key Takeaways
-
+<!--JK: Added this section - see if you like it-->
 -  `Enable VHD Compaction` will impact the Nutanix Files cluster hosting the profile containers at the user logoff.
 -  `Enable VHD Compaction` combined with `local caching for profile containers` being **Enabled** will impact Nutanix Files latency more heavily than when **Disabled** at logoff. This makes sense given the data has to be written back to the user profile store prior to compaction.
 
