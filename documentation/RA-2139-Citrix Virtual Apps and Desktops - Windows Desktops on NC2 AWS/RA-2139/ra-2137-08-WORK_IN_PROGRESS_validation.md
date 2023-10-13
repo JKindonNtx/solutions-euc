@@ -125,3 +125,7 @@ The following graphs are Login Enterprise EUX specific measurements. A higher sc
 The next chart shows the difference in Cluster Controller IOPS:
 
 ![MCS vs PVS IOPS](../images/RA-2003-Citrix_Virtual_Apps_and_Desktops_Windows_Servers_on_vSphere_image22.png "MCS vs PVS IOPS")
+
+### Network Bandwidth
+
+The next chart shows the network (bandwidth) usage by the AWS VPN during the test.
