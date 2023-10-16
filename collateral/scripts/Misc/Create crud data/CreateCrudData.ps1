@@ -147,6 +147,36 @@ function Write-Log {
     }
 }
 
+function Convert-SizeToBytes {
+    param (
+        [string]$size
+    )
+
+    $size = $size -replace "(?i)[^\d.mgk]", ""
+
+    if ($size -match '(\d+(\.\d+)?)\s*(k|kb|m|mb|g|gb)$') {
+        $numericPart = [double]::Parse($matches[1])
+        $unit = $matches[3].ToLower()
+
+        if ($unit -eq 'k' -or $unit -eq 'kb') {
+            $sizeInBytes = $numericPart * 1KB
+        }
+        elseif ($unit -eq 'm' -or $unit -eq 'mb') {
+            $sizeInBytes = $numericPart * 1MB
+        }
+        elseif ($unit -eq 'g' -or $unit -eq 'gb') {
+            $sizeInBytes = $numericPart * 1GB
+        }
+        else {
+            $sizeInBytes = $numericPart
+        }
+
+        return [int64]$sizeInBytes
+    }
+
+    throw "Invalid size format"
+}
+
 function CreateCrudData {
     Write-Log -Message "Creating crud data in $($FilePath)" -Level Info
     if (!(Test-Path $FilePath)) {
@@ -158,9 +188,16 @@ function CreateCrudData {
             $FileName = $_
             $FileSize = $FilesToCreate[$_]
             $FileCreatePath = $FilePath + "\" + $FileName
-            
             $file = New-Object System.IO.FileStream $FileCreatePath, Create, ReadWrite -ErrorAction Stop
-            $file.SetLength($FileSize)
+            
+            if ($PSVersionTable.PSVersion.Major -lt 7) {
+                # Do this is powershell 5, need to convert to bytes first
+                $fileSizeInBytes = Convert-SizeToBytes -size $fileSize
+                $file.SetLength($fileSizeInBytes)
+            }
+            else {
+                $file.SetLength($FileSize)
+            }
             $file.Close()
         }
 
