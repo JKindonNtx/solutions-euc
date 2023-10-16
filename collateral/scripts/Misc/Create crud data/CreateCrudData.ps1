@@ -18,6 +18,8 @@
     Amount of time to sleep between creation and deletion in AutoCreateAndClean mode. Defaults to 20 seconds
 .PARAMETER FileSetSizeinGb
     Predefined amount of data to create. Offers 15, 30 or 45 Gb options. Defaults to 15Gb.
+.PARAMETER IsContainer
+    For FSLogix Containers, creates a basic file copy of a file (System.IO.FileStream doesn't appear to grow the container)
 .EXAMPLE
     .\CreateCrudData.ps1 -Mode Create
     Will create data in C:\Users\%Username%\AppData\Roaming\CrudData
@@ -39,6 +41,9 @@
 .EXAMPLE
     .\CreateCrudData.ps1 -AutoCreateAndClean -FileSetSizeinGb 30 -CrudPath "MoreCrudThanCrud"
     Will create and delete data in C:\Users\%Username%\AppData\Roaming\MoreCrudThanCrud, wait default 20 seconds between creation and deletion and use the default 30 GiB file set
+.EXAMPLE
+    .\CreateCrudData.ps1 -AutoCreateAndClean -FileSetSizeinGb 30 -CrudPath "MoreCrudThanCrud" -IsContainerData
+    Will create and delete data in C:\Users\%Username%\AppData\Roaming\MoreCrudThanCrud, wait default 20 seconds between creation and deletion and use the default 30 GiB file set. This will use a file copy approach based on the default "C:\Windows\System32\WindowsCodecsRaw.dll" File
 .NOTES 
     Author: James Kindon, Nutanix
 #>
@@ -69,7 +74,12 @@ Param(
 
     [Parameter(Mandatory = $false)]
     [ValidateSet(15,30,45)]
-    [int]$FileSetSizeinGb = 15
+    [int]$FileSetSizeinGb = 15,
+
+    [Parameter(Mandatory = $false, ParameterSetName = "CreateDeleteSelection")]
+    [Parameter(ParameterSetName = "CreateDeleteAuto")]
+    [Switch]$IsContainerData
+
 )
 #endregion
 
@@ -183,39 +193,48 @@ function CreateCrudData {
         New-Item -Path $FilePath -ItemType Directory | Out-Null
     }
 
-    try {
-        foreach ($_ in $FilesToCreate.keys) {
-            $FileName = $_
-            $FileSize = $FilesToCreate[$_]
-            $FileCreatePath = $FilePath + "\" + $FileName
-            $file = New-Object System.IO.FileStream $FileCreatePath, Create, ReadWrite -ErrorAction Stop
-            
-            if ($PSVersionTable.PSVersion.Major -lt 7) {
-                # Do this is powershell 5, need to convert to bytes first
-                $fileSizeInBytes = Convert-SizeToBytes -size $fileSize
-                $file.SetLength($fileSizeInBytes)
-            }
-            else {
-                $file.SetLength($FileSize)
-            }
-            $file.Close()
+    if ($IsContainerData) {
+        # Loop to create copies of the source file
+        for ($i = 1; $i -le $fileCopyCount; $i++) {
+            $destinationFile = Join-Path $destinationFolder ("file$i.txt")
+            Copy-Item -Path $sourceFile -Destination $destinationFile
         }
-
+    }
+    else {
         try {
-            Write-Log -Message "Getting folder statistics for: $($FilePath)" -Level Info
-            $FolderSize = (Get-ChildItem $FilePath -ErrorAction Stop | Measure-Object -Property Length -sum).sum / 1Gb
-            Write-Log -Message "Created $($FolderSize)Gb in: $($FilePath)" -Level Info
+            foreach ($_ in $FilesToCreate.keys) {
+                $FileName = $_
+                $FileSize = $FilesToCreate[$_]
+                $FileCreatePath = $FilePath + "\" + $FileName
+                $file = New-Object System.IO.FileStream $FileCreatePath, Create, ReadWrite -ErrorAction Stop
+            
+                if ($PSVersionTable.PSVersion.Major -lt 7) {
+                    # Do this is powershell 5, need to convert to bytes first
+                    $fileSizeInBytes = Convert-SizeToBytes -size $fileSize
+                    $file.SetLength($fileSizeInBytes)
+                }
+                else {
+                    $file.SetLength($FileSize)
+                }
+                $file.Close()
+            }
+
+            try {
+                Write-Log -Message "Getting folder statistics for: $($FilePath)" -Level Info
+                $FolderSize = (Get-ChildItem $FilePath -ErrorAction Stop | Measure-Object -Property Length -sum).sum / 1Gb
+                Write-Log -Message "Created $($FolderSize)Gb in: $($FilePath)" -Level Info
+            }
+            catch {
+                Write-Log -Message "Failed to get Folder size for: $($FilePath)" -Level Warn
+                Write-Log -Message $_ -Level Warn
+            }
+
+            Write-Log -Message "Successfully created crud data in: $($FilePath)" -Level Info
         }
         catch {
-            Write-Log -Message "Failed to get Folder size for: $($FilePath)" -Level Warn
+            Write-Log -Message "Failed to create crud data from: $($FilePath)" -Level Warn
             Write-Log -Message $_ -Level Warn
         }
-
-        Write-Log -Message "Successfully created crud data in: $($FilePath)" -Level Info
-    }
-    catch {
-        Write-Log -Message "Failed to create crud data from: $($FilePath)" -Level Warn
-        Write-Log -Message $_ -Level Warn
     }
 }
 
@@ -253,6 +272,7 @@ function DeleteCrudData {
 # Variables
 # ============================================================================
 $FilePath = $env:APPDATA + "\" + $CrudPath
+$SourceFile = "C:\Windows\System32\WindowsCodecsRaw.dll"
 
 # 15GiB iteration
 $FilesToCreate15 = @{
@@ -359,6 +379,22 @@ switch ($FileSetSizeinGb) {
 if ($Mode -ne "Create" -or $Mode -ne "Delete" -and $AutoCreateAndClean -eq "false") {
     Write-Log -Message "You must specify an operational mode. Either Create or Delete" -Level Info
     Exit 1
+}
+
+if ($IsContainerData) {
+    if (Test-Path $sourceFile -PathType Leaf) {
+        $SourceFileSize = (Get-Item -Path $sourceFile).Length
+     
+        $DataSetInBytes =  1073741824 * $FileSetSizeinGb # convert to bytes
+        $FileCopyCount = $DataSetInBytes / $SourceFileSize
+        $FileCopyCount = [System.Math]::Ceiling($FileCopyCount)
+
+        Write-Log -Message "Will copy $($FileCopyCount) iterations of $sourceFile to $destinationFile" -level Info
+    }
+    else {
+        Write-Log -Message "Source File: $($sourceFile) does not exist. Cannot copy" -Level Warn
+        Exit 1
+    }
 }
 
 if ($Mode -eq "Create") {
