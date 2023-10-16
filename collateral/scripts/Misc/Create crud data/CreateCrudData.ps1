@@ -196,7 +196,7 @@ function CreateCrudData {
     if ($IsContainerData) {
         # Loop to create copies of the source file
         for ($i = 1; $i -le $fileCopyCount; $i++) {
-            $destinationFile = Join-Path $destinationFolder ("file$i.txt")
+            $destinationFile = Join-Path $filepath ("file$i.txt")
             Copy-Item -Path $sourceFile -Destination $destinationFile
         }
     }
@@ -389,7 +389,7 @@ if ($IsContainerData) {
         $FileCopyCount = $DataSetInBytes / $SourceFileSize
         $FileCopyCount = [System.Math]::Ceiling($FileCopyCount)
 
-        Write-Log -Message "Will copy $($FileCopyCount) iterations of $sourceFile to $destinationFile" -level Info
+        Write-Log -Message "Will copy $($FileCopyCount) iterations of $sourceFile" -level Info
     }
     else {
         Write-Log -Message "Source File: $($sourceFile) does not exist. Cannot copy" -Level Warn
@@ -409,6 +409,7 @@ elseif ($Mode -eq "Delete") {
 if ($AutoCreateAndClean.IsPresent) {
     Write-Log -Message "AutoCreateAndClean mode is enabled. Handling creation and deletion of crud data in $($FilePath)" -Level Info
     CreateCrudData
+    Write-Log -Message "Sleeping for $($AutoCreateAndCleanRestTime) seconds before deleting crud data" -Level Info
     Start-Sleep $AutoCreateAndCleanRestTime
     DeleteCrudData
 }
