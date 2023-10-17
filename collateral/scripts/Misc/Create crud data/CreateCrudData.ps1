@@ -17,7 +17,7 @@
 .PARAMETER AutoCreateAndCleanRestTime
     Amount of time to sleep between creation and deletion in AutoCreateAndClean mode. Defaults to 20 seconds
 .PARAMETER FileSetSizeinGb
-    Predefined amount of data to create. Offers 15, 30 or 45 Gb options. Defaults to 15Gb.
+    Predefined amount of data to create. Offers 5, 10, 15, 30 or 45 Gb options. Defaults to 15Gb.
 .PARAMETER IsContainer
     For FSLogix Containers, creates a basic file copy of a file (System.IO.FileStream doesn't appear to grow the container)
 .EXAMPLE
@@ -73,7 +73,7 @@ Param(
     [int]$AutoCreateAndCleanRestTime = 20,
 
     [Parameter(Mandatory = $false)]
-    [ValidateSet(15,30,45)]
+    [ValidateSet(5,10,15,30,45)]
     [int]$FileSetSizeinGb = 15,
 
     [Parameter(Mandatory = $false, ParameterSetName = "CreateDeleteSelection")]
@@ -274,6 +274,30 @@ function DeleteCrudData {
 $FilePath = $env:APPDATA + "\" + $CrudPath
 $SourceFile = "C:\Windows\System32\WindowsCodecsRaw.dll"
 
+# 5GiB iteration
+$FilesToCreate5 = @{
+    "Crud1" = "1Gb"
+    "Crud2" = "500Mb"
+    "Crud3" = "500Mb"
+    "Crud4" = "900Mb"
+    "Crud5" = "100Mb"
+    "Crud6" = "2Gb"
+}
+# 10GiB iteration
+$FilesToCreate10 = @{
+    "Crud1" = "1Gb"
+    "Crud2" = "500Mb"
+    "Crud3" = "500Mb"
+    "Crud4" = "900Mb"
+    "Crud5" = "100Mb"
+    "Crud6" = "2Gb"
+    "Crud7" = "1Gb"
+    "Crud8" = "500Mb"
+    "Crud9" = "500Mb"
+    "Crud10" = "900Mb"
+    "Crud11" = "100Mb"
+    "Crud12" = "2Gb"
+}
 # 15GiB iteration
 $FilesToCreate15 = @{
     "Crud1" = "1kb"
@@ -371,6 +395,8 @@ $FilesToCreate45 = @{
 #Set the File Set Size
 Write-Log -Message "File set size selected is $($FileSetSizeinGb)Gb" -Level Info
 switch ($FileSetSizeinGb) {
+    5 { $FilesToCreate = $FilesToCreate5 }
+    10 { $FilesToCreate = $FilesToCreate10 }
     15 { $FilesToCreate = $FilesToCreate15 }
     30 { $FilesToCreate = $FilesToCreate30 }
     45 { $FilesToCreate = $FilesToCreate45 }
