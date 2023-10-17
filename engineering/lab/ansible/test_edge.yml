@@ -1,5 +1,0 @@
----
-- name: Install Microsoft Edge 116
-  hosts: all
-  roles:
-  - install_ms_edge_116
