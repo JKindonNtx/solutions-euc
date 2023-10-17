@@ -1,6 +1,11 @@
 ---
 # Install Google Chrome
 
+- name: Delete default Install Key
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate
+    name: InstallDefault
+    state: absent
 
 - name: Set Edge Updates
   ansible.windows.win_regedit:
@@ -29,7 +34,7 @@
     state: present
     arguments: >-
       ALLOWDOWNGRADE=1
-  become: yes
+  become: true
   become_method: runas
   become_flags: logon_type=new_credentials logon_flags=net_credentials_only
 
