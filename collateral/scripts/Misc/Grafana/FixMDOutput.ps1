@@ -201,18 +201,44 @@ foreach ($_ in $HTML_Heading_References) {
 ##------------------------------------------------------------
 # Remove inline table HTML
 ##------------------------------------------------------------
-$TextMatch = '- <span style=".*(?:[^>]*>){2}'
-$HTML_Inline_Table_References = @()
-$HTML_Inline_Table_References += $OriginalFile | Select-String -Pattern $TextMatch -AllMatches | ForEach-Object {
+#$TextMatch = '- <span style=".*(?:[^>]*>){2}'
+#start of reference removal
+$TextMatch = '<span style="color:#[0-9A-F]{6}">'
+
+$HTML_Inline_Table_References_start = @()
+$HTML_Inline_Table_References_start += $OriginalFile | Select-String -Pattern $TextMatch -AllMatches | ForEach-Object {
     $_.Matches.Value
 }
 
-$Reference_To_Convert = "Inline HTML Table References"
-$TotalCount = $HTML_Inline_Table_References.Count
+$Reference_To_Convert = "Inline HTML Table References Start"
+$TotalCount = $HTML_Inline_Table_References_start.Count
 Write-Screen -Message "There are $($TotalCount) $($Reference_To_Convert) to convert"
 
 $CurrentCount = 1
-foreach ($_ in $HTML_Inline_Table_References) {
+foreach ($_ in $HTML_Inline_Table_References_start) {
+    Write-Screen -Message "Processing $($CurrentCount) of $($TotalCount)"
+    Write-Screen -Message "The current value is: $($_)"
+    $OriginalValue = $_
+    $OriginalValue = $OriginalValue -replace $_ ,''
+    $OriginalValue = $OriginalValue -replace 'seconds  ','seconds '
+    $NewValue = $OriginalValue
+    $OriginalFile = $OriginalFile -replace $_ , $NewValue
+    $CurrentCount ++
+}
+
+#end of reference removal
+$TextMatch = '</span>'
+$HTML_Inline_Table_References_end = @()
+$HTML_Inline_Table_References_end += $OriginalFile | Select-String -Pattern $TextMatch -AllMatches | ForEach-Object {
+    $_.Matches.Value
+}
+
+$Reference_To_Convert = "Inline HTML Table References End"
+$TotalCount = $HTML_Inline_Table_References_end.Count
+Write-Screen -Message "There are $($TotalCount) $($Reference_To_Convert) to convert"
+
+$CurrentCount = 1
+foreach ($_ in $HTML_Inline_Table_References_end) {
     Write-Screen -Message "Processing $($CurrentCount) of $($TotalCount)"
     Write-Screen -Message "The current value is: $($_)"
     $OriginalValue = $_
@@ -233,6 +259,11 @@ $OriginalFile = $OriginalFile -replace '</div>',''
 $OriginalFile = $OriginalFile -replace "^\s$",'' # Fix Single indented lines
 
 #endregion Fix Remaining Misc HTML
+Write-Screen -Message "Replacing Percentage Spaces"
+$OriginalFile = $OriginalFile -replace '(?<=\d) %',"%"
+#region Fix Percentage layouts
+
+#endregion Fix Percentage layouts
 
 #output content to new file
 try {

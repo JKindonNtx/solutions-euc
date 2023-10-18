@@ -29,6 +29,9 @@
     25.09.2023: Added a check for image existence. If the file exists, it will no longer be downloaded. This speeds up iterative documentation versions.
     25.09.2023: Fixed Alt Text in image additions, surrounded in "" which helps with longer image names
     25.09.2023: Moved Excluded components to Parameter based
+    13.10.2023: Added Cluster CPU usage with EUX Score Graph for individual runs (Panel ID 119)
+    13.10.2023: Added Nutanix Files Individual Runs to Nutanix Files Section. (Panel ID 127,128,129,130)
+    13.10.2023: Moved icons array to variables section. Added a check for icon existence. If the file exists, it will no longer be downloaded. This speeds up iterative documentation versions.
 - To Do
  -> Function this sucker - Inject between section headers
     # Add Page Break
@@ -239,6 +242,7 @@ function Get-Graphs {
                 68 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_controller_iops.png" }
                 70 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_total_logon_time.png" }
                 69 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_controller_latency.png" }
+                119 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_cpu_with_eux_score.png" }
                 31 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_start.png" }
                 32 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_open_doc.png" }
                 33 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_save_file.png" }
@@ -266,6 +270,10 @@ function Get-Graphs {
                 77 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_latency.png" }
                 78 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_throughput.png" }
                 79 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_connections_and_number_of_files.png" }
+                127 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_iops.png" }
+                128 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_latency.png" }
+                129 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_throughput.png" }
+                130 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_connections_and_files.png" }
                 80 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_management_cpu.png" }
                 81 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_packet_engine_cpu.png" }
                 82 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_memory_usage.png" }
@@ -327,6 +335,7 @@ function Get-Graphs {
                 68 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_controller_iops_$($ImageSuffix).png" }
                 70 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_total_logon_time_$($ImageSuffix).png" }
                 69 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_controller_latency_$($ImageSuffix).png" }
+                119 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_cpu_with_eux_score_$($ImageSuffix).png" }
                 31 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_start_$($ImageSuffix).png" }
                 32 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_open_doc_$($ImageSuffix).png" }
                 33 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_save_file_$($ImageSuffix).png" }
@@ -354,6 +363,10 @@ function Get-Graphs {
                 77 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_latency_$($ImageSuffix).png" }
                 78 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_throughput_$($ImageSuffix).png" }
                 79 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_connections_and_number_of_files_$($ImageSuffix).png" }
+                127 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_iops_$($ImageSuffix).png" }
+                128 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_latency_$($ImageSuffix).png" }
+                129 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_throughput_$($ImageSuffix).png" }
+                130 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_connections_and_files_$($ImageSuffix).png" }
                 80 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_management_cpu_$($ImageSuffix).png" }
                 81 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_packet_engine_cpu_$($ImageSuffix).png" }
                 82 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_memory_usage_$($ImageSuffix).png" }
@@ -486,6 +499,7 @@ function Add-Graphs {
 # User Input Script Variables
 $maxLength = 65536
 [System.Console]::SetIn([System.IO.StreamReader]::new([System.Console]::OpenStandardInput($maxLength), [System.Console]::InputEncoding, $false, $maxLength))
+$icons = @('Nutanix-Logo','bootinfo','hardware','infrastructure','broker','targetvm','loginenterprise','testicon','leresults','hostresources','clusterresources','logintimes','individualruns','appresults','euxmeasurements','filesicon','citrixnetscaler','base_image','sample-eux-score-graph','sample-login-enterprise-graph','rdainfo','appsperf')   
 
 #region Report Sections
 # -----------------------------------------------------------------------------------------------------------------------
@@ -1156,11 +1170,18 @@ $LoginTimeResults = Get-PayloadResults -TestDetails $LoginTimeDetails -Order $Lo
 # -----------------------------------------------------------------------------------------------------------------------
 #region Download Icons
 Write-Screen -Message "Downloading Icons"
-$icons = @('Nutanix-Logo','bootinfo','hardware','infrastructure','broker','targetvm','loginenterprise','testicon','leresults','hostresources','clusterresources','logintimes','individualruns','appresults','euxmeasurements','filesicon','citrixnetscaler','base_image','sample-eux-score-graph','sample-login-enterprise-graph','rdainfo','appsperf')   
 
 # Loop through the icons and download the images
 foreach($icon in $icons){
-    Get-UriFile -Uri ($iconsSource + "$($icon).png") -OutFile (Join-Path -Path $imagePath -ChildPath "$($icon).png")
+    ## Test it first
+    $IconOut = (Join-Path -Path $imagePath -ChildPath "$($icon).png")
+    if (Test-Path  -Path $IconOut) {
+        Write-Screen -Message "Icon File $($IconOut) already exists. Not downloading. Delete the file if you want to re-download it"
+    }
+    else {
+        Get-UriFile -Uri ($iconsSource + "$($icon).png") -OutFile $IconOut
+    }
+    #Get-UriFile -Uri ($iconsSource + "$($icon).png") -OutFile (Join-Path -Path $imagePath -ChildPath "$($icon).png")
 }
 
 #endregion Download Icons
@@ -1281,7 +1302,7 @@ else {
 if ($IndividualRuns) {
     Write-Screen -Message "Downloading Individual Runs Graphs"
     # Build the PanelID Array 
-    $Panels = @('66', '67', '68', '70', '69')  
+    $Panels = @('66', '67', '68', '70', '69', '119')  
     $endtime = "1672538820000"
     Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 }
@@ -1332,7 +1353,7 @@ else {
 if ($NutanixFiles) {
     Write-Screen -Message "Downloading Nutanix Files Graphs"
     # Build the PanelID Array 
-    $Panels = @('71', '77', '78', '79')  
+    $Panels = @('71', '77', '78', '79', '127', '128', '129', '130')  
     $endtime = "1672538820000"
     Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 }

@@ -1,0 +1,51 @@
+---
+# Install Google Chrome
+
+- name: Delete default Install Key
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate
+    name: InstallDefault
+    state: absent
+
+- name: Set Edge Updates
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate
+    name: Update{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}
+    data: 00000000
+    type: dword
+
+- name: Set Edge Rollback Allow
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate
+    name: RollbackToTargetVersion{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}
+    data: 00000001
+    type: dword
+
+- name: Set Edge Rollback Version
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\EdgeUpdate
+    name: TargetVersionPrefix{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}
+    data: 116.0.1938.98
+    type: string
+
+- name: Install Microsoft Edge
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Microsoft\\Edge\\116\\MicrosoftEdgeEnterpriseX64.msi"
+    state: present
+    arguments: >-
+      ALLOWDOWNGRADE=1
+  become: true
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+
+- name: Set Edge Update service startup mode to disabled and ensure it is stopped
+  ansible.windows.win_service:
+    name: edgeupdate
+    start_mode: disabled
+    state: stopped
+
+- name: Set Edge Update service m startup mode to disabled and ensure it is stopped
+  ansible.windows.win_service:
+    name: edgeupdatem
+    start_mode: disabled
+    state: stopped
