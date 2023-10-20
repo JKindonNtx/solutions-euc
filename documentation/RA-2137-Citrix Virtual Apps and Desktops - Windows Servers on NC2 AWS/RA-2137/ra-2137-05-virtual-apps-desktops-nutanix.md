@@ -26,16 +26,12 @@ Enterprise-grade cluster management
 
 : A simplified and intuitive approach to managing large clusters, including a converged GUI that serves as a central point for servers and storage, alert notifications, and the bonjour mechanism that automatically detects new nodes in the cluster. As a result, you can spend time enhancing your environment rather than maintaining it.
 
-High-density architecture
-
-: Nutanix uses an advanced server architecture that, using the NX-3000 series as an example, can house eight Intel CPUs (up to 160 cores) and up to 6 TB of memory in a single 2RU appliance. Coupled with data archiving and compression, Nutanix can make the desktop hardware footprint five times smaller.
-
 Time-sliced clusters
 
 : Like public cloud environments, Nutanix can provide a truly converged cloud infrastructure, allowing you to run your server and desktop virtualization on a single cloud. Get the efficiency and savings you require with a converged cloud on a truly unified architecture.
 
 ## Virtual Apps and Desktops on NC2 with AWS
-The following figures show the main architectural components of the Citrix Virtual Apps and Desktops on Nutanix solution and the communication path between services along with the overall architecture of running Nutanix Cloud Clusters on AWS. 
+The following figures show the main architectural components of the Citrix Virtual Apps and Desktops on Nutanix solution and the communication path between services along with the high level architecture of running Nutanix Cloud Clusters on AWS. 
  
 ![Overview of CVAD](../images/RA-2137_Citrix_Virtual_Apps_and_Desktops_Windows_Servers_on_NC2_AWS_image02.png "Overview of CVAD")
 
@@ -44,16 +40,18 @@ The following figures show the main architectural components of the Citrix Virtu
 ## Pod Design
 The next table contains highlights from a high-level snapshot of the Citrix Virtual Apps and Desktops on Nutanix hosted virtual desktop pod.
 
+_Table: Pod Design_ 
+
 | Pod Purpose | Item | Quantity |
 | --- | --- | --- |
 | Control Pod | Delivery Controllers | 2 |
 | Control Pod | StoreFront servers | 2 |
-| Services Pod | AHV hosts | up to 16 |
+| Services Pod | AHV hosts | up to 28 |
 | Services Pod | Nutanix Cloud Clusters | 1 |
 | Services Pod | datastores | 1 |
-| Services Pod | servers | up to 160 |
+| Services Pod | servers | up to 560 |
 
-You can have a maximum of 16 AHV host nodes per NC2 on AWS instance. Citrix VAD Windows Server VDAs have 6 vCPU per VM and 20 VMs per node, with 120 Windows Server VDAs per NCA instance. If you change the vCPU count, the numbers of Windows Server VDAs per node and per cluster change as well.
+You can have a maximum of 28 AHV host nodes per NC2 on AWS instance. Citrix VAD Windows Server VDAs have 6 vCPU per VM and 20 VMs per node, with 560 Windows Server VDAs per NCA instance. If you change the vCPU count, the numbers of Windows Server VDAs per node and per cluster change as well.
 
 ## Nutanix Compute and Storage
 
@@ -62,6 +60,8 @@ Nutanix provides an ideal combination of high-performance compute and localized 
 ![Overview of Storage](../images/RA-2137_Citrix_Virtual_Apps_and_Desktops_Windows_Servers_on_NC2_AWS_image04.png "Overview of Storage")
 
 The following table details the Nutanix storage pool and container configuration.
+
+_Table: Storage Design_ 
 
 | Name | Role | Details |
 | --- | --- | --- |

@@ -104,8 +104,8 @@ _Table: Virtual Server Cluster Specifications_
 | Parameter | Setting |
 | --- | --- |
 | Block type | Amazon AWS i4i.metal |
-| Number of blocks | 6 |
-| Number of nodes | 6 |
+| Number of blocks | 4 |
+| Number of nodes | 4 |
 | CPU type | Xeon Platinum 8375C CPU @ 2.90GHz |
 | Number of CPUs per node | 2 |
 | Number of cores per CPU | 32 |

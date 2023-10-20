@@ -12,7 +12,7 @@ This document covers the following subject areas:
 - Overview of Citrix Virtual Apps and Desktops and its use cases.
 - The benefits of running Citrix Virtual Apps and Desktops on Nutanix Cloud Clusters on AWS.
 - Design and configuration considerations for building a Citrix Virtual Apps and Desktops solution on Nutanix AHV.
-- Benchmarking Citrix Virtual Apps and Desktops performance on Nutanix Cloud Clusters on AWS.
+- Benchmarking Citrix Virtual Apps and Desktops performance on Nutanix Cloud Clusters hosted in AWS.
 
 ## Document Version History 
 
@@ -20,4 +20,4 @@ This document covers the following subject areas:
 | :---: | --- | --- |
 | 1.0 | November 2020 | Original publication. |
 | 1.1 | April 2022 | Updates throughout. | 
-| 2.0 | October 2023 | Updated testing to i4i.metal nodes. | 
+| 2.0 | October 2023 | Updated testing to i4i.metal nodes and removed i3.metal nodes. | 

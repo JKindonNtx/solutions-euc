@@ -15,7 +15,7 @@ _Table: Platform Design Decisions: Nutanix AHV_
 
 | Item | Detail | Rationale |
 | --- | --- | --- |
-| Cluster size | As many as 16 AHV hosts (minimum of 3 hosts) | Isolated fault domains (best practice) |
+| Cluster size | As many as 28 AHV hosts (minimum of 3 hosts) | Isolated fault domains (best practice) |
 | Datastores | 1 AOS distributed storage datastore per pod (Virtual Apps and Desktops server VMs, VM clones, and so on) | Nutanix handles I/O distribution and localization; n-Controller model |
 | Infrastructure services | Small deployments: Shared cluster; Large deployments: Dedicated cluster | Dedicated infrastructure cluster for larger deployments (best practice) |
 
@@ -23,7 +23,7 @@ _Table: Platform Design Decisions: Nutanix_
   
 | Item | Detail | Rationale |
 | --- | --- | --- |
-| Cluster size | As many as 16 nodes | Isolated fault domains (best practice) |
+| Cluster size | As many as 28 nodes | Isolated fault domains (best practice) |
 | Storage pools | 1 storage pool per cluster | Standard practice; intelligent tiering handles data locality |
 | Containers | 1 container for VMs | Standard practice |
 | Features and enhancements | Increase CVM memory to 24–32+ GB. Turn on deduplication and compression for persistent desktops. Turn on compression only for nonpersistent desktops. (We set the CVM to 32 GB for the RA.) | Best practice |
