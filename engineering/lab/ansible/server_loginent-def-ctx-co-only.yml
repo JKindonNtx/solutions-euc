@@ -1,0 +1,6 @@
+---
+- name: Install Windows Server Gold with Office 2021 x64 - LoginVSI - CTX
+  hosts: all
+  roles:
+  - run_cust_imageoptimize_citrix
+  - run_image_tattoo
