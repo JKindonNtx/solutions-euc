@@ -172,3 +172,5 @@ The next chart shows the difference in Cluster Controller IOPS:
 ### Network Bandwidth
 
 The next chart shows the network bandwidth usage by the AWS VPN during the test.
+
+![AWS Bandwidth](../images/RA-2139_Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_NC2_AWS_image16.png "AWS Bandwidth")
