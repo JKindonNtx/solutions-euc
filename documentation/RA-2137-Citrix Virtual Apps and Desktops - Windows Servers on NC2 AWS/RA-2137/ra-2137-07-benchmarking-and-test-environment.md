@@ -103,15 +103,15 @@ _Table: Virtual Server Cluster Specifications_
 
 | Parameter | Setting |
 | --- | --- |
-| Block type | Amazon AWS i4i.metal |
+| Block type | AWS EC2 i4i.metal |
 | Number of blocks | 4 |
 | Number of nodes | 4 |
 | CPU type | Xeon Platinum 8375C CPU @ 2.90GHz |
 | Number of CPUs per node | 2 |
 | Number of cores per CPU | 32 |
 | Memory per node | 1 TB |
-| Disk config per node | 8 × 3.2 TB SSD-PCIe |
-| Network | 2 × 25 GbE |
+| Disk config per node | 8 × 3.75 TB NVMe |
+| Network | 1 × 75 GbE |
 
 _Table: Nutanix Software Specifications_
 
