@@ -103,15 +103,15 @@ _Table: Virtual Desktop Cluster Specifications_
 
 | Parameter | Setting |
 | --- | --- |
-| Block type | Amazon AWS i4i.metal |
+| Block type | AWS EC2 i4i.metal |
 | Number of blocks | 8 |
 | Number of nodes | 8 |
 | CPU type | Xeon Platinum 8375C CPU @ 2.90GHz |
 | Number of CPUs per node | 2 |
 | Number of cores per CPU | 32 |
 | Memory per node | 1 TB |
-| Disk config per node | 8 × 3.2 TB SSD-PCIe |
-| Network | 2 × 25 GbE |
+| Disk config per node | 8 × 3.75 TB NVMe |
+| Network | 1 × 75 GbE |
 
 _Table: Nutanix Software Specifications_
 
@@ -129,7 +129,7 @@ _Table: Citrix Software Specifications_
 | Parameter | Setting |
 | --- | --- |
 | Citrix Virtual Apps and Desktops version | 7.2203 CU2 |
-| Provisioning Services version | 7.2203 CU2 |
+| Citrix Provisioning version | 7.2203 CU2 |
 
 _Table: Windows Desktop Template Image Configuration_ 
 
@@ -146,5 +146,5 @@ _Table: Windows Desktop Template Image Configuration_
 | Virtual CD/DVD drive 1 | Client |
 | Applications | Adobe Acrobat DC, Microsoft Edge Browser, Microsoft Office 2021 (x64) |
 | Citrix Virtual Desktop Agent | 7.2203 CU2 |
-| Citrix Provisioning Services Target Device | 7.2203 CU2 |
+| Citrix Provisioning Target Device | 7.2203 CU2 |
 | Optimizations | Citrix Optimizer; custom optimizations to the default user profile |
