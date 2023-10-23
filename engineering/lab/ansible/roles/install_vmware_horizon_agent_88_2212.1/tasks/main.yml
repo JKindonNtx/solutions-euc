@@ -1,0 +1,23 @@
+---
+# Install VMware Horizon Agent client
+- name: Create Log Folder
+  win_file:
+    path: C:\\Logs
+    state: directory
+
+- name: Install Horizon Agent client
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\VMware\\Horizon\\Agent\\8.8 - 2212.1\\VMware-Horizon-Agent-x86_64-2212-8.8.0-21067308.exe"
+    arguments: /s /v"/qn REBOOT=ReallySuppress VDM_VC_MANAGED_AGENT=1 RDP_CHOICE=1 ADDLOCAL=Core,BlastUDP,NGVC,VmwVaudio,USB,RTAV,PerfTracker"
+    state: present
+    expected_return_code: [0, 3010]
+    product_id: '{BAB84A6C-6635-4780-B93C-0B616764CCB6}'
+    log_path: C:\\Logs\\HorizonAgent.log
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  register: HorizonAgent_install
+
+- name: Reboot to complete VMware Horizon Agent install
+  ansible.windows.win_reboot:
+  when: HorizonAgent_install.changed
