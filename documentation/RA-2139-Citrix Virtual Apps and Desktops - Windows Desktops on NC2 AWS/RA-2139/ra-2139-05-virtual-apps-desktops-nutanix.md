@@ -30,7 +30,7 @@ Time-sliced clusters
 
 : Like public cloud environments, Nutanix can provide a truly converged cloud infrastructure, allowing you to run your server and desktop virtualization on a single cloud. Get the efficiency and savings you require with a converged cloud on a truly unified architecture.
 
-## Virtual Apps and Desktops on NC2 with AWS
+## Virtual Apps and Desktops on Nutanix Cloud Clusters with AWS
 The following figures show the main architectural components of the Citrix Virtual Apps and Desktops on Nutanix solution and the communication path between services along with the high level architecture of running Nutanix Cloud Clusters on AWS. 
  
 ![Overview of CVAD](../images/RA-2139_Citrix_Virtual_Apps_and_Desktops_Windows_Desktops_on_NC2_AWS_image02.png "Overview of CVAD")
