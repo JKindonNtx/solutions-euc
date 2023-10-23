@@ -129,7 +129,7 @@ _Table: Citrix Software Specifications_
 | Parameter | Setting |
 | --- | --- |
 | Citrix Virtual Apps and Desktops version | 7.2203 CU2 |
-| Provisioning Services version | 7.2203 CU2 |
+| Citrix Provisioning version | 7.2203 CU2 |
 
 _Table: Windows Server Template Image Configuration_ 
 
@@ -146,5 +146,5 @@ _Table: Windows Server Template Image Configuration_
 | Virtual CD/DVD drive 1 | Client |
 | Applications | Adobe Acrobat DC, Microsoft Edge Browser, Microsoft Office 2021 (x64) |
 | Citrix Virtual Desktop Agent | 7.2203 CU2 |
-| Citrix Provisioning Services Target Device | 7.2203 CU2 |
+| Citrix Provisioning Target Device | 7.2203 CU2 |
 | Optimizations | Citrix Optimizer; custom optimizations to the default user profile |
