@@ -32,6 +32,7 @@
     13.10.2023: Added Cluster CPU usage with EUX Score Graph for individual runs (Panel ID 119)
     13.10.2023: Added Nutanix Files Individual Runs to Nutanix Files Section. (Panel ID 127,128,129,130)
     13.10.2023: Moved icons array to variables section. Added a check for icon existence. If the file exists, it will no longer be downloaded. This speeds up iterative documentation versions.
+    24.10.2023: Added Panels for Files stats breakouts, both Individual Runs and Averages (Panel ID 131-152)
 - To Do
  -> Function this sucker - Inject between section headers
     # Add Page Break
@@ -267,13 +268,37 @@ function Get-Graphs {
                 49 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_my_docs.png" }
                 50 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_my_docs_latency.png" }
                 71 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_iops.png" }
+                131 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_iops_total.png" }
+                132 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_iops_read.png" }
+                133 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_iops_write.png" }
                 77 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_latency.png" }
+                139 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_latency_total.png" }
+                140 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_latency_read.png" }
+                141 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_latency_write.png" }
+                142 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_latency_metadata.png" }
                 78 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_throughput.png" }
+                134 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_throughput_total.png" }
+                136 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_throughput_read.png" }
+                135 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_throughput_write.png" }
                 79 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_connections_and_number_of_files.png" }
+                137 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_number_of_files.png" }
+                138 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_connections.png" }
                 127 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_iops.png" }
+                143 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_iops_total.png" }
+                144 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_iops_read.png" }
+                145 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_iops_write.png" }
                 128 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_latency.png" }
+                149 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_latency_total.png" }
+                150 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_latency_read.png" }
+                151 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_latency_write.png" }
+                152 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_latency_latency.png" }
                 129 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_throughput.png" }
+                146 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_throughput_total.png" }
+                147 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_throughput_read.png" }
+                148 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_throughput_write.png" }
                 130 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_connections_and_files.png" }
+                153 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_connections.png" }
+                154 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_number_of_files.png" }
                 80 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_management_cpu.png" }
                 81 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_packet_engine_cpu.png" }
                 82 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_memory_usage.png" }
@@ -360,13 +385,37 @@ function Get-Graphs {
                 49 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_my_docs_$($ImageSuffix).png" }
                 50 { $OutFile = Join-Path -Path $imagePath -ChildPath "vsi_eux_disk_my_docs_latency_$($ImageSuffix).png" }
                 71 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_iops_$($ImageSuffix).png" }
+                131 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_iops_total_$($ImageSuffix).png" }
+                132 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_iops_read_$($ImageSuffix).png" }
+                133 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_iops_write_$($ImageSuffix).png" }
                 77 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_latency_$($ImageSuffix).png" }
+                139 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_latency_total_$($ImageSuffix).png" }
+                140 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_latency_read_$($ImageSuffix).png" }
+                141 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_latency_write_$($ImageSuffix).png" }
+                142 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_latency_metadata_$($ImageSuffix).png" }
                 78 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_throughput_$($ImageSuffix).png" }
+                134 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_throughput_total_$($ImageSuffix).png" }
+                136 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_throughput_read_$($ImageSuffix).png" }
+                135 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_throughput_write_$($ImageSuffix).png" }
                 79 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_connections_and_number_of_files_$($ImageSuffix).png" }
+                137 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_number_of_files_$($ImageSuffix).png" }
+                138 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_connections_$($ImageSuffix).png" }
                 127 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_iops_$($ImageSuffix).png" }
+                143 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_iops_total_$($ImageSuffix).png" }
+                144 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_iops_read_$($ImageSuffix).png" }
+                145 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_iops_write_$($ImageSuffix).png" }
                 128 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_latency_$($ImageSuffix).png" }
+                149 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_latency_total_$($ImageSuffix).png" }
+                150 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_latency_read_$($ImageSuffix).png" }
+                151 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_latency_write_$($ImageSuffix).png" }
+                152 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_latency_latency_$($ImageSuffix).png" }
                 129 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_throughput_$($ImageSuffix).png" }
+                146 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_throughput_total_$($ImageSuffix).png" }
+                147 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_throughput_read_$($ImageSuffix).png" }
+                148 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_throughput_write_$($ImageSuffix).png" }
                 130 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_connections_and_files_$($ImageSuffix).png" }
+                153 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_connections_$($ImageSuffix).png" }
+                154 { $OutFile = Join-Path -Path $imagePath -ChildPath "nutanix_files_individual_runs_files_number_of_files_$($ImageSuffix).png" }
                 80 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_management_cpu_$($ImageSuffix).png" }
                 81 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_packet_engine_cpu_$($ImageSuffix).png" }
                 82 { $OutFile = Join-Path -Path $imagePath -ChildPath "citrix_netscaler_memory_usage_$($ImageSuffix).png" }
@@ -1353,7 +1402,7 @@ else {
 if ($NutanixFiles) {
     Write-Screen -Message "Downloading Nutanix Files Graphs"
     # Build the PanelID Array 
-    $Panels = @('71', '77', '78', '79', '127', '128', '129', '130')  
+    $Panels = @('71', '77', '78', '79', '127', '128', '129', '130', '131', '132', '133', '134', '135', '136', '137', '138', '139', '140', '141', '142', '143', '144', '145', '146', '147', '148', '149', '150', '151', '152', '153', '154')  
     $endtime = "1672538820000"
     Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 }
