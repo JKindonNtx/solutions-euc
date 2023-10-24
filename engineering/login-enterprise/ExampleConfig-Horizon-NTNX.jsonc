@@ -26,10 +26,10 @@
     },
     "Target": {
         "DeliveryType":  "VMware", // VMware
-        "ConnectionServer": "vcs01.example.loginvsi.com",
-        "ConnectionServerUser": "henk@example.loginvsi.com",
+        "ConnectionServer": "connection.domain.com",
+        "ConnectionServerUser": "username@domain.com",
         "ConnectionServerUserPassword": "MySuperSecurePassword!123",
-        "vCenterServer": "vcenter.example.loginvsi.com",
+        "vCenterServer": "vcenter.domain.com",
         "vCenterUsername": "example\\henk", //remember it's json so \ needs to be escaped
         "vCenterPassword": "MySuperSecurePassword!123",
         "VMFolder": "/EXAMPLE/vm/VMware Horizon", //Get these values from the details page of an existing pool
@@ -41,7 +41,7 @@
         ],
         "RefreshOsDiskAfterLogoff": "ALWAYS", // or NEVER
         "UserAssignment": "DEDICATED", // or FLOATING
-        "UseViewStorageAccelerator": true,
+        "UseViewStorageAccelerator": false,
         "enableGRIDvGPUs": false,
         "Entitlements": "${Domain.NetBios}\\Domain Users",
         "ProvisioningMode": "AllMachinesUpFront", //Valid values are AllMachinesUpFront and OnDemand
@@ -62,13 +62,13 @@
         "IPMI_password": "password", // Used to get power consumption of host
         "CVMsshpassword":  "password", // Used to set affinity on VMs
         "CVM_storage": "VDI", // Storage container where VMs are deployed
-        "Files": "ws-files.wsperf.nutanix.com", // Specify Nutanix Files url if you want to capture files stats. Leave empty if not used.
+        "Files": "files.domain.com", // Specify Nutanix Files url if you want to capture files stats. Leave empty if not used.
         "Files_api": "filesapi", // Specify the Nutanix Files API user, make sure to create this user.
         "Files_password": "password", // Specify the Nutanix Files API password
         "NetScaler": "", // The Citrix NetScaler NSIP
         "NetScaler_Password": "", // The NSROOT password for the Citrix NetScaler
-        "NamingPattern": "W10AMD8LE-####", // Naming pattern of VMs. Also used to set affinity
-        "ADContainer": "OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com",
+        "NamingPattern": "W10AMD8LE-{n:fixed=4}", // Naming pattern of VMs. Also used to set affinity
+        "ADContainer": "OU=Target,OU=Computers,OU=LoginEnterprise",
         "DomainName": "${Domain.NetBios}",
         "Workload": "Knowledge Worker", // Knowledge Worker or Task Worker
         "DesktopPoolName": "Login-ENT-AMD", // Poolname is used to create the desktop pool
@@ -88,6 +88,8 @@
                 "NumberOfSessions": 220, // This is ignored when Autocalc is set to true
                 "NumberOfVMs": 220, // This is ignored when Autocalc is set to true
                 "PowerOnVMs": 220, // Amount of VMs to poweron initially, set to same value as amount of VM's by default. This is ignored when Autocalc is set to true
+                "AutocalcVMs":  false,
+                "Max":  false,
                 "TargetOS":  "", // Autofilled
                 "TargetOSVersion":  "", // Autofilled
                 "DesktopBrokerAgentVersion":  "", // Autofilled
