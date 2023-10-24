@@ -110,7 +110,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     }
 
     #$VSI_Test_RampupInMinutes = [Math]::Round($VSI_Target_NumberOfSessions / $VSI_Target_LogonsPerMinute, 0, [MidpointRounding]::AwayFromZero)
-    $VSI_Target_RampupInMinutes = 5
+    $VSI_Target_RampupInMinutes = 48
 
 
     for ($i = 1; $i -le $VSI_Target_ImageIterations; $i++) {
@@ -168,7 +168,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
 
         $NTNXInfra.Testinfra.BootStart = $Boot.bootstart
-        $NTNXInfra.Testinfra.Boottime = $Boot.boottim
+        $NTNXInfra.Testinfra.Boottime = $Boot.boottime
 
         # Set number of sessions per launcher
         if ($($VSI_Target_SessionCfg.ToLower()) -eq "ica") {
@@ -266,7 +266,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #Check for RDA File and if exists then move it to the output folder
         if(Test-Path -Path $RDASource){
-            $csvData = get-content $RDASource | ConvertFrom-String -Delimiter "," -PropertyNames Timestamp,screenResolutionid,encoderid,movingImageCompressionConfigurationid,preferredColorDepthid,videoCodecid,VideoCodecUseid,VideoCodecTextOptimizationid,VideoCodecColorspaceid,VideoCodecTypeid,HardwareEncodeEnabledid,VisualQualityid,FramesperSecondid,RDHSMaxFPS,currentCPU,currentRAM,totalCPU,currentFps,totalFps,currentRTT,NetworkLatency,NetworkLoss,CurrentBandwidthEDT,totalBandwidthusageEDT,averageBandwidthusageEDT,currentavailableEDTBandwidth,EDTInUseId,currentBandwithoutput,currentLatency,currentavailableBandwidth,totalBandwidthusage,averageBandwidthUsage,averageBandwidthAvailable,GPUusage,GPUmemoryusage,GPUmemoryInUse,GPUvideoEncoderusage,GPUvideoDecoderusage,GPUtotalUsage,GPUVideoEncoderSessions,GPUVideoEncoderAverageFPS,GPUVideoEncoderLatency | Select -Skip 1
+            $csvData = get-content $RDASource | ConvertFrom-String -Delimiter "," -PropertyNames Timestamp,currentCPU,currentRAM,totalCPU,videoCodecid,VideoCodecUseid,VideoCodecTypeid,currentBandwithoutput,currentLatency,currentavailableBandwidth,currentFps,NetworkLoss,totalBandwidth,averageBandwidth,totalFps,averageBandwidthAvailable,GPUusage,GPUmemoryusage,GPUmemoryInUse,GPUvideoEncoderusage,GPUvideoDecoderusage,GPUtotalUsage,GPUVideoEncoderSessions,GPUVideoEncoderAverageFPS,GPUVideoEncoderLatency | Select -Skip 1
             $csvData | Export-Csv -Path $RDADestination -NoTypeInformation
             Remove-Item -Path $RDASource -ErrorAction SilentlyContinue
         }
