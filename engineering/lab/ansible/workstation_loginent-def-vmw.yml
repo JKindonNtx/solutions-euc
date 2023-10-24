@@ -1,13 +1,13 @@
 ---
-- name: Install Windows 10/11 Gold with Office 2019 x64 - LoginVSI - VMW
+- name: Install Windows 10/11 Gold with Office 2021 x64 - LoginVSI - VMW
   hosts: all
   roles:
   - run_ms_deployment_scripts
   - install_ms_net_framework_3.5
   - install_ms_visual_c_2013u5
-  - install_vmware_horizon_agent_84_2111
+  - install_vmware_horizon_agent_88_2212.1
   - install_adobe_reader_dc
-  - install_ms_office_2019_x64
+  - install_ms_office_2021_x64
   - run_ms_file_types
   - run_optimize
   - run_image_tattoo

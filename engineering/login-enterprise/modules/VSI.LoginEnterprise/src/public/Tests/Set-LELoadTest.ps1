@@ -17,7 +17,7 @@ function Set-LELoadTest {
     Switch ($ConnectorName) {
         # create test
         "VMware Horizon View" {
-            $HORIZON_CMD_LINE = '"C:\Program Files (x86)\VMware\VMware Horizon View Client\vmware-view.exe" -serverURL {serverurl} -userName "{username}" -password "{password}" -domainName "{domain}" -desktopName "{resource}" -standalone -loginAsCurrentUser False -nonInteractive'
+            $HORIZON_CMD_LINE = '"C:\Program Files\VMware\VMware Horizon View Client\vmware-view.exe" -serverURL {serverurl} -userName "{username}" -password "{password}" -domainName "{domain}" -desktopName "{resource}" -standalone -loginAsCurrentUser False -nonInteractive'
             $NewTestBody = @{
                 type           = "LoadTest"
                 name           = $TestName
