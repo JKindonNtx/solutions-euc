@@ -7,6 +7,45 @@ function Enable-VSIHVDesktopPool {
         [Int32]$NumberOfSpareVMs = 15,
         [switch]$RDSH
     )
+
+    $Boot = "" | Select-Object -Property bootstart,boottime,firstvmname
+
+    if(!($null -eq (Get-HVPool -PoolName $Name))){
+        Write-Log "Pool $($Name) Found"
+        Write-Log "Getting VMs in Pool $($Name)"
+        $desktops = Get-HVMachine -PoolName $Name | Where-Object {$_.ManagedMachineData.VirtualCenterData.VirtualMachinePowerState -ne "POWERED_OFF"}
+        $totalDesktops = $desktops.Count
+        Write-Log "Disable Pool $($Name)"
+        Set-HVPool  -PoolName $Name -Disable
+        Start-Sleep 2
+        Write-Log "Initiate the shutdown for all the VMs."
+        foreach ($desktop in $desktops.base.Name) { 
+            Shutdown-VMGuest -VM $desktop -Confirm:$False | Out-Null
+        }
+        $boot.firstvmname = $desktops[0].base.dnsname
+
+        $desktops = Get-HVMachine -PoolName $Name | Where-Object {$_.ManagedMachineData.VirtualCenterData.VirtualMachinePowerState -ne "POWERED_OFF"}
+
+        $startTime = Get-Date
+        $date = Get-Date
+        $timeout = 180
+        while ($desktops.Count -ne 0) {
+            $desktops = Get-HVMachine -PoolName $Name | Where-Object {$_.ManagedMachineData.VirtualCenterData.VirtualMachinePowerState -ne "POWERED_OFF"}	
+            Write-Log -Update "$($desktops.Count) of $($totalDesktops) still running."
+            $date = Get-Date
+            if (($date - $startTime).TotalMinutes -gt $timeout) {
+                throw "Shutdown took to long." 
+            }
+            Start-Sleep 10
+        }    
+        Write-Log "All VMs are down."
+
+    } 
+
+    $Boot.bootstart = get-date -format o
+    Start-Sleep -Seconds 10
+    $BootStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+
     $hvService = $Global:VSIHV_ConnectionServer.ExtensionData
     $desktopservice = New-Object vmware.hv.DesktopService
     $farmservice = New-Object vmware.hv.FarmService
@@ -79,6 +118,11 @@ function Enable-VSIHVDesktopPool {
             }
         }
     }
+
+    $BootStopwatch.stop()
+    $Boot.boottime = $BootStopwatch.elapsed.totalseconds
+    $Boot
+
 }
 
 function WaitFor-AvailableMachines {

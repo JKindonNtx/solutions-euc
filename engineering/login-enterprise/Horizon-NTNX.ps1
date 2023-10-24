@@ -39,6 +39,19 @@ $config = $configFile | ConvertFrom-Json
 $NTNXInfra = Get-NTNXinfo -Config $config
 # End Get Infra-info
 
+if ($VSI_Target_Workload -Like "Task*"){
+    $LEWorkload = "TW"
+}
+if ($VSI_Target_Workload -Like "Office*"){
+    $LEWorkload = "OW"
+}
+if ($VSI_Target_Workload -Like "Knowledge*"){
+    $LEWorkload = "KW"
+}
+if ($VSI_Target_Workload -Like "Power*"){
+    $LEWorkload = "PW"
+}
+
 #region RunTest
 #Set the multiplier for the Workloadtype. This adjusts the required MHz per user setting.
 ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
@@ -97,7 +110,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     }
 
     #$VSI_Test_RampupInMinutes = [Math]::Round($VSI_Target_NumberOfSessions / $VSI_Target_LogonsPerMinute, 0, [MidpointRounding]::AwayFromZero)
-    $VSI_Target_RampupInMinutes = 48
+    $VSI_Target_RampupInMinutes = 5
 
 
     for ($i = 1; $i -le $VSI_Target_ImageIterations; $i++) {
@@ -124,14 +137,14 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             -ReplicaDatastore $VSI_Target_ReplicaDatastore `
             -InstantCloneDatastores $VSI_Target_InstantCloneDatastores `
             -NamingPattern $VSI_Target_NamingPattern `
-            -NetBiosName $VSI_Target_NetBiosName `
+            -NetBiosName $VSI_Target_DomainName `
             -ADContainer $VSI_Target_ADContainer `
             -EntitledGroups $VSI_Target_Entitlements `
             -vTPM $VSI_Target_vTPM `
-            -Protocol $VSI_Target_Protocol `
+            -Protocol $VSI_Target_SessionCfg `
             -RefreshOsDiskAfterLogoff $VSI_Target_RefreshOSDiskAfterLogoff `
             -UserAssignment $VSI_Target_UserAssignment `
-            -PoolType $VSI_Target_PoolType `
+            -PoolType $VSI_Target_CloneType `
             -UseViewStorageAccelerator $VSI_Target_UseViewStorageAccelerator `
             -enableGRIDvGPUs $VSI_Target_enableGRIDvGPUs
 
@@ -155,25 +168,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
 
         $NTNXInfra.Testinfra.BootStart = $Boot.bootstart
-        $NTNXInfra.Testinfra.Boottime = $Boot.boottime
-
-        # Get Build Tattoo Information and update variable with new values
-        # UPDATE TO GET THE FIRST VM IN THE POOL DNS NAME
-        #$Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTatoo }
-        #$NTNXInfra.Target.ImagesToTest.TargetOS = $Tattoo.OSName
-        #$NTNXInfra.Target.ImagesToTest.TargetOSVersion = $Tattoo.OSVersion
-        #$NTNXInfra.Target.ImagesToTest.OfficeVersion = $Tattoo.OfficeName
-        #$NTNXInfra.Target.ImagesToTest.ToolsGuestVersion = $Tattoo.GuestToolsVersion
-        #$NTNXInfra.Target.ImagesToTest.OptimizerVendor = $Tattoo.Optimizer
-        #$NTNXInfra.Target.ImagesToTest.OptimizationsVersion = $Tattoo.OptimizerVersion
-        #$NTNXInfra.Target.ImagesToTest.DesktopBrokerAgentVersion = $Tattoo.VdaVersion
-        $NTNXInfra.Target.ImagesToTest.TargetOS = "Windows 10"
-        $NTNXInfra.Target.ImagesToTest.TargetOSVersion = "22H2-2212"
-        $NTNXInfra.Target.ImagesToTest.OfficeVersion = "Office 2019"
-        $NTNXInfra.Target.ImagesToTest.ToolsGuestVersion = "1.1.1"
-        $NTNXInfra.Target.ImagesToTest.OptimizerVendor = "VMware"
-        $NTNXInfra.Target.ImagesToTest.OptimizationsVersion = "1.0"
-        $NTNXInfra.Target.ImagesToTest.DesktopBrokerAgentVersion = "2212.1"
+        $NTNXInfra.Testinfra.Boottime = $Boot.boottim
 
         # Set number of sessions per launcher
         if ($($VSI_Target_SessionCfg.ToLower()) -eq "ica") {
@@ -207,6 +202,17 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             Write-Host (Get-Date) "Wait for VMs to become idle"
             Start-Sleep -Seconds 60
         }
+
+        # Get Build Tattoo Information and update variable with new values
+        $MasterImageDNS = $boot.firstvmname
+        $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTatoo }
+        $NTNXInfra.Target.ImagesToTest.TargetOS = $Tattoo.OSName
+        $NTNXInfra.Target.ImagesToTest.TargetOSVersion = $Tattoo.OSVersion
+        $NTNXInfra.Target.ImagesToTest.OfficeVersion = $Tattoo.OfficeName
+        $NTNXInfra.Target.ImagesToTest.ToolsGuestVersion = $Tattoo.GuestToolsVersion
+        $NTNXInfra.Target.ImagesToTest.OptimizerVendor = $Tattoo.Optimizer
+        $NTNXInfra.Target.ImagesToTest.OptimizationsVersion = $Tattoo.OptimizerVersion
+        $NTNXInfra.Target.ImagesToTest.DesktopBrokerAgentVersion = $Tattoo.VdaVersion
 
         #Stop and cleanup monitoring job Boot phase
         $monitoringJob | Stop-Job | Remove-Job
