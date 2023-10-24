@@ -27,6 +27,10 @@ function Invoke-NetScalerStats {
     # Get NetScaler Stats
     $Stats = Invoke-RestMethod -uri "$hostname/nitro/v1/stat/ns" -WebSession $NSSession.WebSession -Method GET 
     $SSL = Invoke-RestMethod -uri "$hostname/nitro/v1/stat/ssl" -WebSession $NSSession.WebSession -Method GET 
+    $TCP = Invoke-RestMethod -uri "$hostname/nitro/v1/stat/protocoltcp" -WebSession $NSSession.WebSession -Method GET 
+    $HTTP = Invoke-RestMethod -uri "$hostname/nitro/v1/stat/protocolhttp" -WebSession $NSSession.WebSession -Method GET 
+    $InterFace = Invoke-RestMethod -uri "$hostname/nitro/v1/stat/interface" -WebSession $NSSession.WebSession -Method GET 
+    $ActiveInterface = $InterFace.interface | Where-Object {$_.id -like "*1/1*" }  
 
     $NSDetails = New-Object -TypeName psobject 
     $NSDetails | Add-Member -MemberType NoteProperty -Name "cpuusagepcnt" -Value $Stats.ns.cpuusagepcnt
@@ -51,6 +55,11 @@ function Invoke-NetScalerStats {
     $NSDetails | Add-Member -MemberType NoteProperty -Name "ssltransactionsrate" -Value $SSL.ssl.ssltransactionsrate
     $NSDetails | Add-Member -MemberType NoteProperty -Name "ssltotecdhetransactions" -Value $SSL.ssl.ssltotecdhetransactions
     $NSDetails | Add-Member -MemberType NoteProperty -Name "sslecdhetransactionsrate" -Value $SSL.ssl.sslecdhetransactionsrate
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "tcperrrst" -Value $TCP.protocoltcp.tcperrrst
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "errdroppedrxpkts" -Value $ActiveInterface.errdroppedrxpkts
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "errdroppedtxpkts" -Value $ActiveInterface.errdroppedtxpkts
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "http11requestsrate" -Value $HTTP.protocolhttp.http11requestsrate
+    $NSDetails | Add-Member -MemberType NoteProperty -Name "http11responsesrate" -Value $HTTP.protocolhttp.http11responsesrate
 
     # Logout of NetScaler
     $logout = @{

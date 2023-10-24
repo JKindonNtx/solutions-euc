@@ -1,0 +1,13 @@
+---
+# Install Edge
+- name: Install Edge
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Microsoft\\Edge\\118\\MicrosoftEdgeSetup.exe"
+    arguments: /silent /install
+    state: present
+    expected_return_code: [0, 3010]
+    creates_path: 'C:\Program Files (x86)\Microsoft\Edge\Application\118.0.2088.57'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  register: Edge_install

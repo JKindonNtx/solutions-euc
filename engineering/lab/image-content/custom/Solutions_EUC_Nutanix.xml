@@ -2335,9 +2335,79 @@
       <action>
         <plugin>Registry</plugin>
         <params>
-          <name>Update{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5} AutoUpdateCheckPeriodMinutes InstallDefault UpdatesSuppressedStartHour UpdatesSuppressedStartMin UpdatesSuppressedDurationMin</name>
-          <path>HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate</path>
-          <value>0 0 0 0 0 0x005A0</value>
+          <name>Update{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Microsoft Edge Updates - Machine Policy - Install Default</name>
+      <description>Disable Install Default</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>InstallDefault</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Microsoft Edge Updates - Machine Policy - AutoUpdateCheckPeriodMinutes</name>
+      <description>Disable AutoUpdateCheckPeriodMinutes</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>AutoUpdateCheckPeriodMinutes</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Microsoft Edge Updates - Machine Policy - UpdatesSuppressedStartHour</name>
+      <description>Disable UpdatesSuppressedStartHour</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>UpdatesSuppressedStartHour</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Microsoft Edge Updates - Machine Policy - UpdatesSuppressedStartMin</name>
+      <description>Disable UpdatesSuppressedStartMin</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>UpdatesSuppressedStartMin</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate</path>
+          <value>0</value>
+          <valuetype>Dword</valuetype>
+        </params>
+      </action>
+    </entry>
+    <entry>
+      <name>Disable Microsoft Edge Updates - Machine Policy - UpdatesSuppressedDurationMin</name>
+      <description>Disable UpdatesSuppressedDurationMin</description>
+      <execute>1</execute>
+      <action>
+        <plugin>Registry</plugin>
+        <params>
+          <name>UpdatesSuppressedDurationMin</name>
+          <path>HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate</path>
+          <value>1140</value>
           <valuetype>Dword</valuetype>
         </params>
       </action>
@@ -5120,10 +5190,10 @@
         <plugin>PowerShell</plugin>
         <executeparams>
           <value><![CDATA[	try {
-		Get-ScheduledTask -TaskName 'OneDrive*' | Disable-ScheduledTask
-		Get-ScheduledTask -TaskName 'MicrosoftEdge*' | Disable-ScheduledTask
-		Get-ScheduledTask -TaskName 'Google*' | Disable-ScheduledTask
-		Get-ScheduledTask -TaskName 'Chrome*' | Disable-ScheduledTask
+    Get-ScheduledTask -TaskName 'OneDrive*' | Stop-ScheduledTask | Disable-ScheduledTask
+    Get-ScheduledTask -TaskName 'MicrosoftEdge*' | Stop-ScheduledTask |Disable-ScheduledTask
+    Get-ScheduledTask -TaskName 'Google*' | Stop-ScheduledTask |Disable-ScheduledTask
+    Get-ScheduledTask -TaskName 'Chrome*' | Stop-ScheduledTask |Disable-ScheduledTask
 		$Global:CTXOE_Details = "Complete";
 		$Global:CTXOE_Result = $True;
 	} catch {

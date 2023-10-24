@@ -484,7 +484,7 @@ function GetPCVMIncrements {
     try {
         $vm_list = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
         $vm_list = $vm_list.entities
-        Write-Log -Message "[VM Retrieval] Retrieved $($vm_list.Count) from offset $($Offset) virtual machines under PC: $($pc_source)" -Level Info
+        Write-Log -Message "[VM Retrieval] Retrieved $($vm_list.Count) virtual machines from offset $($Offset) under PC: $($pc_source)" -Level Info
         #Now we need to add them to the existing $VirtualMachinesArray
         $Global:VirtualMachines = ($Global:VirtualMachines + $vm_list)
         Write-Log -Message "[VM Retrieval] Retrieved VM Count is $($Global:VirtualMachines.Count) under PC: $($pc_source)" -Level Info
@@ -622,7 +622,7 @@ $Payload = (ConvertTo-Json $PayloadContent)
 try {
     Write-Log -Message "[Cluster Retrieval] Attempting to retrieve Clusters from $($pc_source)" -Level Info
     $Clusters = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
-    Write-Log -Message "[Cluster Retrieval] Sucessfully retrieved Clusters from $($pc_source)" -Level Info
+    Write-Log -Message "[Cluster Retrieval] Successfully retrieved Clusters from $($pc_source)" -Level Info
 }
 catch {
     Write-Log -Message "[Cluster Retrieval] Failed to retrieve Clusters from $($pc_source)" -Level Warn
@@ -656,7 +656,7 @@ $Payload = (ConvertTo-Json $PayloadContent)
 try {
     Write-Log -Message "[Host Retrieval] Attempting to retrieve Hosts from $($pc_source)" -Level Info
     $Hosts = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
-    Write-Log -Message "[Host Retrieval] Sucessfully retrieved Hosts from $($pc_source)" -Level Info
+    Write-Log -Message "[Host Retrieval] Successfully retrieved Hosts from $($pc_source)" -Level Info
 }
 catch {
     Write-Log -Message "[Host Retrieval] Failed to retrieve Hosts from $($pc_source)" -Level Warn
@@ -698,7 +698,7 @@ try {
     $VirtualMachines = InvokePrismAPI -Method $Method -Url $RequestUri -Payload $Payload -Credential $PrismCentralCredentials -ErrorAction Stop
     # We need to understand if we are above 500 machines, and if we need to loop through incremental pulls
     $vm_total_entity_count = $VirtualMachines.metadata.total_matches
-    Write-Log -Message "[VM Retrieval] Sucessfully retrieved virtual machines from $($pc_source)" -Level Info
+    Write-Log -Message "[VM Retrieval] Successfully retrieved virtual machines from $($pc_source)" -Level Info
 }
 catch {
     Write-Log -Message "[VM Retrieval] Failed to retrieve virtual machines from $($pc_source)" -Level Warn
@@ -709,7 +709,7 @@ catch {
 $VirtualMachines = $VirtualMachines.entities
 
 if ($null -ne $VirtualMachines) {
-    Write-Log -Message "[VM Retrieval] Identified $($VirtualMachines.Count) virtual machines under PC: $($pc_source)" -Level Info
+    Write-Log -Message "[VM Retrieval] Retrieved $($VirtualMachines.Count) virtual machines under PC: $($pc_source)" -Level Info
 }
 else {
     Write-Log -Message "[VM Retrieval] Failed to retrieve virtual machine info from $($pc_source)" -Level Error

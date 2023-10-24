@@ -28,7 +28,7 @@ function Get-VSIGraphs {
         # Check on Bucketname and build Uri accordingly
 
             if($BucketName -eq "NetScaler"){
-                $PanelID = "132"
+                $PanelID = "158"
                 $OutFile = Join-Path -Path "$($OutputFolder)" -ChildPath "$($TestName)_NetScaler.png"
                 $Year = get-date -Format "yyyy"
                 $Month = get-date -Format "MM"
