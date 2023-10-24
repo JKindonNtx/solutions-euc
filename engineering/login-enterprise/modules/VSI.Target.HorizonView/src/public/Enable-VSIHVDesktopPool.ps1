@@ -43,7 +43,7 @@ function Enable-VSIHVDesktopPool {
     } 
 
     $Boot.bootstart = get-date -format o
-    Start-Sleep -Seconds 10
+    Start-Sleep -Seconds 60
     $BootStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
     $hvService = $Global:VSIHV_ConnectionServer.ExtensionData
