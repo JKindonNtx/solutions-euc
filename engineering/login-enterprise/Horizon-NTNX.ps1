@@ -266,7 +266,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #Check for RDA File and if exists then move it to the output folder
         if(Test-Path -Path $RDASource){
-            $csvData = get-content $RDASource | ConvertFrom-String -Delimiter "," -PropertyNames Timestamp,currentCPU,currentRAM,totalCPU,videoCodecid,VideoCodecUseid,VideoCodecTypeid,currentBandwithoutput,currentLatency,currentavailableBandwidth,currentFps,NetworkLoss,totalBandwidth,averageBandwidth,totalFps,averageBandwidthAvailable,GPUusage,GPUmemoryusage,GPUmemoryInUse,GPUvideoEncoderusage,GPUvideoDecoderusage,GPUtotalUsage,GPUVideoEncoderSessions,GPUVideoEncoderAverageFPS,GPUVideoEncoderLatency | Select -Skip 1
+            $csvData = get-content $RDASource | ConvertFrom-String -Delimiter "," -PropertyNames Timestamp,currentCPU,currentRAM,totalCPU,videoCodecid,VideoCodecUseid,VideoCodecTypeid,currentBandwithoutput,currentLatency,currentavailableBandwidth,currentFps,NetworkLoss,totalBandwidth,averageBandwidth,totalFps,averageBandwidthAvailable,GPUusage,GPUmemoryusage,GPUmemoryInUse,GPUvideoEncoderusage,GPUvideoDecoderusage,GPUtotalUsage,GPUVideoEncoderSessions,GPUVideoEncoderAverageFPS,GPUVideoEncoderLatency | Select -Skip 2
             $csvData | Export-Csv -Path $RDADestination -NoTypeInformation
             Remove-Item -Path $RDASource -ErrorAction SilentlyContinue
         }
