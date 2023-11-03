@@ -5,15 +5,6 @@ function Get-Cluster {
 
     .DESCRIPTION
     This function will run an Api call against Prism Central and will return all the Clusters currently registered.
-    
-    .PARAMETER PrismIP
-    Specifies the Prism Central IP.
-
-    .PARAMETER PrismUserName
-    Specifies the Prism Central User Name.
-
-    .PARAMETER PrismPassword
-    Specifies the Prism Central Password.
 
     .PARAMETER ClusterExtID
     (Optional) Specifies the Ext ID (UUID) of the Cluster you want to return.
@@ -29,11 +20,11 @@ function Get-Cluster {
     Gets the current Clusters from the Prism Central Appliance.
 
     .EXAMPLE
-    PS> Get-Cluster -PrismIP "10.10.10.10" -PrismUserName "admin" -PrismPassword "password" -ClusterExtID "fds3r43-432qqr-w342fewfew"
+    PS> Get-Cluster -ClusterExtID "fds3r43-432qqr-w342fewfew"
     Gets the specific Ext ID Cluster from the Prism Central Appliance.
 
     .EXAMPLE
-    PS> Get-Cluster -PrismIP "10.10.10.10" -PrismUserName "admin" -PrismPassword "password" -ClusterExtID "fds3r43-432qqr-w342fewfew" -Verbose
+    PS> Get-Cluster -ClusterExtID "fds3r43-432qqr-w342fewfew" -Verbose
     Gets the specific Ext ID Cluster from the Prism Central Appliance with Verbose output.
 
     .LINK
@@ -46,9 +37,6 @@ function Get-Cluster {
     [CmdletBinding()]
 
     Param (
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$PrismIP,
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$PrismUserName,
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$PrismPassword,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$false)][System.String]$ClusterExtID
     )
 
@@ -62,9 +50,9 @@ function Get-Cluster {
     process {
 
         # Build Base Api Reference
-        $ApiPath = "/$($ClusterApiRoot)/$($ClusterNameSpace)/$($ClusterApiVersion)/$($ClusterModuleConfig)/$($ClusterResourceClusters)"
+        $ApiPath = "/$($ApiRoot)/$($ClusterNameSpace)/$($ClusterApiVersion)/$($ModuleConfig)/$($ClusterResourceClusters)"
 
-        # If specific cluster is passed in then append that to the Api Uri
+        # If specific value is passed in then append that to the Api Uri
         if(!(Get-NullVariable -Check $ClusterExtID)){
             $ApiPath = "$($ApiPath)/$($ClusterExtID)"
         } 
@@ -72,7 +60,7 @@ function Get-Cluster {
 
         # Execute Api Call
         write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Executing Api query - $($ApiPath)"
-        $Result = Invoke-NutanixApiCall -PrismIP $PrismIP -PrismUserName $PrismUserName -PrismPassword $PrismPassword -ApiPath $ApiPath
+        $Result = Invoke-NutanixApiCall -ApiPath $ApiPath
 
     } # process
 

@@ -25,23 +25,34 @@ Api NameSpaces available:
 
 "@        
 
-
 # Build API Constants
 
 # API Root
-New-Variable -Name ClusterApiRoot -Value "api" -Option ReadOnly
+New-Variable -Name ApiRoot -Value "api" -Option ReadOnly
 
 # API Versions
+New-Variable -Name AIOpsApiVersion -Value "v4.0.a2" -Option ReadOnly
 New-Variable -Name ClusterApiVersion -Value "v4.0.b1" -Option ReadOnly
+New-Variable -Name DataProtectionApiVersion -Value "v4.0.a4" -Option ReadOnly
+New-Variable -Name FlowApiVersion -Value "v4.0.a1" -Option ReadOnly
 
 # API NameSpace
+New-Variable -Name AiOpsNameSpace -Value "aiops" -Option ReadOnly
 New-Variable -Name ClusterNameSpace -Value "clustermgmt" -Option ReadOnly
+New-Variable -Name DataProtectionNameSpace -Value "dataprotection" -Option ReadOnly
+New-Variable -Name FlowNameSpace -Value "microseg" -Option ReadOnly
 
 # API Module
-New-Variable -Name ClusterModuleConfig -Value "config" -Option ReadOnly
-New-Variable -Name ClusterModuleStats -Value "stats" -Option ReadOnly
+New-Variable -Name ModuleConfig -Value "config" -Option ReadOnly
+New-Variable -Name ModuleStats -Value "stats" -Option ReadOnly
 
-# API Resource - NameSpace Cluster
+# API Resource - AIOps
+New-Variable -Name AIOpsResourceSources -Value "sources" -Option ReadOnly
+New-Variable -Name AIOpsResourceEntityTypes -Value "entity-types" -Option ReadOnly
+New-Variable -Name AIOpsResourceEntities -Value "entities" -Option ReadOnly
+New-Variable -Name AIOpsResourceMetadata -Value "entity-descriptors" -Option ReadOnly
+
+# API Resource - Cluster
 New-Variable -Name ClusterResourceClusters -Value "clusters" -Option ReadOnly
 New-Variable -Name ClusterResourceFaultToleranceStatus -Value "fault-tolerance-status" -Option ReadOnly
 New-Variable -Name ClusterResourceRackableUnits -Value "rackable-units" -Option ReadOnly
@@ -50,3 +61,13 @@ New-Variable -Name ClusterResourceSYSLOG -Value "rsyslog-servers" -Option ReadOn
 New-Variable -Name ClusterResourceHosts -Value "hosts" -Option ReadOnly
 New-Variable -Name ClusterResourceHostNIC -Value "host-nics" -Option ReadOnly
 New-Variable -Name ClusterResourceHostVirtualNIC -Value "virtual-nics" -Option ReadOnly
+
+# API Resource - Data Protection
+New-Variable -Name DataProtectionResourceConsistencyGroups -Value "consistency-groups" -Option ReadOnly
+
+# API Resource - Flow
+New-Variable -Name FlowResourceAddressGroups -Value "address-groups" -Option ReadOnly
+New-Variable -Name FlowResourceNetworkSecurityPolicies -Value "policies" -Option ReadOnly
+New-Variable -Name FlowResourceServiceGroups -Value "service-groups" -Option ReadOnly
+
+

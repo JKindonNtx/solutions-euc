@@ -41,8 +41,18 @@ function Get-NutanixApiError {
     process {
 
         # Decode the Api Error
-        $ErrorJSON = $ErrorMessage.ErrorDetails.Message | ConvertFrom-Json
-        $Return = $ErrorJSON.data.error.validationErrorMessages.message
+        if(test-path variable:\ErrorMessage.ErrorDetails.Message){
+            $ErrorJSON = $ErrorMessage.ErrorDetails.Message | ConvertFrom-Json
+        } else {
+            $ErrorReturn = $ErrorMessage
+        }
+        
+        # Check for active web session
+        if(test-path variable:\ErrorJSON.data.error.validationErrorMessages.message){
+            $Return = $ErrorJSON.data.error.validationErrorMessages.message
+        } else {
+            $Return = $ErrorReturn
+        }
 
     } # process
 

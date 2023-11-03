@@ -6,15 +6,6 @@ function Get-ClusterSNMP {
 
     .DESCRIPTION
     This function will run an Api call against Prism Central and will return the Cluster SNMP information.
-    
-    .PARAMETER PrismIP
-    Specifies the Prism Central IP
-
-    .PARAMETER PrismUserName
-    Specifies the Prism Central User Name
-
-    .PARAMETER PrismPassword
-    Specifies the Prism Central Password
 
     .PARAMETER ClusterExtID
     Specifies the Ext ID (UUID) of the Cluster you want to return.
@@ -26,7 +17,7 @@ function Get-ClusterSNMP {
     Returns the Nutanix Cluster SNMP information based on the parameters passed into the function.
 
     .EXAMPLE
-    PS> Get-ClusterSNMP -PrismIP "10.10.10.10" -PrismUserName "admin" -PrismPassword "password" -ClusterExtID "fds3r43-432qqr-w342fewfew"
+    PS> Get-ClusterSNMP -ClusterExtID "fds3r43-432qqr-w342fewfew"
     Gets the specific Ext ID Cluster SNMP Information from the Prism Central Appliance.
 
     .LINK
@@ -37,9 +28,6 @@ function Get-ClusterSNMP {
     [CmdletBinding()]
 
     Param (
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$PrismIP,
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$PrismUserName,
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$PrismPassword,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$ClusterExtID
     )
 
@@ -53,12 +41,12 @@ function Get-ClusterSNMP {
     process {
 
         # Build Base Api Reference
-        $ApiPath = "/$($ClusterApiRoot)/$($ClusterNameSpace)/$($ClusterApiVersion)/$($ClusterModuleConfig)/$($ClusterResourceClusters)/$($ClusterExtID)/$($ClusterResourceSNMP)"
+        $ApiPath = "/$($ApiRoot)/$($ClusterNameSpace)/$($ClusterApiVersion)/$($ModuleConfig)/$($ClusterResourceClusters)/$($ClusterExtID)/$($ClusterResourceSNMP)"
         write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Building Api path - $($ApiPath)"
 
         # Execute Api Call
         write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Executing Api query - $($ApiPath)"
-        $Result = Invoke-NutanixApiCall -PrismIP $PrismIP -PrismUserName $PrismUserName -PrismPassword $PrismPassword -ApiPath $ApiPath
+        $Result = Invoke-NutanixApiCall -ApiPath $ApiPath
 
     } # process
 

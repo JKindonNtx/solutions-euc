@@ -6,15 +6,6 @@ function Get-AIOpsTimeline {
 
     .DESCRIPTION
     This function will run an Api call against Prism Central and will return the AI Ops Timeline Data available.
-    
-    .PARAMETER PrismIP
-    Specifies the Prism Central IP
-
-    .PARAMETER PrismUserName
-    Specifies the Prism Central User Name
-
-    .PARAMETER PrismPassword
-    Specifies the Prism Central Password
 
     .PARAMETER SourceExtID
     Specifies the Source ExtID of the Entity you wish to return the timeline data for
@@ -23,28 +14,27 @@ function Get-AIOpsTimeline {
     Specifies the Entity ExtID of the Entity you wish to return the timeline data for
 
     .INPUTS
-    This function will take inputs via pipeline as string
+    This function will take inputs via pipeline.
 
     .OUTPUTS
-    Returns an object with the query result and either the data from the query or the error message
+    Returns the timeline data for a given entity based on a source type.
 
     .EXAMPLE
-    PS> Get-AIOpsTimeline -PrismIP "10.10.10.10" -PrismUserName "admin" -PrismPassword "password" -SourceExtID $SourceExtID -EntityExtID $EntityExtID
+    PS> Get-AIOpsTimeline -SourceExtID $SourceExtID -EntityExtID $EntityExtID
     Gets the current AIOps Timeline from the Prism Central Appliance with Source and Entity ExtID's.
 
     .LINK
     https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/NcpCli/Help/Get-AIOpsTimeline.md
+
+    .LINK
+    Project Site: https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/NcpCli
 #>
 
     [CmdletBinding()]
 
     Param (
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$PrismIP,
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$PrismUserName,
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$PrismPassword,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$SourceExtID,
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$EntityExtID,
-        $VerbosePreference = $PSCmdlet.GetVariableValue('VerbosePreference')
+        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$EntityExtID
     )
 
     begin {
@@ -55,29 +45,21 @@ function Get-AIOpsTimeline {
     } # begin
 
     process {
+        
+        # Build Base Api Reference
+        $ApiPath = "/$($ApiRoot)/$($AiOpsNameSpace)/$($AIOpsApiVersion)/$($ModuleStats)/$($AIOpsResourceSources)/$($SourceExtID)/$($AIOpsResourceEntities)/$($EntityExtID)"
+        write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Building Api path - $($ApiPath)"
 
-        try {
-            
-            # Build Api Reference
-            write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Building Api Reference"
-            $ApiData = (Get-NutanixApiPath -NameSpace "AIOps.Timeline")
-            $ApiPath1 = $ApiData.Replace("{SourceExtID}", "$($SourceUUID)")
-            $ApiPath = $ApiPath1.Replace("{EntityExtID}", "$($EntityExtID)")
-            write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Api: $($ApiPath)"
-
-            # Execute Api Call
-            write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Executing Api query targetting $($PrismIP)"
-            Invoke-NutanixApiCall -PrismIP $PrismIP -PrismUserName $PrismUserName -PrismPassword $PrismPassword -ApiPath $ApiPath
-
-        } catch {
-
-            # Api call failed - output the error
-            write-warning "$($PSCmdlet.MyInvocation.MyCommand.Name) - Api call failed: $_"
-
-        }
+        # Execute Api Call
+        write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Executing Api query - $($ApiPath)"
+        $Result = Invoke-NutanixApiCall -ApiPath $ApiPath
 
     } # process
 
-    end {} # end
+    end {
+
+        return Get-ReturnData -Result $Result -CmdLet $PSCmdlet.MyInvocation.MyCommand.Name
+
+    } # end
 
 }

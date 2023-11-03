@@ -6,15 +6,6 @@ function Get-HostVirtualNIC {
 
     .DESCRIPTION
     This function will run an Api call against Prism Central and will return all the Host Virtual NICS currently registered.
-    
-    .PARAMETER PrismIP
-    Specifies the Prism Central IP
-
-    .PARAMETER PrismUserName
-    Specifies the Prism Central User Name
-
-    .PARAMETER PrismPassword
-    Specifies the Prism Central Password
 
     .PARAMETER ClusterExtID
     Specifies the Ext ID (UUID) of the Cluster you want to return.
@@ -32,11 +23,11 @@ function Get-HostVirtualNIC {
     Returns the Nutanix Host Virtual NIC information based on either the Host passed in or the individual Virtual NIC.
 
     .EXAMPLE
-    PS> Get-HostVirtualNIC -PrismIP "10.10.10.10" -PrismUserName "admin" -PrismPassword "password" -ClusterExtID "fds3r43-432qqr-w342fewfew" -HostExtID "fdfrwf3-fews43rw2-453253245432543"
+    PS> Get-HostVirtualNIC -ClusterExtID "fds3r43-432qqr-w342fewfew" -HostExtID "fdfrwf3-fews43rw2-453253245432543"
     Gets the Host Virtual NICs from the specific Cluster passed in from the Prism Central Appliance.
 
     .EXAMPLE
-    PS> Get-HostVirtualNIC -PrismIP "10.10.10.10" -PrismUserName "admin" -PrismPassword "password" -ClusterExtID "fds3r43-432qqr-w342fewfew" -HostExtID "fdfrwf3-fews43rw2-453253245432543" -HostVirtualNICExtID "34225234-431321414-341324-3414"
+    PS> Get-HostVirtualNIC -ClusterExtID "fds3r43-432qqr-w342fewfew" -HostExtID "fdfrwf3-fews43rw2-453253245432543" -HostVirtualNICExtID "34225234-431321414-341324-3414"
     Gets the Host Virtual NICs from the specific Cluster passed in from the Prism Central Appliance.
 
     .LINK
@@ -47,9 +38,6 @@ function Get-HostVirtualNIC {
     [CmdletBinding()]
 
     Param (
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$PrismIP,
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$PrismUserName,
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$PrismPassword,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$ClusterExtID,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$HostExtID,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$false)][System.String]$HostVirtualNICExtID
@@ -65,7 +53,7 @@ function Get-HostVirtualNIC {
     process {
 
         # Build Api Reference
-        $ApiPath = "/$($ClusterApiRoot)/$($ClusterNameSpace)/$($ClusterApiVersion)/$($ClusterModuleConfig)/$($ClusterResourceClusters)/$($ClusterExtID)/$($ClusterResourceHosts)/$($HostExtID)/$($ClusterResourceHostVirtualNIC)"
+        $ApiPath = "/$($ApiRoot)/$($ClusterNameSpace)/$($ClusterApiVersion)/$($ModuleConfig)/$($ClusterResourceClusters)/$($ClusterExtID)/$($ClusterResourceHosts)/$($HostExtID)/$($ClusterResourceHostVirtualNIC)"
         
         # If specific NIC is passed in then append that to the Api Uri
         if(!(Get-NullVariable -Check $HostVirtualNICExtID)){
@@ -75,7 +63,7 @@ function Get-HostVirtualNIC {
 
         # Execute Api Call
         write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Executing Api query - $($ApiPath)"
-        $Result = Invoke-NutanixApiCall -PrismIP $PrismIP -PrismUserName $PrismUserName -PrismPassword $PrismPassword -ApiPath $ApiPath
+        $Result = Invoke-NutanixApiCall -ApiPath $ApiPath
 
     } # process
 
