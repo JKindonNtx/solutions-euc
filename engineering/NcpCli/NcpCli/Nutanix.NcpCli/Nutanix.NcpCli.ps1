@@ -34,17 +34,20 @@ New-Variable -Name ApiRoot -Value "api" -Option ReadOnly
 New-Variable -Name AIOpsApiVersion -Value "v4.0.a2" -Option ReadOnly
 New-Variable -Name ClusterApiVersion -Value "v4.0.b1" -Option ReadOnly
 New-Variable -Name DataProtectionApiVersion -Value "v4.0.a4" -Option ReadOnly
+New-Variable -Name LCMApiVersion -Value "v4.0.a4" -Option ReadOnly
 New-Variable -Name FlowApiVersion -Value "v4.0.a1" -Option ReadOnly
 
 # API NameSpace
 New-Variable -Name AiOpsNameSpace -Value "aiops" -Option ReadOnly
 New-Variable -Name ClusterNameSpace -Value "clustermgmt" -Option ReadOnly
 New-Variable -Name DataProtectionNameSpace -Value "dataprotection" -Option ReadOnly
+New-Variable -Name LCMNameSpace -Value "lcm" -Option ReadOnly
 New-Variable -Name FlowNameSpace -Value "microseg" -Option ReadOnly
 
 # API Module
 New-Variable -Name ModuleConfig -Value "config" -Option ReadOnly
 New-Variable -Name ModuleStats -Value "stats" -Option ReadOnly
+New-Variable -Name ModuleResources -Value "resources" -Option ReadOnly
 
 # API Resource - AIOps
 New-Variable -Name AIOpsResourceSources -Value "sources" -Option ReadOnly
@@ -64,6 +67,16 @@ New-Variable -Name ClusterResourceHostVirtualNIC -Value "virtual-nics" -Option R
 
 # API Resource - Data Protection
 New-Variable -Name DataProtectionResourceConsistencyGroups -Value "consistency-groups" -Option ReadOnly
+
+# API Resource - Life Cycle Management
+New-Variable -Name LCMResourceBundles -Value "bundles" -Option ReadOnly
+New-Variable -Name LCMResourceConfig -Value "config" -Option ReadOnly
+New-Variable -Name LCMResourceEntity -Value "entities" -Option ReadOnly
+New-Variable -Name LCMResourceHistory -Value "history" -Option ReadOnly
+New-Variable -Name LCMResourceImages -Value "images" -Option ReadOnly
+New-Variable -Name LCMResourceModuleConfig -Value "moduleConfig" -Option ReadOnly
+New-Variable -Name LCMResourceNodePriorityConfig -Value "node-priorities" -Option ReadOnly
+New-Variable -Name LCMResourceStatus -Value "status" -Option ReadOnly
 
 # API Resource - Flow
 New-Variable -Name FlowResourceAddressGroups -Value "address-groups" -Option ReadOnly

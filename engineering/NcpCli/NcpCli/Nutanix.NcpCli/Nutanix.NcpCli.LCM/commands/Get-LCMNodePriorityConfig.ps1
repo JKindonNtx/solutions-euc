@@ -1,42 +1,32 @@
 function Get-LCMNodePriorityConfig {
-
 <#
     .SYNOPSIS
     Gets the Node Priority Config from Nutanix Prism Central.
 
     .DESCRIPTION
     This function will run an Api call against Prism Central and will return the LCM Node Priority Config.
-    
-    .PARAMETER PrismIP
-    Specifies the Prism Central IP
-
-    .PARAMETER PrismUserName
-    Specifies the Prism Central User Name
-
-    .PARAMETER PrismPassword
-    Specifies the Prism Central Password
 
     .INPUTS
-    This function will take inputs via pipeline as string
+    None.
 
     .OUTPUTS
-    Returns an object with the query result and either the data from the query or the error message
+    Returns the LCM Node Priority Config from Prism Central.
 
     .EXAMPLE
-    PS> Get-LCMNodePriorityConfig -PrismIP "10.10.10.10" -PrismUserName "admin" -PrismPassword "password"
+    PS> Get-LCMNodePriorityConfig
     Gets the current Node Priority Config from the Prism Central Appliance.
 
     .LINK
     https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/NcpCli/Help/Get-LCMNodePriorityConfig.md
+
+    .LINK
+    Project Site: https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/NcpCli
+
 #>
 
     [CmdletBinding()]
 
     Param (
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$PrismIP,
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$PrismUserName,
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][System.String]$PrismPassword,
-        $VerbosePreference = $PSCmdlet.GetVariableValue('VerbosePreference')
     )
 
     begin {
@@ -48,26 +38,20 @@ function Get-LCMNodePriorityConfig {
 
     process {
 
-        try {
-            
-            # Build Api Reference
-            write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Building Api Reference"
-            $ApiPath = (Get-NutanixApiPath -NameSpace "LCM.NodePriorityConfig")
-            write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Api: $($ApiPath)"
+        # Build Base Api Reference
+        $ApiPath = "/$($ApiRoot)/$($LCMNameSpace)/$($LCMApiVersion)/$($ModuleResources)/$($LCMResourceNodePriorityConfig)"
+        write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Building Api path - $($ApiPath)"
 
-            # Execute Api Call
-            write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Executing Api query targetting $($PrismIP)"
-            Invoke-NutanixApiCall -PrismIP $PrismIP -PrismUserName $PrismUserName -PrismPassword $PrismPassword -ApiPath $ApiPath
-
-        } catch {
-
-            # Api call failed - output the error
-            write-warning "$($PSCmdlet.MyInvocation.MyCommand.Name) - Api call failed: $_"
-
-        }
+        # Execute Api Call
+        write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Executing Api query - $($ApiPath)"
+        $Result = Invoke-NutanixApiCall -ApiPath $ApiPath
 
     } # process
 
-    end {} # end
+    end {
+
+        return Get-ReturnData -Result $Result -CmdLet $PSCmdlet.MyInvocation.MyCommand.Name
+
+    } # end
 
 }
