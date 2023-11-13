@@ -15,9 +15,4 @@
   become: true
   become_method: runas
 
-#    Details you will find in the CSV is as below.
-#        1. InstanceName - VM name present in the cluster
-#        2. OS - Windows/Linux
-#        3. Display Name - Software name installed inside VM
-#        4. Version - Version of the software
-#        5. Publisher - Publisher Name of the software
+
