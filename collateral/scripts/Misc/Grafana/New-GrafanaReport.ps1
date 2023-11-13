@@ -33,6 +33,7 @@
     13.10.2023: Added Nutanix Files Individual Runs to Nutanix Files Section. (Panel ID 127,128,129,130)
     13.10.2023: Moved icons array to variables section. Added a check for icon existence. If the file exists, it will no longer be downloaded. This speeds up iterative documentation versions.
     24.10.2023: Added Panels for Files stats breakouts, both Individual Runs and Averages (Panel ID 131-152)
+    26.10.2023: Added Panels for Individual run CPU Usage (Panel ID 156)
 - To Do
  -> Function this sucker - Inject between section headers
     # Add Page Break
@@ -244,6 +245,7 @@ function Get-Graphs {
                 70 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_total_logon_time.png" }
                 69 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_controller_latency.png" }
                 119 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_cpu_with_eux_score.png" }
+                156 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_cpu.png" }
                 31 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_start.png" }
                 32 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_open_doc.png" }
                 33 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_save_file.png" }
@@ -361,6 +363,7 @@ function Get-Graphs {
                 70 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_total_logon_time_$($ImageSuffix).png" }
                 69 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_controller_latency_$($ImageSuffix).png" }
                 119 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_cpu_with_eux_score_$($ImageSuffix).png" }
+                156 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_cpu_$($ImageSuffix).png" }
                 31 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_start_$($ImageSuffix).png" }
                 32 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_open_doc_$($ImageSuffix).png" }
                 33 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_save_file_$($ImageSuffix).png" }
@@ -1351,7 +1354,7 @@ else {
 if ($IndividualRuns) {
     Write-Screen -Message "Downloading Individual Runs Graphs"
     # Build the PanelID Array 
-    $Panels = @('66', '67', '68', '70', '69', '119')  
+    $Panels = @('66', '67', '68', '70', '69', '119', '156')  
     $endtime = "1672538820000"
     Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 }
