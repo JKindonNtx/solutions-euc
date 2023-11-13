@@ -67,8 +67,8 @@ Param(
     [string]$iconsSource = "http://10.57.64.119:3000/public/img/nutanix/",
 
     [Parameter(Mandatory = $false)]
-    [ValidateSet("LoginEnterpriseResults","HostResources","ClusterResources","LoginTimes","Applications","VsiEuxMeasurements","RDA","BootInfo","IndividualRuns","NutanixFiles","CitrixNetScaler","None")]
-    [Array]$ExcludedComponentList = ("BootInfo","IndividualRuns","NutanixFiles","CitrixNetScaler") # Items to exclude
+    [ValidateSet("BootInfo","LoginEnterpriseResults","HostResources","ClusterResources","LoginTimes","Applications","VsiEuxMeasurements","RDA","IndividualRuns","NutanixFiles","CitrixNetScaler","None")]
+    [Array]$ExcludedComponentList = ("IndividualRuns","NutanixFiles","CitrixNetScaler") # Items to exclude
 
 )
 
@@ -213,6 +213,7 @@ function Get-Graphs {
                 89 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_iops.png" }
                 95 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_iops_individual_runs.png" }
                 93 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_latency.png" }
+                157 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_cpu.png" }
                 97 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_latency_individual_runs.png" }
                 2 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_vsi_max.png" }
                 5 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_vsi_max_individual_runs.png" }
@@ -331,6 +332,7 @@ function Get-Graphs {
                 89 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_iops_$($ImageSuffix).png" }
                 95 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_iops_individual_runs_$($ImageSuffix).png" }
                 93 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_latency_$($ImageSuffix).png" }
+                157 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_cpu_$($ImageSuffix).png" }
                 97 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_latency_individual_runs_$($ImageSuffix).png" }
                 2 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_vsi_max_$($ImageSuffix).png" }
                 5 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_vsi_max_individual_runs_$($ImageSuffix).png" }
@@ -1251,8 +1253,8 @@ foreach($icon in $icons){
 if ($BootInfo) {
     Write-Screen -Message "Downloading Boot Info Graphs"
     # Build the PanelID Array 
-    $Panels = @('85', '84', '86', '94', '92', '96', '89', '95', '93', '97')   
-    [int]$maxboottime = (($testDetailResults.boottime | measure -Maximum).maximum + 30) * 1000
+    $Panels = @('85', '84', '86', '94', '92', '96', '89', '95', '93', '97', '157')   
+    [int]$maxboottime = (($testDetailResults.boottime | measure -Maximum).maximum + 150) * 1000
     $endtime = 1672534800000 + $maxboottime
     Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 }

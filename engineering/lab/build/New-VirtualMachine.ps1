@@ -350,7 +350,7 @@ if ($confirmationStart -eq 'n') {
 
                 # Connect CD Rom to VM
                 Write-Host (Get-Date)":Attach MDT CD ROM"
-                $CD = New-CDDrive -VM $($OSDetails.Name) -ISOPath "[VDI] ISO/LiteTouchPE_x64-NP.iso"
+                $CD = New-CDDrive -VM $($OSDetails.Name) -ISOPath "[$($JSON.VM.Container)] ISO/LiteTouchPE_x64-NP.iso"
                 Set-CDDrive -CD $CD -StartConnected $true -Confirm:$false
                 
                 # Power on the VM

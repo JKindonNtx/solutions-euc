@@ -2,9 +2,9 @@
 - name: Reboot before Optimizations
   ansible.windows.win_reboot:
 
-- name: Pause for 2 minutes
+- name: Pause for 1 minutes
   ansible.builtin.pause:
-    minutes: 2
+    minutes: 1
 
 # Run Citrix Optimizer
 - name: Run Citrix Optimizer
