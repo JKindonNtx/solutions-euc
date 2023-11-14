@@ -11,17 +11,7 @@
     src: files/get-VMwareTools.ps1
     dest: "{{ install_dir }}//get-VMwareTools.ps1"
 
-- name: Run script to get the latest VMware Tools 
+- name: Run script to install the latest VMware Tools 
   win_shell: "{{ install_dir }}//get-VMwareTools.ps1"
   become: true
   become_method: runas
-
-- name: Install VMware Tools
-  win_package:
-    path: "{{ install_dir }}\\VMwareTools.exe"
-    arguments: /S /v "/qn REBOOT=R ADDLOCAL=ALL REMOVE=Hgfs,CBHelper,FileIntrospection,NetworkIntrospection,ServiceDiscovery,DeviceHelper"
-    state: present
-    expected_return_code: [0, 3010]
-  become: yes
-  become_method: runas
-  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
