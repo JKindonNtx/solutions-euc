@@ -86,13 +86,11 @@ function Set-TestData {
         if($ConfigFound){
 
             # Build Web Headers
-            write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Building Web Headers"
             $WebHeaders = @{
                 Authorization = "Token $($ConfigJSON.TestInfra.InfluxToken)"
             }
 
             # Build Unix Date
-            write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Building Unix Start Date"
             $StartDate = Get-Date
             $UnixStartedDate = Get-Date -Date $StartDate -UFormat %s
             $NewStartDate = $UnixStartedDate.Split(".")
@@ -101,11 +99,9 @@ function Set-TestData {
             $CurrentMonth = get-date -Format MM
 
             # Build Influx DB Url
-            write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Building Influx DB Uri"
             $influxDbUri = $InfluxUri + "&bucket=$($InfluxBucket)"
 
             # Build the test status
-            write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Setting Test Status"
             switch ($Status)
             {
                 "Planned" { $StatusInt = "0"}
@@ -116,8 +112,6 @@ function Set-TestData {
             $Fields = "TestStatus=$($StatusInt)"
 
             # Build the Test Tags
-            $ReportUri = "http://10.57.64.119:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=$($CurrentYear)&var-Month=$($CurrentMonth)&var-DocumentName=$($ConfigJSON.Test.DocumentName)&var-Comment=$($ConfigJSON.Target.ImagesToTest.Comment)&var-Testname=$($ConfigJSON.TestInfra.TestName)&var-Run=$($ConfigJSON.TestInfra.TestName)_Run$($RunNumber)&var-Naming=Comment"
-            write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Building Influx Tags"
             $Tag = (
                 "Run=$($RunNumber)," +
                 "ImageIterations=$($ConfigJSON.Target.ImageIterations)," +
@@ -176,7 +170,6 @@ function Set-TestData {
                 "MaxAbsoluteActiveActions=$($ConfigJSON.TestInfra.MaxAbsoluteActiveActions)," +
                 "MaxAbsoluteNewActionsPerMinute=$($ConfigJSON.TestInfra.MaxAbsoluteNewActionsPerMinute)," +
                 "MaxPercentageActiveActions=$($ConfigJSON.TestInfra.MaxPercentageActiveActions)," +
-                "ReportUri=https://test"
             )
 
             if($StatusInt -eq "3"){
@@ -189,7 +182,6 @@ function Set-TestData {
             $Tag = Set-CleanData -Data $Tag
 
             # Update Influx DB
-            write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Updating Influx DB"
             $Body = "$TestName,$Tag $Fields $FormattedStartDate"
             try {
                 $null = Invoke-RestMethod -Method Post -Uri $influxDbUri -Headers $WebHeaders -Body $Body
