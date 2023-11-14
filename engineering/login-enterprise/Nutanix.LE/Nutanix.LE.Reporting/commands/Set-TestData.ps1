@@ -30,7 +30,7 @@ function Set-TestData {
     .PARAMETER ErrorMessage
     (Optional) The error message.
 
-    .PARAMETER PercentComplete
+    .PARAMETER CurrentPhase
     The percent completion of the current test.
 
     .INPUTS
@@ -60,7 +60,7 @@ function Set-TestData {
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$InfluxBucket,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][ValidateSet("Planned","Running","Complete","Error")]$Status,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$false)]$ErrorMessage,
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$PercentComplete,
+        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$CurrentPhase,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$CurrentMessage
     )
 
@@ -118,7 +118,7 @@ function Set-TestData {
                 "DataType=TestInfo," +
                 "Document=$($ConfigJSON.Test.DocumentName)," +
                 "Status=$($Status)," +
-                "Complete=$($PercentComplete)," +
+                "Complete=$($CurrentPhase) of $($var_TotalPhases)," +
                 "CurrentMessage=$($CurrentMessage)," +
                 "Year=$($CurrentYear)," +
                 "Month=$($CurrentMonth)," +
@@ -184,7 +184,7 @@ function Set-TestData {
             # Update Influx DB
             $Body = "$TestName,$Tag $Fields $FormattedStartDate"
             try {
-                $null = Invoke-RestMethod -Method Post -Uri $influxDbUri -Headers $WebHeaders -Body $Body
+                Invoke-RestMethod -Method Post -Uri $influxDbUri -Headers $WebHeaders -Body $Body
                 $Return = $true
             } catch {
                 $Return = $false
