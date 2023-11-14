@@ -1,0 +1,18 @@
+# Report on the metrics Corp IT have requested
+
+- name: Create install directory for ansible operations
+  win_file: 
+    path: "{{ install_dir }}"
+    state: directory
+
+- name: copy script to server
+  win_copy:
+    src: files/collect-inventory.ps1
+    dest: "{{ install_dir }}//collect-inventory.ps1"
+
+- name: Run script to collect an inventory for Corp IT
+  win_shell: "{{ install_dir }}//collect-inventory.ps1"
+  become: true
+  become_method: runas
+
+
