@@ -244,8 +244,21 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     # End Setup testname
 
     # Slack update
+    Write-Log -Message "Updating Slack" -Level Info
     $SlackMessage = "New Login Enterprise test started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName). Testname: $($NTNXTestname)."
-    #Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
+    Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
+
+    # Citrix validation
+    if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
+        Write-Log -Message "Validating Citrix" -Level Info
+        Connect-VSICTX -DDC $VSI_Target_DDC
+    }
+
+    # LE Test Check
+    Write-Log -Message "Polling LE for tests" -Level Info
+    $Test = Get-LETests | Where-Object { $_.name -eq $VSI_Test_Name }
+    Wait-LeTest -testId $Test.Id
+
 }
 
 #endregion Execute Test
