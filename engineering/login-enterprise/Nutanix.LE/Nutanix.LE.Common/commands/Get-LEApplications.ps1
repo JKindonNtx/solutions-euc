@@ -1,4 +1,4 @@
-function function-template {
+function Get-LEApplications {
     <#
     .SYNOPSIS
     Quick Description of the function.
@@ -26,25 +26,35 @@ function function-template {
     Project Site: https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/login-enterprise/Nutanix.LE
 
 #>
-    [CmdletBinding()]
-
-    Param (
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][System.String]$ParameterName
-    )
 
     begin {
         # Set strict mode 
         Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
+        #Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
+        Write-Log -Message "Starting Get-LEApplications" -Level Info
     }
 
     process {
-        # Process code for the function
+        $Body = @{
+            orderBy   = "name"
+            direction = "asc"
+            count     = 10000
+            include   = "none"
+        }
+
+        try {
+            $Response = Invoke-PublicApiMethod -Method "GET" -Path "v6/applications" -Body $Body -ErrorAction Stop
+        }
+        catch {
+            Write-Log -Message $_ -Level Error
+            Exit 1
+        }
+        $Response.items
     } # process
 
     end {
-        # Return data for the function
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
+        #Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
+        Write-Log -Message "Finishing Get-LEApplications" -Level Info
     } # end
 
 }

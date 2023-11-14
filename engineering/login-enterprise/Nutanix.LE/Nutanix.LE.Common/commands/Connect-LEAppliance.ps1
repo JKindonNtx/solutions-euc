@@ -1,4 +1,4 @@
-function function-template {
+function Connect-LEAppliance {
     <#
     .SYNOPSIS
     Quick Description of the function.
@@ -29,7 +29,10 @@ function function-template {
     [CmdletBinding()]
 
     Param (
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][System.String]$ParameterName
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)]
+        [System.String]$URL,
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)]
+        [System.String]$Token
     )
 
     begin {
@@ -39,11 +42,19 @@ function function-template {
     }
 
     process {
-        # Process code for the function
+        $global:LE_URL = $url.TrimEnd("/")
+        $global:LE_Token = $token
+
+        if ($null -eq (Get-LEApplications)) {
+            Write-Log -Message "Failed to connect to appliance at $url, please check that the URL and Token are correct" -Level Error
+            Exit 1
+        }
+        else {
+            Write-Log -Message "Connected to VSI Appliance at URL: $($global:LE_URL)" -Level Info
+        }
     } # process
 
     end {
-        # Return data for the function
         Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
     } # end
 
