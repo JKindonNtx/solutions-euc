@@ -1,11 +1,19 @@
 <##
 .SYNOPSIS
 .DESCRIPTION
+.PARAMETER ConfigFile
+The JSON file containing the test configuration
+.PARAMETER ReportConfigFile
+.PARAMETER Type
+Specify the type of test to be run, CitrixVAD, CitrixDaaS, Horizon, RAS
+.NOTES
 TODO
 - Consolidate different configuration options into single script - DaaS, CVAD, Horizon, Parallels etc.
 - Update function descriptions and details per Dave defaults
 - Validate behaviour on anything with a -VALIDATE switch currently in the Write-Log function - odd behaviour
 - Validate what should be in JSON, vs Param vs Variables
+- Consider any other snapins - if only citrix, move the PowerShell check to the Citrix Type only.
+- Fixup the Params in this script for Config File etc
 #>
 
 #region Params
@@ -257,7 +265,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #region Slack update
     Write-Log -Message "Updating Slack" -Level Info
     $SlackMessage = "New Login Enterprise test started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName). Testname: $($NTNXTestname)."
-    #Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
+    Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
     #endregion Slack update
 
     #region Citrix validation
@@ -273,6 +281,61 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     Wait-LeTest -testId $Test.Id
     #endregion LE Test Check
 
+    #region LE Users
+
+    #region AD Users
+
+    #region Test Rampup
+
+    #region Iteration through runs
+
+    #region Update Slack
+
+    #region Configure Citrix Desktop Pool
+
+    #region Configure Folder Details for output
+
+    #region Monitoring
+
+    #region Citrix Desktop Pool Boot
+
+    #region Build Tattoo 
+
+    #region Set number of sessions per launcher
+
+    #region Update the test params/create test if not exist
+
+    #region Wait for VM's to have settled down
+
+    #region Stop and cleanup monitoring job Boot phase
+
+    #region Set RDA Source and Destination files and clean out source files if they still exist
+
+    #region VM Idle state
+
+    #region Nutanix Curator Stop
+
+    #region Start the test
+
+    #region Start monitoring
+
+    #region Wait for test to finish
+
+    #region Cleanup monitoring job
+
+    #region Nutanix Curator Start
+
+    #region Write config to OutputFolder
+
+    #region Check for RDA File and if exists then move it to the output folder
+
+    #region Upload Config to Influx
+
+    #region Slack update
+
+    #region Analyze Run results
+
+    #region Slack update
 }
 
 #endregion Execute Test
