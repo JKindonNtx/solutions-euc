@@ -60,7 +60,6 @@ $Validated_OS_Types = @("multisession", "singlesession")
 $var_ModuleName = "Nutanix.LE"
 Write-Host "$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: Trying to import $var_ModuleName module"
 try {
-    #Import-Module C:\DevOps\solutions-euc\engineering\login-enterprise\Nutanix.LE\Nutanix.LE.psd1 -Force -ErrorAction Stop
     Import-Module "$PSScriptRoot\$var_ModuleName.psd1" -Force -ErrorAction Stop
     Write-Log -Message "Successfully imported $var_ModuleName Module" -Level Info
 }
@@ -172,7 +171,7 @@ $NTNXInfra = Get-NTNXinfo -Config $config
 ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     Set-VSIConfigurationVariables -ImageConfiguration $ImageToTest -ConfigurationFile $ConfigFile
 
-    #Set affinity
+    #region Set affinity
     if ($VSI_Target_NodeCount -eq "1") {
         $NTNXInfra.Testinfra.SetAffinity = $true
     }
@@ -180,7 +179,9 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $NTNXInfra.Testinfra.SetAffinity = $false
     }
     Write-Log -Message "Nutanix Host Affinity is set to: $($NTNXInfra.Testinfra.SetAffinity)" -Level Info
+    #endregion Set affinity
 
+    #region Validate Workload Profiles
     if ($VSI_Target_Workload -notin $Validated_Workload_Profiles ) {
         Write-Log -Message "Worker Profile: $($VSI_Target_Workload) is not a valid profile for testing. Please check config file" -Level Error
         Exit 1
@@ -194,6 +195,9 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $WLmultiplier = 1.1
     }
     Write-Log -Message "LE Worker Profile is: $($VSI_Target_Workload) and the Workload is set to: $($LEWorkload)" -Level Info
+    #endregion Validate Workload Profiles
+
+    #region Handle AutoCalc
     If ($VSI_Target_AutocalcVMs) {
         If ($VSI_Target_Max) {
             $VSI_VSImax = 1
@@ -235,29 +239,34 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         ($NTNXInfra.Target.ImagesToTest | Where-Object { $_.Comment -eq $VSI_Target_Comment }).NumberOfSessions = $VSI_Target_NumberOfSessions
         Write-Log -Message "AutoCalc is enabled and the number of VMs is set to $VSI_Target_NumberOfVMS and the number of sessions to $VSI_Target_NumberOfSessions on $VSI_Target_NodeCount Node(s)" -Level Info
     }
+    #endregion Handle AutoCalc
 
     $NTNXInfra.Target.ImagesToTest = $ImageToTest
-    # Setup testname
+
+    #region Setup testname
     Write-Log -Message "Setting up Test Details" -Level Info
     $NTNXid = (New-Guid).Guid.SubString(1,6)
     $NTNXTestname = "$($NTNXid)_$($VSI_Target_NodeCount)n_A$($NTNXInfra.Testinfra.AOSversion)_$($NTNXInfra.Testinfra.HypervisorType)_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
-    # End Setup testname
+    #endregion Setup testname
 
-    # Slack update
+    #region Slack update
     Write-Log -Message "Updating Slack" -Level Info
     $SlackMessage = "New Login Enterprise test started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName). Testname: $($NTNXTestname)."
     Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
+    #endregion Slack update
 
-    # Citrix validation
+    #region Citrix validation
     if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
         Write-Log -Message "Validating Citrix" -Level Info
         Connect-VSICTX -DDC $VSI_Target_DDC
     }
+    #endregion Citrix validation
 
-    # LE Test Check
+    #region LE Test Check
     Write-Log -Message "Polling LE for tests" -Level Info
     $Test = Get-LETests | Where-Object { $_.name -eq $VSI_Test_Name }
     Wait-LeTest -testId $Test.Id
+    #endregion LE Test Check
 
 }
 
