@@ -1,7 +1,7 @@
 @{
 
     # Script module or binary module file associated with this manifest.
-    RootModule = 'Nutanix.LE.Citrix.DaaS.psm1'
+    RootModule = 'Nutanix.LE.Citrix.psm1'
     
     # Version number of this module.
     ModuleVersion = '2311.001'
@@ -10,7 +10,7 @@
     # CompatiblePSEditions = @()
     
     # ID used to uniquely identify this module
-    GUID = '32105ae4-7036-4a84-914b-153c3606776a'
+    GUID = '94c76ac2-9d3a-4761-8971-6c8b02fb47e2'
     
     # Author of this module
     Author = 'Nutanix Solutions Engineering'

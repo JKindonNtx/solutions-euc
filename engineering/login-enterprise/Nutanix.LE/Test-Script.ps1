@@ -1,6 +1,11 @@
 <##
 .SYNOPSIS
 .DESCRIPTION
+TODO
+- Consolidate different configuration options into single script - DaaS, CVAD, Horizon, Parallels etc.
+- Update function descriptions and details per Dave defaults
+- Validate behaviour on anything with a -VALIDATE switch currently in the Write-Log function - odd behaviour
+- Validate what should be in JSON, vs Param vs Variables
 #>
 
 #region Params
@@ -252,7 +257,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #region Slack update
     Write-Log -Message "Updating Slack" -Level Info
     $SlackMessage = "New Login Enterprise test started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName). Testname: $($NTNXTestname)."
-    Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
+    #Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
     #endregion Slack update
 
     #region Citrix validation

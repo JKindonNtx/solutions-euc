@@ -68,11 +68,11 @@ NestedModules = @(
     'Nutanix.LE.ps1',
     @{ModuleName="Nutanix.LE.Common"; ModuleVersion="2311.001"}
     @{ModuleName="Nutanix.LE.AD"; ModuleVersion="2311.001"}
-    @{ModuleName="Nutanix.LE.Citrix.CVAD"; ModuleVersion="2311.001"}
-    @{ModuleName="Nutanix.LE.Citrix.DaaS"; ModuleVersion="2311.001"}
+    @{ModuleName="Nutanix.LE.Citrix"; ModuleVersion="2311.001"}
     @{ModuleName="Nutanix.LE.Citrix.NetScaler"; ModuleVersion="2311.001"}
     @{ModuleName="Nutanix.LE.GuestVM"; ModuleVersion="2311.001"}
     @{ModuleName="Nutanix.LE.Launcher"; ModuleVersion="2311.001"}
+    @{ModuleName="Nutanix.LE.LE.Details"; ModuleVersion="2311.001"}
     @{ModuleName="Nutanix.LE.Nutanix.AHV"; ModuleVersion="2311.001"}
     @{ModuleName="Nutanix.LE.Nutanix.AOS"; ModuleVersion="2311.001"}
     @{ModuleName="Nutanix.LE.Nutanix.CVM"; ModuleVersion="2311.001"}
