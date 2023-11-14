@@ -58,7 +58,7 @@ function Set-TestData {
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$RunNumber,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$InfluxUri,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$InfluxBucket,
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][ValidateSet("Planned","Running","Complete","Error")]$Status,
+        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][ValidateSet("Planned","Running","Complete","Error","UploadError")]$Status,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$false)]$ErrorMessage,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$CurrentPhase,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$CurrentMessage
@@ -72,10 +72,8 @@ function Set-TestData {
         # Read in the Config File
         if(Test-Path -Path $ConfigFile){
             $ConfigFound = $true
-            write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - Found config file $($ConfigFile)"
             $ConfigJSON = Get-Content -Path $ConfigFile -Raw | ConvertFrom-Json
         } else {
-            write-verbose "$($PSCmdlet.MyInvocation.MyCommand.Name) - $($ConfigFile) Not Found"
             $ConfigFound = $false
         }
 
@@ -108,6 +106,7 @@ function Set-TestData {
                 "Running" { $StatusInt = "1"}
                 "Complete" { $StatusInt = "2"}
                 "Error" { $StatusInt = "3"}
+                "UploadError" { $StatusInt = "4" }
             }
             $Fields = "TestStatus=$($StatusInt)"
 
@@ -118,7 +117,8 @@ function Set-TestData {
                 "DataType=TestInfo," +
                 "Document=$($ConfigJSON.Test.DocumentName)," +
                 "Status=$($Status)," +
-                "Complete=$($CurrentPhase) of $($var_TotalPhases)," +
+                "CurrentPhase=$($CurrentPhase)," +
+                "TotalPhases=$($var_TotalPhases)," +
                 "CurrentMessage=$($CurrentMessage)," +
                 "Year=$($CurrentYear)," +
                 "Month=$($CurrentMonth)," +
@@ -169,17 +169,18 @@ function Set-TestData {
                 "InfraMemoryGB=$($ConfigJSON.TestInfra.MemoryGB)," +
                 "MaxAbsoluteActiveActions=$($ConfigJSON.TestInfra.MaxAbsoluteActiveActions)," +
                 "MaxAbsoluteNewActionsPerMinute=$($ConfigJSON.TestInfra.MaxAbsoluteNewActionsPerMinute)," +
-                "MaxPercentageActiveActions=$($ConfigJSON.TestInfra.MaxPercentageActiveActions)," +
+                "MaxPercentageActiveActions=$($ConfigJSON.TestInfra.MaxPercentageActiveActions)" 
             )
 
-            if($StatusInt -eq "3"){
+            if(($StatusInt -eq "3") -or ($StatusInt -eq "4")){
                 $Tag = $Tag + ",ErrorMessage=$($ErrorMessage)"
             } else {
                 $Tag = $Tag + ",ErrorMessage=None"
             }
 
             # Clean the spaces in the Tags
-            $Tag = Set-CleanData -Data $Tag
+            $NewTag = $Tag.Replace("=,", "=0,")
+            $Tag = Set-CleanData -Data $NewTag
 
             # Update Influx DB
             $Body = "$TestName,$Tag $Fields $FormattedStartDate"

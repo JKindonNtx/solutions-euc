@@ -261,7 +261,11 @@ function Start-InfluxUpload {
     
     end {
 
-        return $Return
+        $UploadDetails = New-Object -TypeName psobject 
+        $UploadDetails | Add-Member -MemberType NoteProperty -Name "ConfigFound" -Value $ConfigFound
+        $UploadDetails | Add-Member -MemberType NoteProperty -Name "TagValidated" -Value $TagValidated
+        $UploadDetails | Add-Member -MemberType NoteProperty -Name "Return" -Value $Return
+        return $UploadDetails
     }
     
 }

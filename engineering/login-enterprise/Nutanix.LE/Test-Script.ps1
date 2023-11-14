@@ -339,9 +339,14 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
     #region Upload Data to Influx
 
+    $CurrentPhase = "15"
+    
     if($NTNXInfra.Test.UploadResults) {
         Write-Log -Message "Uploading Test Run Data to Influx" -Level Info
         
+        $TestDetail = $NTNXInfra.TestInfra.TestName -Split '_Run'
+        $Run = $TestDetail[1]
+
         # Get the boot files and start time
         $Files = Get-ChildItem "$($OutputFolder)\Boot\*.csv"
         $Started = $($NTNXInfra.TestInfra.Bootstart)
@@ -357,6 +362,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         foreach($File in $Files){
             if(($File.Name -like "host raw*") -or ($File.Name -like "cluster raw*")){
                 Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
+                $null = Set-TestData -ConfigFile "$($OutputFolder)\Testconfig.json" -TestName $($NTNXInfra.TestInfra.TestName) -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket "Tests" -Status "Running" -CurrentPhase $CurrentPhase -CurrentMessage "Uploading Boot File $($File.name) to Influx"
                 if(Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
                     Write-Log -Message "Finished uploading Boot File $($File.Name) to Influx" -Level Info
                 } else {
@@ -377,19 +383,30 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         foreach($File in $Files){
             if(($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*")){
                 Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
-                if(Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName){
-                    Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
+                $UploadResult = Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName
+                if($UploadResult.Return -eq $true){
+                    Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info -Update
+                    $UploadStatus = "Finished"
                 } else {
-                    Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
+                    if($UploadResult.TagValidated -eq $false){
+                        Write-Log -Message "Error with empty tag value - check json test result file" -Level Warn
+                        $UploadStatus = "Empty Tag Value"
+                    } else {
+                        Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
+                        $UploadStatus = "Errored"
+                    }
                 }
             } else {
                 Write-Log -Message "Skipped uploading File $($File.Name) to Influx" -Level Info
             }
+            $null = Set-TestData -ConfigFile "$($OutputFolder)\Testconfig.json" -TestName $($NTNXInfra.TestInfra.TestName) -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket "Tests" -Status "Running" -CurrentPhase $CurrentPhase -CurrentMessage "Uploading $($File.name) to Influx - Status: $($UploadStatus)"
         }
 
     } else {
         Write-Log -Message "Skipping uploading Test Run Data to Influx" -Level Info
     }
+
+    $null = Set-TestData -ConfigFile "$($OutputFolder)\Testconfig.json" -TestName $($NTNXInfra.TestInfra.TestName) -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket "Tests" -Status "Running" -CurrentPhase $CurrentPhase -CurrentMessage "Finished Region - Upload Data to Influx"
 
     #endregion Upload Data to Influx
 
