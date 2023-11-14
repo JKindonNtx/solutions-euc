@@ -14,6 +14,14 @@ TODO
 - Validate what should be in JSON, vs Param vs Variables
 - Consider any other snapins - if only citrix, move the PowerShell check to the Citrix Type only.
 - Fixup the Params in this script for Config File etc
+- Consider Template JSON output based on -Planning Switch
+- Switch setup -> API / Influx DB LE1 = 
+    - Common -> JSON based?
+    - CVAD -> Validate only the appropriate JSON config for CVAD
+    - DaaS
+    - Horizon -> 
+    - NetScaler
+- Query Inlfux for running tests against LE appliance
 #>
 
 #region Params
