@@ -1,7 +1,7 @@
 @{
 
     # Script module or binary module file associated with this manifest.
-    RootModule = 'Nutanix.LE.Paralells.RAS.psm1'
+    RootModule = 'Nutanix.LE.Parallels.RAS.psm1'
     
     # Version number of this module.
     ModuleVersion = '2311.001'

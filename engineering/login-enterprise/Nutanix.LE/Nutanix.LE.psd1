@@ -79,7 +79,7 @@ NestedModules = @(
     @{ModuleName="Nutanix.LE.Nutanix.Files"; ModuleVersion="2311.001"}
     @{ModuleName="Nutanix.LE.Nutanix.PrismCentral"; ModuleVersion="2311.001"}
     @{ModuleName="Nutanix.LE.Nutanix.PrismElement"; ModuleVersion="2311.001"}
-    @{ModuleName="Nutanix.LE.Paralells.RAS"; ModuleVersion="2311.001"}
+    @{ModuleName="Nutanix.LE.Parallels.RAS"; ModuleVersion="2311.001"}
     @{ModuleName="Nutanix.LE.RDA"; ModuleVersion="2311.001"}
     @{ModuleName="Nutanix.LE.Reporting"; ModuleVersion="2311.001"}
     @{ModuleName="Nutanix.LE.VMware.ESXi"; ModuleVersion="2311.001"}
