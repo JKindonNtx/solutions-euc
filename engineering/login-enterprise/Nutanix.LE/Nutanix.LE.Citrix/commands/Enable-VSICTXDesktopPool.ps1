@@ -1,31 +1,5 @@
 function Enable-VSICTXDesktopPool {
-    <#
-    .SYNOPSIS
-    Quick Description of the function.
 
-    .DESCRIPTION
-    Detailed description of the function.
-
-    .PARAMETER ParameterName
-    Description of each parameter being passed into the function.
-
-    .INPUTS
-    This function will take inputs via pipeline.
-
-    .OUTPUTS
-    What the function returns.
-
-    .EXAMPLE
-    PS> function-template -parameter "parameter detail"
-    Description of the example.
-
-    .LINK
-    Markdown Help: https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/login-enterprise/Help/function-template.md
-
-    .LINK
-    Project Site: https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/login-enterprise/Nutanix.LE
-
-#>
     [CmdletBinding()]
 
     Param (
@@ -120,7 +94,6 @@ function Enable-VSICTXDesktopPool {
                 $provtask = Get-ProvTask -AdminAddress $DDC -TaskId $provTaskId
             }
             
-            Write-Log ""
             $ProvSchemeUid = (Get-ProvScheme -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName).ProvisioningSchemeUid.Guid
             $Uid = (Get-BrokerCatalog -AdminAddress $DDC -Name $DesktopPoolName).Uid
             $ProvVMS = Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeUid $ProvSchemeUid -MaxRecordCount $([int]::MaxValue) | Where-Object { $_.Tag -ne "Brokered" }
@@ -135,7 +108,6 @@ function Enable-VSICTXDesktopPool {
                 Lock-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -Tag "Brokered" -VMID @($VM.VMId) -ErrorAction Stop
                 New-BrokerMachine -AdminAddress $DDC -Cataloguid $Uid -MachineName $VM.ADAccountSid -ErrorAction Stop | Add-BrokerMachine -DesktopGroup $DesktopPoolName -ErrorAction Stop
             }
-            Write-Log ""
         }
 
         if ($CloneType -eq "PVS"){
@@ -179,7 +151,6 @@ function Enable-VSICTXDesktopPool {
         while ($true) {
             Write-Log -Update -Message "$RegisteredVMCount/$PowerOnVMs/$NumberOfVMs (Registered/PowerOnVMs/Total)" -Level Info
             if ($RegisteredVMCount -eq $PowerOnVMs) {
-                Write-Log ""
                 break
             } else {          
                 $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $MaxRecordCount

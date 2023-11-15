@@ -1,33 +1,5 @@
 function Get-LEAccountGroups  {
-    <#
-    .SYNOPSIS
-    Quick Description of the function.
 
-    .DESCRIPTION
-    Detailed description of the function.
-
-    .PARAMETER orderBy
-    .PARAMETER Direction
-    .PARAMETER Count
-    .PARAMETER Include
-
-    .INPUTS
-    This function will take inputs via pipeline.
-
-    .OUTPUTS
-    What the function returns.
-
-    .EXAMPLE
-    PS> function-template -parameter "parameter detail"
-    Description of the example.
-
-    .LINK
-    Markdown Help: https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/login-enterprise/Help/function-template.md
-
-    .LINK
-    Project Site: https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/login-enterprise/Nutanix.LE
-
-#>
     [CmdletBinding()]
 
     Param (

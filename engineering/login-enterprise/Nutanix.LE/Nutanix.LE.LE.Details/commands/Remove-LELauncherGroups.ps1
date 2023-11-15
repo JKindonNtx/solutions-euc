@@ -1,23 +1,22 @@
-function Remove-LEAccountGroups {
+function Remove-LELauncherGroups {
 
     [CmdletBinding()]
 
     Param (
-        [Parameter(Mandatory = $true)][array]$ids
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)][array]$ids
     )
 
     begin {
         # Set strict mode 
         Set-StrictMode -Version Latest
-        Write-Log -Message "Starting Remove-LEAccountGroups" -Level Info
+        Write-Log -Message "Starting Remove-LELauncherGroups" -Level Info
     }
 
     process {
-        
         $Body = ConvertTo-Json @($ids)
 
         try {
-            $Response = Invoke-PublicApiMethod -Method "DELETE" -Path "v6/account-groups" -Body $Body -ErrorAction Stop
+            $Response = Invoke-PublicApiMethod -Method "DELETE" -Path "v6/launcher-groups" -Body $Body
             $Response.id
         }
         catch {
@@ -29,7 +28,7 @@ function Remove-LEAccountGroups {
 
     end {
         # Return data for the function
-        Write-Log -Message "Finishing Remove-LEAccountGroups" -Level Info
+        Write-Log -Message "Finishing Remove-LELauncherGroups" -Level Info
     } # end
 
 }

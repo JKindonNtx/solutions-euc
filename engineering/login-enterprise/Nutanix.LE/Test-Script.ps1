@@ -9,7 +9,6 @@ Specify the type of test to be run, CitrixVAD, CitrixDaaS, Horizon, RAS
 .NOTES
 TODO
 - Consolidate different configuration options into single script - DaaS, CVAD, Horizon, Parallels etc.
-- Update function descriptions and details per Dave defaults
 - Validate behaviour on anything with a -VALIDATE switch currently in the Write-Log function - odd behaviour
 - Validate what should be in JSON, vs Param vs Variables
 - Consider any other snapins - if only citrix, move the PowerShell check to the Citrix Type only.
@@ -60,6 +59,8 @@ Param(
 )
 #endregion Params
 
+##// Add a JSON Builder job here - don't execute anything other than a JSON output
+
 #region Variables
 # ============================================================================
 # Variables
@@ -69,7 +70,7 @@ If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $
 $Validated_Workload_Profiles = @("Task Worker", "Knowledge Worker")
 $Validated_OS_Types = @("multisession", "singlesession")
 $VSI_Target_RampupInMinutes = 48 ##// This needs to move to JSON
-
+$MaxRecordCount = 5000 ##// This needs to move to Variables
 #endregion Variables
 
 #Region Execute
@@ -155,6 +156,7 @@ $Temp_Module = $null
 #region variable setting
 #----------------------------------------------------------------------------------------------------------------------------
 Set-VSIConfigurationVariables -ConfigurationFile $ConfigFile
+
 # Fix trailing slash issue
 $VSI_LoginEnterprise_ApplianceURL = $VSI_LoginEnterprise_ApplianceURL.TrimEnd("/")
 # Populates the $global:LE_URL
@@ -187,6 +189,32 @@ $NTNXInfra = Get-NTNXinfo -Config $config
 #endregion Get Nutanix Infra
 
 #endregion variable setting
+
+##// Report Output here on relevent variables- Dave wants a Snazzy Header
+
+##// Write out common configurations below
+Write-Log -Message "Value is: PLACEHOLDER" -Level Validation
+
+if ($Type -eq "CitrixVAD") {
+    Write-Log -Message "Value is: PLACEHOLDER" -Level Validation
+}
+if ($Type -eq "CitrixDaaS") {
+    Write-Log -Message "Value is: PLACEHOLDER" -Level Validation
+}
+if ($Type -eq "Horizon") {
+    Write-Log -Message "Value is: PLACEHOLDER" -Level Validation
+}
+if ($Type -eq "RAS") {
+    Write-Log -Message "Value is: PLACEHOLDER" -Level Validation
+}
+
+##// Write out a prompt here post validation work - make sure all is good before going
+
+##//
+
+##// Validate Authentication Components here - Pre Flight Checks
+# Files Auth
+# Etc
 
 #region Execute Test
 #Set the multiplier for the Workloadtype. This adjusts the required MHz per user setting.
@@ -334,7 +362,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     $Params = $null
     #endregion AD Users
 
-    #region Iteration through runs
+    #region Iterate through runs
     for ($i = 1; $i -le $VSI_Target_ImageIterations; $i++) {
         # Will only create the pool if it does not exist
         
@@ -347,6 +375,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $IPMI_ip = Get-NTNXHostIPMI -NTNXHost $VSI_Target_NTNXHost
         $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $VSI_Target_HypervisorConnection +"\"+ $VSI_Target_HypervisorNetwork +".network" }
         $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
+        #endregion Update Slack
 
         #region Configure Citrix Desktop Pool
         $params = @{
@@ -418,124 +447,293 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $NTNXInfra.Testinfra.BootStart = $Boot.bootstart
         $NTNXInfra.Testinfra.Boottime = $Boot.boottime
         #endregion Start monitoring Boot phase
-    }
 
-
-    
-
-    
-    #region Citrix Desktop Pool Boot
-
-    #region Build Tattoo 
-
-    #region Set number of sessions per launcher
-
-    #region Update the test params/create test if not exist
-
-    #region Wait for VM's to have settled down
-
-    #region Stop and cleanup monitoring job Boot phase
-
-    #region Set RDA Source and Destination files and clean out source files if they still exist
-
-    #region VM Idle state
-
-    #region Nutanix Curator Stop
-
-    #region Start the test
-
-    #region Start monitoring
-
-    #region Wait for test to finish
-
-    #region Cleanup monitoring job
-
-    #region Nutanix Curator Start
-
-    #region Write config to OutputFolder
-
-    #region Check for RDA File and if exists then move it to the output folder
-
-    #region Upload Data to Influx
-
-    $CurrentPhase = "15"
-    
-    if($NTNXInfra.Test.UploadResults) {
-        Write-Log -Message "Uploading Test Run Data to Influx" -Level Info
-        
-        $TestDetail = $NTNXInfra.TestInfra.TestName -Split '_Run'
-        $Run = $TestDetail[1]
-
-        # Get the boot files and start time
-        $Files = Get-ChildItem "$($OutputFolder)\Boot\*.csv"
-        $Started = $($NTNXInfra.TestInfra.Bootstart)
-
-        # Build the Boot Bucket Name
-        If ($($NTNXInfra.Test.BucketName) -eq "LoginDocuments") {
-            $BucketName = "BootBucket"
-        } Else {
-            $BucketName = "BootBucketRegression"
+        #region Get Build Tattoo Information and update variable with new values
+        $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $VSI_Target_DesktopPoolName -MaxRecordCount $MaxRecordCount
+        $RegisteredVMs = ($BrokerVMS | Where-Object { $_.RegistrationState -eq "Registered" })
+        $MasterImageDNS = $RegisteredVMs[0].DNSName
+        try {
+            $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTatoo } -ErrorAction Stop 
         }
+        catch {
+            Write-Log -Message $_ -Level Error
+            #Exit 1
+        }
+        $NTNXInfra.Target.ImagesToTest.TargetOS = $Tattoo.OSName
+        $NTNXInfra.Target.ImagesToTest.TargetOSVersion = $Tattoo.OSVersion
+        $NTNXInfra.Target.ImagesToTest.OfficeVersion = $Tattoo.OfficeName
+        $NTNXInfra.Target.ImagesToTest.ToolsGuestVersion = $Tattoo.GuestToolsVersion
+        $NTNXInfra.Target.ImagesToTest.OptimizerVendor = $Tattoo.Optimizer
+        $NTNXInfra.Target.ImagesToTest.OptimizationsVersion = $Tattoo.OptimizerVersion
+        $NTNXInfra.Target.ImagesToTest.DesktopBrokerAgentVersion = $Tattoo.VdaVersion
+        #endregion Get Build Tattoo Information and update variable with new values
 
-        # Loop through the boot files and process each one
-        foreach($File in $Files){
-            if(($File.Name -like "host raw*") -or ($File.Name -like "cluster raw*")){
-                Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
-                $null = Set-TestData -ConfigFile "$($OutputFolder)\Testconfig.json" -TestName $($NTNXInfra.TestInfra.TestName) -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket "Tests" -Status "Running" -CurrentPhase $CurrentPhase -CurrentMessage "Uploading Boot File $($File.name) to Influx"
-                if(Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
-                    Write-Log -Message "Finished uploading Boot File $($File.Name) to Influx" -Level Info
-                } else {
-                    Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
-                }
-            } else {
-                Write-Log -Message "Skipped uploading Boot File $($File.Name) to Influx" -Level Info
+        #region Set number of sessions per launcher
+        if ($($VSI_Target_SessionCfg.ToLower()) -eq "ica") {
+            $SessionsperLauncher = 20
+        } else {
+            $SessionsperLauncher = 12
+        }
+        if (-not ($SkipLaunchers)) {
+            $NumberOfLaunchers = [System.Math]::Ceiling($VSI_Target_NumberOfSessions / $SessionsperLauncher)
+            # Wait for all launchers to be registered in LE
+            Wait-LELaunchers -Amount $NumberOfLaunchers -NamingPattern $VSI_Launchers_NamingPattern
+            # Create/update launchergroup with the launchers
+            Set-LELauncherGroup -LauncherGroupName $VSI_Launchers_GroupName -NamingPattern $VSI_Launchers_NamingPattern
+        }
+        #endregion Set number of sessions per launcher
+
+        #region Update the test params/create test if not exist
+        $Params = @{
+            TestName = $VSI_Test_Name
+            SessionAmount = $VSI_Target_NumberOfSessions
+            RampupInMinutes = $VSI_Target_RampupInMinutes
+            DurationInMinutes = $VSI_Target_DurationInMinutes
+            LauncherGroupName = $VSI_Launchers_GroupName
+            AccountGroupName = $VSI_Users_GroupName
+            ConnectorName = "Citrix Storefront"
+            ConnectorParams = @{serverURL = $VSI_Target_StorefrontURL; resource = $VSI_Target_DesktopPoolName }
+            Workload = $VSI_Target_Workload
+        }
+        $testId = Set-LELoadTest @Params
+        $params = $null
+        #endregion Update the test params/create test if not exist
+
+        #region Wait for VM's to have settled down
+        if (-not ($SkipWaitForIdleVMs)) {
+            Write-Log -Message "Waiting 60 seconds for VMs to become idle" -Level Info
+            Start-Sleep -Seconds 60
+        }
+        #endregion Wait for VM's to have settled down
+
+        #region Stop and cleanup monitoring job Boot phase
+        $monitoringJob | Stop-Job | Remove-Job
+        #endregion Stop and cleanup monitoring job Boot phase
+
+        #region Set RDA Source and Destination files and clean out source files if they still exist
+        $RDADestination = "$OutputFolder\RDA.csv"
+        $RDASource = Join-Path -Path "$($NTNXInfra.TestInfra.RDAPath)" -ChildPath "$($VSI_Users_BaseName)0001.csv"
+        if(Test-Path -Path $RDASource){
+            Write-Log -Message "Removing RDA Source File $($RDASource)" -Level Info
+            Remove-Item -Path $RDASource -ErrorAction SilentlyContinue
+        } else {
+            Write-Log -Message "RDA Source File $($RDASource) does not exist" -Level Info
+        }
+        #endregion Set RDA Source and Destination files and clean out source files if they still exist
+
+        #region VM Idle state
+        Write-Log -Message "Waiting for $VSI_Target_MinutesToWaitAfterIdleVMs minutes before starting test" -Leve Info
+        Start-sleep -Seconds $($VSI_Target_MinutesToWaitAfterIdleVMs * 60)
+        #endregion VM Idle state
+
+        #region Nutanix Curator Stop
+        Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "stop"
+        #endregion Nutanix Curator Stop
+
+        #region Start the test
+        Start-LETest -testId $testId -Comment "$FolderName-$VSI_Target_Comment"
+        $TestRun = Get-LETestRuns -testId $testId | Select-Object -Last 1
+        #endregion Start the test
+
+        #region Start monitoring
+        $Params = @{
+            OutputFolder                 = $OutputFolder 
+            DurationInMinutes            = $VSI_Target_DurationInMinutes 
+            RampupInMinutes              = $VSI_Target_RampupInMinutes 
+            Hostuuid                     = $Hostuuid 
+            IPMI_ip                      = $IPMI_ip 
+            Path                         = $Scriptroot 
+            NTNXCounterConfigurationFile = $ReportConfigFile 
+            AsJob                        = $true
+        }
+        $monitoringJob = Start-VSINTNXMonitoring @params
+        $Params = $null
+
+        if ($VSI_Target_Files -ne "") {
+            $Params = @{
+                OutputFolder                 = $OutputFolder 
+                DurationInMinutes            = $VSI_Target_DurationInMinutes 
+                RampupInMinutes              = $VSI_Target_RampupInMinutes 
+                Path                         = $Scriptroot 
+                NTNXCounterConfigurationFile = $ReportConfigFile 
+                AsJob                        = $true
             }
+            $monitoringFilesJob = Start-NTNXFilesMonitoring @Params
+            $Params = $null
         }
+        if ($VSI_Target_NetScaler -ne "") {
+            $Params = @{
+                OutputFolder      = $OutputFolder 
+                DurationInMinutes = $VSI_Target_DurationInMinutes 
+                RampupInMinutes   = $VSI_Target_RampupInMinutes 
+                Path              = $Scriptroot 
+                AsJob             = $true
+            }
+            $monitoringNSJob = Start-NTNXNSMonitoring @params
+            $Params = $null
+        }
+        #endregion Start monitoring
 
-        # Get the test run files and start time
-        $Files = Get-ChildItem "$($OutputFolder)\*.csv"
-        $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv"
-        $Started = $vsiresult.started
-        $BucketName = $($NTNXInfra.Test.BucketName)
+        #region Wait for test to finish
+        Wait-LETest -testId $testId
+        #endregion Wait for test to finish
 
-        # Loop through the test run data files and process each one
-        foreach($File in $Files){
-            if(($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*")){
-                Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
-                $UploadResult = Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName
-                if($UploadResult.Return -eq $true){
-                    Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info -Update
-                    $UploadStatus = "Finished"
-                } else {
-                    if($UploadResult.TagValidated -eq $false){
-                        Write-Log -Message "Error with empty tag value - check json test result file" -Level Warn
-                        $UploadStatus = "Empty Tag Value"
-                    } else {
+        #region Cleanup monitoring job
+        $monitoringJob | Wait-Job | Remove-Job
+        if ($VSI_Target_Files -ne "") {
+            $monitoringFilesJob | Wait-Job | Remove-Job
+        }
+        if ($VSI_Target_NetScaler -ne "") {
+            $monitoringNSJob | Wait-Job | Remove-Job
+        }
+        #endregion Cleanup monitoring job
+
+        #region Nutanix Curator Start
+        Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "start"
+        #endregion Nutanix Curator Start
+
+        #region Write config to OutputFolder
+        $NTNXInfra.Testinfra.VMCPUCount = [Int]$VSI_Target_NumCPUs * [Int]$VSI_Target_NumCores
+        $NTNXInfra.Testinfra.Testname = $FolderName
+        $NTNXInfra | ConvertTo-Json -Depth 20 | Set-Content -Path $OutputFolder\Testconfig.json -Force
+        Write-Log -Message "Exporting LE Measurements to output folder" -Level Info
+        Export-LEMeasurements -Folder $OutputFolder -TestRun $TestRun -DurationInMinutes $VSI_Target_DurationInMinutes
+        #endregion Write config to OutputFolder
+
+        #region Check for RDA File and if exists then move it to the output folder
+        if(Test-Path -Path $RDASource){
+            $csvData = get-content $RDASource | ConvertFrom-String -Delimiter "," -PropertyNames Timestamp,screenResolutionid,encoderid,movingImageCompressionConfigurationid,preferredColorDepthid,videoCodecid,VideoCodecUseid,VideoCodecTextOptimizationid,VideoCodecColorspaceid,VideoCodecTypeid,HardwareEncodeEnabledid,VisualQualityid,FramesperSecondid,RDHSMaxFPS,currentCPU,currentRAM,totalCPU,currentFps,totalFps,currentRTT,NetworkLatency,NetworkLoss,CurrentBandwidthEDT,totalBandwidthusageEDT,averageBandwidthusageEDT,currentavailableEDTBandwidth,EDTInUseId,currentBandwithoutput,currentLatency,currentavailableBandwidth,totalBandwidthusage,averageBandwidthUsage,averageBandwidthAvailable,GPUusage,GPUmemoryusage,GPUmemoryInUse,GPUvideoEncoderusage,GPUvideoDecoderusage,GPUtotalUsage,GPUVideoEncoderSessions,GPUVideoEncoderAverageFPS,GPUVideoEncoderLatency | Select -Skip 1
+            $csvData | Export-Csv -Path $RDADestination -NoTypeInformation
+            Remove-Item -Path $RDASource -ErrorAction SilentlyContinue
+        }
+        #endregion Check for RDA File and if exists then move it to the output folder
+
+        #region Upload Data to Influx
+
+        $CurrentPhase = "15"
+        
+        if ($NTNXInfra.Test.UploadResults) {
+            Write-Log -Message "Uploading Test Run Data to Influx" -Level Info
+            
+            $TestDetail = $NTNXInfra.TestInfra.TestName -Split '_Run'
+            $Run = $TestDetail[1]
+
+            # Get the boot files and start time
+            $Files = Get-ChildItem "$($OutputFolder)\Boot\*.csv"
+            $Started = $($NTNXInfra.TestInfra.Bootstart)
+
+            # Build the Boot Bucket Name
+            If ($($NTNXInfra.Test.BucketName) -eq "LoginDocuments") {
+                $BucketName = "BootBucket"
+            }
+            Else {
+                $BucketName = "BootBucketRegression"
+            }
+
+            # Loop through the boot files and process each one
+            foreach ($File in $Files) {
+                if (($File.Name -like "host raw*") -or ($File.Name -like "cluster raw*")) {
+                    Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
+                    $null = Set-TestData -ConfigFile "$($OutputFolder)\Testconfig.json" -TestName $($NTNXInfra.TestInfra.TestName) -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket "Tests" -Status "Running" -CurrentPhase $CurrentPhase -CurrentMessage "Uploading Boot File $($File.name) to Influx"
+                    if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
+                        Write-Log -Message "Finished uploading Boot File $($File.Name) to Influx" -Level Info
+                    }
+                    else {
                         Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
-                        $UploadStatus = "Errored"
                     }
                 }
-            } else {
-                Write-Log -Message "Skipped uploading File $($File.Name) to Influx" -Level Info
+                else {
+                    Write-Log -Message "Skipped uploading Boot File $($File.Name) to Influx" -Level Info
+                }
             }
-            $null = Set-TestData -ConfigFile "$($OutputFolder)\Testconfig.json" -TestName $($NTNXInfra.TestInfra.TestName) -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket "Tests" -Status "Running" -CurrentPhase $CurrentPhase -CurrentMessage "Uploading $($File.name) to Influx - Status: $($UploadStatus)"
+
+            # Get the test run files and start time
+            $Files = Get-ChildItem "$($OutputFolder)\*.csv"
+            $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv"
+            $Started = $vsiresult.started
+            $BucketName = $($NTNXInfra.Test.BucketName)
+
+            # Loop through the test run data files and process each one
+            foreach ($File in $Files) {
+                if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*")) {
+                    Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
+                    $UploadResult = Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName
+                    if ($UploadResult.Return -eq $true) {
+                        Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info -Update
+                        $UploadStatus = "Finished"
+                    }
+                    else {
+                        if ($UploadResult.TagValidated -eq $false) {
+                            Write-Log -Message "Error with empty tag value - check json test result file" -Level Warn
+                            $UploadStatus = "Empty Tag Value"
+                        }
+                        else {
+                            Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
+                            $UploadStatus = "Errored"
+                        }
+                    }
+                }
+                else {
+                    Write-Log -Message "Skipped uploading File $($File.Name) to Influx" -Level Info
+                }
+                $null = Set-TestData -ConfigFile "$($OutputFolder)\Testconfig.json" -TestName $($NTNXInfra.TestInfra.TestName) -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket "Tests" -Status "Running" -CurrentPhase $CurrentPhase -CurrentMessage "Uploading $($File.name) to Influx - Status: $($UploadStatus)"
+            }
+
+        }
+        else {
+            Write-Log -Message "Skipping uploading Test Run Data to Influx" -Level Info
         }
 
-    } else {
-        Write-Log -Message "Skipping uploading Test Run Data to Influx" -Level Info
+        $null = Set-TestData -ConfigFile "$($OutputFolder)\Testconfig.json" -TestName $($NTNXInfra.TestInfra.TestName) -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket "Tests" -Status "Running" -CurrentPhase $CurrentPhase -CurrentMessage "Finished Region - Upload Data to Influx"
+
+        #endregion Upload Data to Influx
+
+        $Testresult = import-csv "$OutputFolder\VSI-results.csv"
+        $Appsuccessrate = $Testresult."Apps success"/$Testresult."Apps total" *100
+
+        #region Slack update
+        $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName). $($Testresult.activesessionCount) sessions active of $($Testresult."login total") total sessions. EUXscore: $($Testresult."EUX score") - VSImax: $($Testresult.vsiMax). App Success rate: $($Appsuccessrate.tostring("#.###"))"
+        Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
+
+        $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -RunNumber $i -TestName $NTNXTestname
+
+        if(Test-Path -path $Filename) {
+            $Params = @{
+                ImageURL     = $FileName 
+                SlackToken   = $NTNXInfra.Testinfra.SlackToken 
+                SlackChannel = $NTNXInfra.Testinfra.SlackChannel 
+                SlackTitle   = "$($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)" 
+                SlackComment = "CPU and EUX score of $($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)"
+            }
+            Update-VSISlackImage @params
+            $Params = $null
+        }
+        #endregion Slack update
+
     }
-
-    $null = Set-TestData -ConfigFile "$($OutputFolder)\Testconfig.json" -TestName $($NTNXInfra.TestInfra.TestName) -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket "Tests" -Status "Running" -CurrentPhase $CurrentPhase -CurrentMessage "Finished Region - Upload Data to Influx"
-
-    #endregion Upload Data to Influx
-
-    #region Slack update
+    #endregion Iterate through runs
 
     #region Analyze Run results
+    Get-VSIResults -TestName $NTNXTestname -Path $ScriptRoot
+    #endregion Analyze Run results
 
     #region Slack update
+    Update-VSISlackresults -TestName $NTNXTestname -Path $ScriptRoot
+    $OutputFolder = "$($ScriptRoot)\testresults\$($NTNXTestname)"
+    $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -TestName $NTNXTestname
+    if(Test-Path -path $Filename) {
+        $Params = @{
+            ImageURL     = $FileName 
+            SlackToken   = $NTNXInfra.Testinfra.SlackToken 
+            SlackChannel = $NTNXInfra.Testinfra.SlackChannel 
+            SlackTitle   = "$($NTNXInfra.Target.ImagesToTest[0].Comment)" 
+            SlackComment = "CPU and EUX scores of $($NTNXInfra.Target.ImagesToTest[0].Comment) - All Runs"
+        }
+        Update-VSISlackImage @params
+        $Params = $Null
+    }
+    #endregion Slack update
 }
-
 #endregion Execute Test
 
 #endregion Execute
