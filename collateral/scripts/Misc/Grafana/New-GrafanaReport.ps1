@@ -58,13 +58,13 @@ Param(
     [string]$ImageSuffix, #shortname for image ouput - helpful for multi run documentation. moves an image from image_name.png to image_name_suffix.png
 
     [Parameter(Mandatory = $false)]
-    [string]$influxDbUrl = "http://10.57.64.119:8086/api/v2/query?orgID=bca5b8aeb2b51f2f",
+    [string]$influxDbUrl = "http://10.57.64.25:8086/api/v2/query?orgID=bca5b8aeb2b51f2f",
 
     [Parameter(Mandatory = $false)]
-    [string]$InfluxToken = "b4yxMiQGOAlR3JftuLHuqssnwo-SOisbC2O6-7od7noAE5W1MLsZxLF7e63RzvUoiOHObc9G8_YOk1rnCLNblA==",
+    [string]$InfluxToken = "8PsWoQV6QTmg98hk-dmVW61RbFs5SPOcVJII56Kp6Qi2E0Svyz6kHOAA8euFO6mzH_cgPODezlRe6qXlLLWgng==",
 
     [Parameter(Mandatory = $false)]
-    [string]$iconsSource = "http://10.57.64.119:3000/public/img/nutanix/",
+    [string]$iconsSource = "http://10.57.64.25:3000/public/img/nutanix/",
 
     [Parameter(Mandatory = $false)]
     [ValidateSet("BootInfo","LoginEnterpriseResults","HostResources","ClusterResources","LoginTimes","Applications","VsiEuxMeasurements","RDA","IndividualRuns","NutanixFiles","CitrixNetScaler","None")]

@@ -336,11 +336,11 @@ if ($confirmationStart -eq 'n') {
     # Section - Script Variables - do not change
     # -----------------------------------------------------------------------------------------------------------------------
 
-    $influxDbUrl = "http://10.57.64.119:8086/api/v2/query?orgID=bca5b8aeb2b51f2f"
-    $InfluxToken = "b4yxMiQGOAlR3JftuLHuqssnwo-SOisbC2O6-7od7noAE5W1MLsZxLF7e63RzvUoiOHObc9G8_YOk1rnCLNblA=="
+    $influxDbUrl = "http://10.57.64.25:8086/api/v2/query?orgID=bca5b8aeb2b51f2f"
+    $InfluxToken = "8PsWoQV6QTmg98hk-dmVW61RbFs5SPOcVJII56Kp6Qi2E0Svyz6kHOAA8euFO6mzH_cgPODezlRe6qXlLLWgng=="
     Write-Screen -Message "Set InfluxDB Uri: $($influxDbUrl)"
 
-    $iconsSource = "http://10.57.64.119:3000/public/img/nutanix/"
+    $iconsSource = "http://10.57.64.25:3000/public/img/nutanix/"
     Write-Screen -Message "Set Icon Uri: $($iconsSource)"
 
     # -----------------------------------------------------------------------------------------------------------------------
