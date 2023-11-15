@@ -14,3 +14,4 @@
   #- run_optimize
   - install_parallels_ras_guest_agent
   - run_image_tattoo
+  - run_software_inventory_corp_it
