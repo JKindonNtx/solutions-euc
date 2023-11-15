@@ -50,7 +50,7 @@
         ],
         "RefreshOsDiskAfterLogoff": "ALWAYS", // or NEVER
         "UserAssignment": "DEDICATED", // or FLOATING
-        "UseViewStorageAccelerator": true,
+        "UseViewStorageAccelerator": false,
         "enableGRIDvGPUs": false,
         "NamingPattern": "ex-",
         "NetBiosName": "${Domain.NetBios}",
