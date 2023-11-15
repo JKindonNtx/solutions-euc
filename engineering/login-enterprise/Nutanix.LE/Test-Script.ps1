@@ -71,6 +71,7 @@ $Validated_Workload_Profiles = @("Task Worker", "Knowledge Worker")
 $Validated_OS_Types = @("multisession", "singlesession")
 $VSI_Target_RampupInMinutes = 48 ##// This needs to move to JSON
 $MaxRecordCount = 5000 ##// This needs to move to Variables
+$InfluxTestDashBucket = "Tests" ##// This needs to move to Variables
 #endregion Variables
 
 #Region Execute
@@ -221,7 +222,14 @@ if ($Type -eq "RAS") {
 ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     Set-VSIConfigurationVariables -ImageConfiguration $ImageToTest -ConfigurationFile $ConfigFile
 
+    #region Setup testname
+    Write-Log -Message "Setting up Test Details" -Level Info
+    $NTNXid = (New-Guid).Guid.SubString(1,6)
+    $NTNXTestname = "$($NTNXid)_$($VSI_Target_NodeCount)n_A$($NTNXInfra.Testinfra.AOSversion)_$($NTNXInfra.Testinfra.HypervisorType)_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
+    #endregion Setup testname
+
     #region Set affinity
+    Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber "N/A" -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "1" -CurrentMessage "Setting Affinity"
     if ($VSI_Target_NodeCount -eq "1") {
         $NTNXInfra.Testinfra.SetAffinity = $true
     }
@@ -292,12 +300,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #endregion Handle AutoCalc
 
     $NTNXInfra.Target.ImagesToTest = $ImageToTest
-
-    #region Setup testname
-    Write-Log -Message "Setting up Test Details" -Level Info
-    $NTNXid = (New-Guid).Guid.SubString(1,6)
-    $NTNXTestname = "$($NTNXid)_$($VSI_Target_NodeCount)n_A$($NTNXInfra.Testinfra.AOSversion)_$($NTNXInfra.Testinfra.HypervisorType)_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
-    #endregion Setup testname
 
     #region Slack update
     Write-Log -Message "Updating Slack" -Level Info
@@ -713,10 +715,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     }
     #endregion Iterate through runs
 
+    $Region = 11
     #region Analyze Run results
     Get-VSIResults -TestName $NTNXTestname -Path $ScriptRoot
     #endregion Analyze Run results
 
+    $Region = 12
     #region Slack update
     Update-VSISlackresults -TestName $NTNXTestname -Path $ScriptRoot
     $OutputFolder = "$($ScriptRoot)\testresults\$($NTNXTestname)"
