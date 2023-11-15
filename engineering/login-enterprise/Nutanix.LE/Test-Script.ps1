@@ -522,7 +522,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Set RDA Source and Destination files and clean out source files if they still exist
 
         #region VM Idle state
-        Write-Log -Message "Waiting for $VSI_Target_MinutesToWaitAfterIdleVMs minutes before starting test" -Leve Info
+        Write-Log -Message "Waiting for $VSI_Target_MinutesToWaitAfterIdleVMs minutes before starting test" -Level Info
         Start-sleep -Seconds $($VSI_Target_MinutesToWaitAfterIdleVMs * 60)
         #endregion VM Idle state
 
