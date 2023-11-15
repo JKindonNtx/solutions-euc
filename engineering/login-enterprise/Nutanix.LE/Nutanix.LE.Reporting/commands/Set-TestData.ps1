@@ -111,6 +111,7 @@ function Set-TestData {
             $Fields = "TestStatus=$($StatusInt)"
 
             # Build the Test Tags
+            $LEAppliance = ($ConfigJSON.Users.BaseName).Replace("VSI", "")
             $Tag = (
                 "Run=$($RunNumber)," +
                 "ImageIterations=$($ConfigJSON.Target.ImageIterations)," +
@@ -169,7 +170,11 @@ function Set-TestData {
                 "InfraMemoryGB=$($ConfigJSON.TestInfra.MemoryGB)," +
                 "MaxAbsoluteActiveActions=$($ConfigJSON.TestInfra.MaxAbsoluteActiveActions)," +
                 "MaxAbsoluteNewActionsPerMinute=$($ConfigJSON.TestInfra.MaxAbsoluteNewActionsPerMinute)," +
-                "MaxPercentageActiveActions=$($ConfigJSON.TestInfra.MaxPercentageActiveActions)" 
+                "MaxPercentageActiveActions=$($ConfigJSON.TestInfra.MaxPercentageActiveActions)," + 
+                "DataCenter=$($ConfigJSON.testinfra.Datacenter)," + 
+                "ClusterName=$($ConfigJSON.testinfra.ClusterName)," + 
+                "LEAppliance=$($LEAppliance)," + 
+                "User=$($ConfigJSON.Target.CVM_admin)"
             )
 
             if(($StatusInt -eq "3") -or ($StatusInt -eq "4")){
