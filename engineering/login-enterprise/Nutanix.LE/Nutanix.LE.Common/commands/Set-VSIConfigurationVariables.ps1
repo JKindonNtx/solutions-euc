@@ -29,11 +29,8 @@ function Set-VSIConfigurationVariables {
     [CmdletBinding()]
 
     Param (
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)]
-        [String]$ConfigurationFile,
-
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)]
-        [String]$ImageConfiguration
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][String]$ConfigurationFile,
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][String]$ImageConfiguration
     )
 
     begin {

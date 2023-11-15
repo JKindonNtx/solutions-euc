@@ -1,4 +1,4 @@
-function Get-LETest {
+function Get-NTNXStorageUUID {
     <#
     .SYNOPSIS
     Quick Description of the function.
@@ -6,10 +6,8 @@ function Get-LETest {
     .DESCRIPTION
     Detailed description of the function.
 
-    .PARAMETER testId
+    .PARAMETER Storage
     Description of each parameter being passed into the function.
-
-    .PARAMETER include
 
     .INPUTS
     This function will take inputs via pipeline.
@@ -31,8 +29,7 @@ function Get-LETest {
     [CmdletBinding()]
 
     Param (
-        [Parameter(Mandatory = $true)][string] $testId,
-        [Parameter(Mandatory = $false)][ValidateSet('none', 'environment', 'workload', 'thresholds', 'all')][string] $include = "all"
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][System.String]$Storage
     )
 
     begin {
@@ -42,18 +39,16 @@ function Get-LETest {
     }
 
     process {
-        $Body = @{
-            include = $include
-        }
-    
         try {
-            $Response = Invoke-PublicApiMethod -Method "GET" -Path "v6/tests/$testId" -Body $Body -ErrorAction Stop
+            $Containerinfo = Invoke-PublicApiMethodNTNX -Method "GET" -Path "storage_containers" -ErrorAction Stop
         }
         catch {
-            Write-Log -Message "Failed to retrieve test info" -Level Error
             Write-Log -Message $_ -Level Error
             Exit 1
         }
+        
+        $Containeritem = $Containerinfo.entities | Where-Object {$_.name -eq $Storage}
+        $Response = ($Containeritem.id.split(":"))[2]
         $Response
     } # process
 

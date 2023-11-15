@@ -29,19 +29,11 @@ function Get-LETests {
     [CmdletBinding()]
 
     Param (
-        [ValidateSet('name', 'connector', 'description')]
-        [string]$orderBy = "name",
-        
-        [ValidateSet('continuousTest', 'loadTest', 'applicationTest')]
-        [string] $testType = "loadTest",
-        
-        [ValidateSet('asc', 'desc')]
-        [string] $Direction = "asc",
-        
-        [ValidateSet('environment', 'workload', 'thresholds', 'all', 'none')]
-        [string] $include = "none",
-
-        [string]$count = 10000
+        [Parameter(Mandatory = $false)][ValidateSet('name', 'connector', 'description')][string]$orderBy = "name",
+        [Parameter(Mandatory = $false)][ValidateSet('continuousTest', 'loadTest', 'applicationTest')][string] $testType = "loadTest",
+        [Parameter(Mandatory = $false)][ValidateSet('asc', 'desc')][string]$Direction = "asc",
+        [Parameter(Mandatory = $false)][ValidateSet('environment', 'workload', 'thresholds', 'all', 'none')][string]$include = "none",
+        [Parameter(Mandatory = $false)][string]$count = 10000
     )
 
     begin {

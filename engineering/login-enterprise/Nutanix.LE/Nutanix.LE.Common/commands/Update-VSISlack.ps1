@@ -32,10 +32,8 @@ function Update-VSISlack {
     [CmdletBinding()]
 
     Param (
-        [Parameter(ValueFromPipeline = $true,ValuefromPipelineByPropertyName = $true, mandatory = $true)]
-        [String]$Slack,
-        [Parameter(ValueFromPipeline = $true,ValuefromPipelineByPropertyName = $true, mandatory = $true)]
-        [String]$Message
+        [Parameter(ValueFromPipeline = $true,ValuefromPipelineByPropertyName = $true, mandatory = $true)][String]$Slack,
+        [Parameter(ValueFromPipeline = $true,ValuefromPipelineByPropertyName = $true, mandatory = $true)][String]$Message
     )
 
     begin {

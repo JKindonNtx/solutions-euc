@@ -29,8 +29,7 @@ function Get-NTNXinfo {
     [CmdletBinding()]
 
     Param (
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)]
-        [System.Object]$Config
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)][System.Object]$Config
     )
 
     begin {

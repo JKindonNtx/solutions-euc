@@ -1,4 +1,4 @@
-function Get-LETest {
+function Get-LEAccountGroups  {
     <#
     .SYNOPSIS
     Quick Description of the function.
@@ -6,10 +6,10 @@ function Get-LETest {
     .DESCRIPTION
     Detailed description of the function.
 
-    .PARAMETER testId
-    Description of each parameter being passed into the function.
-
-    .PARAMETER include
+    .PARAMETER orderBy
+    .PARAMETER Direction
+    .PARAMETER Count
+    .PARAMETER Include
 
     .INPUTS
     This function will take inputs via pipeline.
@@ -31,35 +31,39 @@ function Get-LETest {
     [CmdletBinding()]
 
     Param (
-        [Parameter(Mandatory = $true)][string] $testId,
-        [Parameter(Mandatory = $false)][ValidateSet('none', 'environment', 'workload', 'thresholds', 'all')][string] $include = "all"
+        [Parameter(mandatory = $false)][string]$orderBy = "name",
+        [Parameter(mandatory = $false)][string]$Direction = "asc",
+        [Parameter(mandatory = $false)][Int32]$Count = 10000,
+        [Parameter(mandatory = $false)][string]$Include = "none"
     )
 
     begin {
         # Set strict mode 
         Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
+        Write-Log -Message "Starting Get-LEAccountGroups" -Level Info
     }
 
     process {
         $Body = @{
-            include = $include
+            orderBy   = $orderBy
+            direction = $Direction
+            count     = $Count
+            include   = $Include
         }
-    
+
         try {
-            $Response = Invoke-PublicApiMethod -Method "GET" -Path "v6/tests/$testId" -Body $Body -ErrorAction Stop
+            $Response = Invoke-PublicApiMethod -Method "GET" -Path "v6/account-groups" -Body $Body -ErrorAction Stop
+            $Response.items
         }
         catch {
-            Write-Log -Message "Failed to retrieve test info" -Level Error
             Write-Log -Message $_ -Level Error
             Exit 1
         }
-        $Response
     } # process
 
     end {
         # Return data for the function
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
+        Write-Log -Message "Finishing Get-LEAccountGroups" -Level Info
     } # end
 
 }

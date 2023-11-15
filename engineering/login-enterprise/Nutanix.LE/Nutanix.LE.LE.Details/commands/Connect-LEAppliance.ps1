@@ -29,10 +29,8 @@ function Connect-LEAppliance {
     [CmdletBinding()]
 
     Param (
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)]
-        [System.String]$URL,
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)]
-        [System.String]$Token
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)][System.String]$URL,
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)][System.String]$Token
     )
 
     begin {

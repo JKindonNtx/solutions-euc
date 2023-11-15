@@ -68,6 +68,7 @@ Param(
 If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $ScriptRoot = $PSScriptRoot }
 $Validated_Workload_Profiles = @("Task Worker", "Knowledge Worker")
 $Validated_OS_Types = @("multisession", "singlesession")
+$VSI_Target_RampupInMinutes = 48 ##// This needs to move to JSON
 
 #endregion Variables
 
@@ -290,21 +291,139 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #endregion LE Test Check
 
     #region LE Users
+    if (-not ($SkipLEUsers)) {
+        # Create the accounts and accountgroup in LE
+        Write-Log -Message "Creating Accounts and Groups in LE" -Level Info
+        $LEaccounts = New-LEAccounts -Username $VSI_Users_BaseName -Password $VSI_Users_Password -Domain $VSI_Users_NetBios -NumberOfDigits $VSI_Users_NumberOfDigits -NumberOfAccounts $VSI_Target_NumberOfSessions
+        New-LEAccountGroup -Name $VSI_Users_GroupName -Description "Created by automation toolkit" -MemberIds $LEaccounts | Out-Null
+    }
+    #endregion LE Users
 
     #region AD Users
+    if (-not ($SkipADUsers)) {
+        # OUs will be created if they don't exist, will also create a group with the $Basename in the same OU
+        # This variant for when you're running this from a domain joined machine and your current user has rights to create AD resources
+        if ([string]::isNullOrEmpty($VSI_Domain_LDAPUsername)) {
+            $params = @{
+                BaseName       = $VSI_Users_BaseName
+                Amount         = $VSI_Target_NumberOfSessions
+                Password       = $VSI_Users_Password
+                NumberOfDigits = $VSI_Users_NumberOfDigits
+                DomainLDAPPath = $VSI_Domain_LDAPPath
+                OU             = $VSI_Users_OU
+                ApplianceURL   = $VSI_LoginEnterprise_ApplianceURL
+            }
+            New-VSIADUsers @params
+        } else {
+            # Alternative for when invoking the toolkit from a machine that's not part of the domain/ user that does not have the appropriate rights to create users
+            $params = @{
+                BaseName       = $VSI_Users_Basename
+                Amount         = $VSI_Target_NumberOfSessions
+                Password       = $VSI_Users_Password
+                NumberOfDigits = $VSI_Users_NumberOfDigits
+                DomainLDAPPath = $VSI_Domain_LDAPPath
+                OU             = $VSI_Users_OU
+                LDAPUsername   = $VSI_Domain_LDAPUsername
+                LDAPPassword   = $VSI_Domain_LDAPPassword
+                ApplianceURL   = $VSI_LoginEnterprise_ApplianceURL
+            }
+            New-VSIADUsers @params
+        }
+    }
 
-    #region Test Rampup
+    $Params = $null
+    #endregion AD Users
 
     #region Iteration through runs
+    for ($i = 1; $i -le $VSI_Target_ImageIterations; $i++) {
+        # Will only create the pool if it does not exist
+        
+        #region Update Slack
+        $SlackMessage = "Testname: $($NTNXTestname) Run$i is started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName)."
+        Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
 
-    #region Update Slack
+        $ContainerId = Get-NTNXStorageUUID -Storage $VSI_Target_CVM_storage
+        $Hostuuid = Get-NTNXHostUUID -NTNXHost $VSI_Target_NTNXHost
+        $IPMI_ip = Get-NTNXHostIPMI -NTNXHost $VSI_Target_NTNXHost
+        $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $VSI_Target_HypervisorConnection +"\"+ $VSI_Target_HypervisorNetwork +".network" }
+        $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
 
-    #region Configure Citrix Desktop Pool
+        #region Configure Citrix Desktop Pool
+        $params = @{
+            ParentVM             = $ParentVM
+            HypervisorConnection = $VSI_Target_HypervisorConnection
+            HypervisorType       = $NTNXInfra.Testinfra.HypervisorType
+            Networkmap           = $networkMap
+            CpuCount             = $VSI_Target_NumCPUs
+            CoresCount           = $VSI_Target_NumCores
+            MemoryGB             = $VSI_Target_MemoryGB
+            ContainerID          = $ContainerId
+            NamingPattern        = $VSI_Target_NamingPattern
+            OU                   = $VSI_Target_ADContainer
+            DomainName           = $VSI_Target_DomainName
+            SessionsSupport      = $VSI_Target_SessionsSupport
+            DesktopPoolName      = $VSI_Target_DesktopPoolName
+            ZoneName             = $VSI_Target_ZoneName
+            Force                = $Force.IsPresent ## Command line required this -Force:$Force.IsPresent note the :
+            EntitledGroup        = $VSI_Users_BaseName
+            SkipImagePrep        = $VSI_Target_SkipImagePrep
+            FunctionalLevel      = $VSI_Target_FunctionalLevel
+            CloneType            = $VSI_Target_CloneType
+            DDC                  = $VSI_Target_DDC
+        }
+        $CreatePool = Set-VSICTXDesktopPoolNTNX @params
 
-    #region Configure Folder Details for output
+        $NTNXInfra.Testinfra.MaxAbsoluteActiveActions = $CreatePool.MaxAbsoluteActiveActions
+        $NTNXInfra.Testinfra.MaxAbsoluteNewActionsPerMinute = $CreatePool.MaxAbsoluteNewActionsPerMinute
+        $NTNXInfra.Testinfra.MaxPercentageActiveActions = $CreatePool.MaxPercentageActiveActions
+        #endregion Configure Citrix Desktop Pool
 
-    #region Monitoring
+        #region Configure Folder Details for output
+        $FolderName = "$($NTNXTestname)_Run$($i)"
+        $OutputFolder = "$ScriptRoot\results\$FolderName"
+        #endregion Configure Folder Details for output
 
+        #region Start monitoring Boot phase
+        $params = @{
+            OutputFolder                 = $OutputFolder 
+            DurationInMinutes            = "Boot" 
+            RampupInMinutes              = $VSI_Target_RampupInMinutes 
+            Hostuuid                     = $Hostuuid 
+            IPMI_ip                      = $IPMI_ip 
+            Path                         = $Scriptroot 
+            NTNXCounterConfigurationFile = $ReportConfigFile 
+            AsJob                        = $true
+        }
+        $monitoringJob = Start-VSINTNXMonitoring @Params
+
+        $params = $null
+
+        $params = @{
+            DesktopPoolName = $VSI_Target_DesktopPoolName
+            NumberofVMs     = $VSI_Target_NumberOfVMS
+            PowerOnVMs      = $VSI_Target_PowerOnVMs
+            DDC             = $VSI_Target_DDC
+            HypervisorType  = $NTNXInfra.Testinfra.HypervisorType
+            Affinity        = $NTNXInfra.Testinfra.SetAffinity
+            ClusterIP       = $NTNXInfra.Target.CVM
+            CVMSSHPassword  = $NTNXInfra.Target.CVMsshpassword
+            VMnameprefix    = $NTNXInfra.Target.NamingPattern
+            CloneType       = $VSI_Target_CloneType
+            Hosts           = $NTNXInfra.Testinfra.Hostip
+        }
+        $Boot = Enable-VSICTXDesktopPool @params
+
+        $Params = $null
+
+        $NTNXInfra.Testinfra.BootStart = $Boot.bootstart
+        $NTNXInfra.Testinfra.Boottime = $Boot.boottime
+        #endregion Start monitoring Boot phase
+    }
+
+
+    
+
+    
     #region Citrix Desktop Pool Boot
 
     #region Build Tattoo 

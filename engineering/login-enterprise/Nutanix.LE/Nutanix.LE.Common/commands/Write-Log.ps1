@@ -29,13 +29,9 @@ Writes an Info Output to the console
     [CmdletBinding()]
 
     Param (
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)]
-        [String]$Message,
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)]
-        [Switch]$Update,
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)]
-        [ValidateSet("Error", "Warn", "Info", "Validation")]
-        [String]$Level = "Info"
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)][String]$Message,
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][Switch]$Update,
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][ValidateSet("Error", "Warn", "Info", "Validation")][String]$Level = "Info"
     )
 
     begin {

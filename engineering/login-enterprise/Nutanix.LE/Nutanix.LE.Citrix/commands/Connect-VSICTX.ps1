@@ -28,14 +28,10 @@ function Connect-VSICTX {
     [CmdletBinding()]
 
     Param (
-        [Parameter(Mandatory = $true, ParameterSetName = 'CitrixCloud')]
-        [String]$ClientID,
-        [Parameter(Mandatory = $true, ParameterSetName = 'CitrixCloud')]
-        [String]$Secret,
-        [Parameter(Mandatory = $true, ParameterSetName = 'CitrixCloud')]
-        [String]$CustomerID,
-        [Parameter(Mandatory = $true, ParameterSetName = 'OnPrem')]
-        [String]$DDC
+        [Parameter(Mandatory = $true, ParameterSetName = 'CitrixCloud')][String]$ClientID,
+        [Parameter(Mandatory = $true, ParameterSetName = 'CitrixCloud')][String]$Secret,
+        [Parameter(Mandatory = $true, ParameterSetName = 'CitrixCloud')][String]$CustomerID,
+        [Parameter(Mandatory = $true, ParameterSetName = 'OnPrem')][String]$DDC
     )
 
     begin {

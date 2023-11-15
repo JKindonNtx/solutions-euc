@@ -29,24 +29,12 @@ function Invoke-PublicApiMethod {
     [CmdletBinding()]
 
     Param (
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)]
-        [String]$Path,
-
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)]
-        [ValidateSet("POST", "GET", "PUT", "DELETE")]
-        [String]$Method,
-
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)]
-        [String]$Body,
-
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)]
-        [String]$ContentType = 'application/json',
-
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)]
-        [String]$OutFile,
-        
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)]
-        [String]$Form
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)][String]$Path,
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)][ValidateSet("POST", "GET", "PUT", "DELETE")][String]$Method,
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)][String]$Body,
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][String]$ContentType = 'application/json',
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][String]$OutFile,
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][String]$Form
     )
 
     begin {

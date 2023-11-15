@@ -1,4 +1,4 @@
-function Get-LETest {
+function Remove-LEAccounts {
     <#
     .SYNOPSIS
     Quick Description of the function.
@@ -6,10 +6,8 @@ function Get-LETest {
     .DESCRIPTION
     Detailed description of the function.
 
-    .PARAMETER testId
+    .PARAMETER ids
     Description of each parameter being passed into the function.
-
-    .PARAMETER include
 
     .INPUTS
     This function will take inputs via pipeline.
@@ -31,35 +29,33 @@ function Get-LETest {
     [CmdletBinding()]
 
     Param (
-        [Parameter(Mandatory = $true)][string] $testId,
-        [Parameter(Mandatory = $false)][ValidateSet('none', 'environment', 'workload', 'thresholds', 'all')][string] $include = "all"
+        [Parameter(Mandatory = $true)][array]$ids
     )
 
     begin {
         # Set strict mode 
         Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
+        Write-Log -Message "Starting Remove-LEAccounts" -Level Info
     }
 
     process {
-        $Body = @{
-            include = $include
-        }
-    
+        $Body = ConvertTo-Json @($ids)
+
         try {
-            $Response = Invoke-PublicApiMethod -Method "GET" -Path "v6/tests/$testId" -Body $Body -ErrorAction Stop
+            $Response = Invoke-PublicApiMethod -Method "DELETE" -Path "v6/accounts" -Body $Body -ErrorAction Stop
+            $Response.id
         }
         catch {
-            Write-Log -Message "Failed to retrieve test info" -Level Error
             Write-Log -Message $_ -Level Error
             Exit 1
         }
-        $Response
+
+    
     } # process
 
     end {
         # Return data for the function
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
+        Write-Log -Message "Finishing Remove-LEAccounts" -Level Info
     } # end
 
 }
