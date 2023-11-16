@@ -33,6 +33,7 @@ TODO
 | Review LE Switching Logic and best Placement - search for "$placeholder_var_LEAppliance" | James | Dave/Sven | 16.11.2023 |
 | Review Output Logic - Search for "Report Output here on relevent variables" | James | Dave/Sven | 16.11.2023 |
 | Review Current JSON File - do we need values that are now auto calculated? | James | Sven | 16.11.2023 |
+| Review Remove-NutanixFilesData.ps1 Function. Search for $TBD_NtxFilesShares - Need provide a list of shares (JSON?). There is a Validation and Execution Phase | James | Dave | 16.11.2023 |
 ------------------------------------------------------
 
 -----------------------------------------------------------------------------------------
@@ -95,8 +96,6 @@ $InfluxTestDashBucket = "Tests" ##// This needs to move to Variables
 # Execute
 # ============================================================================
 
-
-
 #region Nutanix Module Import
 #----------------------------------------------------------------------------------------------------------------------------
 $var_ModuleName = "Nutanix.LE"
@@ -112,12 +111,12 @@ catch {
 }
 #endregion Nutanix Module Import
 
-#region Validation
+#region Param Output
 #----------------------------------------------------------------------------------------------------------------------------
 Write-Log -Message "Configuration File is:        $($ConfigFile)" -Level Validation
 Write-Log -Message "Report Configuration File is: $($ReportConfigFile)" -Level Validation
 Write-Log -Message "Test Type is:                 $($Type)" -Level Validation
-#endregion Validation
+#endregion Param Output
 
 #region PowerShell Versions
 #----------------------------------------------------------------------------------------------------------------------------
@@ -209,7 +208,8 @@ $NTNXInfra = Get-NTNXinfo -Config $config
 
 #endregion variable setting
 
-#region Handle Automated LE Settings Mapping - Check with Sven/Dave on how/what where we should store this info for reference - JSON or PowerShell root script/variables?
+#region Handle Automated LE Settings Mapping
+###### Check with Sven/Dave on how/what where we should store this info for reference - JSON or PowerShell root script/variables?
 #----------------------------------------------------------------------------------------------------------------------------
 $placeholder_var_LEAppliance = "LE1" #// This needs to be killed - is here for testing only, would likely live in JSON
 if ($placeholder_var_LEAppliance -eq "LE1") {
@@ -263,11 +263,19 @@ else {
     Write-Log -Message "Input confirmed" -Level Info
 }
 
-#Nutanix Files Pre Flight Checks
+#region Nutanix Files Pre Flight Checks
 if ($VSI_Target_Files -ne "") {
     Write-Log -Message "Validating Nutanix Files Authentication" -Level Info
+    
     Invoke-NutanixFilesAuthCheck
+
+    if ($null -ne $TBD_NtxFilesShares) {
+        ##TODO Need to validate this
+        Write-Log -Message "Processing Nutanix Files Data Removal Validation" -Level Info
+        ##Remove-NutanixFilesData -Shares $TBD_NtxFilesShares -Mode Validate
+    }
 }
+#endregion Nutanix Files Pre Flight Checks
 
 #endregion Validation
 
@@ -715,6 +723,16 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             Remove-Item -Path $RDASource -ErrorAction SilentlyContinue
         }
         #endregion Check for RDA File and if exists then move it to the output folder
+
+        #region Cleanup Nutanix Files Data
+        if ($VSI_Target_Files -ne "") {
+            if ($null -ne $TBD_NtxFilesShares) {
+                Write-Log -Message "Processing Nutanix Files Data Removal" -Level Info
+                # TODO: Need to Validate this configuation
+                ##Remove-NutanixFilesData -Shares $TBD_NtxFilesShares -Mode Execute
+            }
+        }
+        #endregion Cleanup Nutanix Files Data
 
         #region Upload Data to Influx
 
