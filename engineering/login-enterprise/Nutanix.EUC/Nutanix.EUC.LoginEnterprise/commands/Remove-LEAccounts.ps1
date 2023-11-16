@@ -6,18 +6,15 @@ function Remove-LEAccounts {
         [Parameter(Mandatory = $true)][array]$ids
     )
 
-        $Body = ConvertTo-Json @($ids)
+    $Body = ConvertTo-Json @($ids)
 
-        try {
-            Invoke-PublicApiMethod -Method "DELETE" -Path "v6/accounts" -Body $Body -ErrorAction Stop
+    try {
+        Invoke-PublicApiMethod -Method "DELETE" -Path "v6/accounts" -Body $Body -ErrorAction Stop
             
-        }
-        catch {
-            Write-Log -Message $_ -Level Error
-            Break
-        }
-
-    
-
+    }
+    catch {
+        Write-Log -Message $_ -Level Error
+        Break
+    }
 
 }

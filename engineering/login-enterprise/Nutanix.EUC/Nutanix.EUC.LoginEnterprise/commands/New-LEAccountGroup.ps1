@@ -11,15 +11,16 @@ function New-LEAccountGroup {
 
     if ($Filter -eq $false) {
         $Body = @{
-            'type'     = "Selection"
+            'type'      = "Selection"
             groupId     = New-Guid
             name        = $Name
             description = $Description
             memberIds   = $MemberIds
         } | ConvertTo-Json
-    } else {
+    }
+    else {
         $Body = @{
-            'type'     = "Filter"
+            'type'      = "Filter"
             groupId     = New-Guid
             name        = $Name
             description = $Description

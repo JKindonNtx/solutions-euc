@@ -89,7 +89,7 @@ function Start-VSINTNXMonitoring {
                     $clusteritem | Add-Member Noteproperty $clusterresult.metric $clusterresult.values[0]
                 }
             }
-            $vmsreadytime = ((($allvms.entities | Where-Object {$_.powerState -eq "on"}).stats."hypervisor.cpu_ready_time_ppm" | Measure-Object -average).average) / 10000
+            $vmsreadytime = ((($allvms.entities | Where-Object { $_.powerState -eq "on" }).stats."hypervisor.cpu_ready_time_ppm" | Measure-Object -average).average) / 10000
             $clusteritem | Add-Member Noteproperty "avg_cpu_ready_time" $vmsreadytime
             $clusteritem | Export-Csv -Path $Filecluster -NoTypeInformation -Append
 

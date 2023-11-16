@@ -4,8 +4,6 @@ function Set-VSIConfigurationVariables {
         $ImageConfiguration
     )
     
-    
-
     if ($null -ne $ConfigurationFile) {
         
         Write-Log "Parsing config file $ConfigurationFile" -level Info
@@ -16,15 +14,12 @@ function Set-VSIConfigurationVariables {
         
         Get-Variable -Name VSI_* -ErrorAction SilentlyContinue | Remove-Variable -ErrorAction SilentlyContinue
         
-       
-
         # Process config from configflie
         foreach ($section in $config.PSObject.Properties) {
             foreach ($var in $section.Value.PSObject.Properties) { 
                 Set-Variable -Name "VSI_$($section.Name)_$($var.Name)" -Value $var.Value -Scope Global
             }
         }
-
     }
 
     if ($null -ne $ImageConfiguration) {
@@ -60,22 +55,19 @@ function Set-VSIConfigurationVariables {
         $VSI_Var.Value = $newVal
     }
     
-  #  if ($null -ne $ImageConfiguration) {
+    #  if ($null -ne $ImageConfiguration) {
 
     #        if (($null -ne (Get-Variable -Scope Global -Name VSI_Target_LogonsPerMinute -ErrorAction SilentlyContinue)) -And ($VSI_Target_LogonsPerMinute -gt 0)) {                
- #           Set-Variable -Name VSI_Target_RampupInMinutes -Scope Global -Value ([Math]::Round($VSI_Target_NumberOfSessions / $VSI_Target_LogonsPerMinute, 0, [MidpointRounding]::AwayFromZero))        
-  #          Write-VSILog "Using LogonsPerMinute: $VSI_Target_LogonsPerMinute"
-   #     }
+    #           Set-Variable -Name VSI_Target_RampupInMinutes -Scope Global -Value ([Math]::Round($VSI_Target_NumberOfSessions / $VSI_Target_LogonsPerMinute, 0, [MidpointRounding]::AwayFromZero))        
+    #          Write-VSILog "Using LogonsPerMinute: $VSI_Target_LogonsPerMinute"
+    #     }
     #    else {
-     #       Write-VSILog "Using VSI_Target_RampupInMinutes: $VSI_Target_RampupInMinutes"
-      #  }
+    #       Write-VSILog "Using VSI_Target_RampupInMinutes: $VSI_Target_RampupInMinutes"
+    #  }
     #
- #       if ($global:VSI_Target_RampupInMinutes -eq 0) {
-  #          $global:VSI_Target_RampupInMinutes = 1
-   #     }
-   # }
+    #       if ($global:VSI_Target_RampupInMinutes -eq 0) {
+    #          $global:VSI_Target_RampupInMinutes = 1
+    #     }
+    # }
     #    
-    
-    
-
 }

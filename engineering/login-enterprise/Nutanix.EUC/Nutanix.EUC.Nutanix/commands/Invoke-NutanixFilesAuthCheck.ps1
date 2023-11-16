@@ -1,35 +1,27 @@
 function Invoke-NutanixFilesAuthCheck {
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
+    $Method = "GET"
+    $URL = "https://$($VSI_Target_Files):9440/api/files/v4.0.a2/config/file-server"
+    $header = @{
+        Authorization     = "Basic " + [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($($VSI_Target_Files_api) + ":" + $($VSI_Target_Files_Password)))
+        "Accept-Encoding" = "gzip"
+        "Accept"          = "application/json"
     }
 
-    process {
-        $Method = "GET"
-        $URL = "https://$($VSI_Target_Files):9440/api/files/v4.0.a2/config/file-server"
-        #$URL = "https://10.57.64.106:9440/api/files/v4.0.a2/config/file-server"
-        $header = @{
-            Authorization     = "Basic " + [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($($VSI_Target_Files_api) + ":" + $($VSI_Target_Files_Password)))
-            "Accept-Encoding" = "gzip"
-            "Accept"          = "application/json"
+    if ($PSEdition -eq "Core") {
+        try {
+            $FilesAuthCheck = Invoke-RestMethod -Method $Method -Uri $URL -Headers $header -SkipCertificateCheck -ErrorAction Stop
+            Write-Log -Message "Successfully Authenticated to Files Environment"
         }
-
-        if ($PSEdition -eq "Core") {
-            try {
-                $FilesAuthCheck = Invoke-RestMethod -Method $Method -Uri $URL -Headers $header -SkipCertificateCheck -ErrorAction Stop
-                Write-Log -Message "Successfully Authenticated to Files Environment"
-            }
-            catch {
-                Write-Log -Message $_ -Level Error
-                Write-Log -Message "Failed to Authenticate to Nutanix Files Environment. Please check credentials. Exiting Script" -Level Error
-                Break
-            }
+        catch {
+            Write-Log -Message $_ -Level Error
+            Write-Log -Message "Failed to Authenticate to Nutanix Files Environment. Please check credentials. Exiting Script" -Level Error
+            Break
         }
-        else {
-            if (-not("SSLValidator" -as [type])) {
-                add-type -TypeDefinition @"
+    }
+    else {
+        if (-not("SSLValidator" -as [type])) {
+            add-type -TypeDefinition @"
         using System;
         using System.Net;
         using System.Net.Security;
@@ -46,24 +38,18 @@ function Invoke-NutanixFilesAuthCheck {
             }
         }
 "@
-            }
-            [System.Net.ServicePointManager]::ServerCertificateValidationCallback = [SSLValidator]::GetDelegate()
-
-            try {
-                $FilesAuthCheck = Invoke-RestMethod -Method $Method -Uri $URL -Headers $header -ErrorAction Stop
-                Write-Log -Message "Successfully Authenticated to Files Environment"
-            }
-            catch {
-                Write-Log -Message $_ -Level Error
-                Write-Log -Message "Failed to Authenticate to Nutanix Files Environment. Please check credentials. Exiting Script" -Level Error
-                Break
-            }
         }
-    } # process
+        [System.Net.ServicePointManager]::ServerCertificateValidationCallback = [SSLValidator]::GetDelegate()
 
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
+        try {
+            $FilesAuthCheck = Invoke-RestMethod -Method $Method -Uri $URL -Headers $header -ErrorAction Stop
+            Write-Log -Message "Successfully Authenticated to Files Environment"
+        }
+        catch {
+            Write-Log -Message $_ -Level Error
+            Write-Log -Message "Failed to Authenticate to Nutanix Files Environment. Please check credentials. Exiting Script" -Level Error
+            Break
+        }
+    }
 
 }

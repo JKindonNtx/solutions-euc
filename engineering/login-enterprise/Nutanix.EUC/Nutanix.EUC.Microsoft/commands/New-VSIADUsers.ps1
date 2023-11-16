@@ -41,140 +41,137 @@ function New-VSIADUsers {
         [Parameter(Mandatory = $false)]$LogonApp
     )
 
+    Write-Log -Message "Creating OUs, users and groups in AD if required" -Level Info
 
-        Write-Log -Message "Creating OUs, users and groups in AD if required" -Level Info
+    if ($null -eq $LogonApp) {
+        $LogonScript = "LoginPI.Logon.exe $ApplianceURL"
+    }
+    else {
+        $LogonScript = "$LogonApp $ApplianceURL"
+    }
 
-        if ($null -eq $LogonApp) {
-            $LogonScript = "LoginPI.Logon.exe $ApplianceURL"
+    try {
+        If ([string]::IsNullOrEmpty($LDAPUsername)) {
+            $DE = New-Object System.DirectoryServices.DirectoryEntry($DomainLDAPPath) -ErrorAction Stop
         }
         else {
-            $LogonScript = "$LogonApp $ApplianceURL"
+            $DE = New-Object System.DirectoryServices.DirectoryEntry($DomainLDAPPath, $LDAPUsername, $LDAPPassword) -ErrorAction Stop
         }
+    }
+    catch {
+        Write-Log -Message $_ -Level Error
+        Break
+    }
+        
 
+    $OUList = New-Object System.Collections.ArrayList
+
+    $OU.Split(",") | ForEach-Object { $OUList.Add($_) | Out-Null }
+    $OUList.Reverse()
+    $newOU = $DE
+
+    Foreach ($aOU in $OUList) {
+        if ($null -ne ($newOU.Children | Where-Object { $_.distinguishedName -like "$($aOU)*" })) {
+            $newOU = $newOU.Children | Where-Object { $_.distinguishedName -like "$($aOU)*" }
+        }
+        else {
+            $newOU = $newOU.Children.Add($aOU, "organizationalUnit")
+            $newOU.CommitChanges()
+        }
+    }
+
+    $DS = New-Object System.DirectoryServices.DirectorySearcher($newOU, "(&(objectClass=user)(cn=$($BaseName)*))")
+    $DS.PageSize = 1000
+
+    Foreach ($Result in $DS.FindAll()) {
+        $User = $Result.GetDirectoryEntry()
         try {
             If ([string]::IsNullOrEmpty($LDAPUsername)) {
-                $DE = New-Object System.DirectoryServices.DirectoryEntry($DomainLDAPPath) -ErrorAction Stop
+                $Parent = New-Object System.DirectoryServices.DirectoryEntry($User.Parent) -ErrorAction Stop
             }
             else {
-                $DE = New-Object System.DirectoryServices.DirectoryEntry($DomainLDAPPath, $LDAPUsername, $LDAPPassword) -ErrorAction Stop
+                $Parent = New-Object System.DirectoryServices.DirectoryEntry($User.Parent, $LDAPUsername, $LDAPPassword) -ErrorAction Stop
             }
         }
         catch {
             Write-Log -Message $_ -Level Error
             Break
         }
-        
+            
+        $Parent.Children.Remove($User)
+        $Parent.CommitChanges()
+    }
 
-        $OUList = New-Object System.Collections.ArrayList
-
-        $OU.Split(",") | ForEach-Object { $OUList.Add($_) | Out-Null }
-        $OUList.Reverse()
-        $newOU = $DE
-
-        Foreach ($aOU in $OUList) {
-            if ($null -ne ($newOU.Children | Where-Object { $_.distinguishedName -like "$($aOU)*" })) {
-                $newOU = $newOU.Children | Where-Object { $_.distinguishedName -like "$($aOU)*" }
-            }
-            else {
-                $newOU = $newOU.Children.Add($aOU, "organizationalUnit")
-                $newOU.CommitChanges()
-            }
-        }
-
-        $DS = New-Object System.DirectoryServices.DirectorySearcher($newOU, "(&(objectClass=user)(cn=$($BaseName)*))")
+    try {
+        $DS = New-Object System.DirectoryServices.DirectorySearcher($newOU, "(&(objectClass=group)(cn=$($BaseName)))") -ErrorAction Stop
         $DS.PageSize = 1000
+    }
+    catch {
+        Write-Log -Message $_ -Level Error
+        Break
+    }
+        
 
-        Foreach ($Result in $DS.FindAll()) {
-            $User = $Result.GetDirectoryEntry()
-            try {
-                If ([string]::IsNullOrEmpty($LDAPUsername)) {
-                    $Parent = New-Object System.DirectoryServices.DirectoryEntry($User.Parent) -ErrorAction Stop
-                }
-                else {
-                    $Parent = New-Object System.DirectoryServices.DirectoryEntry($User.Parent, $LDAPUsername, $LDAPPassword) -ErrorAction Stop
-                }
-            }
-            catch {
-                Write-Log -Message $_ -Level Error
-                Break
-            }
-            
-            $Parent.Children.Remove($User)
-            $Parent.CommitChanges()
-        }
-
+    Foreach ($Result in $DS.FindAll()) {
+        $Group = $Result.GetDirectoryEntry()
         try {
-            $DS = New-Object System.DirectoryServices.DirectorySearcher($newOU, "(&(objectClass=group)(cn=$($BaseName)))") -ErrorAction Stop
-            $DS.PageSize = 1000
+            If ([string]::IsNullOrEmpty($LDAPUsername)) {
+                $Parent = New-Object System.DirectoryServices.DirectoryEntry($Group.Parent) -ErrorAction Stop
+            }
+            else {
+                $Parent = New-Object System.DirectoryServices.DirectoryEntry($Group.Parent, $LDAPUsername, $LDAPPassword) -ErrorAction Stop
+            }
         }
         catch {
             Write-Log -Message $_ -Level Error
             Break
         }
-        
-
-        Foreach ($Result in $DS.FindAll()) {
-            $Group = $Result.GetDirectoryEntry()
-            try {
-                If ([string]::IsNullOrEmpty($LDAPUsername)) {
-                    $Parent = New-Object System.DirectoryServices.DirectoryEntry($Group.Parent) -ErrorAction Stop
-                }
-                else {
-                    $Parent = New-Object System.DirectoryServices.DirectoryEntry($Group.Parent, $LDAPUsername, $LDAPPassword) -ErrorAction Stop
-                }
-            }
-            catch {
-                Write-Log -Message $_ -Level Error
-                Break
-            }
             
-            $Parent.Children.Remove($Group)
-            $Parent.CommitChanges()
-        }
+        $Parent.Children.Remove($Group)
+        $Parent.CommitChanges()
+    }
 
-        <#
+    <#
         GLOBAL       | SECURITY = 0x80000002 = -2147483646
         DOMAIN_LOCAL | SECURITY = 0x80000004 = -2147483644
         UNIVERSAL    | SECURITY = 0x80000008 = -2147483640
         #>
 
-        $group = $newOU.Children.Add("CN=$BaseName", "group")
-        $group.Properties["displayName"].Value = $BaseName
-        $group.Properties["samAccountName"].Value = $BaseName
-        $group.Properties["groupType"].Value = -2147483646
+    $group = $newOU.Children.Add("CN=$BaseName", "group")
+    $group.Properties["displayName"].Value = $BaseName
+    $group.Properties["samAccountName"].Value = $BaseName
+    $group.Properties["groupType"].Value = -2147483646
+    $group.CommitChanges()
+
+    $group = $newOU.Children | Where-Object { $_.distinguishedName -like "CN=$($basename),$($newOU.distinguishedName)" -and $_.SchemaClassName -eq "group" }
+
+    For ($i = 1; $i -le $amount; $i++) {
+        $user = $Null
+        $Name = "$($BaseName){0:D$NumberOfDigits}" -f $i
+        $user = $newOU.Create("user", "cn=$Name")
+        $user.Put("samAccountName", $Name) | Out-Null
+        $user.Put("mail", "$Name@wsperf.nutanix.com") | Out-Null
+        $user.Put("displayName", $Name) | Out-Null
+        $user.Put("givenName", $Name) | Out-Null
+        $user.Put("name", $Name) | Out-Null
+        $user.Put("scriptPath", $LogonScript) | Out-Null
+        $user.Put("userPrincipalName", "$($Name)@wsperf.nutanix.com") | Out-Null
+        $user.Put("userAccountControl", 66080) | Out-Null
+        $user.SetInfo() | Out-Null
+        $user.SetPassword($Password) | Out-Null
+        $group.Properties["member"].Add($user.Properties["distinguishedName"].Trim()) | Out-Null
         $group.CommitChanges()
+    }
 
-        $group = $newOU.Children | Where-Object { $_.distinguishedName -like "CN=$($basename),$($newOU.distinguishedName)" -and $_.SchemaClassName -eq "group" }
+    Write-Log -Message "Created $Amount users with BaseName $BaseName in $OU" -Level Info
+    Write-Log -Message "Created Group $BaseName in $OU" -Level Info
 
-        For ($i = 1; $i -le $amount; $i++) {
-            $user = $Null
-            $Name = "$($BaseName){0:D$NumberOfDigits}" -f $i
-            $user = $newOU.Create("user", "cn=$Name")
-            $user.Put("samAccountName", $Name) | Out-Null
-            $user.Put("mail", "$Name@wsperf.nutanix.com") | Out-Null
-            $user.Put("displayName", $Name) | Out-Null
-            $user.Put("givenName", $Name) | Out-Null
-            $user.Put("name", $Name) | Out-Null
-            $user.Put("scriptPath", $LogonScript) | Out-Null
-            $user.Put("userPrincipalName", "$($Name)@wsperf.nutanix.com") | Out-Null
-            $user.Put("userAccountControl", 66080) | Out-Null
-            $user.SetInfo() | Out-Null
-            $user.SetPassword($Password) | Out-Null
-            $group.Properties["member"].Add($user.Properties["distinguishedName"].Trim()) | Out-Null
-            $group.CommitChanges()
-        }
-
-        Write-Log -Message "Created $Amount users with BaseName $BaseName in $OU" -Level Info
-        Write-Log -Message "Created Group $BaseName in $OU" -Level Info
-
-        if ($null -eq $LogonApp) {
-            Write-Log -Message "IMPORTANT: DO NOT FORGET TO COPY THE LOGIN ENTERPRISE LOGONAPP TO THE NETLOGON SHARE!!!" -Level Info
-            Write-Log -Message "Download it from $ApplianceURL/contentDelivery/content/zip/logon.zip" -Level Info
-        }
-        else {
-            Write-Log -Message "IMPORTANT: Make sure the logonApp is located at $LogonApp" -Level Info
-            Write-Log -Message "Download it from $ApplianceURL/contentDelivery/content/zip/logon.zip" -Level Info
-        }
-
-
+    if ($null -eq $LogonApp) {
+        Write-Log -Message "IMPORTANT: DO NOT FORGET TO COPY THE LOGIN ENTERPRISE LOGONAPP TO THE NETLOGON SHARE!!!" -Level Info
+        Write-Log -Message "Download it from $ApplianceURL/contentDelivery/content/zip/logon.zip" -Level Info
+    }
+    else {
+        Write-Log -Message "IMPORTANT: Make sure the logonApp is located at $LogonApp" -Level Info
+        Write-Log -Message "Download it from $ApplianceURL/contentDelivery/content/zip/logon.zip" -Level Info
+    }
 }

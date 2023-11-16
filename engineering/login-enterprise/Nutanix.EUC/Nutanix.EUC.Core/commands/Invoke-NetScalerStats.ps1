@@ -10,12 +10,12 @@ function Invoke-NetScalerStats {
         login = @{
             username = "nsroot";
             password = $Password
-            timeout = "900"
+            timeout  = "900"
         }
     }
     
     $loginJson = ConvertTo-Json -InputObject $login
-    Invoke-RestMethod -uri "$hostname/nitro/v1/config/login" -body $loginJson -SessionVariable saveSession -Headers @{"Content-Type" = "application/vnd.com.citrix.netscaler.login+json"} -Method POST 
+    Invoke-RestMethod -uri "$hostname/nitro/v1/config/login" -body $loginJson -SessionVariable saveSession -Headers @{"Content-Type" = "application/vnd.com.citrix.netscaler.login+json" } -Method POST 
 
     # Build Script NetScaler Session Variable
     $nsSession = New-Object -TypeName PSObject
@@ -54,7 +54,7 @@ function Invoke-NetScalerStats {
         }
     }
     $logoutJson = ConvertTo-Json -InputObject $logout       
-    Invoke-RestMethod -uri "$hostname/nitro/v1/config/logout" -body $logoutJson -WebSession $NSSession.WebSession -Headers @{"Content-Type" = "application/vnd.com.citrix.netscaler.logout+json"} -Method POST
+    Invoke-RestMethod -uri "$hostname/nitro/v1/config/logout" -body $logoutJson -WebSession $NSSession.WebSession -Headers @{"Content-Type" = "application/vnd.com.citrix.netscaler.logout+json" } -Method POST
 
     return $NSDetails
 }

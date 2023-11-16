@@ -25,16 +25,17 @@ function Set-VSICTXDesktopPoolNTNX {
     $AllocationType = "Random"
     #Add-PSSnapin Citrix*
     #Get-XDAuthentication -BearerToken $global:VSICTX_BearerToken
-    if ($CloneType -eq "PVS"){
+    if ($CloneType -eq "PVS") {
         $CreatePool = $false
-    } Else {
+    }
+    Else {
         $CreatePool = $true
     }
     
     Write-Log "Checking if desktoppool $DesktopPoolName exists..."
     $DG = Get-BrokerDesktopGroup -AdminAddress $DDC -Name $DesktopPoolName -erroraction SilentlyContinue
     if ($null -ne $DG) {
-        if ($CloneType -eq "MCS"){
+        if ($CloneType -eq "MCS") {
             Write-Log "Checking the catalog to see if image configuration is same as requested"
             $Catalog = Get-BrokerCatalog -AdminAddress $DDC -Name $DesktopPoolName -ErrorAction SilentlyContinue
             if ($null -ne $Catalog) {
@@ -124,12 +125,13 @@ function Set-VSICTXDesktopPoolNTNX {
                 -CleanOnBoot `
                 -NetworkMapping $networkMap `
                 -CustomProperties $provcustomProperties
-                if ($Task.TaskState -ne "Finished") {
-                    Write-Log "Failed to create Provisioning scheme"
-                    throw $Task.TerminatingError
-                }
-        ## ESXi ##
-        } elseif (($HypervisorType) -eq "ESXi") {
+            if ($Task.TaskState -ne "Finished") {
+                Write-Log "Failed to create Provisioning scheme"
+                throw $Task.TerminatingError
+            }
+            ## ESXi ##
+        }
+        elseif (($HypervisorType) -eq "ESXi") {
             # Update CPU Count to Reflect vCPUs and Cores
             $TotalCPU = [int]$CpuCount * [int]$CoresCount
 
@@ -148,10 +150,10 @@ function Set-VSICTXDesktopPoolNTNX {
                 -MasterImageVM $ParentVM `
                 -NetworkMapping $networkMap `
                 -CustomProperties $provcustomProperties
-                if ($Task.TaskState -ne "Finished") {
-                    Write-Log "Failed to create Provisioning scheme"
-                    throw $Task.TerminatingError
-                }
+            if ($Task.TaskState -ne "Finished") {
+                Write-Log "Failed to create Provisioning scheme"
+                throw $Task.TerminatingError
+            }
         }
         
         #if ($SessionsSupport -eq "MultiSession") {
@@ -178,10 +180,10 @@ function Set-VSICTXDesktopPoolNTNX {
         
     }
     if ($null -eq $DG) {
-        if ($CloneType -eq "PVS"){
-        Write-Log "Creating desktopgroup $DesktopPoolName"
-        $DG = New-BrokerDesktopGroup -AdminAddress $DDC -DeliveryType DesktopsOnly -DesktopKind $DesktopKind -Description "Created by EUC Performance Engineering" -ColorDepth TwentyFourBit -Name $DesktopPoolName -PublishedName $DesktopPoolName -SessionSupport $SessionsSupport -MachineLogonType ActiveDirectory -ShutdownDesktopsAfterUse $true -ErrorAction Stop
-        Start-Sleep -Seconds 30
+        if ($CloneType -eq "PVS") {
+            Write-Log "Creating desktopgroup $DesktopPoolName"
+            $DG = New-BrokerDesktopGroup -AdminAddress $DDC -DeliveryType DesktopsOnly -DesktopKind $DesktopKind -Description "Created by EUC Performance Engineering" -ColorDepth TwentyFourBit -Name $DesktopPoolName -PublishedName $DesktopPoolName -SessionSupport $SessionsSupport -MachineLogonType ActiveDirectory -ShutdownDesktopsAfterUse $true -ErrorAction Stop
+            Start-Sleep -Seconds 30
         }
     }
 

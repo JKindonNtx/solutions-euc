@@ -181,6 +181,7 @@ $VSI_LoginEnterprise_ApplianceURL = $VSI_LoginEnterprise_ApplianceURL.TrimEnd("/
 Connect-LEAppliance -Url $VSI_LoginEnterprise_ApplianceURL -Token $VSI_LoginEnterprise_ApplianceToken
 
 #region Config File
+#----------------------------------------------------------------------------------------------------------------------------
 Write-Log -Message "Importing config file: $($ConfigFile)" -Level Info
 try {
     $configFileData = Get-Content -Path $ConfigFile -ErrorAction Stop
@@ -203,12 +204,14 @@ catch {
 #endregion Config File
 
 #region Get Nutanix Infra
+#----------------------------------------------------------------------------------------------------------------------------
 $NTNXInfra = Get-NTNXinfo -Config $config
 #endregion Get Nutanix Infra
 
 #endregion variable setting
 
 #region Handle Automated LE Settings Mapping
+#----------------------------------------------------------------------------------------------------------------------------
 
 #endregion Handle Automated LE Settings Mapping 
 
@@ -246,6 +249,7 @@ else {
 }
 
 #region Nutanix Files Pre Flight Checks
+#----------------------------------------------------------------------------------------------------------------------------
 if ($VSI_Target_Files -ne "") {
     Write-Log -Message "Validating Nutanix Files Authentication" -Level Info
     
@@ -262,11 +266,13 @@ if ($VSI_Target_Files -ne "") {
 #endregion Validation
 
 #region Execute Test
+#----------------------------------------------------------------------------------------------------------------------------
 #Set the multiplier for the Workloadtype. This adjusts the required MHz per user setting.
 ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     Set-VSIConfigurationVariables -ImageConfiguration $ImageToTest
 
     #region Validate Workload Profiles
+    #----------------------------------------------------------------------------------------------------------------------------
     if ($VSI_Target_Workload -notin $Validated_Workload_Profiles ) {
         Write-Log -Message "Worker Profile: $($VSI_Target_Workload) is not a valid profile for testing. Please check config file" -Level Error
         Break #Temporary! Replace with #Break
@@ -283,20 +289,21 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #endregion Validate Workload Profiles
 
     #region Setup testname
+    #----------------------------------------------------------------------------------------------------------------------------
     Write-Log -Message "Setting up Test Details" -Level Info
-    $NTNXid = (New-Guid).Guid.SubString(1,6)
+    $NTNXid = (New-Guid).Guid.SubString(1, 6)
     $NTNXTestname = "$($NTNXid)_$($VSI_Target_NodeCount)n_A$($NTNXInfra.Testinfra.AOSversion)_$($NTNXInfra.Testinfra.HypervisorType)_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
     #endregion Setup testname
 
     #region Setup Test Dashboard Data
-
+    #----------------------------------------------------------------------------------------------------------------------------
     $CurrentTotalPhase = 1
     $TotalPhases = (([int]$NTNXInfra.Target.ImageIterations * $RunPhases) + $PreRunPhases)
 
     # Build Test Dashboard Objects
 
     for ($i = 0; $i -le $VSI_Target_ImageIterations; $i++) {
-        if($i -eq 0){ $Phases = $TotalPhases } else { $Phases = $RunPhases }
+        if ($i -eq 0) { $Phases = $TotalPhases } else { $Phases = $RunPhases }
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -315,6 +322,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #endregion Setup Test Dashboard Data
 
     #region Set affinity
+    #----------------------------------------------------------------------------------------------------------------------------
 
     # Update Test Dashboard
     $params = @{
@@ -344,12 +352,14 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     $NTNXInfra.Target.ImagesToTest = $ImageToTest
 
     #region Slack update
+    #----------------------------------------------------------------------------------------------------------------------------
     Write-Log -Message "Updating Slack" -Level Info
     $SlackMessage = "New Login Enterprise test started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName). Testname: $($NTNXTestname)."
     Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
     #endregion Slack update
 
     #region Citrix validation
+    #----------------------------------------------------------------------------------------------------------------------------
 
     # Update Test Dashboard
     $params = @{
@@ -374,6 +384,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #endregion Citrix validation
 
     #region LE Test Check
+    #----------------------------------------------------------------------------------------------------------------------------
 
     # Update Test Dashboard
     $params = @{
@@ -397,6 +408,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #endregion LE Test Check
 
     #region LE Users
+    #----------------------------------------------------------------------------------------------------------------------------
 
     # Update Test Dashboard
     if (($SkipLEUsers)) { $Message = "Skipping Login Enterprise User Creation" } else { $Message = "Creating Login Enterprise Users" }
@@ -424,6 +436,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #endregion LE Users
 
     #region AD Users
+    #----------------------------------------------------------------------------------------------------------------------------
 
     # Update Test Dashboard
     if (($SkipADUsers)) { $Message = "Skipping AD User Creation" } else { $Message = "Creating AD Users" }
@@ -456,7 +469,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 ApplianceURL   = $VSI_LoginEnterprise_ApplianceURL
             }
             New-VSIADUsers @params
-        } else {
+        }
+        else {
             # Alternative for when invoking the toolkit from a machine that's not part of the domain/ user that does not have the appropriate rights to create users
             $params = @{
                 BaseName       = $VSI_Users_Basename
@@ -477,19 +491,20 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #endregion AD Users
 
     #region Iterate through runs
+    #----------------------------------------------------------------------------------------------------------------------------
     for ($i = 1; $i -le $VSI_Target_ImageIterations; $i++) {
 
         $CurrentRunPhase = 1
-
-        # Will only create the pool if it does not exist
         
         #region Update Slack
+        #----------------------------------------------------------------------------------------------------------------------------
         $SlackMessage = "Testname: $($NTNXTestname) Run$i is started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName)."
         Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
 
         #endregion Update Slack
 
         #region Get Nutanix Info
+        #----------------------------------------------------------------------------------------------------------------------------
 
         # Update Test Dashboard
         $params = @{
@@ -528,12 +543,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if ($Mode -eq "CitrixVAD" -or $Mode -eq "CitrixDaaS") {
             ## Placeholder Block to capture the relevent settings below - will change with different tech
         }
-        $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $VSI_Target_HypervisorConnection +"\"+ $VSI_Target_HypervisorNetwork +".network" }
+        $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $VSI_Target_HypervisorConnection + "\" + $VSI_Target_HypervisorNetwork + ".network" }
         $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
 
-        #endregoin Get Nutanix Info
+        #endregion Get Nutanix Info
 
         #region Configure Desktop Pool
+        #----------------------------------------------------------------------------------------------------------------------------
 
         # Update Test Dashboard
         $params = @{
@@ -597,7 +613,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $NTNXInfra.Testinfra.MaxAbsoluteNewActionsPerMinute = $CreatePool.MaxAbsoluteNewActionsPerMinute
         $NTNXInfra.Testinfra.MaxPercentageActiveActions = $CreatePool.MaxPercentageActiveActions
 
-        if ($Mode -eq "Horizon") { #Need to check with Sven here - which config do we use Horizon-NTNX.ps1 or NorizonView.Ps1?
+        if ($Mode -eq "Horizon") {
+            #Need to check with Sven here - which config do we use Horizon-NTNX.ps1 or NorizonView.Ps1?
             $params = @{
                 Name                      = $VSI_Target_DesktopPoolName
                 ParentVM                  = $VSI_Target_ParentVM
@@ -626,11 +643,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Configure Desktop Pool
 
         #region Configure Folder Details for output
+        #----------------------------------------------------------------------------------------------------------------------------
         $FolderName = "$($NTNXTestname)_Run$($i)"
         $OutputFolder = "$ScriptRoot\results\$FolderName"
         #endregion Configure Folder Details for output
 
         #region Start monitoring Boot phase
+        #----------------------------------------------------------------------------------------------------------------------------
 
         # Update Test Dashboard
         $params = @{
@@ -697,12 +716,15 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $Params = $null
         }
         
-        if ($Mode -eq "Horizon") { # Need to check with Sven on this
+        if ($Mode -eq "Horizon") {
+            # Need to check with Sven on this
             if ($VSI_Target_PoolType -eq "RDSH") {
                 $Boot = Enable-VSIHVDesktopPool -Name $VSI_Target_DesktopPoolName -VMAmount $VSI_Target_NumberOfVMs -Increment $VSI_Target_VMPoolIncrement -RDSH
-            } elseif ($VSI_Target_ProvisioningMode -eq "AllMachinesUpFront") {
+            }
+            elseif ($VSI_Target_ProvisioningMode -eq "AllMachinesUpFront") {
                 $Boot = Enable-VSIHVDesktopPool -Name $VSI_Target_DesktopPoolName -VMAmount $VSI_Target_NumberOfVMs -Increment $VSI_Target_VMPoolIncrement -AllMachinesUpFront
-            } else {
+            }
+            else {
                 $Boot = Enable-VSIHVDesktopPool -Name $VSI_Target_DesktopPoolName -VMAmount $VSI_Target_NumberOfVMs -NumberOfSpareVMs $VSI_Target_NumberOfSpareVMs
             }
         }
@@ -712,6 +734,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Start monitoring Boot phase
 
         #region Get Build Tattoo Information and update variable with new values
+        #----------------------------------------------------------------------------------------------------------------------------
         if ($Mode -eq "CitrixVAD" -or $Mode -eq "CitrixDaaS") {
             ## Placeholder Block to capture the relevent settings below - will change with different tech
             $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $VSI_Target_DesktopPoolName -MaxRecordCount $MaxRecordCount
@@ -719,7 +742,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $MasterImageDNS = $RegisteredVMs[0].DNSName
         }
         
-        if ($Mode -eq "Horizon") { # Need to check with Sven on this
+        if ($Mode -eq "Horizon") {
+            # Need to check with Sven on this
             ## Placeholder to get the Horizon First Machine FQND into $MasterImageDNS
         }
 
@@ -771,6 +795,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Get Build Tattoo Information and update variable with new values
 
         #region Set number of sessions per launcher
+        #----------------------------------------------------------------------------------------------------------------------------
 
         # Update Test Dashboard
         $params = @{
@@ -805,7 +830,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         if ($($VSI_Target_SessionCfg.ToLower()) -eq "ica") {
             $SessionsperLauncher = 20
-        } else {
+        }
+        else {
             $SessionsperLauncher = 12
         }
         if (-not ($SkipLaunchers)) {
@@ -818,6 +844,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Set number of sessions per launcher
 
         #region Update the test params/create test if not exist
+        #----------------------------------------------------------------------------------------------------------------------------
 
         # Update Test Dashboard
         $params = @{
@@ -870,6 +897,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Update the test params/create test if not exist
 
         #region Wait for VM's to have settled down
+        #----------------------------------------------------------------------------------------------------------------------------
         if (-not ($SkipWaitForIdleVMs)) {
             Write-Log -Message "Waiting 60 seconds for VMs to become idle" -Level Info
             Start-Sleep -Seconds 60
@@ -877,21 +905,25 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Wait for VM's to have settled down
 
         #region Stop and cleanup monitoring job Boot phase
+        #----------------------------------------------------------------------------------------------------------------------------
         $monitoringJob | Stop-Job | Remove-Job
         #endregion Stop and cleanup monitoring job Boot phase
 
         #region Set RDA Source and Destination files and clean out source files if they still exist
+        #----------------------------------------------------------------------------------------------------------------------------
         $RDADestination = "$OutputFolder\RDA.csv"
         $RDASource = Join-Path -Path "$($NTNXInfra.TestInfra.RDAPath)" -ChildPath "$($VSI_Users_BaseName)0001.csv"
-        if(Test-Path -Path $RDASource){
+        if (Test-Path -Path $RDASource) {
             Write-Log -Message "Removing RDA Source File $($RDASource)" -Level Info
             Remove-Item -Path $RDASource -ErrorAction SilentlyContinue
-        } else {
+        }
+        else {
             Write-Log -Message "RDA Source File $($RDASource) does not exist" -Level Info
         }
         #endregion Set RDA Source and Destination files and clean out source files if they still exist
 
         #region VM Idle state
+        #----------------------------------------------------------------------------------------------------------------------------
 
         # Update Test Dashboard
         $params = @{
@@ -929,6 +961,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion VM Idle state
 
         #region Nutanix Curator Stop
+        #----------------------------------------------------------------------------------------------------------------------------
 
         # Update Test Dashboard
         $params = @{
@@ -965,6 +998,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Nutanix Curator Stop
 
         #region Start the test
+        #----------------------------------------------------------------------------------------------------------------------------
 
         # Update Test Dashboard
         $params = @{
@@ -1002,6 +1036,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Start the test
 
         #region Start monitoring
+        #----------------------------------------------------------------------------------------------------------------------------
 
         # Update Test Dashboard
         $params = @{
@@ -1138,6 +1173,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Start monitoring
 
         #region Wait for test to finish
+        #----------------------------------------------------------------------------------------------------------------------------
 
         # Update Test Dashboard
         $params = @{
@@ -1174,6 +1210,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Wait for test to finish
 
         #region Cleanup monitoring job
+        #----------------------------------------------------------------------------------------------------------------------------
         $monitoringJob | Wait-Job | Remove-Job
         if ($VSI_Target_Files -ne "") {
             $monitoringFilesJob | Wait-Job | Remove-Job
@@ -1184,6 +1221,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Cleanup monitoring job
 
         #region Nutanix Curator Start
+        #----------------------------------------------------------------------------------------------------------------------------
 
         # Update Test Dashboard
         $params = @{
@@ -1220,6 +1258,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Nutanix Curator Start
 
         #region Write config to OutputFolder
+        #----------------------------------------------------------------------------------------------------------------------------
 
         # Update Test Dashboard
         $params = @{
@@ -1260,14 +1299,16 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Write config to OutputFolder
 
         #region Check for RDA File and if exists then move it to the output folder
-        if(Test-Path -Path $RDASource){
-            $csvData = get-content $RDASource | ConvertFrom-String -Delimiter "," -PropertyNames Timestamp,screenResolutionid,encoderid,movingImageCompressionConfigurationid,preferredColorDepthid,videoCodecid,VideoCodecUseid,VideoCodecTextOptimizationid,VideoCodecColorspaceid,VideoCodecTypeid,HardwareEncodeEnabledid,VisualQualityid,FramesperSecondid,RDHSMaxFPS,currentCPU,currentRAM,totalCPU,currentFps,totalFps,currentRTT,NetworkLatency,NetworkLoss,CurrentBandwidthEDT,totalBandwidthusageEDT,averageBandwidthusageEDT,currentavailableEDTBandwidth,EDTInUseId,currentBandwithoutput,currentLatency,currentavailableBandwidth,totalBandwidthusage,averageBandwidthUsage,averageBandwidthAvailable,GPUusage,GPUmemoryusage,GPUmemoryInUse,GPUvideoEncoderusage,GPUvideoDecoderusage,GPUtotalUsage,GPUVideoEncoderSessions,GPUVideoEncoderAverageFPS,GPUVideoEncoderLatency | Select -Skip 1
+        #----------------------------------------------------------------------------------------------------------------------------
+        if (Test-Path -Path $RDASource) {
+            $csvData = get-content $RDASource | ConvertFrom-String -Delimiter "," -PropertyNames Timestamp, screenResolutionid, encoderid, movingImageCompressionConfigurationid, preferredColorDepthid, videoCodecid, VideoCodecUseid, VideoCodecTextOptimizationid, VideoCodecColorspaceid, VideoCodecTypeid, HardwareEncodeEnabledid, VisualQualityid, FramesperSecondid, RDHSMaxFPS, currentCPU, currentRAM, totalCPU, currentFps, totalFps, currentRTT, NetworkLatency, NetworkLoss, CurrentBandwidthEDT, totalBandwidthusageEDT, averageBandwidthusageEDT, currentavailableEDTBandwidth, EDTInUseId, currentBandwithoutput, currentLatency, currentavailableBandwidth, totalBandwidthusage, averageBandwidthUsage, averageBandwidthAvailable, GPUusage, GPUmemoryusage, GPUmemoryInUse, GPUvideoEncoderusage, GPUvideoDecoderusage, GPUtotalUsage, GPUVideoEncoderSessions, GPUVideoEncoderAverageFPS, GPUVideoEncoderLatency | Select -Skip 1
             $csvData | Export-Csv -Path $RDADestination -NoTypeInformation
             Remove-Item -Path $RDASource -ErrorAction SilentlyContinue
         }
         #endregion Check for RDA File and if exists then move it to the output folder
 
         #region Cleanup Nutanix Files Data
+        #----------------------------------------------------------------------------------------------------------------------------
 
         # Update Test Dashboard
         if ($VSI_Target_Files -ne "") { $Message = "Starting Nutanix Files Data Clean" } else { $Message = "Skipping Nutanix Files Data Clean" }
@@ -1311,7 +1352,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Cleanup Nutanix Files Data
 
         #region Upload Data to Influx
-        
+        #----------------------------------------------------------------------------------------------------------------------------
+
         # Update Test Dashboard
         if ($NTNXInfra.Test.UploadResults) { $Message = "Uploading Data to InfluxDB" } else { $Message = "Skipping InfluxDB Data Upload" }
         $params = @{
@@ -1368,10 +1410,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                     Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
                     if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
                         Write-Log -Message "Finished uploading Boot File $($File.Name) to Influx" -Level Info
-                    } else {
+                    }
+                    else {
                         Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
                     }
-                } else {
+                }
+                else {
                     Write-Log -Message "Skipped uploading Boot File $($File.Name) to Influx" -Level Info
                 }
             }
@@ -1386,12 +1430,14 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             foreach ($File in $Files) {
                 if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*")) {
                     Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
-                    if(Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName){
+                    if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
                         Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info -Update
-                    } else {
+                    }
+                    else {
                         Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
                     }
-                } else {
+                }
+                else {
                     Write-Log -Message "Skipped uploading File $($File.Name) to Influx" -Level Info
                 }
             }
@@ -1404,15 +1450,16 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Upload Data to Influx
 
         $Testresult = import-csv "$OutputFolder\VSI-results.csv"
-        $Appsuccessrate = $Testresult."Apps success"/$Testresult."Apps total" *100
+        $Appsuccessrate = $Testresult."Apps success" / $Testresult."Apps total" * 100
 
         #region Slack update
+        #----------------------------------------------------------------------------------------------------------------------------
         $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName). $($Testresult.activesessionCount) sessions active of $($Testresult."login total") total sessions. EUXscore: $($Testresult."EUX score") - VSImax: $($Testresult.vsiMax). App Success rate: $($Appsuccessrate.tostring("#.###"))"
         Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
 
         $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -RunNumber $i -TestName $NTNXTestname
 
-        if(Test-Path -path $Filename) {
+        if (Test-Path -path $Filename) {
             $Params = @{
                 ImageURL     = $FileName 
                 SlackToken   = $NTNXInfra.Testinfra.SlackToken 
@@ -1426,6 +1473,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Slack update
 
         #region Finish Test Run
+        #----------------------------------------------------------------------------------------------------------------------------
 
         # Update Test Dashboard
         $params = @{
@@ -1464,14 +1512,16 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #endregion Iterate through runs
 
     #region Analyze Run results
+    #----------------------------------------------------------------------------------------------------------------------------
     Get-VSIResults -TestName $NTNXTestname -Path $ScriptRoot
     #endregion Analyze Run results
 
     #region Slack update
+    #----------------------------------------------------------------------------------------------------------------------------
     Update-VSISlackresults -TestName $NTNXTestname -Path $ScriptRoot
     $OutputFolder = "$($ScriptRoot)\testresults\$($NTNXTestname)"
     $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -TestName $NTNXTestname
-    if(Test-Path -path $Filename) {
+    if (Test-Path -path $Filename) {
         $Params = @{
             ImageURL     = $FileName 
             SlackToken   = $NTNXInfra.Testinfra.SlackToken 

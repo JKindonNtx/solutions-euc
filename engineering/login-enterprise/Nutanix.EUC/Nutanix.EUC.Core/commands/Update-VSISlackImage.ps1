@@ -32,19 +32,17 @@ function Update-VSISlackImage {
         $SlackComment
     )
 
-
-        if(!(get-module | where-object {$_.Name -eq "PSSlack" })) {
-            try {
-                install-module PSSlack -Scope CurrentUser -allowclobber -Confirm:$false -Force -ErrorAction Stop
-                import-module PSSlack -ErrorAction Stop
-            }
-            catch {
-                Write-Log -Message $_ -Level Error
-            }
-            
+    if (!(get-module | where-object { $_.Name -eq "PSSlack" })) {
+        try {
+            install-module PSSlack -Scope CurrentUser -allowclobber -Confirm:$false -Force -ErrorAction Stop
+            import-module PSSlack -ErrorAction Stop
         }
+        catch {
+            Write-Log -Message $_ -Level Error
+        }
+            
+    }
 
-        Send-SlackFile -Channel $SlackChannel -path $ImageURL -Token $SlackToken -Title $SlackTitle -Comment $SlackComment
-
+    Send-SlackFile -Channel $SlackChannel -path $ImageURL -Token $SlackToken -Title $SlackTitle -Comment $SlackComment
 
 }

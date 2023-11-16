@@ -25,20 +25,25 @@ function Invoke-PublicApiMethodNTNXv1 {
                 if ($null -ne $Body) {
                     if ($null -ne $OutFile) {
                         Invoke-RestMethod -Body $Body -Method $Method -Uri $URL -Headers $Header -SkipCertificateCheck -OutFile $OutFile -ErrorAction Stop
-                    } else {
+                    }
+                    else {
                         Invoke-RestMethod -Body $Body -Method $Method -Uri $URL -Headers $Header -SkipCertificateCheck -ErrorAction Stop
                     }
-                } else {
+                }
+                else {
                     if ($null -ne $OutFile) {
                         Invoke-RestMethod -Method $Method -Uri $URL -Headers $Header -SkipCertificateCheck -OutFile $OutFile -ErrorAction Stop
-                    } elseif ($null -ne $Form) {
+                    }
+                    elseif ($null -ne $Form) {
                         Invoke-RestMethod -Method $Method -Uri $URL -Headers $Header -SkipCertificateCheck -Form $Form -ErrorAction Stop
-                    } else {
+                    }
+                    else {
                         Invoke-RestMethod -Method $Method -Uri $URL -Headers $Header -SkipCertificateCheck -ErrorAction Stop
                     }
                 }
                 $done = $true
-            } catch {
+            }
+            catch {
                 $reason = $_
                 Write-Log -Message "API call failed, sleeping 2 seconds and trying again $($maxcount - $count) times: $_" -Level Warn
                 Start-Sleep -Seconds 2
@@ -47,7 +52,8 @@ function Invoke-PublicApiMethodNTNXv1 {
                 Write-Log -Message "API call failed after $($maxcount) times with reason: $reason" -Level Error
             }
         }
-    } else {
+    }
+    else {
         if (-not("SSLValidator" -as [type])) {
             add-type -TypeDefinition @"
         using System;
@@ -78,13 +84,16 @@ function Invoke-PublicApiMethodNTNXv1 {
                 if ($null -ne $Body) {
                     if ($null -ne $OutFile) {
                         Invoke-RestMethod -Body $Body -Method $Method -Uri $URL -Headers $Header -OutFile $OutFile -ErrorAction Stop
-                    } else {
+                    }
+                    else {
                         Invoke-RestMethod -Body $Body -Method $Method -Uri $URL -Headers $Header -ErrorAction Stop
                     }
-                } else {
+                }
+                else {
                     if ($null -ne $OutFile) {
                         Invoke-RestMethod -Method $Method -Uri $URL -Headers $Header -OutFile $OutFile -ErrorAction Stop
-                    } elseif ($null -ne $Form) {
+                    }
+                    elseif ($null -ne $Form) {
                         $FilePath = $Form.Values[0]
                         $FileName = $(Split-Path $FilePath -Leaf)
                         $fileBytes = [System.IO.File]::ReadAllBytes($FilePath);
@@ -123,12 +132,14 @@ function Invoke-PublicApiMethodNTNXv1 {
                         }
                         $result.Content.ReadAsStringAsync().Result.Trim("`"")
 
-                    } else {
+                    }
+                    else {
                         Invoke-RestMethod -Method $Method -Uri $URL -Headers $Header -ErrorAction Stop
                     }
                 }
                 $done = $true
-            } catch {
+            }
+            catch {
                 $reason = $_
                 Write-Log -Message "API call $url failed, sleeping 2 seconds and trying again $($maxcount - $count) times: $_" -Level Warn
                 Start-Sleep -Seconds 2

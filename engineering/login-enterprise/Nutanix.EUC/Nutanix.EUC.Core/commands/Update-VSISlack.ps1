@@ -32,36 +32,32 @@ function Update-VSISlack {
     [CmdletBinding()]
 
     Param (
-        [Parameter(ValueFromPipeline = $true,ValuefromPipelineByPropertyName = $true, mandatory = $true)][String]$Slack,
-        [Parameter(ValueFromPipeline = $true,ValuefromPipelineByPropertyName = $true, mandatory = $true)][String]$Message
+        [Parameter(ValueFromPipeline = $true, ValuefromPipelineByPropertyName = $true, mandatory = $true)][String]$Slack,
+        [Parameter(ValueFromPipeline = $true, ValuefromPipelineByPropertyName = $true, mandatory = $true)][String]$Message
     )
 
+    Write-Log -Message "Message: $Message" -Level Info
+    Write-Log -Message "Slack: $Slack" -Level Info
 
-        Write-Log -Message "Message: $Message" -Level Info
-        Write-Log -Message "Slack: $Slack" -Level Info
-
-        $body = ConvertTo-Json -Depth 4 @{
-            username = "Login Enterprise Automation"
-            attachments = @(
-                @{
-                    fallback = "Login Enterprise Slack Integration."
-                    color = "#36a64f"
-                    pretext = "*Login Enterprise Integration*"
-                    title = "Login Enterprise Automation update"
-                    text = $Message  
-                }
-            )
-        }
-        $RestError = $null
-        Try {
-            Invoke-RestMethod -uri $Slack -Method Post -body $body -ContentType 'application/json' -ErrorAction Stop | Out-Null
-        } 
-        Catch {
-            $RestError = $_
-            Write-Log -Message "Failed to update Slack" -Level Warn
-            Write-Log -Message $RestError -Level Warn
-        }
-
-
-
+    $body = ConvertTo-Json -Depth 4 @{
+        username    = "Login Enterprise Automation"
+        attachments = @(
+            @{
+                fallback = "Login Enterprise Slack Integration."
+                color    = "#36a64f"
+                pretext  = "*Login Enterprise Integration*"
+                title    = "Login Enterprise Automation update"
+                text     = $Message  
+            }
+        )
+    }
+    $RestError = $null
+    Try {
+        Invoke-RestMethod -uri $Slack -Method Post -body $body -ContentType 'application/json' -ErrorAction Stop | Out-Null
+    } 
+    Catch {
+        $RestError = $_
+        Write-Log -Message "Failed to update Slack" -Level Warn
+        Write-Log -Message $RestError -Level Warn
+    }
 }

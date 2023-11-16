@@ -44,44 +44,42 @@ function Set-NTNXcurator {
         [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true )][system.string[]]$Action
     )
     
-
-    
-        # Install Posh-SSH module. Required to connect to the hosts using SSH. Used for capturing performance stats.
-        #if (!((Get-Module -ListAvailable *) | Where-Object { $_.Name -eq "Posh-SSH" })) {
-        #    Write-Host "SSH module not found, installing missing module."
-        #    Install-Module -Name Posh-SSH -RequiredVersion 2.3.0 -Confirm:$false -Force
-        #
-        #}
-        # Build the command and set the curator status using SSH
-        if ($Action -eq "stop") {
-            $command = "allssh genesis stop curator"
-        }
-        else {
-            $command = "allssh genesis restart"
-        }
-        $password = ConvertTo-SecureString "$CVMsshpassword" -AsPlainText -Force
-        $HostCredential = New-Object System.Management.Automation.PSCredential ("nutanix", $password)
-        try {
-            $session = New-SSHSession -ComputerName $ClusterIP -Credential $HostCredential -AcceptKey -KeepAliveInterval 5 -ErrorAction Stop
-            $sshStream = New-SSHShellStream -SessionId $session.SessionId -ErrorAction Stop
-        }
-        catch {
-            Write-Log -Message $_ -Level Error
-            Break
-        }
+    # Install Posh-SSH module. Required to connect to the hosts using SSH. Used for capturing performance stats.
+    #if (!((Get-Module -ListAvailable *) | Where-Object { $_.Name -eq "Posh-SSH" })) {
+    #    Write-Host "SSH module not found, installing missing module."
+    #    Install-Module -Name Posh-SSH -RequiredVersion 2.3.0 -Confirm:$false -Force
+    #
+    #}
+    # Build the command and set the curator status using SSH
+    if ($Action -eq "stop") {
+        $command = "allssh genesis stop curator"
+    }
+    else {
+        $command = "allssh genesis restart"
+    }
+    $password = ConvertTo-SecureString "$CVMsshpassword" -AsPlainText -Force
+    $HostCredential = New-Object System.Management.Automation.PSCredential ("nutanix", $password)
+    try {
+        $session = New-SSHSession -ComputerName $ClusterIP -Credential $HostCredential -AcceptKey -KeepAliveInterval 5 -ErrorAction Stop
+        $sshStream = New-SSHShellStream -SessionId $session.SessionId -ErrorAction Stop
+    }
+    catch {
+        Write-Log -Message $_ -Level Error
+        Break
+    }
         
-        $sshStream.WriteLine($command)
+    $sshStream.WriteLine($command)
+    Start-sleep -Seconds 10
+    $JobFinished = $false
+    while ($JobFinished -eq $false) {
+        $JobOutput = $sshStream.Read()
+        if ($JobOutput -like "*nutanix@*") {
+            $JobFinished = $true
+        } 
         Start-sleep -Seconds 10
-        $JobFinished = $false
-        while ($JobFinished -eq $false) {
-            $JobOutput = $sshStream.Read()
-            if ($JobOutput -like "*nutanix@*") {
-                $JobFinished = $true
-            } 
-            Start-sleep -Seconds 10
-        }
+    }
 
-        Remove-SSHSession -Name $Session | Out-Null
+    Remove-SSHSession -Name $Session | Out-Null
     
 } # Set-NutanixAffinity
     

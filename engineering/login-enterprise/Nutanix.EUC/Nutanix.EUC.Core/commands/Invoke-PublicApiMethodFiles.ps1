@@ -11,16 +11,11 @@ function Invoke-PublicApiMethodFiles {
     )
 
     $header = @{
-        Authorization = "Basic " + [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($($VSI_Target_Files_api) + ":" + $($VSI_Target_Files_Password)))
+        Authorization     = "Basic " + [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($($VSI_Target_Files_api) + ":" + $($VSI_Target_Files_Password)))
         "Accept-Encoding" = "gzip"
-        "Accept"        = "application/json"
+        "Accept"          = "application/json"
     }
 
- #   $Header = @{
-  #      "Accept"        = "application/json"
-   #     "Authorization" = "Basic " + [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes$($VSI_Target_CVM_admin) + ":" + $($VSI_Target_CVM_Password))
-    #    "Content-Type"  = $ContentType
-    #}
     if ($PSEdition -eq "Core") {
         $count = 0
         $maxcount = 5
@@ -32,20 +27,25 @@ function Invoke-PublicApiMethodFiles {
                 if ($null -ne $Body) {
                     if ($null -ne $OutFile) {
                         Invoke-RestMethod -Body $Body -Method $Method -Uri $URL -Headers $Header -SkipCertificateCheck -OutFile $OutFile
-                    } else {
+                    }
+                    else {
                         Invoke-RestMethod -Body $Body -Method $Method -Uri $URL -Headers $Header -SkipCertificateCheck
                     }
-                } else {
+                }
+                else {
                     if ($null -ne $OutFile) {
                         Invoke-RestMethod -Method $Method -Uri $URL -Headers $Header -SkipCertificateCheck -OutFile $OutFile
-                    } elseif ($null -ne $Form) {
+                    }
+                    elseif ($null -ne $Form) {
                         Invoke-RestMethod -Method $Method -Uri $URL -Headers $Header -SkipCertificateCheck -Form $Form
-                    } else {
+                    }
+                    else {
                         Invoke-RestMethod -Method $Method -Uri $URL -Headers $Header -SkipCertificateCheck
                     }
                 }
                 $done = $true
-            } catch {
+            }
+            catch {
                 $reason = $_
                 Write-Warning "API call failed, sleeping 2 seconds and trying again $($maxcount - $count) times: $_"
                 Start-Sleep -Seconds 2
@@ -54,7 +54,8 @@ function Invoke-PublicApiMethodFiles {
                 throw "API call failed after $($maxcount) times with reason: $reason"
             }
         }
-    } else {
+    }
+    else {
         if (-not("SSLValidator" -as [type])) {
             add-type -TypeDefinition @"
         using System;
@@ -74,7 +75,6 @@ function Invoke-PublicApiMethodFiles {
         }
 "@
         }
-        #[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Ssl3 -bor [System.Net.SecurityProtocolType]::Tls -bor [System.Net.SecurityProtocolType]::Tls11 -bor [System.Net.SecurityProtocolType]::Tls12
         [System.Net.ServicePointManager]::ServerCertificateValidationCallback = [SSLValidator]::GetDelegate()
         $count = 0
         $maxcount = 5
@@ -86,14 +86,16 @@ function Invoke-PublicApiMethodFiles {
                 if ($null -ne $Body) {
                     if ($null -ne $OutFile) {
                         Invoke-RestMethod -Body $Body -Method $Method -Uri $URL -Headers $Header -OutFile $OutFile
-                    } else {
+                    }
+                    else {
                         Invoke-RestMethod -Body $Body -Method $Method -Uri $URL -Headers $Header
                     }
-                } else {
+                }
+                else {
                     if ($null -ne $OutFile) {
                         Invoke-RestMethod -Method $Method -Uri $URL -Headers $Header -OutFile $OutFile
-                    } elseif ($null -ne $Form) {
-                        #Write-Host "TODO fix form multi/part data upload for non-pscore"
+                    }
+                    elseif ($null -ne $Form) {
                         
                         $FilePath = $Form.Values[0]
                         $FileName = $(Split-Path $FilePath -Leaf)
@@ -117,11 +119,6 @@ function Invoke-PublicApiMethodFiles {
                             ContentType = "multipart/form-data; boundary=`"$boundary`""
                             Body        = $bodylines                        
                         }
-                        #Write-Host $bodyLines
-                        #Invoke-webrequest @splat -verbose
-                        
-                        #$Body = @{file = $(Get-Content -Path $Form.Values[0]) }
-                        #Write-Host $body.values
                         
                         Add-Type -AssemblyName 'System.Net.Http'
                         
@@ -137,17 +134,15 @@ function Invoke-PublicApiMethodFiles {
                             throw "Failed to upload $filePath"
                         }
                         $result.Content.ReadAsStringAsync().Result.Trim("`"")
-                        #$result.EnsureSuccessStatusCode()
-                        
 
-                        
-                        #Invoke-RestMethod -InFile $FilePath -Headers $Header -uri $URL -method post -verbose -ContentType "multipart/form-data"
-                    } else {
+                    }
+                    else {
                         Invoke-RestMethod -Method $Method -Uri $URL -Headers $Header
                     }
                 }
                 $done = $true
-            } catch {
+            }
+            catch {
                 $reason = $_
                 Write-Warning "API call $url failed, sleeping 2 seconds and trying again $($maxcount - $count) times: $_"
                 Start-Sleep -Seconds 2

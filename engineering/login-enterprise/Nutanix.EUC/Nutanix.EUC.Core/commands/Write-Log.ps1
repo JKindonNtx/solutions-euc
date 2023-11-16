@@ -34,42 +34,34 @@ Writes an Info Output to the console
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][ValidateSet("Error", "Warn", "Info", "Validation")][String]$Level = "Info"
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-    }
-
-    process {
-        # Write message to error, warning, or Info
-        switch ($Level) {
-            'Error' {
-                if ($Update.IsPresent) {
-                    Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message" -NoNewline
-                } else {
-                    Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message"
-                }
+    # Write message to error, warning, or Info
+    switch ($Level) {
+        'Error' {
+            if ($Update.IsPresent) {
+                Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message" -NoNewline
             }
-            'Warn' {
-                if ($Update.IsPresent) {
-                    Write-Host "$([char]0x1b)[33m[$([char]0x1b)[33m$(Get-Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message" -NoNewline
-                } else {
-                    Write-Host "$([char]0x1b)[33m[$([char]0x1b)[33m$(Get-Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message"
-                }
-            }
-            'Info' {
-                if ($Update.IsPresent) {
-                    Write-Host "$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message" -NoNewline
-                } else {
-                    Write-Host "$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message"
-                }
-            }
-            'Validation' {
-                Write-Host "$([char]0x1b)[96mVALIDATION: $Message"
+            else {
+                Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message"
             }
         }
-    } # process
-
-    end { 
-    } # end
-
+        'Warn' {
+            if ($Update.IsPresent) {
+                Write-Host "$([char]0x1b)[33m[$([char]0x1b)[33m$(Get-Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message" -NoNewline
+            }
+            else {
+                Write-Host "$([char]0x1b)[33m[$([char]0x1b)[33m$(Get-Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message"
+            }
+        }
+        'Info' {
+            if ($Update.IsPresent) {
+                Write-Host "$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message" -NoNewline
+            }
+            else {
+                Write-Host "$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message"
+            }
+        }
+        'Validation' {
+            Write-Host "$([char]0x1b)[96mVALIDATION: $Message"
+        }
+    }
 }

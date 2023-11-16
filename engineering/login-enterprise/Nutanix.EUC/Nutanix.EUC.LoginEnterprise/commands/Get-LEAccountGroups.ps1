@@ -1,4 +1,4 @@
-function Get-LEAccountGroups  {
+function Get-LEAccountGroups {
 
     [CmdletBinding()]
 
@@ -9,21 +9,20 @@ function Get-LEAccountGroups  {
         [Parameter(mandatory = $false)][string]$Include = "none"
     )
 
-        $Body = @{
-            orderBy   = $orderBy
-            direction = $Direction
-            count     = $Count
-            include   = $Include
-        }
+    $Body = @{
+        orderBy   = $orderBy
+        direction = $Direction
+        count     = $Count
+        include   = $Include
+    }
 
-        try {
-            $Response = Invoke-PublicApiMethod -Method "GET" -Path "v6/account-groups" -Body $Body -ErrorAction Stop
-            $Response.items
-        }
-        catch {
-            Write-Log -Message $_ -Level Error
-            Break
-        }
-
+    try {
+        $Response = Invoke-PublicApiMethod -Method "GET" -Path "v6/account-groups" -Body $Body -ErrorAction Stop
+        $Response.items
+    }
+    catch {
+        Write-Log -Message $_ -Level Error
+        Break
+    }
 
 }

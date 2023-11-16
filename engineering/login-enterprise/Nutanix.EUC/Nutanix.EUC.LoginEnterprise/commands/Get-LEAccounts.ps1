@@ -9,22 +9,21 @@ function Get-LEAccounts {
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][string]$Include = "none"
     )
 
-        $Body = @{
-            orderBy   = $orderBy
-            direction = $Direction
-            count     = $Count
-            include   = $Include
-        }
-        try {
-            $Response = Invoke-PublicApiMethod -Path 'v6/accounts' -Method 'GET' -Body $Body -ErrorAction Stop
-            $Response.items
-        }
-        catch {
-            Write-Log -Message $_ -Level Error
-            Break
-        }
+    $Body = @{
+        orderBy   = $orderBy
+        direction = $Direction
+        count     = $Count
+        include   = $Include
+    }
+    try {
+        $Response = Invoke-PublicApiMethod -Path 'v6/accounts' -Method 'GET' -Body $Body -ErrorAction Stop
+        $Response.items
+    }
+    catch {
+        Write-Log -Message $_ -Level Error
+        Break
+    }
         
     $Response.items
-
 
 }

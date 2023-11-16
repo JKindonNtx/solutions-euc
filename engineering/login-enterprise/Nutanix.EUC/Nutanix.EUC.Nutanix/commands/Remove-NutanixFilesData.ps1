@@ -40,102 +40,89 @@ function Remove-NutanixFilesData {
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $False)][String]$DummyFolder = "Folder_To_Delete"
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    }
+    # Process code for the function
+    foreach ($Share in $Shares) {
+        Write-Log -Message "Processing Share $($Share)" -Level Info
+        if (Test-Path $Share -PathType Container) {
+            Write-Log -Message "Sucessfully Connected to $($Share)" -Level Info
+            try {
+                $RootDirectoryData = Get-ChildItem -Path $Share -Directory -ErrorAction Stop
+                Write-Log -Message "There are $(($RootDirectoryData | Measure-Object).Count) root directories to delete on $($Share)" -Level Info
+            }
+            catch {
+                Write-Log $_ -Level Error
+                Break #Temporary! Replace with #Break
+            }
 
-    process {
-        # Process code for the function
-        foreach ($Share in $Shares) {
-            Write-Log -Message "Processing Share $($Share)" -Level Info
-            if (Test-Path $Share -PathType Container) {
-                Write-Log -Message "Sucessfully Connected to $($Share)" -Level Info
+            if ($Mode -eq "Validate") {
+                Write-Log -Message "Processing Share $($Share) in Validation Mode" -Level Info
+
+                # Create Dummy Data
                 try {
-                    $RootDirectoryData = Get-ChildItem -Path $Share -Directory -ErrorAction Stop
-                    Write-Log -Message "There are $(($RootDirectoryData | Measure-Object).Count) root directories to delete on $($Share)" -Level Info
+                    $null = New-Item -Path $Share -Name $DummyFolder -ItemType Directory -Force -ErrorAction Stop
+                    Write-Log -Message "Created dummy directory $($DummyFolder) on $($Share). Sleeping for 10 seconds" -Level Info
+                    Start-Sleep 10
                 }
                 catch {
-                    Write-Log $_ -Level Error
+                    Write-Log -Message "Failed to Create directory on $($Share)" -Level Error
+                    Write-Log -Message $_ -Level Error
                     Break #Temporary! Replace with #Break
                 }
 
-                if ($Mode -eq "Validate") {
-                    Write-Log -Message "Processing Share $($Share) in Validation Mode" -Level Info
-
-                    # Create Dummy Data
-                    try {
-                        $null = New-Item -Path $Share -Name $DummyFolder -ItemType Directory -Force -ErrorAction Stop
-                        Write-Log -Message "Created dummy directory $($DummyFolder) on $($Share). Sleeping for 10 seconds" -Level Info
-                        Start-Sleep 10
-                    }
-                    catch {
-                        Write-Log -Message "Failed to Create directory on $($Share)" -Level Error
-                        Write-Log -Message $_ -Level Error
-                        Break #Temporary! Replace with #Break
-                    }
-
-                    # Delete Dummy Data
+                # Delete Dummy Data
+                try {
+                    Remove-Item -Path (Join-Path $Share -ChildPath $DummyFolder) -Recurse -Force -ErrorAction Stop
+                    Write-Log -Message "Deleted dummy directory $($DummyFolder) on $($Share)" -Level Info
+                    Write-Log -Message "Validated $($Share) Successfully" -Level Info
+                }
+                catch {
+                    Write-Log -Message "Failed to delete directory $($DummyFolder) on $($Share). Trying again in 10 seconds" -Level Warn
+                    Write-Log -Message $_ -Level Warn
+                    Start-Sleep 10
                     try {
                         Remove-Item -Path (Join-Path $Share -ChildPath $DummyFolder) -Recurse -Force -ErrorAction Stop
                         Write-Log -Message "Deleted dummy directory $($DummyFolder) on $($Share)" -Level Info
-                        Write-Log -Message "Validated $($Share) Successfully" -Level Info
                     }
                     catch {
-                        Write-Log -Message "Failed to delete directory $($DummyFolder) on $($Share). Trying again in 10 seconds" -Level Warn
-                        Write-Log -Message $_ -Level Warn
-                        Start-Sleep 10
-                        try {
-                            Remove-Item -Path (Join-Path $Share -ChildPath $DummyFolder) -Recurse -Force -ErrorAction Stop
-                            Write-Log -Message "Deleted dummy directory $($DummyFolder) on $($Share)" -Level Info
-                        }
-                        catch {
-                            Write-Log -Message "Failed to delete Directory $($DummyFolder) on $($Share)." -Level Error
-                            Write-Log -Message $_ -Level Error
-                            Break #Temporary! Replace with #Break
-                        }
-                    }
-
-                }
-
-                if ($Mode -eq "Execute") {
-                    Write-Log -Message "Processing Share $($Share) in Execute Mode" -Level Info
-                    Write-Log -Message "Deleting contents of $($Share)" -Level Info
-                    try {
-                        Remove-Item -Path $Share\* -Recurse -Force -ErrorAction Stop
-                        $RootDirectoryData = Get-ChildItem -Path $Share -Directory -ErrorAction Stop
-                        Write-Log -Message "There are now $(($RootDirectoryData | Measure-Object).Count) Root Directories on $($Share)" -Level Info
-                    }
-                    catch {
-                        Write-Log -Message "Failed to Delete Contents of $($Share)" -Level Error
+                        Write-Log -Message "Failed to delete Directory $($DummyFolder) on $($Share)." -Level Error
                         Write-Log -Message $_ -Level Error
-                        if ($ContinueOnFail) {
-                            Write-Log -Message "Continue on Failure is present. Proceeding without confirmed deletion of Nutanix Files Data" -Level Warn
-                        }
-                        else {
-                            Write-Log -Message "Continue on Failure is not present. Exiting Script" -Level 
-                            Break #Temporary! Replace with #Break
-                        }
+                        Break #Temporary! Replace with #Break
                     }
                 }
+
             }
-            else {
-                if ($Mode -eq "Execute" -and $ContinueOnFail) {
-                    Write-Log -Message "Share $($Share) does not exist. Please check configuration." -Level Warn
-                    Write-Log -Message "Continue on Failure is present. Proceeding without confirmed deletion of Nutanix Files Data" -Level Warn
+
+            if ($Mode -eq "Execute") {
+                Write-Log -Message "Processing Share $($Share) in Execute Mode" -Level Info
+                Write-Log -Message "Deleting contents of $($Share)" -Level Info
+                try {
+                    Remove-Item -Path $Share\* -Recurse -Force -ErrorAction Stop
+                    $RootDirectoryData = Get-ChildItem -Path $Share -Directory -ErrorAction Stop
+                    Write-Log -Message "There are now $(($RootDirectoryData | Measure-Object).Count) Root Directories on $($Share)" -Level Info
                 }
-                else {
-                    Write-Log -Message "Share $($Share) does not exist. Please check configuration. Exiting Script" -Level Error
-                    Break #Temporary! Replace with #Break
+                catch {
+                    Write-Log -Message "Failed to Delete Contents of $($Share)" -Level Error
+                    Write-Log -Message $_ -Level Error
+                    if ($ContinueOnFail) {
+                        Write-Log -Message "Continue on Failure is present. Proceeding without confirmed deletion of Nutanix Files Data" -Level Warn
+                    }
+                    else {
+                        Write-Log -Message "Continue on Failure is not present. Exiting Script" -Level 
+                        Break #Temporary! Replace with #Break
+                    }
                 }
             }
         }
-    } # process
-
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
+        else {
+            if ($Mode -eq "Execute" -and $ContinueOnFail) {
+                Write-Log -Message "Share $($Share) does not exist. Please check configuration." -Level Warn
+                Write-Log -Message "Continue on Failure is present. Proceeding without confirmed deletion of Nutanix Files Data" -Level Warn
+            }
+            else {
+                Write-Log -Message "Share $($Share) does not exist. Please check configuration. Exiting Script" -Level Error
+                Break #Temporary! Replace with #Break
+            }
+        }
+    }
 
 }

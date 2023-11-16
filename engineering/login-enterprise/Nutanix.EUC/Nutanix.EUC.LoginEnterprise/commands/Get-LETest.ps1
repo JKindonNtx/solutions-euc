@@ -7,20 +7,18 @@ function Get-LETest {
         [Parameter(Mandatory = $false)][ValidateSet('none', 'environment', 'workload', 'thresholds', 'all')][string] $include = "all"
     )
 
-
-        $Body = @{
-            include = $include
-        }
+    $Body = @{
+        include = $include
+    }
     
-        try {
-            $Response = Invoke-PublicApiMethod -Method "GET" -Path "v6/tests/$testId" -Body $Body -ErrorAction Stop
-        }
-        catch {
-            Write-Log -Message "Failed to retrieve test info" -Level Error
-            Write-Log -Message $_ -Level Error
-            Break
-        }
-        $Response
-
+    try {
+        $Response = Invoke-PublicApiMethod -Method "GET" -Path "v6/tests/$testId" -Body $Body -ErrorAction Stop
+    }
+    catch {
+        Write-Log -Message "Failed to retrieve test info" -Level Error
+        Write-Log -Message $_ -Level Error
+        Break
+    }
+    $Response
 
 }

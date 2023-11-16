@@ -10,17 +10,15 @@ function Get-LETests {
         [Parameter(Mandatory = $false)][string]$count = 10000
     )
 
-
-        $Body = @{
-            testType  = $testType
-            orderBy   = $orderBy
-            direction = $direction
-            count     = $Count
-            include   = $Include
-        }
+    $Body = @{
+        testType  = $testType
+        orderBy   = $orderBy
+        direction = $direction
+        count     = $Count
+        include   = $Include
+    }
         
-        $Response = Invoke-PublicApiMethod -Method "GET" -Path "v6/tests" -Body $Body
-        $Response.items
-
+    $Response = Invoke-PublicApiMethod -Method "GET" -Path "v6/tests" -Body $Body
+    $Response.items
 
 }
