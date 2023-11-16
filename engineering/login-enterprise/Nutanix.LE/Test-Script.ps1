@@ -21,6 +21,22 @@ TODO
     - Horizon -> 
     - NetScaler
 - Query Inlfux for running tests against LE appliance
+- Remember to replace BREAK with Exit 1! Temporarily using Break
+
+------------------------------------------------------------------------------------------
+### REVIEW NOTES - WORK IN PROGRESS - REMOVE ONCE VALIDATED
+------------------------------------------------------
+| Item | Requester | Reviewer | Date |
+| Review Horizon Input Logic - Search for "$Mode -eq "Horizon"" | James | Sven | 16.11.2023 |
+| Move HV Helper and HV Functions into new framework (review functions for logging etc) | James | James/Sven/Dave | 16.11.2023 |
+| Review Files Auth Validation Logic - Search for "Invoke-NutanixFilesAuthCheck" | James | Dave | 16.11.2023 |
+| Review LE Switching Logic and best Placement - search for "$placeholder_var_LEAppliance" | James | Dave/Sven | 16.11.2023 |
+| Review Output Logic - Search for "Report Output here on relevent variables" | James | Dave/Sven | 16.11.2023 |
+| Review Current JSON File - do we need values that are now auto calculated? | James | Sven | 16.11.2023 |
+------------------------------------------------------
+
+-----------------------------------------------------------------------------------------
+
 #>
 
 #region Params
@@ -79,6 +95,8 @@ $InfluxTestDashBucket = "Tests" ##// This needs to move to Variables
 # Execute
 # ============================================================================
 
+
+
 #region Nutanix Module Import
 #----------------------------------------------------------------------------------------------------------------------------
 $var_ModuleName = "Nutanix.LE"
@@ -90,7 +108,7 @@ try {
 catch {
     Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: Failed to import $var_ModuleName module. Exit script"
     Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $_"
-    Exit 1
+    Break #Temporary! Replace with #Exit 1
 }
 #endregion Nutanix Module Import
 
@@ -105,12 +123,12 @@ Write-Log -Message "Test Type is:                 $($Type)" -Level Validation
 #----------------------------------------------------------------------------------------------------------------------------
 if ($PSVersionTable.PSVersion.Major -lt 5) { 
     Write-Log -Message "You must upgrade to PowerShell 5.x to run this script" -Level Warn
-    Exit 1
+    Break #Temporary! Replace with #Exit 1
 }
 
 if ($PSVersionTable.PSVersion.Major -gt 6) { 
     Write-Log -Message "You cannot use PowerShell $($PSVersionTable.PSVersion.Major) with Citrix snapins. Please revert to PowerShell 5.x" -Level Warn
-    #Exit 1
+    Break #Temporary! Replace with #Exit 1
 }
 #endregion PowerShell Versions
 
@@ -128,7 +146,7 @@ if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
     catch {
         Write-Log -Message "Failed to import Citrix Snapins" -Level Error
         Write-Log -Message $_ -Level Error
-        Exit 1
+        Break #Temporary! Replace with #Exit 1
     }
 }
 #endregion Citrix Snapin Import
@@ -148,7 +166,7 @@ else {
     }
     catch {
         Write-Log -Message $_ -Level Error
-        Exit 1
+        Break #Temporary! Replace with #Exit 1
     }
 }
 $Temp_Module = $null
@@ -171,7 +189,7 @@ try {
 catch {
     Write-Log -Message "Failed to import config file: $($configFile)" -Level Error
     Write-Log -Message $_ -Level Error
-    Exit 1
+    Break #Temporary! Replace with #Exit 1
 }
 
 $configFileData = $configFileData -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/'
@@ -181,7 +199,7 @@ try {
 }
 catch {
     Write-Log -Message $_ -Level Error
-    Exit 1
+    Break #Temporary! Replace with #Exit 1
 }
 #endregion Config File
 
@@ -191,31 +209,67 @@ $NTNXInfra = Get-NTNXinfo -Config $config
 
 #endregion variable setting
 
+#region Handle Automated LE Settings Mapping - Check with Sven/Dave on how/what where we should store this info for reference - JSON or PowerShell root script/variables?
+#----------------------------------------------------------------------------------------------------------------------------
+$placeholder_var_LEAppliance = "LE1" #// This needs to be killed - is here for testing only, would likely live in JSON
+if ($placeholder_var_LEAppliance -eq "LE1") {
+    $config.LoginEnterprise.ApplianceURL = "https://WS-LE1.wsperf.nutanix.com"
+    $config.LoginEnterprise.ApplianceToken = "pQYtAZu_o2JnVUqCZwoLvRAAai1zwfd3G8Na9yaNBrw"
+    $config.Launchers.GroupName = "LE1-Launchers"
+    $config.Launchers.NamingPattern = "LE1-202309-"
+    $config.Users.BaseName = "VSILE1"
+    $Config.Users.NumberOfDigits = "" #// Should this be a PowerShell set Variable rather than a JSON config? Is it every going to change?
+}
+if ($placeholder_var_LEAppliance -eq "LE2") {
+    $config.LoginEnterprise.ApplianceURL = "https://WS-LE2.wsperf.nutanix.com"
+    $config.LoginEnterprise.ApplianceToken = ""
+    $config.Launchers.GroupName = "LE2-Launchers"
+    $config.Launchers.NamingPattern = "LE2-202309-"
+    $config.Users.BaseName = "VSILE2"
+    $Config.Users.NumberOfDigits = "" #// Should this be a PowerShell set Variable rather than a JSON config? Is it every going to change?
+}
+#endregion Handle Automated LE Settings Mapping 
+
+#region Validation
+#----------------------------------------------------------------------------------------------------------------------------
 ##// Report Output here on relevent variables- Dave wants a Snazzy Header
-
-##// Write out common configurations below
-Write-Log -Message "Value is: PLACEHOLDER" -Level Validation
-
-if ($Type -eq "CitrixVAD") {
-    Write-Log -Message "Value is: PLACEHOLDER" -Level Validation
-}
-if ($Type -eq "CitrixDaaS") {
-    Write-Log -Message "Value is: PLACEHOLDER" -Level Validation
-}
-if ($Type -eq "Horizon") {
-    Write-Log -Message "Value is: PLACEHOLDER" -Level Validation
-}
-if ($Type -eq "RAS") {
-    Write-Log -Message "Value is: PLACEHOLDER" -Level Validation
-}
+foreach ($Item in $Config) {
+    foreach ($SectionName in $Item.PSObject.Properties.Name) {
+        Write-Log -Message "Section $sectionName contains the following defined values:" -Level Validation
+        $properties = @()
+        # Access the properties within each section
+        foreach ($property in $Item.$sectionName.PSObject.Properties) {
+            if ($null -ne $property.value -and $property.value -ne "") {
+                $properties += [PSCustomObject]@{
+                    Name  = $property.Name
+                    Value = $property.Value
+                }
+            }
+        }
+        # Output properties in a tabular format
+        [System.Console]::ForegroundColor = [System.ConsoleColor]::Cyan
+        $properties | Format-Table -AutoSize -HideTableHeaders
+        [System.Console]::ResetColor()
+    }
+} #// How to handle nested Array (ImagesToTest)
 
 ##// Write out a prompt here post validation work - make sure all is good before going
+$answer = read-host "Test details correct for test? yes or no? "
+if ($answer -ne "yes" -and $answer -ne "y") { 
+    Write-Log -Message "Input not confirmed. Exit" -Level Info
+    Break #Temporary! Replace with #Exit 0
+}
+else {
+    Write-Log -Message "Input confirmed" -Level Info
+}
 
-##//
+#Nutanix Files Pre Flight Checks
+if ($VSI_Target_Files -ne "") {
+    Write-Log -Message "Validating Nutanix Files Authentication" -Level Info
+    Invoke-NutanixFilesAuthCheck
+}
 
-##// Validate Authentication Components here - Pre Flight Checks
-# Files Auth
-# Etc
+#endregion Validation
 
 #region Execute Test
 #Set the multiplier for the Workloadtype. This adjusts the required MHz per user setting.
@@ -242,7 +296,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #region Validate Workload Profiles
     if ($VSI_Target_Workload -notin $Validated_Workload_Profiles ) {
         Write-Log -Message "Worker Profile: $($VSI_Target_Workload) is not a valid profile for testing. Please check config file" -Level Error
-        Exit 1
+        Break #Temporary! Replace with #Exit 1
     }
     if ($VSI_Target_Workload -eq "Task Worker") {
         $LEWorkload = "TW"
@@ -375,11 +429,17 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $ContainerId = Get-NTNXStorageUUID -Storage $VSI_Target_CVM_storage
         $Hostuuid = Get-NTNXHostUUID -NTNXHost $VSI_Target_NTNXHost
         $IPMI_ip = Get-NTNXHostIPMI -NTNXHost $VSI_Target_NTNXHost
+        if ($Mode -eq "CitrixVAD" -or $Mode -eq "CitrixDaaS") {
+            ## Placeholder Block to capture the relevent settings below - will change with different tech
+        }
         $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $VSI_Target_HypervisorConnection +"\"+ $VSI_Target_HypervisorNetwork +".network" }
         $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
         #endregion Update Slack
 
         #region Configure Citrix Desktop Pool
+        if ($Mode -eq "CitrixVAD" -or $Mode -eq "CitrixDaaS") {
+            ## Placeholder Block to capture the relevent settings below - will change with different tech
+        }
         $params = @{
             ParentVM             = $ParentVM
             HypervisorConnection = $VSI_Target_HypervisorConnection
@@ -407,6 +467,33 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $NTNXInfra.Testinfra.MaxAbsoluteActiveActions = $CreatePool.MaxAbsoluteActiveActions
         $NTNXInfra.Testinfra.MaxAbsoluteNewActionsPerMinute = $CreatePool.MaxAbsoluteNewActionsPerMinute
         $NTNXInfra.Testinfra.MaxPercentageActiveActions = $CreatePool.MaxPercentageActiveActions
+
+        if ($Mode -eq "Horizon") { #Need to check with Sven here - which config do we use Horizon-NTNX.ps1 or NorizonView.Ps1?
+            $params = @{
+                Name                      = $VSI_Target_DesktopPoolName
+                ParentVM                  = $VSI_Target_ParentVM
+                VMSnapshot                = $VSI_Target_Snapshot
+                VMFolder                  = $VSI_Target_VMFolder
+                HostOrCluster             = $VSI_Target_Cluster
+                ResourcePool              = $VSI_Target_ResourcePool
+                ReplicaDatastore          = $VSI_Target_ReplicaDatastore
+                InstantCloneDatastores    = $VSI_Target_InstantCloneDatastores
+                NamingPattern             = $VSI_Target_NamingPattern
+                NetBiosName               = $VSI_Target_DomainName
+                ADContainer               = $VSI_Target_ADContainer
+                EntitledGroups            = $VSI_Target_Entitlements
+                vTPM                      = $VSI_Target_vTPM
+                Protocol                  = $VSI_Target_SessionCfg
+                RefreshOsDiskAfterLogoff  = $VSI_Target_RefreshOSDiskAfterLogoff
+                UserAssignment            = $VSI_Target_UserAssignment
+                PoolType                  = $VSI_Target_CloneType
+                UseViewStorageAccelerator = $VSI_Target_UseViewStorageAccelerator
+                enableGRIDvGPUs           = $VSI_Target_enableGRIDvGPUs
+            }
+            Set-VSIHVDesktopPool @params
+            $Params = $null
+        }
+
         #endregion Configure Citrix Desktop Pool
 
         #region Configure Folder Details for output
@@ -429,6 +516,9 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         $params = $null
 
+        if ($Mode -eq "CitrixVAD" -or $Mode -eq "CitrixDaaS") {
+            #Placeholder block to capture the below settings
+        }
         $params = @{
             DesktopPoolName = $VSI_Target_DesktopPoolName
             NumberofVMs     = $VSI_Target_NumberOfVMS
@@ -446,11 +536,24 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         $Params = $null
 
+        if ($Mode -eq "Horizon") { # Need to check with Sven on this
+            if ($VSI_Target_PoolType -eq "RDSH") {
+                $Boot = Enable-VSIHVDesktopPool -Name $VSI_Target_DesktopPoolName -VMAmount $VSI_Target_NumberOfVMs -Increment $VSI_Target_VMPoolIncrement -RDSH
+            } elseif ($VSI_Target_ProvisioningMode -eq "AllMachinesUpFront") {
+                $Boot = Enable-VSIHVDesktopPool -Name $VSI_Target_DesktopPoolName -VMAmount $VSI_Target_NumberOfVMs -Increment $VSI_Target_VMPoolIncrement -AllMachinesUpFront
+            } else {
+                $Boot = Enable-VSIHVDesktopPool -Name $VSI_Target_DesktopPoolName -VMAmount $VSI_Target_NumberOfVMs -NumberOfSpareVMs $VSI_Target_NumberOfSpareVMs
+            }
+        }
+
         $NTNXInfra.Testinfra.BootStart = $Boot.bootstart
         $NTNXInfra.Testinfra.Boottime = $Boot.boottime
         #endregion Start monitoring Boot phase
 
         #region Get Build Tattoo Information and update variable with new values
+        if ($Mode -eq "CitrixVAD" -or $Mode -eq "CitrixDaaS") {
+            ## Placeholder Block to capture the relevent settings below - will change with different tech
+        }
         $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $VSI_Target_DesktopPoolName -MaxRecordCount $MaxRecordCount
         $RegisteredVMs = ($BrokerVMS | Where-Object { $_.RegistrationState -eq "Registered" })
         $MasterImageDNS = $RegisteredVMs[0].DNSName
@@ -459,7 +562,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            #Exit 1
+            Break #Temporary! Replace with #Exit 1
         }
         $NTNXInfra.Target.ImagesToTest.TargetOS = $Tattoo.OSName
         $NTNXInfra.Target.ImagesToTest.TargetOSVersion = $Tattoo.OSVersion
@@ -486,16 +589,19 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Set number of sessions per launcher
 
         #region Update the test params/create test if not exist
+        if ($Mode -eq "CitrixVAD" -or $Mode -eq "CitrixDaaS") {
+            ## Placeholder Block to capture the relevent settings below - will change with different tech
+        }
         $Params = @{
-            TestName = $VSI_Test_Name
-            SessionAmount = $VSI_Target_NumberOfSessions
-            RampupInMinutes = $VSI_Target_RampupInMinutes
+            TestName          = $VSI_Test_Name
+            SessionAmount     = $VSI_Target_NumberOfSessions
+            RampupInMinutes   = $VSI_Target_RampupInMinutes
             DurationInMinutes = $VSI_Target_DurationInMinutes
             LauncherGroupName = $VSI_Launchers_GroupName
-            AccountGroupName = $VSI_Users_GroupName
-            ConnectorName = "Citrix Storefront"
-            ConnectorParams = @{serverURL = $VSI_Target_StorefrontURL; resource = $VSI_Target_DesktopPoolName }
-            Workload = $VSI_Target_Workload
+            AccountGroupName  = $VSI_Users_GroupName
+            ConnectorName     = "Citrix Storefront"
+            ConnectorParams   = @{serverURL = $VSI_Target_StorefrontURL; resource = $VSI_Target_DesktopPoolName }
+            Workload          = $VSI_Target_Workload
         }
         $testId = Set-LELoadTest @Params
         $params = $null
@@ -743,4 +849,4 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 #endregion Execute
 
 Write-Log -Message "Script Finished" -Level Info
-Exit 0
+Break #Temporary! Replace with #Exit 0

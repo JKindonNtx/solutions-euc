@@ -131,7 +131,8 @@ function Invoke-PublicApiMethodFiles {
                         $client.DefaultRequestHeaders.Authorization = $($VSI_Target_Files_Password)
                         $result = $client.PostAsync($url, $content).Result
                         if ($result.IsSuccessStatusCode -eq $false) {
-                            throw "Failed to upload $filePath"
+                            Write-Log -Message "Failed to upload $filePath" -Level Error
+                            Exit 1
                         }
                         $result.Content.ReadAsStringAsync().Result.Trim("`"")
 
