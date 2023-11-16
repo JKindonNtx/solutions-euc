@@ -14,15 +14,11 @@ function Set-LELoadTest {
         $Workload
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
+
         $ExistingTest = $null
         $ExistingTest = Get-LETests -testType "loadTest" | Where-Object { $_.Name -eq $TestName }
-    }
 
-    process {
+
         Switch ($ConnectorName) {
             # create test
             "VMware Horizon View" {
@@ -169,11 +165,6 @@ function Set-LELoadTest {
         Write-Log -Message "Updated existing test $($TestName)" -Level Info
         return $ExistingTest.id
     
-    } # process
 
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
 
 }

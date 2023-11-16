@@ -11,12 +11,7 @@ function Invoke-PublicApiMethod {
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][String]$Form
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-    }
 
-    process {
         $Header = @{
             "Accept"        = "application/json"
             "Authorization" = "Bearer $global:LE_Token"
@@ -151,10 +146,6 @@ function Invoke-PublicApiMethod {
                 }
             }
         }
-    } # process
 
-    end {
-        # Return data for the function
-    } # end
 
 }

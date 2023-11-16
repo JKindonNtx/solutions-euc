@@ -21,14 +21,9 @@ function Get-VSIGraphs {
         $TestName
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
+  
         $BucketName = $TestConfig.test.BucketName
-    }
 
-    process {
         if(!($null -eq $RunNumber)){
             # Graph for Single Run
             # Check on Bucketname and build Uri accordingly
@@ -109,11 +104,6 @@ function Get-VSIGraphs {
 
         $File = Get-Item $OutFile
         Return $File.fullname
-    } # process
 
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
 
 }

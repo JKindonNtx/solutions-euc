@@ -9,13 +9,6 @@ function Get-LEAccountGroups  {
         [Parameter(mandatory = $false)][string]$Include = "none"
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting Get-LEAccountGroups" -Level Info
-    }
-
-    process {
         $Body = @{
             orderBy   = $orderBy
             direction = $Direction
@@ -31,11 +24,6 @@ function Get-LEAccountGroups  {
             Write-Log -Message $_ -Level Error
             Break
         }
-    } # process
 
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing Get-LEAccountGroups" -Level Info
-    } # end
 
 }

@@ -1,3 +1,3 @@
-function Dummy-FunctionGuest {
+function Set-DummyGuest {
     write-host "Dummy Function"
 }

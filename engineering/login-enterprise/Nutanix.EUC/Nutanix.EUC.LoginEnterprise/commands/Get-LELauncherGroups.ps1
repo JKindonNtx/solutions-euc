@@ -9,13 +9,7 @@ function Get-LELauncherGroups {
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)] [string]$Include = "none"
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    }
 
-    process {
         $Body = @{
             orderBy   = $orderBy
             direction = $Direction
@@ -32,11 +26,6 @@ function Get-LELauncherGroups {
             Break
         }
         
-    } # process
-
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
+ 
 
 }

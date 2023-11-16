@@ -12,13 +12,6 @@ function Start-NTNXFilesMonitoring {
         [Parameter(Mandatory = $false)] [string]$StopMonitoringCheckFile = "$env:temp\VSIMonitoring_Stop.chk"
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    }
-
-    process {
         $NTNXCounterConfiguration = Get-Content $NTNXCounterConfigurationFile | ConvertFrom-Json
         $MonitoringScriptBlock = {
             param(
@@ -79,11 +72,5 @@ function Start-NTNXFilesMonitoring {
             Get-Job -Name NTNXFilesMonitoringJob -ErrorAction Ignore | Remove-Job
             return (Start-Job -ScriptBlock $MonitoringScriptBlock -Name NTNXFilesMonitoringJob -ArgumentList @($Path, $VSI_Target_Files, $VSI_Target_Files_api, $VSI_Target_Files_Password, $DurationInMinutes, $RampupInMinutes, $OutputFolder, $NTNXCounterConfiguration, $StopMonitoringCheckFile))
         }
-    } # process
-
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
 
 }

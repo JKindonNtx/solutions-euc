@@ -6,13 +6,7 @@ function Remove-LELauncherGroups {
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)][array]$ids
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting Remove-LELauncherGroups" -Level Info
-    }
 
-    process {
         $Body = ConvertTo-Json @($ids)
 
         try {
@@ -24,11 +18,6 @@ function Remove-LELauncherGroups {
             Break
         }
         
-    } # process
 
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing Remove-LELauncherGroups" -Level Info
-    } # end
 
 }

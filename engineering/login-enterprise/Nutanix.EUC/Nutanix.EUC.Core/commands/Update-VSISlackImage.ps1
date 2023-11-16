@@ -32,13 +32,7 @@ function Update-VSISlackImage {
         $SlackComment
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    }
 
-    process {
         if(!(get-module | where-object {$_.Name -eq "PSSlack" })) {
             try {
                 install-module PSSlack -Scope CurrentUser -allowclobber -Confirm:$false -Force -ErrorAction Stop
@@ -51,11 +45,6 @@ function Update-VSISlackImage {
         }
 
         Send-SlackFile -Channel $SlackChannel -path $ImageURL -Token $SlackToken -Title $SlackTitle -Comment $SlackComment
-    } # process
 
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
 
 }

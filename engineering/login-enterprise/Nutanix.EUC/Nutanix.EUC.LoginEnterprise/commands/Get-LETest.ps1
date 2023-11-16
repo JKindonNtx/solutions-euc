@@ -7,13 +7,7 @@ function Get-LETest {
         [Parameter(Mandatory = $false)][ValidateSet('none', 'environment', 'workload', 'thresholds', 'all')][string] $include = "all"
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    }
 
-    process {
         $Body = @{
             include = $include
         }
@@ -27,11 +21,6 @@ function Get-LETest {
             Break
         }
         $Response
-    } # process
 
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
 
 }

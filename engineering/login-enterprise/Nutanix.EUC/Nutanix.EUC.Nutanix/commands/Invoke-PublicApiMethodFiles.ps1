@@ -12,13 +12,6 @@ function Invoke-PublicApiMethodFiles {
         $Form
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    }
-
-    process {
         $header = @{
             Authorization = "Basic " + [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($($VSI_Target_Files_api) + ":" + $($VSI_Target_Files_Password)))
             "Accept-Encoding" = "gzip"
@@ -152,12 +145,5 @@ function Invoke-PublicApiMethodFiles {
             }
         }
     }
-
-    } # process
-
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
 
 }

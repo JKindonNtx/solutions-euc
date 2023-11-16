@@ -10,13 +10,7 @@ function New-LELauncherGroup {
         [Parameter(Mandatory = $false)][string]$Description
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting New-LELauncherGroup" -Level Info
-    }
 
-    process {
         if ($Filter.IsPresent) {
             $Body = @{
                 'type'     = "Filter"
@@ -43,12 +37,6 @@ function New-LELauncherGroup {
             Write-Log -Message $_ -Level Error
             Break
         }
-        
-    } # process
 
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing New-LELauncherGroup" -Level Info
-    } # end
 
 }

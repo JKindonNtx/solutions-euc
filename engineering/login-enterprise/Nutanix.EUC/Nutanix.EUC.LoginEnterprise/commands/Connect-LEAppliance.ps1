@@ -7,13 +7,6 @@ function Connect-LEAppliance {
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)][System.String]$Token
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    }
-
-    process {
         $global:LE_URL = $url.TrimEnd("/")
         $global:LE_Token = $token
 
@@ -24,10 +17,6 @@ function Connect-LEAppliance {
         else {
             Write-Log -Message "Connected to VSI Appliance at URL: $($global:LE_URL)" -Level Info
         }
-    } # process
 
-    end {
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
 
 }

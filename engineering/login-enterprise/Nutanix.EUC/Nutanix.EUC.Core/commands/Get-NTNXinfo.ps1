@@ -6,13 +6,7 @@ function Get-NTNXinfo {
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)][System.Object]$Config
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    }
 
-    process {
         $NTNXHost = $($Config.Target.NTNXHost)
         try {
             $Clusterinfo = Invoke-PublicApiMethodNTNX -Method "GET" -Path "cluster" -ErrorAction Stop
@@ -77,10 +71,6 @@ function Get-NTNXinfo {
             $Config.Testinfra.SetAffinity = 'false'
         }
         $Config
-    } # process
-
-    end {
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
+ 
 
 }

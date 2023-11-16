@@ -1,3 +1,3 @@
-function Dummy-FunctionVMware {
+function Set-DummyParallels {
     write-host "Dummy Function"
 }

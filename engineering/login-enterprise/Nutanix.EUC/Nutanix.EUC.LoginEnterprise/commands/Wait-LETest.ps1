@@ -6,13 +6,7 @@ function Wait-LETest {
         [Parameter(Mandatory = $true)][AllowEmptyString()][string] $testId
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    }
 
-    process {
         if (-not ([string]::IsNullOrEmpty($testId))) {
     
             Write-Log -Message "Waiting for test to complete" -Level Info
@@ -32,11 +26,6 @@ function Wait-LETest {
             #Write-Log -Message ""
             Write-Log -Message "Test finished" -Level Info
         } 
-    } # process
 
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
 
 }

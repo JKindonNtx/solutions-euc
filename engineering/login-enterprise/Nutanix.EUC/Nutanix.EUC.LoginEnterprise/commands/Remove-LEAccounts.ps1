@@ -6,13 +6,6 @@ function Remove-LEAccounts {
         [Parameter(Mandatory = $true)][array]$ids
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting Remove-LEAccounts" -Level Info
-    }
-
-    process {
         $Body = ConvertTo-Json @($ids)
 
         try {
@@ -25,11 +18,6 @@ function Remove-LEAccounts {
         }
 
     
-    } # process
 
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing Remove-LEAccounts" -Level Info
-    } # end
 
 }

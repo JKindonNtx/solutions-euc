@@ -9,13 +9,6 @@ function Get-LEAccounts {
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][string]$Include = "none"
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting Get-LEAccounts" -Level Info
-    }
-
-    process {
         $Body = @{
             orderBy   = $orderBy
             direction = $Direction
@@ -31,12 +24,7 @@ function Get-LEAccounts {
             Break
         }
         
-    } # process
+    $Response.items
 
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing Get-LEAccounts" -Level Info
-        return $Response.items
-    } # end
 
 }

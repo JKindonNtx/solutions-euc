@@ -7,13 +7,7 @@ function Set-VSIConfigurationVariables {
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][String]$ImageConfiguration
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    }
 
-    process {
         if ($null -ne $ConfigurationFile) {
         
             Write-Log -Message "Parsing config file $ConfigurationFile" -Level Info
@@ -79,10 +73,6 @@ function Set-VSIConfigurationVariables {
             
             $VSI_Var.Value = $newVal
         }
-    } # process
 
-    end {
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
 
 }

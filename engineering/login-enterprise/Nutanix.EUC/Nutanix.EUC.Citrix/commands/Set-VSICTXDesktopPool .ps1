@@ -19,17 +19,12 @@ function Set-VSICTXDesktopPool {
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][String]$FunctionalLevel = "L7_22",
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][String]$DDC
     )
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
+
         $DesktopKind = "Shared"
         $AllocationType = "Random"
         $CreatePool = $true
         $MaxRecordCount = 5000
-    }
 
-    process {
         Write-Log -Message "Checking if desktoppool $DesktopPoolName exists..." -Level Info
         $DG = Get-BrokerDesktopGroup -AdminAddress $DDC -Name $DesktopPoolName -erroraction SilentlyContinue
 
@@ -264,13 +259,7 @@ function Set-VSICTXDesktopPool {
             Write-Log -Message $_ -Level Error
             Break
         }
-     
-    } # process
 
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
 
 }
 

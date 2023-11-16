@@ -41,13 +41,7 @@ function New-VSIADUsers {
         [Parameter(Mandatory = $false)]$LogonApp
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    }
 
-    process {
         Write-Log -Message "Creating OUs, users and groups in AD if required" -Level Info
 
         if ($null -eq $LogonApp) {
@@ -182,11 +176,5 @@ function New-VSIADUsers {
             Write-Log -Message "Download it from $ApplianceURL/contentDelivery/content/zip/logon.zip" -Level Info
         }
 
-    } # process
-
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
 
 }

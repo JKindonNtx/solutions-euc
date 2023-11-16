@@ -6,13 +6,7 @@ function Restart-LELaunchers {
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][array]$Launchers
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting Restart-LELaunchers" -Level Info
-    }
 
-    process {
         Write-Log "Rebooting launchers."
 
         foreach ($launcher in $launchers) { 
@@ -38,11 +32,6 @@ function Restart-LELaunchers {
             } while ($rebootLauncher -eq $false)
     
         }
-    } # process
 
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing Restart-LELaunchers" -Level Info
-    } # end
 
 }

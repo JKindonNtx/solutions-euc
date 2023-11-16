@@ -30,13 +30,7 @@ function Get-VSIResults {
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][System.String]$Path
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    }
 
-    process {
         if (-not (Test-Path "$($Path)\testresults")) { New-Item -ItemType Directory -Path "$($Path)\testresults" | Out-Null }
         New-Item -Path "$($Path)\testresults" -Name $TestName -ItemType Directory -Force | Out-Null
 
@@ -57,11 +51,6 @@ function Get-VSIResults {
         Copy-Item "$($Path)\results\$($TestName)_Run1\Testconfig.json" -Destination "$($Path)\testresults\$TestName"
         Write-Log -Message "Getting VSI results finished" -Level Info
         $result
-    } # process
 
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
 
 }

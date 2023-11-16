@@ -1,13 +1,6 @@
 function Get-LEApplications {
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        #Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-        Write-Log -Message "Starting Get-LEApplications" -Level Info
-    }
 
-    process {
         $Body = @{
             orderBy   = "name"
             direction = "asc"
@@ -23,11 +16,6 @@ function Get-LEApplications {
             Break
         }
         $Response.items
-    } # process
 
-    end {
-        #Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-        Write-Log -Message "Finishing Get-LEApplications" -Level Info
-    } # end
 
 }

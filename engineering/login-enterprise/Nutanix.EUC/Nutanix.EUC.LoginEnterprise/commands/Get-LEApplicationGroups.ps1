@@ -6,13 +6,7 @@ function Get-LEApplicationGroups {
         $include = "none"
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting Get-LEApplicationGroups" -Level Info
-    }
 
-    process {
         $Body = @{
             orderBy   = "Name"
             direction = "Asc"
@@ -29,11 +23,6 @@ function Get-LEApplicationGroups {
             Break
         }
         
-    } # process
 
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing Get-LEApplicationGroups" -Level Info
-    } # end
 
 }

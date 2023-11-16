@@ -1,12 +1,6 @@
 function Get-LELaunchers {
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting Get-LELaunchers" -Level Info
-    }
 
-    process {
         $Body = @{
             orderBy   = "Name"
             direction = "Asc"
@@ -21,11 +15,6 @@ function Get-LELaunchers {
             Break
         }
         
-    } # process
 
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing Get-LELaunchers" -Level Info
-    } # end
 
 }

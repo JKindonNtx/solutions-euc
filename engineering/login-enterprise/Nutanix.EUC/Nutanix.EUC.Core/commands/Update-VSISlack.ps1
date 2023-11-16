@@ -36,13 +36,7 @@ function Update-VSISlack {
         [Parameter(ValueFromPipeline = $true,ValuefromPipelineByPropertyName = $true, mandatory = $true)][String]$Message
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    }
 
-    process {
         Write-Log -Message "Message: $Message" -Level Info
         Write-Log -Message "Slack: $Slack" -Level Info
 
@@ -68,10 +62,6 @@ function Update-VSISlack {
             Write-Log -Message $RestError -Level Warn
         }
 
-    } # process
 
-    end {
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
 
 }

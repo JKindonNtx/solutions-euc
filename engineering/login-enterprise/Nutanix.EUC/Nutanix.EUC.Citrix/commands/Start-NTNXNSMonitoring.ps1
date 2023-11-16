@@ -11,13 +11,7 @@ function Start-NTNXNSMonitoring {
         [Parameter(Mandatory = $false)] [string]$StopMonitoringCheckFile = "$env:temp\VSIMonitoring_Stop.chk"
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    }
 
-    process {
         $MonitoringScriptBlock = {
             param(
                 $Path,
@@ -83,11 +77,6 @@ function Start-NTNXNSMonitoring {
             Get-Job -Name NTNXNSMonitoringJob -ErrorAction Ignore | Remove-Job
             return (Start-Job -ScriptBlock $MonitoringScriptBlock -Name NTNXNSMonitoringJob -ArgumentList @($Path, $VSI_Target_NetScaler, $VSI_Target_NetScaler_Password, $DurationInMinutes, $RampupInMinutes, $OutputFolder, $StopMonitoringCheckFile))
         }
-    } # process
-
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
+ 
 
 }

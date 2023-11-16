@@ -44,12 +44,7 @@ function Set-NTNXcurator {
         [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true )][system.string[]]$Action
     )
     
-    Begin {
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # Begin
-    
-    Process {
+
     
         # Install Posh-SSH module. Required to connect to the hosts using SSH. Used for capturing performance stats.
         #if (!((Get-Module -ListAvailable *) | Where-Object { $_.Name -eq "Posh-SSH" })) {
@@ -87,11 +82,6 @@ function Set-NTNXcurator {
         }
 
         Remove-SSHSession -Name $Session | Out-Null
-    } # Process
-        
-    End {
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # End
     
 } # Set-NutanixAffinity
     

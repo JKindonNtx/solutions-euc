@@ -23,13 +23,6 @@ function Update-VSISlackresults {
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][System.String]$Path
     )
 
-    begin {
-        # Set strict mode 
-        # Set-StrictMode -Version Latest
-        Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    }
-
-    process {
         $configfile = "$($Path)\testresults\$TestName\Testconfig.json"
         $config = Get-Content -Path $configFile -Raw | ConvertFrom-Json
         $body = ConvertTo-Json -Depth 4 @{
@@ -139,11 +132,6 @@ function Update-VSISlackresults {
         } Catch {
             $RestError = $_
         }
-    } # process
 
-    end {
-        # Return data for the function
-        Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
-    } # end
 
 }
