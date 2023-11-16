@@ -11,7 +11,7 @@ function Get-LEAccounts {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting Get-LEAccounts" -Level Info
     }
 
@@ -28,7 +28,7 @@ function Get-LEAccounts {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Exit 1
+            Break
         }
         
     } # process
@@ -36,6 +36,7 @@ function Get-LEAccounts {
     end {
         # Return data for the function
         Write-Log -Message "Finishing Get-LEAccounts" -Level Info
+        return $Response.items
     } # end
 
 }

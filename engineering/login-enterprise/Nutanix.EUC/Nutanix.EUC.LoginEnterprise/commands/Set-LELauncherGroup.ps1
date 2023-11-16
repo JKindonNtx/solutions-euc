@@ -9,7 +9,7 @@ function Set-LELauncherGroup {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting Set-LELauncherGroup" -Level Info
     }
 

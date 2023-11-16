@@ -8,7 +8,7 @@ function Wait-LETest {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
     }
 

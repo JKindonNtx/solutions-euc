@@ -21,7 +21,7 @@ function Set-VSICTXDesktopPool {
     )
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
         $DesktopKind = "Shared"
         $AllocationType = "Random"
@@ -62,7 +62,7 @@ function Set-VSICTXDesktopPool {
                 }
                 catch {
                     Write-Log -Message $_ -Level Error
-                    Exit 1
+                    Break
                 }
                 
             }
@@ -73,7 +73,7 @@ function Set-VSICTXDesktopPool {
                 }
                 catch {
                     Write-Log -Message $_ -Level Error
-                    Exit 1
+                    Break
                 }
                 
             }
@@ -84,7 +84,7 @@ function Set-VSICTXDesktopPool {
                 }
                 catch {
                     Write-Log -Message $_ -Level Error
-                    Exit 1
+                    Break
                 }
                 
                 try {
@@ -92,7 +92,7 @@ function Set-VSICTXDesktopPool {
                 }
                 catch {
                     Write-Log -Message $_ -Level Error
-                    Exit 1
+                    Break
                 }
                 
                 foreach ($Task in $Tasks) {
@@ -104,7 +104,7 @@ function Set-VSICTXDesktopPool {
                         }
                         catch {
                             Write-Log -Message $_ -Level Error
-                            Exit 1
+                            Break
                         }
                         
                         if ($Task2.TaskState -ne "Finished") {
@@ -119,7 +119,7 @@ function Set-VSICTXDesktopPool {
                 }
                 catch {
                     Write-Log -Message $_ -Level Error
-                    Exit 1
+                    Break
                 }
             }
 
@@ -132,7 +132,7 @@ function Set-VSICTXDesktopPool {
                     }
                     catch {
                         Write-Log -Message $_ -Level Error
-                        #Exit 1
+                        #Break
                     }
                     
                 }
@@ -148,7 +148,7 @@ function Set-VSICTXDesktopPool {
                 }
                 catch {
                     Write-Log -Message $_ -Level Error
-                    #Exit 1
+                    #Break
                 }
                 
             }
@@ -161,7 +161,7 @@ function Set-VSICTXDesktopPool {
             }
             catch {
                 Write-Log -Message $_ -Level Error
-                Exit 1
+                Break
             }
 
             Write-Log -Message "Creating provisioningscheme $DesktopPoolName" -Level Info
@@ -177,7 +177,7 @@ function Set-VSICTXDesktopPool {
             }
             catch {
                 Write-Log -Message $_ -Level Error
-                Exit 1
+                Break
             }
 
             if ($Task.TaskState -ne "Finished") {
@@ -203,7 +203,7 @@ function Set-VSICTXDesktopPool {
             }
             catch {
                 Write-Log -Message $_ -Level Error
-                Exit 1
+                Break
             }
             $params = $null
 
@@ -225,7 +225,7 @@ function Set-VSICTXDesktopPool {
             }
             catch {
                 Write-Log -Message $_ -Level Error
-                Exit 1
+                Break
             }
             $params = $null
 
@@ -241,7 +241,7 @@ function Set-VSICTXDesktopPool {
             }
             catch {
                 Write-Log -Message $_ -Level Error
-                Exit 1
+                Break
             }
         } else {
             try {
@@ -250,7 +250,7 @@ function Set-VSICTXDesktopPool {
             }
             catch {
                 Write-Log -Message $_ -Level Error
-                Exit 1
+                Break
             }
         }
         
@@ -262,7 +262,7 @@ function Set-VSICTXDesktopPool {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Exit 1
+            Break
         }
      
     } # process

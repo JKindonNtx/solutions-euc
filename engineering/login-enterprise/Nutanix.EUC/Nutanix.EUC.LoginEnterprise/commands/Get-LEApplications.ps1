@@ -2,7 +2,7 @@ function Get-LEApplications {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         #Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
         Write-Log -Message "Starting Get-LEApplications" -Level Info
     }
@@ -20,7 +20,7 @@ function Get-LEApplications {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Exit 1
+            Break
         }
         $Response.items
     } # process

@@ -8,7 +8,7 @@ function Get-NTNXinfo {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
     }
 
@@ -20,7 +20,7 @@ function Get-NTNXinfo {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Exit 1
+            Break
         }
         
         $Hostitem = $Hostdata.entities | Where-Object { $_.name -eq $NTNXHost }

@@ -12,7 +12,7 @@ function New-LEAccounts {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
     }
 
@@ -38,7 +38,7 @@ function New-LEAccounts {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Exit 1
+            Break
         }
 
 
@@ -47,6 +47,7 @@ function New-LEAccounts {
     end {
         # Return data for the function
         Write-Log -Message "Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
+        return $Response.idList
     } # end
 
 }

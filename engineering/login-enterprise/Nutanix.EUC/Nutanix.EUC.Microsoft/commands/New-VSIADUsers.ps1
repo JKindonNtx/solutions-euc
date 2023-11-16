@@ -43,7 +43,7 @@ function New-VSIADUsers {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
     }
 
@@ -67,7 +67,7 @@ function New-VSIADUsers {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Exit 1
+            Break
         }
         
 
@@ -102,7 +102,7 @@ function New-VSIADUsers {
             }
             catch {
                 Write-Log -Message $_ -Level Error
-                Exit 1
+                Break
             }
             
             $Parent.Children.Remove($User)
@@ -115,7 +115,7 @@ function New-VSIADUsers {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Exit 1
+            Break
         }
         
 
@@ -131,7 +131,7 @@ function New-VSIADUsers {
             }
             catch {
                 Write-Log -Message $_ -Level Error
-                Exit 1
+                Break
             }
             
             $Parent.Children.Remove($Group)
@@ -155,7 +155,6 @@ function New-VSIADUsers {
         For ($i = 1; $i -le $amount; $i++) {
             $user = $Null
             $Name = "$($BaseName){0:D$NumberOfDigits}" -f $i
-            Write-Log -Message "Creating $Name in $($newOU.Path)" -Level Info
             $user = $newOU.Create("user", "cn=$Name")
             $user.Put("samAccountName", $Name) | Out-Null
             $user.Put("mail", "$Name@wsperf.nutanix.com") | Out-Null

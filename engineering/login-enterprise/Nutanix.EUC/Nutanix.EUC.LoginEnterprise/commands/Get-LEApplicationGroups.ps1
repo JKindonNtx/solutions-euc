@@ -8,7 +8,7 @@ function Get-LEApplicationGroups {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting Get-LEApplicationGroups" -Level Info
     }
 
@@ -26,7 +26,7 @@ function Get-LEApplicationGroups {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Exit 1
+            Break
         }
         
     } # process

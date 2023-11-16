@@ -9,7 +9,7 @@ function Connect-LEAppliance {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
     }
 
@@ -19,7 +19,7 @@ function Connect-LEAppliance {
 
         if ($null -eq (Get-LEApplications)) {
             Write-Log -Message "Failed to connect to appliance at $url, please check that the URL and Token are correct" -Level Error
-            Exit 1
+            Break
         }
         else {
             Write-Log -Message "Connected to VSI Appliance at URL: $($global:LE_URL)" -Level Info

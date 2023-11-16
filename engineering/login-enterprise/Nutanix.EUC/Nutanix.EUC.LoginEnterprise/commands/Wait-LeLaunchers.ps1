@@ -10,7 +10,7 @@ function Wait-LELaunchers {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
     }
 
@@ -31,7 +31,7 @@ function Wait-LELaunchers {
             $TimeSpan = New-TimeSpan -Start $StartStamp -End (Get-Date)
             if ($TimeSpan.TotalMinutes -ge $TimeOutMinutes) {
                 Write-Log -Message "Only $Launcher/$Amount launchers registered with LE within $TimoutMinutes minutes" -Level Error
-                Exit 1
+                Break
             }
         }
     } # process

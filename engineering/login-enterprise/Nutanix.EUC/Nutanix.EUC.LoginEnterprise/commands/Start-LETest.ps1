@@ -9,7 +9,7 @@ function Start-LETest {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
     }
 
@@ -23,7 +23,7 @@ function Start-LETest {
         }
         catch {
             Write-Error -Message $_ -Level Error
-            Exit 1
+            Break
         }
         
     } # process

@@ -12,7 +12,7 @@ function New-LELauncherGroup {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting New-LELauncherGroup" -Level Info
     }
 
@@ -41,7 +41,7 @@ function New-LELauncherGroup {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Exit 1
+            Break
         }
         
     } # process

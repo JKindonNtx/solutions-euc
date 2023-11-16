@@ -13,7 +13,7 @@ function Invoke-PublicApiMethod {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
     }
 
     process {
@@ -54,7 +54,7 @@ function Invoke-PublicApiMethod {
                 }
                 if ($count -eq $maxcount) {
                     Write-Log -Message "API call failed after $($maxcount) times with reason: $reason" -Level Error
-                    Exit 1
+                    Break
                 }
             }
         } else {
@@ -147,7 +147,7 @@ function Invoke-PublicApiMethod {
                 }
                 if ($count -eq $maxcount) {
                     Write-Log -Message "API call failed after $($maxcount) times with reason: $reason" -Level Error
-                    Exit 1
+                    Break
                 }
             }
         }

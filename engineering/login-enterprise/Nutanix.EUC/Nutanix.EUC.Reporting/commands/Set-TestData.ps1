@@ -68,139 +68,126 @@ function Set-TestData {
         begin{
     
             # Set strict mode 
-            Set-StrictMode -Version Latest
+            # Set-StrictMode -Version Latest
     
             # Read in the Config File
-            if(Test-Path -Path $ConfigFile){
-                $ConfigFound = $true
-                $ConfigJSON = Get-Content -Path $ConfigFile -Raw | ConvertFrom-Json
-            } else {
-                $ConfigFound = $false
-            }
+            $ConfigJSON = $ConfigFile
+
     
         }
     
         process {
     
-            if($ConfigFound){
-    
-                # Build Web Headers
-                $WebHeaders = @{
-                    Authorization = "Token $($ConfigJSON.TestInfra.InfluxToken)"
-                }
-    
-                # Build Unix Date
-                $StartDate = Get-Date
-                $UnixStartedDate = Get-Date -Date $StartDate -UFormat %s
-                $NewStartDate = $UnixStartedDate.Split(".")
-                $FormattedStartDate = $NewStartDate[0]
-                $CurrentYear = get-date -Format yyyy
-                $CurrentMonth = get-date -Format MM
-    
-                # Build Influx DB Url
-                $influxDbUri = $InfluxUri + "&bucket=$($InfluxBucket)"
-    
-                # Build the test status
-                switch ($Status)
-                {
-                    "Planned" { $StatusInt = "0"}
-                    "Running" { $StatusInt = "1"}
-                    "Complete" { $StatusInt = "2"}
-                    "Error" { $StatusInt = "3"}
-                }
-                $Fields = "TestStatus=$($StatusInt)"
-    
-                # Build the Test Tags
-                $LEAppliance = ($ConfigJSON.Users.BaseName).Replace("VSI", "")
-                $Tag = (
-                    "Run=$($RunNumber)," +
-                    "ImageIterations=$($ConfigJSON.Target.ImageIterations)," +
-                    "DataType=TestInfo," +
-                    "Document=$($ConfigJSON.Test.DocumentName)," +
-                    "Status=$($Status)," +
-                    "CurrentPhase=$($CurrentPhase)," +
-                    "TotalPhases=$($TotalPhase)," +
-                    "CurrentMessage=$($CurrentMessage)," +
-                    "Year=$($CurrentYear)," +
-                    "Month=$($CurrentMonth)," +
-                    "DeliveryType=$($ConfigJSON.Target.DeliveryType)," +
-                    "DesktopBrokerVersion=$($ConfigJSON.Target.DesktopBrokerVersion)," +
-                    "DesktopBrokerAgentVersion=$($ConfigJSON.Target.ImagesToTest.DesktopBrokerAgentVersion)," +
-                    "CloneType=$($ConfigJSON.Target.CloneType)," +
-                    "SessionCfg=$($ConfigJSON.Target.SessionCfg)," +
-                    "SessionsSupport=$($ConfigJSON.Target.SessionsSupport)," +
-                    "NodeCount=$($ConfigJSON.Target.NodeCount)," +
-                    "Workload=$($ConfigJSON.Target.Workload)," +
-                    "NumCPUs=$($ConfigJSON.Target.ImagesToTest.NumCpus)," +
-                    "NumCores=$($ConfigJSON.Target.ImagesToTest.NumCores)," +
-                    "MemoryGB=$($ConfigJSON.Target.ImagesToTest.MemoryGB)," +
-                    "HostGPUs=$($ConfigJSON.TestInfra.HostGPUs)," +
-                    "SecureBoot=$($ConfigJSON.Target.ImagesToTest.SecureBoot)," +
-                    "vTPM=$($ConfigJSON.Target.ImagesToTest.vTPM)," +
-                    "CredentialGuard=$($ConfigJSON.Target.ImagesToTest.CredentialGuard)," +
-                    "AutocalcVMs=$($ConfigJSON.Target.ImagesToTest.AutocalcVMs)," +
-                    "Max=$($ConfigJSON.Target.ImagesToTest.Max)," +
-                    "NumberOfSessions=$($ConfigJSON.Target.ImagesToTest.NumberOfSessions)," +
-                    "NumberOfVMs=$($ConfigJSON.Target.ImagesToTest.NumberOfVMs)," +
-                    "TargetOS=$($ConfigJSON.Target.ImagesToTest.TargetOS)," +
-                    "TargetOSVersion=$($ConfigJSON.Target.ImagesToTest.TargetOSVersion)," +
-                    "OfficeVersion=$($ConfigJSON.Target.ImagesToTest.OfficeVersion)," +
-                    "ToolsGuestVersion=$($ConfigJSON.Target.ImagesToTest.ToolsGuestVersion)," +
-                    "OptimizerVendor=$($ConfigJSON.Target.ImagesToTest.OptimizerVendor)," +
-                    "OptimizationsVersion=$($ConfigJSON.Target.ImagesToTest.OptimizationsVersion)," +
-                    "GPUProfile=$($ConfigJSON.Target.ImagesToTest.GPUProfile)," +
-                    "Comment=$($ConfigJSON.Target.ImagesToTest.Comment)," +
-                    "InfraSSDCount=$($ConfigJSON.TestInfra.SSDCount)," +
-                    "InfraSingleNodeTest=$($ConfigJSON.TestInfra.SingleNodeTest)," +
-                    "InfraTestName=$($ConfigJSON.TestInfra.TestName)," +
-                    "InfraHardwareType=$($ConfigJSON.TestInfra.HardwareType)," +
-                    "InfraFullVersion=$($ConfigJSON.TestInfra.FullVersion)," +
-                    "InfraCPUBrand=$($ConfigJSON.TestInfra.CPUBrand)," +
-                    "InfraCPUType=$($ConfigJSON.TestInfra.CPUType)," +
-                    "InfraAOSVersion=$($ConfigJSON.TestInfra.AOSVersion)," +
-                    "InfraHypervisorBrand=$($ConfigJSON.TestInfra.HypervisorBrand)," +
-                    "InfraHypervisorVersion=$($ConfigJSON.TestInfra.HypervisorVersion)," +
-                    "InfraHypervisorType=$($ConfigJSON.TestInfra.HypervisorType)," +
-                    "InfraBIOS=$($ConfigJSON.TestInfra.BIOS)," +
-                    "InfraTotalNodes=$($ConfigJSON.TestInfra.TotalNodes)," +
-                    "InfraCPUCores=$($ConfigJSON.TestInfra.CPUCores)," +
-                    "InfraCPUThreadCount=$($ConfigJSON.TestInfra.CPUThreadCount)," +
-                    "InfraCPUSocketCount=$($ConfigJSON.TestInfra.CPUSocketCount)," +
-                    "InfraCPUSpeed=$($ConfigJSON.TestInfra.CPUSpeed)," +
-                    "InfraMemoryGB=$($ConfigJSON.TestInfra.MemoryGB)," +
-                    "MaxAbsoluteActiveActions=$($ConfigJSON.TestInfra.MaxAbsoluteActiveActions)," +
-                    "MaxAbsoluteNewActionsPerMinute=$($ConfigJSON.TestInfra.MaxAbsoluteNewActionsPerMinute)," +
-                    "MaxPercentageActiveActions=$($ConfigJSON.TestInfra.MaxPercentageActiveActions)," + 
-                    "DataCenter=$($ConfigJSON.testinfra.Datacenter)," + 
-                    "ClusterName=$($ConfigJSON.testinfra.ClusterName)," + 
-                    "LEAppliance=$($LEAppliance)," + 
-                    "User=$($ConfigJSON.Target.CVM_admin)"
-                )
-    
-                if($StatusInt -eq "3"){
-                    $Tag = $Tag + ",ErrorMessage=$($ErrorMessage)"
-                } else {
-                    $Tag = $Tag + ",ErrorMessage=None"
-                }
-    
-                # Clean the spaces in the Tags
-                $NewTag = $Tag.Replace("=,", "=0,")
-                $Tag = Set-CleanData -Data $NewTag
-    
-                # Update Influx DB
-                $Body = "$TestName,$Tag $Fields $FormattedStartDate"
-                try {
-                    Invoke-RestMethod -Method Post -Uri $influxDbUri -Headers $WebHeaders -Body $Body
-                    $Return = $true
-                } catch {
-                    $Return = $false
-                }
-    
+            # Build Web Headers
+            $WebHeaders = @{
+                Authorization = "Token $($ConfigJSON.TestInfra.InfluxToken)"
+            }
+
+            # Build Unix Date
+            $StartDate = Get-Date
+            $UnixStartedDate = Get-Date -Date $StartDate -UFormat %s
+            $NewStartDate = $UnixStartedDate.Split(".")
+            $FormattedStartDate = $NewStartDate[0]
+            $CurrentYear = get-date -Format yyyy
+            $CurrentMonth = get-date -Format MM
+
+            # Build Influx DB Url
+            $influxDbUri = $InfluxUri + "&bucket=$($InfluxBucket)"
+
+            # Build the test status
+            switch ($Status)
+            {
+                "Planned" { $StatusInt = "0"}
+                "Running" { $StatusInt = "1"}
+                "Complete" { $StatusInt = "2"}
+                "Error" { $StatusInt = "3"}
+            }
+            $Fields = "TestStatus=$($StatusInt)"
+
+            # Build the Test Tags
+            $LEAppliance = ($ConfigJSON.Users.BaseName).Replace("VSI", "")
+            $Tag = (
+                "Run=$($RunNumber)," +
+                "ImageIterations=$($ConfigJSON.Target.ImageIterations)," +
+                "DataType=TestInfo," +
+                "Document=$($ConfigJSON.Test.DocumentName)," +
+                "Status=$($Status)," +
+                "CurrentPhase=$($CurrentPhase)," +
+                "TotalPhases=$($TotalPhase)," +
+                "CurrentMessage=$($CurrentMessage)," +
+                "Year=$($CurrentYear)," +
+                "Month=$($CurrentMonth)," +
+                "DeliveryType=$($ConfigJSON.Target.DeliveryType)," +
+                "DesktopBrokerVersion=$($ConfigJSON.Target.DesktopBrokerVersion)," +
+                "DesktopBrokerAgentVersion=$($ConfigJSON.Target.ImagesToTest.DesktopBrokerAgentVersion)," +
+                "CloneType=$($ConfigJSON.Target.CloneType)," +
+                "SessionCfg=$($ConfigJSON.Target.SessionCfg)," +
+                "SessionsSupport=$($ConfigJSON.Target.SessionsSupport)," +
+                "NodeCount=$($ConfigJSON.Target.NodeCount)," +
+                "Workload=$($ConfigJSON.Target.Workload)," +
+                "NumCPUs=$($ConfigJSON.Target.ImagesToTest.NumCpus)," +
+                "NumCores=$($ConfigJSON.Target.ImagesToTest.NumCores)," +
+                "MemoryGB=$($ConfigJSON.Target.ImagesToTest.MemoryGB)," +
+                "HostGPUs=$($ConfigJSON.TestInfra.HostGPUs)," +
+                "SecureBoot=$($ConfigJSON.Target.ImagesToTest.SecureBoot)," +
+                "vTPM=$($ConfigJSON.Target.ImagesToTest.vTPM)," +
+                "CredentialGuard=$($ConfigJSON.Target.ImagesToTest.CredentialGuard)," +
+                "AutocalcVMs=$($ConfigJSON.Target.ImagesToTest.AutocalcVMs)," +
+                "Max=$($ConfigJSON.Target.ImagesToTest.Max)," +
+                "NumberOfSessions=$($ConfigJSON.Target.ImagesToTest.NumberOfSessions)," +
+                "NumberOfVMs=$($ConfigJSON.Target.ImagesToTest.NumberOfVMs)," +
+                "TargetOS=$($ConfigJSON.Target.ImagesToTest.TargetOS)," +
+                "TargetOSVersion=$($ConfigJSON.Target.ImagesToTest.TargetOSVersion)," +
+                "OfficeVersion=$($ConfigJSON.Target.ImagesToTest.OfficeVersion)," +
+                "ToolsGuestVersion=$($ConfigJSON.Target.ImagesToTest.ToolsGuestVersion)," +
+                "OptimizerVendor=$($ConfigJSON.Target.ImagesToTest.OptimizerVendor)," +
+                "OptimizationsVersion=$($ConfigJSON.Target.ImagesToTest.OptimizationsVersion)," +
+                "GPUProfile=$($ConfigJSON.Target.ImagesToTest.GPUProfile)," +
+                "Comment=$($ConfigJSON.Target.ImagesToTest.Comment)," +
+                "InfraSSDCount=$($ConfigJSON.TestInfra.SSDCount)," +
+                "InfraSingleNodeTest=$($ConfigJSON.TestInfra.SingleNodeTest)," +
+                "InfraTestName=$($ConfigJSON.TestInfra.TestName)," +
+                "InfraHardwareType=$($ConfigJSON.TestInfra.HardwareType)," +
+                "InfraFullVersion=$($ConfigJSON.TestInfra.FullVersion)," +
+                "InfraCPUBrand=$($ConfigJSON.TestInfra.CPUBrand)," +
+                "InfraCPUType=$($ConfigJSON.TestInfra.CPUType)," +
+                "InfraAOSVersion=$($ConfigJSON.TestInfra.AOSVersion)," +
+                "InfraHypervisorBrand=$($ConfigJSON.TestInfra.HypervisorBrand)," +
+                "InfraHypervisorVersion=$($ConfigJSON.TestInfra.HypervisorVersion)," +
+                "InfraHypervisorType=$($ConfigJSON.TestInfra.HypervisorType)," +
+                "InfraBIOS=$($ConfigJSON.TestInfra.BIOS)," +
+                "InfraTotalNodes=$($ConfigJSON.TestInfra.TotalNodes)," +
+                "InfraCPUCores=$($ConfigJSON.TestInfra.CPUCores)," +
+                "InfraCPUThreadCount=$($ConfigJSON.TestInfra.CPUThreadCount)," +
+                "InfraCPUSocketCount=$($ConfigJSON.TestInfra.CPUSocketCount)," +
+                "InfraCPUSpeed=$($ConfigJSON.TestInfra.CPUSpeed)," +
+                "InfraMemoryGB=$($ConfigJSON.TestInfra.MemoryGB)," +
+                "MaxAbsoluteActiveActions=$($ConfigJSON.TestInfra.MaxAbsoluteActiveActions)," +
+                "MaxAbsoluteNewActionsPerMinute=$($ConfigJSON.TestInfra.MaxAbsoluteNewActionsPerMinute)," +
+                "MaxPercentageActiveActions=$($ConfigJSON.TestInfra.MaxPercentageActiveActions)," + 
+                "DataCenter=$($ConfigJSON.testinfra.Datacenter)," + 
+                "ClusterName=$($ConfigJSON.testinfra.ClusterName)," + 
+                "LEAppliance=$($LEAppliance)," + 
+                "User=$($ConfigJSON.Target.CVM_admin)"
+            )
+
+            if($StatusInt -eq "3"){
+                $Tag = $Tag + ",ErrorMessage=$($ErrorMessage)"
             } else {
-    
-                # Config File not found - returning $false
+                $Tag = $Tag + ",ErrorMessage=None"
+            }
+
+            # Clean the spaces in the Tags
+            $NewTag = $Tag.Replace("=,", "=0,")
+            $Tag = Set-CleanData -Data $NewTag
+
+            # Update Influx DB
+            $Body = "$TestName,$Tag $Fields $FormattedStartDate"
+            try {
+                Invoke-RestMethod -Method Post -Uri $influxDbUri -Headers $WebHeaders -Body $Body
+                $Return = $true
+            } catch {
                 $Return = $false
-    
             }
     
         } # process

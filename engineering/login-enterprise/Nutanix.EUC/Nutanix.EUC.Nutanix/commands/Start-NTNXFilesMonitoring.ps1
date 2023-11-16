@@ -14,7 +14,7 @@ function Start-NTNXFilesMonitoring {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
     }
 
@@ -57,7 +57,7 @@ function Start-NTNXFilesMonitoring {
                 }
                 catch {
                     Write-Log -Message $_ -Level Error
-                    Exit 1
+                    Break
                 }
     
                 $filesitem = New-Object PSObject  

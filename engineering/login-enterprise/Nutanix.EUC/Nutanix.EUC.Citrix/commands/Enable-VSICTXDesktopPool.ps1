@@ -22,7 +22,7 @@ function Enable-VSICTXDesktopPool {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
         $MaxRecordCount = 5000
     }
@@ -53,7 +53,7 @@ function Enable-VSICTXDesktopPool {
             $date = Get-Date
             if (($date - $startTime).TotalMinutes -gt $timeout) {
                 Write-Log -Message "Shutdown took to long." -Level Error
-                Exit 1
+                Break
             }
             Start-Sleep 10
         }
@@ -163,7 +163,7 @@ function Enable-VSICTXDesktopPool {
                 }
                 if ($TS.TotalMinutes -gt $VMRegistrationTimeOutMinutes) {
                     Write-Log -Message "VMs failed to register within $VMRegistrationTimeOutMinutes minutes" -Level Error
-                    Exit 1
+                    Break
                 }
             }
         }

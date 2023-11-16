@@ -8,7 +8,7 @@ function Remove-LEAccounts {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting Remove-LEAccounts" -Level Info
     }
 
@@ -16,12 +16,12 @@ function Remove-LEAccounts {
         $Body = ConvertTo-Json @($ids)
 
         try {
-            $Response = Invoke-PublicApiMethod -Method "DELETE" -Path "v6/accounts" -Body $Body -ErrorAction Stop
-            $Response.id
+            Invoke-PublicApiMethod -Method "DELETE" -Path "v6/accounts" -Body $Body -ErrorAction Stop
+            
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Exit 1
+            Break
         }
 
     

@@ -8,7 +8,7 @@ function Get-NTNXHostIPMI {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
     }
 
@@ -18,7 +18,7 @@ function Get-NTNXHostIPMI {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Exit 1
+            Break
         }
         
         $Hostitem = $NTNXHosts.entities | Where-Object {$_.name -eq $NTNXHost}

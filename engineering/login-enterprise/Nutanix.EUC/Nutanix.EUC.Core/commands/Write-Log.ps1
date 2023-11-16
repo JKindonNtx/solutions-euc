@@ -36,7 +36,7 @@ Writes an Info Output to the console
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
     }
 
     process {

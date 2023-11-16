@@ -21,7 +21,7 @@ TODO
     - Horizon -> 
     - NetScaler
 - Query Inlfux for running tests against LE appliance
-- Remember to replace BREAK with Exit 1! Temporarily using Break
+- Remember to replace BREAK with Break! Temporarily using Break
 
 ------------------------------------------------------------------------------------------
 ### REVIEW NOTES - WORK IN PROGRESS - REMOVE ONCE VALIDATED
@@ -53,7 +53,7 @@ Param(
 
     [Parameter(Mandatory = $false)]
     [ValidateSet("CitrixVAD", "CitrixDaaS", "Horizon", "RAS")]
-    [string]$Type
+    [string]$Type,
 
     #[Parameter(Mandatory = $false)]
     #[switch]$Force,
@@ -64,11 +64,11 @@ Param(
     #[Parameter(Mandatory = $false)]
     #[switch]$SkipPDFExport,
 
-    #[Parameter(Mandatory = $false)]
-    #[switch]$SkipADUsers,
+    [Parameter(Mandatory = $false)]
+    [switch]$SkipADUsers,
 
-    #[Parameter(Mandatory = $false)]
-    #[switch]$SkipLEUsers,
+    [Parameter(Mandatory = $false)]
+    [switch]$SkipLEUsers
 
     #[Parameter(Mandatory = $false)]
     #[switch]$SkipLaunchers
@@ -107,7 +107,7 @@ try {
 catch {
     Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: Failed to import $var_ModuleName module. Exit script"
     Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $_"
-    Break #Temporary! Replace with #Exit 1
+    Break #Temporary! Replace with #Break
 }
 #endregion Nutanix Module Import
 
@@ -122,12 +122,12 @@ Write-Log -Message "Test Type is:                 $($Type)" -Level Validation
 #----------------------------------------------------------------------------------------------------------------------------
 if ($PSVersionTable.PSVersion.Major -lt 5) { 
     Write-Log -Message "You must upgrade to PowerShell 5.x to run this script" -Level Warn
-    Break #Temporary! Replace with #Exit 1
+    Break #Temporary! Replace with #Break
 }
 
 if ($PSVersionTable.PSVersion.Major -gt 6) { 
     Write-Log -Message "You cannot use PowerShell $($PSVersionTable.PSVersion.Major) with Citrix snapins. Please revert to PowerShell 5.x" -Level Warn
-    Break #Temporary! Replace with #Exit 1
+    Break #Temporary! Replace with #Break
 }
 #endregion PowerShell Versions
 
@@ -145,12 +145,12 @@ if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
     catch {
         Write-Log -Message "Failed to import Citrix Snapins" -Level Error
         Write-Log -Message $_ -Level Error
-        Break #Temporary! Replace with #Exit 1
+        Break #Temporary! Replace with #Break
     }
 }
 #endregion Citrix Snapin Import
 
-#region remove existing SSH Keys
+#region remove existing SSH Keys ***UPDATE****
 #----------------------------------------------------------------------------------------------------------------------------
 $Temp_Module = (Get-Module -ListAvailable *) | Where-Object { $_.Name -eq "Posh-SSH" }
 if ($Null -ne $Temp_Module) {
@@ -165,7 +165,7 @@ else {
     }
     catch {
         Write-Log -Message $_ -Level Error
-        Break #Temporary! Replace with #Exit 1
+        Break #Temporary! Replace with #Break
     }
 }
 $Temp_Module = $null
@@ -188,7 +188,7 @@ try {
 catch {
     Write-Log -Message "Failed to import config file: $($configFile)" -Level Error
     Write-Log -Message $_ -Level Error
-    Break #Temporary! Replace with #Exit 1
+    Break #Temporary! Replace with #Break
 }
 
 $configFileData = $configFileData -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/'
@@ -198,7 +198,7 @@ try {
 }
 catch {
     Write-Log -Message $_ -Level Error
-    Break #Temporary! Replace with #Exit 1
+    Break #Temporary! Replace with #Break
 }
 #endregion Config File
 
@@ -215,25 +215,25 @@ $NTNXInfra = Get-NTNXinfo -Config $config
 #region Validation
 #----------------------------------------------------------------------------------------------------------------------------
 ##// Report Output here on relevent variables- Dave wants a Snazzy Header
-foreach ($Item in $Config) {
-    foreach ($SectionName in $Item.PSObject.Properties.Name) {
-        Write-Log -Message "Section $sectionName contains the following defined values:" -Level Validation
-        $properties = @()
-        # Access the properties within each section
-        foreach ($property in $Item.$sectionName.PSObject.Properties) {
-            if ($null -ne $property.value -and $property.value -ne "") {
-                $properties += [PSCustomObject]@{
-                    Name  = $property.Name
-                    Value = $property.Value
-                }
-            }
-        }
-        # Output properties in a tabular format
-        [System.Console]::ForegroundColor = [System.ConsoleColor]::Cyan
-        $properties | Format-Table -AutoSize -HideTableHeaders
-        [System.Console]::ResetColor()
-    }
-} #// How to handle nested Array (ImagesToTest)
+#foreach ($Item in $Config) {
+#    foreach ($SectionName in $Item.PSObject.Properties.Name) {
+#        Write-Log -Message "Section $sectionName contains the following defined values:" -Level Validation
+#        $properties = @()
+#        # Access the properties within each section
+#        foreach ($property in $Item.$sectionName.PSObject.Properties) {
+#            if ($null -ne $property.value -and $property.value -ne "") {
+#                $properties += [PSCustomObject]@{
+#                    Name  = $property.Name
+#                    Value = $property.Value
+#                }
+#            }
+#        }
+#        # Output properties in a tabular format
+#        [System.Console]::ForegroundColor = [System.ConsoleColor]::Cyan
+#        $properties | Format-Table -AutoSize -HideTableHeaders
+#        [System.Console]::ResetColor()
+#    }
+#} #// How to handle nested Array (ImagesToTest)
 
 ##// Write out a prompt here post validation work - make sure all is good before going
 $answer = read-host "Test details correct for test? yes or no? "
@@ -264,7 +264,23 @@ if ($VSI_Target_Files -ne "") {
 #region Execute Test
 #Set the multiplier for the Workloadtype. This adjusts the required MHz per user setting.
 ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
-    Set-VSIConfigurationVariables -ImageConfiguration $ImageToTest -ConfigurationFile $ConfigFile
+    Set-VSIConfigurationVariables -ImageConfiguration $ImageToTest
+
+    #region Validate Workload Profiles
+    if ($VSI_Target_Workload -notin $Validated_Workload_Profiles ) {
+        Write-Log -Message "Worker Profile: $($VSI_Target_Workload) is not a valid profile for testing. Please check config file" -Level Error
+        Break #Temporary! Replace with #Break
+    }
+    if ($VSI_Target_Workload -eq "Task Worker") {
+        $LEWorkload = "TW"
+        $WLmultiplier = 0.8
+    }
+    if ($VSI_Target_Workload -eq "Knowledge Worker") {
+        $LEWorkload = "KW"
+        $WLmultiplier = 1.1
+    }
+    Write-Log -Message "LE Worker Profile is: $($VSI_Target_Workload) and the Workload is set to: $($LEWorkload)" -Level Info
+    #endregion Validate Workload Profiles
 
     #region Setup testname
     Write-Log -Message "Setting up Test Details" -Level Info
@@ -282,7 +298,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     for ($i = 0; $i -le $VSI_Target_ImageIterations; $i++) {
         if($i -eq 0){ $Phases = $TotalPhases } else { $Phases = $RunPhases }
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -302,7 +318,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
     # Update Test Dashboard
     $params = @{
-        ConfigFile     = $ConfigFile
+        ConfigFile     = $NTNXInfra
         TestName       = $NTNXTestname 
         RunNumber      = "0" 
         InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -325,22 +341,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     Write-Log -Message "Nutanix Host Affinity is set to: $($NTNXInfra.Testinfra.SetAffinity)" -Level Info
     #endregion Set affinity
 
-    #region Validate Workload Profiles
-    if ($VSI_Target_Workload -notin $Validated_Workload_Profiles ) {
-        Write-Log -Message "Worker Profile: $($VSI_Target_Workload) is not a valid profile for testing. Please check config file" -Level Error
-        Break #Temporary! Replace with #Exit 1
-    }
-    if ($VSI_Target_Workload -eq "Task Worker") {
-        $LEWorkload = "TW"
-        $WLmultiplier = 0.8
-    }
-    if ($VSI_Target_Workload -eq "Knowledge Worker") {
-        $LEWorkload = "KW"
-        $WLmultiplier = 1.1
-    }
-    Write-Log -Message "LE Worker Profile is: $($VSI_Target_Workload) and the Workload is set to: $($LEWorkload)" -Level Info
-    #endregion Validate Workload Profiles
-
     $NTNXInfra.Target.ImagesToTest = $ImageToTest
 
     #region Slack update
@@ -353,7 +353,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
     # Update Test Dashboard
     $params = @{
-        ConfigFile     = $ConfigFile
+        ConfigFile     = $NTNXInfra
         TestName       = $NTNXTestname 
         RunNumber      = "0" 
         InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -377,7 +377,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
     # Update Test Dashboard
     $params = @{
-        ConfigFile     = $ConfigFile
+        ConfigFile     = $NTNXInfra
         TestName       = $NTNXTestname 
         RunNumber      = "0" 
         InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -401,7 +401,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     # Update Test Dashboard
     if (($SkipLEUsers)) { $Message = "Skipping Login Enterprise User Creation" } else { $Message = "Creating Login Enterprise Users" }
     $params = @{
-        ConfigFile     = $ConfigFile
+        ConfigFile     = $NTNXInfra
         TestName       = $NTNXTestname 
         RunNumber      = "0" 
         InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -415,7 +415,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     $params = $null
     $CurrentTotalPhase++
 
-    if (-not ($SkipLEUsers)) {
+    if (!($SkipLEUsers)) {
         # Create the accounts and accountgroup in LE
         Write-Log -Message "Creating Accounts and Groups in LE" -Level Info
         $LEaccounts = New-LEAccounts -Username $VSI_Users_BaseName -Password $VSI_Users_Password -Domain $VSI_Users_NetBios -NumberOfDigits $VSI_Users_NumberOfDigits -NumberOfAccounts $VSI_Target_NumberOfSessions
@@ -428,7 +428,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     # Update Test Dashboard
     if (($SkipADUsers)) { $Message = "Skipping AD User Creation" } else { $Message = "Creating AD Users" }
     $params = @{
-        ConfigFile     = $ConfigFile
+        ConfigFile     = $NTNXInfra
         TestName       = $NTNXTestname 
         RunNumber      = "0" 
         InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -442,7 +442,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     $params = $null
     $CurrentTotalPhase++
 
-    if (-not ($SkipADUsers)) {
+    if (!($SkipADUsers)) {
         # OUs will be created if they don't exist, will also create a group with the $Basename in the same OU
         # This variant for when you're running this from a domain joined machine and your current user has rights to create AD resources
         if ([string]::isNullOrEmpty($VSI_Domain_LDAPUsername)) {
@@ -493,7 +493,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Update Test Dashboard
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -508,7 +508,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentRunPhase++
 
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -537,7 +537,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Update Test Dashboard
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -552,7 +552,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentRunPhase++
 
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -634,7 +634,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Update Test Dashboard
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -649,7 +649,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentRunPhase++
 
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -725,7 +725,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Update Test Dashboard
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -740,7 +740,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentRunPhase++
 
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -759,7 +759,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Break #Temporary! Replace with #Exit 1
+            Break #Temporary! Replace with #Break
         }
         $NTNXInfra.Target.ImagesToTest.TargetOS = $Tattoo.OSName
         $NTNXInfra.Target.ImagesToTest.TargetOSVersion = $Tattoo.OSVersion
@@ -774,7 +774,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Update Test Dashboard
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -789,7 +789,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentRunPhase++
 
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -821,7 +821,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Update Test Dashboard
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -836,7 +836,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentRunPhase++
 
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -895,7 +895,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Update Test Dashboard
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -910,7 +910,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentRunPhase++
 
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -932,7 +932,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Update Test Dashboard
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -947,7 +947,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentRunPhase++
 
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -968,7 +968,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Update Test Dashboard
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -983,7 +983,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentRunPhase++
 
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1005,7 +1005,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Update Test Dashboard
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1020,7 +1020,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentRunPhase++
 
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1050,7 +1050,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         # Update Test Dashboard
         if ($VSI_Target_Files -ne "") { $Message = "Starting Nutanix Files Monitor Run $($i)" } else { $Message = "Skipping Nutanix Files Monitoring" }
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1065,7 +1065,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentRunPhase++
 
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1095,7 +1095,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         # Update Test Dashboard
         if ($VSI_Target_NetScaler -ne "") { $Message = "Starting Citrix NetScaler Monitor Run $($i)" } else { $Message = "Skipping Citrix NetScaler Monitoring" }
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1110,7 +1110,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentRunPhase++
 
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1141,7 +1141,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Update Test Dashboard
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1156,7 +1156,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentRunPhase++
 
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1187,7 +1187,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Update Test Dashboard
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1202,7 +1202,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentRunPhase++
 
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1223,7 +1223,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Update Test Dashboard
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1238,7 +1238,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentRunPhase++
 
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1272,7 +1272,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         # Update Test Dashboard
         if ($VSI_Target_Files -ne "") { $Message = "Starting Nutanix Files Data Clean" } else { $Message = "Skipping Nutanix Files Data Clean" }
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1287,7 +1287,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentRunPhase++
 
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1315,7 +1315,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         # Update Test Dashboard
         if ($NTNXInfra.Test.UploadResults) { $Message = "Uploading Data to InfluxDB" } else { $Message = "Skipping InfluxDB Data Upload" }
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1330,7 +1330,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentRunPhase++
 
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1429,7 +1429,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Update Test Dashboard
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1444,7 +1444,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentRunPhase++
 
         $params = @{
-            ConfigFile     = $ConfigFile
+            ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
@@ -1488,7 +1488,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
 # Update Test Dashboard
 $params = @{
-    ConfigFile     = $ConfigFile
+    ConfigFile     = $NTNXInfra
     TestName       = $NTNXTestname 
     RunNumber      = "0" 
     InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 

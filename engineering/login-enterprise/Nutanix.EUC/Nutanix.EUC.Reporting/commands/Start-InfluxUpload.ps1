@@ -50,7 +50,7 @@ function Start-InfluxUpload {
     begin {
 
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
 
         # Read in the Config File
         $JSONFile = Join-Path $ResultsPath "TestConfig.json"

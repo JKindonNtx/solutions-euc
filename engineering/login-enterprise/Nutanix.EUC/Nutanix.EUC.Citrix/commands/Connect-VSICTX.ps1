@@ -36,7 +36,7 @@ function Connect-VSICTX {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
     }
 
@@ -52,12 +52,13 @@ function Connect-VSICTX {
             catch {
                 Write-Log -Message "Failed to get Citrix Site details" -Level Error
                 Write-Log -Message $_ -Level Error
-                Exit 1
+                Break
             }
     
         }
 
-        if ($null -ne $ClientID) {
+        #if ($null -ne $ClientID) {
+        if(!(test-path variable:\ClientID)){
             Write-Log -Message "Handling Citrix Credentials and Validating Citrix Cloud DaaS" -Level Info
             $tokenUrl = 'https://api-us.cloud.com/cctrustoauth2/root/tokens/clients'
     
@@ -72,7 +73,7 @@ function Connect-VSICTX {
             catch {
                 Write-Log -Message "Failed to Get Citrix DaaS Details" -Level Error
                 Write-Log -Message $_  -Level Error
-                Exit 1
+                Break
             }
             $token = $response.Content | ConvertFrom-Json
             $global:VSICTX_AuthHeader = @{
@@ -92,7 +93,7 @@ function Connect-VSICTX {
             catch {
                 Write-Log -Message "Failed to get Citrix DaaS details" -Level Error
                 Write-Log -Message $_ -Level Error
-                Exit 1
+                Break
             }
         }
     } # process

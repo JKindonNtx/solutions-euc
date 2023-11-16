@@ -8,7 +8,7 @@ function Get-NTNXStorageUUID {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
     }
 
@@ -18,7 +18,7 @@ function Get-NTNXStorageUUID {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Exit 1
+            Break
         }
         
         $Containeritem = $Containerinfo.entities | Where-Object {$_.name -eq $Storage}

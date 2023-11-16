@@ -11,7 +11,7 @@ function Get-LEAccountGroups  {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting Get-LEAccountGroups" -Level Info
     }
 
@@ -29,7 +29,7 @@ function Get-LEAccountGroups  {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Exit 1
+            Break
         }
     } # process
 

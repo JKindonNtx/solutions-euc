@@ -8,7 +8,7 @@ function Invoke-NetScalerStats {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
     }
 
@@ -28,7 +28,7 @@ function Invoke-NetScalerStats {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            #Exit 1
+            #Break
         }
     
         # Build Script NetScaler Session Variable
@@ -73,7 +73,7 @@ function Invoke-NetScalerStats {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            #Exit 1
+            #Break
         }       
     
         return $NSDetails

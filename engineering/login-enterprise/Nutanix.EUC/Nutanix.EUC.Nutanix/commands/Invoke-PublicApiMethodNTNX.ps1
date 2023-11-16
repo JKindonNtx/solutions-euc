@@ -10,7 +10,6 @@ function Invoke-PublicApiMethodNTNX {
         [ValidateSet("POST", "GET", "PUT", "DELETE")]
         [String]$Method = "GET",
 
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)]
         [String]$Body,
 
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)]
@@ -23,12 +22,6 @@ function Invoke-PublicApiMethodNTNX {
         [String]$Form
     )
 
-    begin {
-        # Set strict mode 
-        Set-StrictMode -Version Latest
-    }
-
-    process {
         $header = @{
             Authorization = "Basic " + [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($($VSI_Target_CVM_admin) + ":" + $($VSI_Target_CVM_Password)))
         }
@@ -40,8 +33,8 @@ function Invoke-PublicApiMethodNTNX {
             while ($done -eq $false) {
                 $count++
                 try {
-                    $URL = "https://$($VSI_Target_CVM):9440/PrismGateway/services/rest/v2.0/$Path"
-                    if ($null -ne $Body) {
+                    $URL = "https://$($VSI_Target_CVM):9440/api/nutanix/v2.0/$Path"
+                    if ([string]::IsNullOrWhiteSpace($Body)) {
                         if ($null -ne $OutFile) {
                             Invoke-RestMethod -Body $Body -Method $Method -Uri $URL -Headers $Header -SkipCertificateCheck -OutFile $OutFile -ErrorAction Stop
                         }
@@ -69,7 +62,7 @@ function Invoke-PublicApiMethodNTNX {
                 }
                 if ($count -eq $maxcount) {
                     Write-Log -Message "API call failed after $($maxcount) times with reason: $reason" -Level Error
-                    Exit 1
+                    Break
                 }
             }
         }
@@ -101,8 +94,8 @@ function Invoke-PublicApiMethodNTNX {
             while ($done -eq $false) {
                 $count++
                 try {
-                    $URL = "https://$($VSI_Target_CVM):9440/PrismGateway/services/rest/v2.0/$Path"
-                    if ($null -ne $Body) {
+                    $URL = "https://$($VSI_Target_CVM):9440/api/nutanix/v2.0/$Path"
+                    if (!([string]::IsNullOrWhiteSpace($Body))) {
                         if ($null -ne $OutFile) {
                             Invoke-RestMethod -Body $Body -Method $Method -Uri $URL -Headers $Header -OutFile $OutFile -ErrorAction Stop
                         }
@@ -166,14 +159,9 @@ function Invoke-PublicApiMethodNTNX {
                 }
                 if ($count -eq $maxcount) {
                     Write-Log -Message "API call failed after $($maxcount) times with reason: $reason" -Level Error
-                    Exit 1
+                    Break
                 }
             }
         }
-    } # process
-
-    end {
-        # Return data for the function
-    } # end
-
+   
 }

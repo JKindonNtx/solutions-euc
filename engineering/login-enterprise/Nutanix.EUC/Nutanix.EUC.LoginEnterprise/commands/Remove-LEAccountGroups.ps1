@@ -8,7 +8,7 @@ function Remove-LEAccountGroups {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting Remove-LEAccountGroups" -Level Info
     }
 
@@ -17,12 +17,12 @@ function Remove-LEAccountGroups {
         $Body = ConvertTo-Json @($ids)
 
         try {
-            $Response = Invoke-PublicApiMethod -Method "DELETE" -Path "v6/account-groups" -Body $Body -ErrorAction Stop
-            $Response.id
+            Invoke-PublicApiMethod -Method "DELETE" -Path "v6/account-groups" -Body $Body -ErrorAction Stop
+
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Exit 1
+            Break
         }
         
     } # process

@@ -8,7 +8,7 @@ function Restart-LELaunchers {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting Restart-LELaunchers" -Level Info
     }
 

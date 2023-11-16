@@ -2,7 +2,7 @@ function Invoke-NutanixFilesAuthCheck {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
     }
 
@@ -24,7 +24,7 @@ function Invoke-NutanixFilesAuthCheck {
             catch {
                 Write-Log -Message $_ -Level Error
                 Write-Log -Message "Failed to Authenticate to Nutanix Files Environment. Please check credentials. Exiting Script" -Level Error
-                Exit 1
+                Break
             }
         }
         else {
@@ -56,7 +56,7 @@ function Invoke-NutanixFilesAuthCheck {
             catch {
                 Write-Log -Message $_ -Level Error
                 Write-Log -Message "Failed to Authenticate to Nutanix Files Environment. Please check credentials. Exiting Script" -Level Error
-                Exit 1
+                Break
             }
         }
     } # process

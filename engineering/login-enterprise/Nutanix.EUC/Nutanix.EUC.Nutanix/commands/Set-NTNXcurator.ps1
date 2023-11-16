@@ -45,7 +45,7 @@ function Set-NTNXcurator {
     )
     
     Begin {
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
     } # Begin
     
@@ -72,7 +72,7 @@ function Set-NTNXcurator {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Exit 1
+            Break
         }
         
         $sshStream.WriteLine($command)

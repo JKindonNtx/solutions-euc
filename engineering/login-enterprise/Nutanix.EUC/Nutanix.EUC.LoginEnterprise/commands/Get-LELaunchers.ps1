@@ -2,7 +2,7 @@ function Get-LELaunchers {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting Get-LELaunchers" -Level Info
     }
 
@@ -18,7 +18,7 @@ function Get-LELaunchers {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Exit 1
+            Break
         }
         
     } # process

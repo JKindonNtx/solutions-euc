@@ -42,7 +42,7 @@ function Remove-NutanixFilesData {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
     }
 
@@ -58,7 +58,7 @@ function Remove-NutanixFilesData {
                 }
                 catch {
                     Write-Log $_ -Level Error
-                    Break #Temporary! Replace with #Exit 1
+                    Break #Temporary! Replace with #Break
                 }
 
                 if ($Mode -eq "Validate") {
@@ -73,7 +73,7 @@ function Remove-NutanixFilesData {
                     catch {
                         Write-Log -Message "Failed to Create directory on $($Share)" -Level Error
                         Write-Log -Message $_ -Level Error
-                        Break #Temporary! Replace with #Exit 1
+                        Break #Temporary! Replace with #Break
                     }
 
                     # Delete Dummy Data
@@ -93,7 +93,7 @@ function Remove-NutanixFilesData {
                         catch {
                             Write-Log -Message "Failed to delete Directory $($DummyFolder) on $($Share)." -Level Error
                             Write-Log -Message $_ -Level Error
-                            Break #Temporary! Replace with #Exit 1
+                            Break #Temporary! Replace with #Break
                         }
                     }
 
@@ -115,7 +115,7 @@ function Remove-NutanixFilesData {
                         }
                         else {
                             Write-Log -Message "Continue on Failure is not present. Exiting Script" -Level 
-                            Break #Temporary! Replace with #Exit 1
+                            Break #Temporary! Replace with #Break
                         }
                     }
                 }
@@ -127,7 +127,7 @@ function Remove-NutanixFilesData {
                 }
                 else {
                     Write-Log -Message "Share $($Share) does not exist. Please check configuration. Exiting Script" -Level Error
-                    Break #Temporary! Replace with #Exit 1
+                    Break #Temporary! Replace with #Break
                 }
             }
         }

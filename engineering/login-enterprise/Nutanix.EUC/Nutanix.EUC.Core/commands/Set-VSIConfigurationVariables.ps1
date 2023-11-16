@@ -9,7 +9,7 @@ function Set-VSIConfigurationVariables {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
     }
 
@@ -22,7 +22,7 @@ function Set-VSIConfigurationVariables {
             }
             catch {
                 Write-Log -Message $_ -Level Error
-                Exit 1
+                Break
             }
             
             $configFile = $configFile -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/'
@@ -32,7 +32,7 @@ function Set-VSIConfigurationVariables {
             }
             catch {
                 Write-Log -Message $_ -Level Error
-                Exit 1
+                Break
             }
             
             Get-Variable -Name VSI_* -ErrorAction SilentlyContinue | Remove-Variable -ErrorAction SilentlyContinue

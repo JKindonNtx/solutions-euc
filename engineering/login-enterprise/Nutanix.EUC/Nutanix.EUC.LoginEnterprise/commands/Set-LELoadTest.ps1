@@ -16,7 +16,7 @@ function Set-LELoadTest {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting $($PSCmdlet.MyInvocation.MyCommand.Name)" -Level Info
         $ExistingTest = $null
         $ExistingTest = Get-LETests -testType "loadTest" | Where-Object { $_.Name -eq $TestName }
@@ -152,7 +152,7 @@ function Set-LELoadTest {
             }
             catch {
                 Write-Log -Message $_ -Level Error
-                Exit 1
+                Break
             }
             Write-Log -Message "Created new test with id: $($Result.id)" -Level Info
             $ExistingTest = Get-LETest -testId $Result.id
@@ -163,7 +163,7 @@ function Set-LELoadTest {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Exit 1
+            Break
         }
         
         Write-Log -Message "Updated existing test $($TestName)" -Level Info

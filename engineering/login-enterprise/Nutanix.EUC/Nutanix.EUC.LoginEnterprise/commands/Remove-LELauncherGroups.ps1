@@ -8,7 +8,7 @@ function Remove-LELauncherGroups {
 
     begin {
         # Set strict mode 
-        Set-StrictMode -Version Latest
+        # Set-StrictMode -Version Latest
         Write-Log -Message "Starting Remove-LELauncherGroups" -Level Info
     }
 
@@ -21,7 +21,7 @@ function Remove-LELauncherGroups {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Exit 1
+            Break
         }
         
     } # process
