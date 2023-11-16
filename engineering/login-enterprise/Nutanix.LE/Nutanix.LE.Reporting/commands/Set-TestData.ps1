@@ -61,6 +61,7 @@ function Set-TestData {
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][ValidateSet("Planned","Running","Complete","Error","UploadError")]$Status,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$false)]$ErrorMessage,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$CurrentPhase,
+        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$TotalPhase,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$CurrentMessage
     )
 
@@ -119,7 +120,7 @@ function Set-TestData {
                 "Document=$($ConfigJSON.Test.DocumentName)," +
                 "Status=$($Status)," +
                 "CurrentPhase=$($CurrentPhase)," +
-                "TotalPhases=$($var_TotalPhases)," +
+                "TotalPhases=$($TotalPhase)," +
                 "CurrentMessage=$($CurrentMessage)," +
                 "Year=$($CurrentYear)," +
                 "Month=$($CurrentMonth)," +

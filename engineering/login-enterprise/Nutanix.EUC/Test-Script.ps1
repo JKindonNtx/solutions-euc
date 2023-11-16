@@ -48,7 +48,6 @@ Param(
     [Parameter(Mandatory = $false)]
     [string]$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-CitrixOnPrem-FSLogix.jsonc",
 
-    ## Check if this parameter can be removed ******
     [Parameter(Mandatory = $false)]
     [string]$ReportConfigFile = ".\ReportConfigurationNTNX.jsonc",
 
@@ -90,7 +89,6 @@ $Validated_OS_Types = @("multisession", "singlesession")
 $VSI_Target_RampupInMinutes = 48 ##// This needs to move to JSON
 $MaxRecordCount = 5000 ##// This needs to move to Variables
 $InfluxTestDashBucket = "Tests" ##// This needs to move to Variables
-
 #endregion Variables
 
 #Region Execute
@@ -100,20 +98,16 @@ $InfluxTestDashBucket = "Tests" ##// This needs to move to Variables
 
 #region Nutanix Module Import
 #----------------------------------------------------------------------------------------------------------------------------
-$var_ModuleName = "Nutanix.LE"
+$var_ModuleName = "Nutanix.EUC"
 Write-Host "$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: Trying to import $var_ModuleName module"
 try {
-    Import-Module "$($ScriptRoot)\$($var_ModuleName)\$($var_ModuleName).psd1" -Force -ErrorAction Stop
+    Import-Module "$ScriptRoot\$var_ModuleName.psd1" -Force -ErrorAction Stop
     Write-Log -Message "Successfully imported $var_ModuleName Module" -Level Info
 }
 catch {
     Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: Failed to import $var_ModuleName module. Exit script"
     Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $_"
-<<<<<<< Updated upstream
     Break #Temporary! Replace with #Exit 1
-=======
-    Break
->>>>>>> Stashed changes
 }
 #endregion Nutanix Module Import
 
@@ -128,20 +122,12 @@ Write-Log -Message "Test Type is:                 $($Type)" -Level Validation
 #----------------------------------------------------------------------------------------------------------------------------
 if ($PSVersionTable.PSVersion.Major -lt 5) { 
     Write-Log -Message "You must upgrade to PowerShell 5.x to run this script" -Level Warn
-<<<<<<< Updated upstream
     Break #Temporary! Replace with #Exit 1
-=======
-    Break
->>>>>>> Stashed changes
 }
 
 if ($PSVersionTable.PSVersion.Major -gt 6) { 
     Write-Log -Message "You cannot use PowerShell $($PSVersionTable.PSVersion.Major) with Citrix snapins. Please revert to PowerShell 5.x" -Level Warn
-<<<<<<< Updated upstream
     Break #Temporary! Replace with #Exit 1
-=======
-    Break
->>>>>>> Stashed changes
 }
 #endregion PowerShell Versions
 
@@ -170,7 +156,8 @@ $Temp_Module = (Get-Module -ListAvailable *) | Where-Object { $_.Name -eq "Posh-
 if ($Null -ne $Temp_Module) {
     Write-Log -Message "Module Posh-SSH Found. Clearing existing SSH Keys if present" -Level Info
     Get-SSHTrustedHost | Remove-SSHTrustedHost
-} else {
+} 
+else {
     Write-Log -Message "Failed to find Posh-SSH Module. Attempting to Install" -Level Info
     try {
         Install-Module -Name Posh-SSH -Force -ErrorAction Stop
@@ -178,11 +165,7 @@ if ($Null -ne $Temp_Module) {
     }
     catch {
         Write-Log -Message $_ -Level Error
-<<<<<<< Updated upstream
         Break #Temporary! Replace with #Exit 1
-=======
-        Break
->>>>>>> Stashed changes
     }
 }
 $Temp_Module = $null
@@ -215,56 +198,18 @@ try {
 }
 catch {
     Write-Log -Message $_ -Level Error
-<<<<<<< Updated upstream
     Break #Temporary! Replace with #Exit 1
-=======
-    Break
->>>>>>> Stashed changes
 }
 #endregion Config File
 
 #region Get Nutanix Infra
 $NTNXInfra = Get-NTNXinfo -Config $config
-$TotalPhases = (([int]$NTNXInfra.Target.ImageIterations * 14) + 6) + 1
-$RunPhases = 14
-$CurrentTotalRunPhase = 1
-$CurrentRunPhase = 1
-
-
-# Build Test Dashboard Objects
-for ($i = 1; $i -le $VSI_Target_ImageIterations; $i++) {
-    $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber "$($i)" -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Planned" -CurrentPhase "0" -CurrentMessage "Scheduled Test Run" -TotalPhase "$($RunPhases)"
-}
-$null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber "0" -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "0" -CurrentMessage "Test Preperation" -TotalPhase "$($TotalPhases)"
-$CurrentTotalRunPhase++
-$CurrentRunPhase++
-
-
-$null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber "1" -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($CurrentRunPhase )" -CurrentMessage "Test Preperation" -TotalPhase "$($RunPhases)"
 #endregion Get Nutanix Infra
 
 #endregion variable setting
 
 #region Handle Automated LE Settings Mapping
-###### Check with Sven/Dave on how/what where we should store this info for reference - JSON or PowerShell root script/variables?
-#----------------------------------------------------------------------------------------------------------------------------
-$placeholder_var_LEAppliance = "LE1" #// This needs to be killed - is here for testing only, would likely live in JSON
-if ($placeholder_var_LEAppliance -eq "LE1") {
-    $config.LoginEnterprise.ApplianceURL = "https://WS-LE1.wsperf.nutanix.com"
-    $config.LoginEnterprise.ApplianceToken = "pQYtAZu_o2JnVUqCZwoLvRAAai1zwfd3G8Na9yaNBrw"
-    $config.Launchers.GroupName = "LE1-Launchers"
-    $config.Launchers.NamingPattern = "LE1-202309-"
-    $config.Users.BaseName = "VSILE1"
-    $Config.Users.NumberOfDigits = "" #// Should this be a PowerShell set Variable rather than a JSON config? Is it every going to change?
-}
-if ($placeholder_var_LEAppliance -eq "LE2") {
-    $config.LoginEnterprise.ApplianceURL = "https://WS-LE2.wsperf.nutanix.com"
-    $config.LoginEnterprise.ApplianceToken = ""
-    $config.Launchers.GroupName = "LE2-Launchers"
-    $config.Launchers.NamingPattern = "LE2-202309-"
-    $config.Users.BaseName = "VSILE2"
-    $Config.Users.NumberOfDigits = "" #// Should this be a PowerShell set Variable rather than a JSON config? Is it every going to change?
-}
+
 #endregion Handle Automated LE Settings Mapping 
 
 #region Validation
@@ -319,9 +264,6 @@ if ($VSI_Target_Files -ne "") {
 #region Execute Test
 #Set the multiplier for the Workloadtype. This adjusts the required MHz per user setting.
 ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
-
-    $RunningPhase = 1
-
     Set-VSIConfigurationVariables -ImageConfiguration $ImageToTest -ConfigurationFile $ConfigFile
 
     #region Setup testname
@@ -330,9 +272,49 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     $NTNXTestname = "$($NTNXid)_$($VSI_Target_NodeCount)n_A$($NTNXInfra.Testinfra.AOSversion)_$($NTNXInfra.Testinfra.HypervisorType)_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
     #endregion Setup testname
 
+    #region Setup Test Dashboard Data
+
+    $CurrentTotalPhase = 1
+    $TotalPhases = (([int]$NTNXInfra.Target.ImageIterations * $RunPhases) + $PreRunPhases)
+
+    # Build Test Dashboard Objects
+
+    for ($i = 0; $i -le $VSI_Target_ImageIterations; $i++) {
+        if($i -eq 0){ $Phases = $TotalPhases } else { $Phases = $RunPhases }
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Planned" 
+            CurrentPhase   = "0" 
+            CurrentMessage = "Scheduled Test Run" 
+            TotalPhase     = "$($Phases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+    }
+
+    #endregion Setup Test Dashboard Data
+
     #region Set affinity
-    $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber "0" -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($CurrentTotalRunPhase)" -CurrentMessage "Setting Affinity" -TotalPhase "$($TotalPhases)"
-    $CurrentTotalRunPhase++
+
+    # Update Test Dashboard
+    $params = @{
+        ConfigFile     = $ConfigFile
+        TestName       = $NTNXTestname 
+        RunNumber      = "0" 
+        InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+        InfluxBucket   = $InfluxTestDashBucket 
+        Status         = "Running" 
+        CurrentPhase   = $CurrentTotalPhase 
+        CurrentMessage = "Setting Affinity Rules" 
+        TotalPhase     = "$($TotalPhases)"
+    }
+    $null = Set-TestData  @params
+    $params = $null
+    $CurrentTotalPhase++
 
     if ($VSI_Target_NodeCount -eq "1") {
         $NTNXInfra.Testinfra.SetAffinity = $true
@@ -344,9 +326,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #endregion Set affinity
 
     #region Validate Workload Profiles
-    $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber "N/A" -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($RunningPhase)" -CurrentMessage "Validating Workload Profiles"
-    $RunningPhase++
-
     if ($VSI_Target_Workload -notin $Validated_Workload_Profiles ) {
         Write-Log -Message "Worker Profile: $($VSI_Target_Workload) is not a valid profile for testing. Please check config file" -Level Error
         Break #Temporary! Replace with #Exit 1
@@ -362,50 +341,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     Write-Log -Message "LE Worker Profile is: $($VSI_Target_Workload) and the Workload is set to: $($LEWorkload)" -Level Info
     #endregion Validate Workload Profiles
 
-    #region Handle AutoCalc
-    If ($VSI_Target_AutocalcVMs) {
-        If ($VSI_Target_Max) {
-            $VSI_VSImax = 1
-        }
-        Else { $VSI_VSImax = 0.8 }
-        $TotalCores = $NTNXInfra.Testinfra.CPUCores * $VSI_Target_NodeCount
-        $TotalGHz = $TotalCores * $NTNXInfra.Testinfra.CPUSpeed * 1000
-        $vCPUsperVM = $VSI_Target_NumCPUs * $VSI_Target_NumCores
-        $GHzperVM = 600 * $WLmultiplier
-        # Set the vCPU multiplier. This affects the number of VMs per node.
-        $vCPUMultiplier = "1.$vCPUsperVM"
-        #$TotalMem = [Math]::Round($NTNXInfra.Testinfra.MemoryGB * 0.92, 0, [MidpointRounding]::AwayFromZero) * $VSI_Target_NodeCount
-        $TotalMem = $VSI_Target_NodeCount * (($($NTNXInfra.Testinfra.MemoryGB) - 32) * 0.94)
-        $MemperVM = $VSI_Target_MemoryGB
-        if ($($VSI_Target_SessionsSupport.ToLower()) -notin $Validated_OS_Types) {
-            Write-Log -Message "OS Type is: $($VSI_Target_SessionsSupport) and is not a valid type for testing. Please check config file" -Level Error
-        }
-        if ($($VSI_Target_SessionsSupport.ToLower()) -eq "multisession") {
-            $VSI_Target_NumberOfVMS = [Math]::Round(($TotalCores - (4 * $VSI_Target_NodeCount)) / $vCPUsperVM * 2, 0, [MidpointRounding]::AwayFromZero)
-            $VSI_Target_PowerOnVMs = $VSI_Target_NumberOfVMS
-            if ($TotalMem -le ($VSI_Target_NumberOfVMS * $MemperVM)) {
-                $VSI_Target_NumberOfVMS = [Math]::Round($TotalMem / $MemperVM, 0, [MidpointRounding]::AwayFromZero)
-                $VSI_Target_PowerOnVMs = $VSI_Target_NumberOfVMS
-            }
-            $RDSHperVM = [Math]::Round(18 / $WLmultiplier, 0, [MidpointRounding]::AwayFromZero)
-            $VSI_Target_NumberOfSessions = [Math]::Round($VSI_Target_NumberOfVMS * $RDSHperVM * $VSI_VSImax, 0, [MidpointRounding]::AwayFromZero)
-        }
-        if ($($VSI_Target_SessionsSupport.ToLower()) -eq "singlesession") {
-            $VSI_Target_NumberOfVMS = [Math]::Round(($TotalGHz / ($GHzperVM * $vCPUMultiplier) * $VSI_VSImax), 0, [MidpointRounding]::AwayFromZero)
-            $VSI_Target_PowerOnVMs = $VSI_Target_NumberOfVMS
-            if ($TotalMem -le ($VSI_Target_NumberOfVMS * $MemperVM)) {
-                $VSI_Target_NumberOfVMS = [Math]::Round($TotalMem / $MemperVM, 0, [MidpointRounding]::AwayFromZero)
-                $VSI_Target_PowerOnVMs = $VSI_Target_NumberOfVMS
-            }
-            $VSI_Target_NumberOfSessions = $VSI_Target_NumberOfVMS
-        }
-        ($NTNXInfra.Target.ImagesToTest | Where-Object { $_.Comment -eq $VSI_Target_Comment }).NumberOfVMs = $VSI_Target_NumberOfVMS
-        ($NTNXInfra.Target.ImagesToTest | Where-Object { $_.Comment -eq $VSI_Target_Comment }).PowerOnVMs = $VSI_Target_PowerOnVMs
-        ($NTNXInfra.Target.ImagesToTest | Where-Object { $_.Comment -eq $VSI_Target_Comment }).NumberOfSessions = $VSI_Target_NumberOfSessions
-        Write-Log -Message "AutoCalc is enabled and the number of VMs is set to $VSI_Target_NumberOfVMS and the number of sessions to $VSI_Target_NumberOfSessions on $VSI_Target_NodeCount Node(s)" -Level Info
-    }
-    #endregion Handle AutoCalc
-
     $NTNXInfra.Target.ImagesToTest = $ImageToTest
 
     #region Slack update
@@ -415,18 +350,46 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #endregion Slack update
 
     #region Citrix validation
-    if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber "N/A" -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($RunningPhase)" -CurrentMessage "Validating Citrix Connectivity"
-        $RunningPhase++
 
+    # Update Test Dashboard
+    $params = @{
+        ConfigFile     = $ConfigFile
+        TestName       = $NTNXTestname 
+        RunNumber      = "0" 
+        InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+        InfluxBucket   = $InfluxTestDashBucket 
+        Status         = "Running" 
+        CurrentPhase   = $CurrentTotalPhase 
+        CurrentMessage = "Validating Citrix Connectivity" 
+        TotalPhase     = "$($TotalPhases)"
+    }
+    $null = Set-TestData  @params
+    $params = $null
+    $CurrentTotalPhase++
+
+    if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
         Write-Log -Message "Validating Citrix" -Level Info
         Connect-VSICTX -DDC $VSI_Target_DDC
     }
     #endregion Citrix validation
 
     #region LE Test Check
-    $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber "N/A" -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($RunningPhase)" -CurrentMessage "Checking for existing running test"
-    $RunningPhase++
+
+    # Update Test Dashboard
+    $params = @{
+        ConfigFile     = $ConfigFile
+        TestName       = $NTNXTestname 
+        RunNumber      = "0" 
+        InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+        InfluxBucket   = $InfluxTestDashBucket 
+        Status         = "Running" 
+        CurrentPhase   = $CurrentTotalPhase 
+        CurrentMessage = "Getting/Completing Existing LE Tests" 
+        TotalPhase     = "$($TotalPhases)"
+    }
+    $null = Set-TestData  @params
+    $params = $null
+    $CurrentTotalPhase++
 
     Write-Log -Message "Polling LE for tests" -Level Info
     $Test = Get-LETests | Where-Object { $_.name -eq $VSI_Test_Name }
@@ -434,25 +397,52 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #endregion LE Test Check
 
     #region LE Users
+
+    # Update Test Dashboard
+    if (($SkipLEUsers)) { $Message = "Skipping Login Enterprise User Creation" } else { $Message = "Creating Login Enterprise Users" }
+    $params = @{
+        ConfigFile     = $ConfigFile
+        TestName       = $NTNXTestname 
+        RunNumber      = "0" 
+        InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+        InfluxBucket   = $InfluxTestDashBucket 
+        Status         = "Running" 
+        CurrentPhase   = $CurrentTotalPhase 
+        CurrentMessage = "$($Message)" 
+        TotalPhase     = "$($TotalPhases)"
+    }
+    $null = Set-TestData  @params
+    $params = $null
+    $CurrentTotalPhase++
+
     if (-not ($SkipLEUsers)) {
         # Create the accounts and accountgroup in LE
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber "N/A" -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($RunningPhase)" -CurrentMessage "Creating LE User Accounts"
-        $RunningPhase++
-
         Write-Log -Message "Creating Accounts and Groups in LE" -Level Info
         $LEaccounts = New-LEAccounts -Username $VSI_Users_BaseName -Password $VSI_Users_Password -Domain $VSI_Users_NetBios -NumberOfDigits $VSI_Users_NumberOfDigits -NumberOfAccounts $VSI_Target_NumberOfSessions
         New-LEAccountGroup -Name $VSI_Users_GroupName -Description "Created by automation toolkit" -MemberIds $LEaccounts | Out-Null
-    } else {
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber "N/A" -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($RunningPhase)" -CurrentMessage "Skipping LE User Accounts"
-        $RunningPhase++
     }
     #endregion LE Users
 
     #region AD Users
-    if (-not ($SkipADUsers)) {
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber "N/A" -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($RunningPhase)" -CurrentMessage "Creating AD User Accounts"
-        $RunningPhase++
 
+    # Update Test Dashboard
+    if (($SkipADUsers)) { $Message = "Skipping AD User Creation" } else { $Message = "Creating AD Users" }
+    $params = @{
+        ConfigFile     = $ConfigFile
+        TestName       = $NTNXTestname 
+        RunNumber      = "0" 
+        InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+        InfluxBucket   = $InfluxTestDashBucket 
+        Status         = "Running" 
+        CurrentPhase   = $CurrentTotalPhase 
+        CurrentMessage = "$($Message)" 
+        TotalPhase     = "$($TotalPhases)"
+    }
+    $null = Set-TestData  @params
+    $params = $null
+    $CurrentTotalPhase++
+
+    if (-not ($SkipADUsers)) {
         # OUs will be created if they don't exist, will also create a group with the $Basename in the same OU
         # This variant for when you're running this from a domain joined machine and your current user has rights to create AD resources
         if ([string]::isNullOrEmpty($VSI_Domain_LDAPUsername)) {
@@ -481,26 +471,56 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             }
             New-VSIADUsers @params
         }
-    } else {
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber "N/A" -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($RunningPhase)" -CurrentMessage "Creating AD User Accounts"
-        $RunningPhase++
     }
 
     $Params = $null
     #endregion AD Users
 
-    #region Iterate through runs - CURRENT PHASES = 7
+    #region Iterate through runs
     for ($i = 1; $i -le $VSI_Target_ImageIterations; $i++) {
+
+        $CurrentRunPhase = 1
+
         # Will only create the pool if it does not exist
         
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber "$($i)" -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($RunningPhase)" -CurrentMessage "Starting Run $($i)"
-        $RunningPhase++ 
-
         #region Update Slack
-        $CurrentPhase = ($Phase * $i) + 2
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($CurrentPhase)" -CurrentMessage "Updating Slack"
         $SlackMessage = "Testname: $($NTNXTestname) Run$i is started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName)."
         Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
+
+        #endregion Update Slack
+
+        #region Get Nutanix Info
+
+        # Update Test Dashboard
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "Gathering Nutanix Information" 
+            TotalPhase     = "$($RunPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentRunPhase++
+
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Currently Executing Run $($i)" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
 
         $ContainerId = Get-NTNXStorageUUID -Storage $VSI_Target_CVM_storage
         $Hostuuid = Get-NTNXHostUUID -NTNXHost $VSI_Target_NTNXHost
@@ -510,17 +530,45 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
         $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $VSI_Target_HypervisorConnection +"\"+ $VSI_Target_HypervisorNetwork +".network" }
         $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
-        #endregion Update Slack
 
-        #region Configure Citrix Desktop Pool
-<<<<<<< Updated upstream
+        #endregoin Get Nutanix Info
+
+        #region Configure Desktop Pool
+
+        # Update Test Dashboard
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "Creating $($Mode) Desktop Pool" 
+            TotalPhase     = "$($RunPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentRunPhase++
+
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Currently Executing Run $($i)" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
+
         if ($Mode -eq "CitrixVAD" -or $Mode -eq "CitrixDaaS") {
             ## Placeholder Block to capture the relevent settings below - will change with different tech
         }
-=======
-        $CurrentPhase = ($Phase * $i) + 3
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($CurrentPhase)" -CurrentMessage "Configure Desktop Pool"
->>>>>>> Stashed changes
         $params = @{
             ParentVM             = $ParentVM
             HypervisorConnection = $VSI_Target_HypervisorConnection
@@ -575,7 +623,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $Params = $null
         }
 
-        #endregion Configure Citrix Desktop Pool
+        #endregion Configure Desktop Pool
 
         #region Configure Folder Details for output
         $FolderName = "$($NTNXTestname)_Run$($i)"
@@ -583,8 +631,38 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Configure Folder Details for output
 
         #region Start monitoring Boot phase
-        $CurrentPhase = ($Phase * $i) + 4
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($CurrentPhase)" -CurrentMessage "Monitor Boot Phase"
+
+        # Update Test Dashboard
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "Booting $($Mode) Desktops" 
+            TotalPhase     = "$($RunPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentRunPhase++
+
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Currently Executing Run $($i)" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
+
         $params = @{
             OutputFolder                 = $OutputFolder 
             DurationInMinutes            = "Boot" 
@@ -601,24 +679,24 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         if ($Mode -eq "CitrixVAD" -or $Mode -eq "CitrixDaaS") {
             #Placeholder block to capture the below settings
+            $params = @{
+                DesktopPoolName = $VSI_Target_DesktopPoolName
+                NumberofVMs     = $VSI_Target_NumberOfVMS
+                PowerOnVMs      = $VSI_Target_PowerOnVMs
+                DDC             = $VSI_Target_DDC
+                HypervisorType  = $NTNXInfra.Testinfra.HypervisorType
+                Affinity        = $NTNXInfra.Testinfra.SetAffinity
+                ClusterIP       = $NTNXInfra.Target.CVM
+                CVMSSHPassword  = $NTNXInfra.Target.CVMsshpassword
+                VMnameprefix    = $NTNXInfra.Target.NamingPattern
+                CloneType       = $VSI_Target_CloneType
+                Hosts           = $NTNXInfra.Testinfra.Hostip
+            }
+            $Boot = Enable-VSICTXDesktopPool @params
+    
+            $Params = $null
         }
-        $params = @{
-            DesktopPoolName = $VSI_Target_DesktopPoolName
-            NumberofVMs     = $VSI_Target_NumberOfVMS
-            PowerOnVMs      = $VSI_Target_PowerOnVMs
-            DDC             = $VSI_Target_DDC
-            HypervisorType  = $NTNXInfra.Testinfra.HypervisorType
-            Affinity        = $NTNXInfra.Testinfra.SetAffinity
-            ClusterIP       = $NTNXInfra.Target.CVM
-            CVMSSHPassword  = $NTNXInfra.Target.CVMsshpassword
-            VMnameprefix    = $NTNXInfra.Target.NamingPattern
-            CloneType       = $VSI_Target_CloneType
-            Hosts           = $NTNXInfra.Testinfra.Hostip
-        }
-        $Boot = Enable-VSICTXDesktopPool @params
-
-        $Params = $null
-
+        
         if ($Mode -eq "Horizon") { # Need to check with Sven on this
             if ($VSI_Target_PoolType -eq "RDSH") {
                 $Boot = Enable-VSIHVDesktopPool -Name $VSI_Target_DesktopPoolName -VMAmount $VSI_Target_NumberOfVMs -Increment $VSI_Target_VMPoolIncrement -RDSH
@@ -634,17 +712,48 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Start monitoring Boot phase
 
         #region Get Build Tattoo Information and update variable with new values
-<<<<<<< Updated upstream
         if ($Mode -eq "CitrixVAD" -or $Mode -eq "CitrixDaaS") {
             ## Placeholder Block to capture the relevent settings below - will change with different tech
+            $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $VSI_Target_DesktopPoolName -MaxRecordCount $MaxRecordCount
+            $RegisteredVMs = ($BrokerVMS | Where-Object { $_.RegistrationState -eq "Registered" })
+            $MasterImageDNS = $RegisteredVMs[0].DNSName
         }
-=======
-        $CurrentPhase = ($Phase * $i) + 5
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($CurrentPhase)" -CurrentMessage "Getting Build Tattoo Information"
->>>>>>> Stashed changes
-        $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $VSI_Target_DesktopPoolName -MaxRecordCount $MaxRecordCount
-        $RegisteredVMs = ($BrokerVMS | Where-Object { $_.RegistrationState -eq "Registered" })
-        $MasterImageDNS = $RegisteredVMs[0].DNSName
+        
+        if ($Mode -eq "Horizon") { # Need to check with Sven on this
+            ## Placeholder to get the Horizon First Machine FQND into $MasterImageDNS
+        }
+
+        # Update Test Dashboard
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "Getting Image Tattoo" 
+            TotalPhase     = "$($RunPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentRunPhase++
+
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Currently Executing Run $($i)" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
+
         try {
             $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTatoo } -ErrorAction Stop 
         }
@@ -662,8 +771,37 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Get Build Tattoo Information and update variable with new values
 
         #region Set number of sessions per launcher
-        $CurrentPhase = ($Phase * $i) + 6
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($CurrentPhase)" -CurrentMessage "Configure Launchers"
+
+        # Update Test Dashboard
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "Rebooting Login Enterprise Launchers" 
+            TotalPhase     = "$($RunPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentRunPhase++
+
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Currently Executing Run $($i)" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
 
         if ($($VSI_Target_SessionCfg.ToLower()) -eq "ica") {
             $SessionsperLauncher = 20
@@ -680,28 +818,55 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Set number of sessions per launcher
 
         #region Update the test params/create test if not exist
-<<<<<<< Updated upstream
+
+        # Update Test Dashboard
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "Updating Login Enterprise Test Details" 
+            TotalPhase     = "$($RunPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentRunPhase++
+
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Currently Executing Run $($i)" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
+
         if ($Mode -eq "CitrixVAD" -or $Mode -eq "CitrixDaaS") {
             ## Placeholder Block to capture the relevent settings below - will change with different tech
+            $Params = @{
+                TestName          = $VSI_Test_Name
+                SessionAmount     = $VSI_Target_NumberOfSessions
+                RampupInMinutes   = $VSI_Target_RampupInMinutes
+                DurationInMinutes = $VSI_Target_DurationInMinutes
+                LauncherGroupName = $VSI_Launchers_GroupName
+                AccountGroupName  = $VSI_Users_GroupName
+                ConnectorName     = "Citrix Storefront"
+                ConnectorParams   = @{serverURL = $VSI_Target_StorefrontURL; resource = $VSI_Target_DesktopPoolName }
+                Workload          = $VSI_Target_Workload
+            }
+            $testId = Set-LELoadTest @Params
+            $params = $null
         }
-=======
-        $CurrentPhase = ($Phase * $i) + 7
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($CurrentPhase)" -CurrentMessage "Updating Test Parameters"
-
->>>>>>> Stashed changes
-        $Params = @{
-            TestName          = $VSI_Test_Name
-            SessionAmount     = $VSI_Target_NumberOfSessions
-            RampupInMinutes   = $VSI_Target_RampupInMinutes
-            DurationInMinutes = $VSI_Target_DurationInMinutes
-            LauncherGroupName = $VSI_Launchers_GroupName
-            AccountGroupName  = $VSI_Users_GroupName
-            ConnectorName     = "Citrix Storefront"
-            ConnectorParams   = @{serverURL = $VSI_Target_StorefrontURL; resource = $VSI_Target_DesktopPoolName }
-            Workload          = $VSI_Target_Workload
-        }
-        $testId = Set-LELoadTest @Params
-        $params = $null
+        
         #endregion Update the test params/create test if not exist
 
         #region Wait for VM's to have settled down
@@ -727,29 +892,148 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Set RDA Source and Destination files and clean out source files if they still exist
 
         #region VM Idle state
-        $CurrentPhase = ($Phase * $i) + 8
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($CurrentPhase)" -CurrentMessage "Waiting before start of test"
+
+        # Update Test Dashboard
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "Waiting $($VSI_Target_MinutesToWaitAfterIdleVMs) Minutes Before Test" 
+            TotalPhase     = "$($RunPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentRunPhase++
+
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Currently Executing Run $($i)" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
 
         Write-Log -Message "Waiting for $VSI_Target_MinutesToWaitAfterIdleVMs minutes before starting test" -Level Info
         Start-sleep -Seconds $($VSI_Target_MinutesToWaitAfterIdleVMs * 60)
         #endregion VM Idle state
 
         #region Nutanix Curator Stop
-        $CurrentPhase = ($Phase * $i) + 9
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($CurrentPhase)" -CurrentMessage "Stopping Curator"
+
+        # Update Test Dashboard
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "Stopping Nutanix Curator" 
+            TotalPhase     = "$($RunPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentRunPhase++
+
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Currently Executing Run $($i)" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
 
         Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "stop"
         #endregion Nutanix Curator Stop
 
         #region Start the test
-        $CurrentPhase = ($Phase * $i) + 10
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($CurrentPhase)" -CurrentMessage "Starting Test Run $($i)"
+
+        # Update Test Dashboard
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "Starting Test Run $($i)" 
+            TotalPhase     = "$($RunPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentRunPhase++
+
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Currently Executing Run $($i)" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
 
         Start-LETest -testId $testId -Comment "$FolderName-$VSI_Target_Comment"
         $TestRun = Get-LETestRuns -testId $testId | Select-Object -Last 1
         #endregion Start the test
 
         #region Start monitoring
+
+        # Update Test Dashboard
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "Starting Login Enterprise Test Monitor Run $($i)" 
+            TotalPhase     = "$($RunPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentRunPhase++
+
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Currently Executing Run $($i)" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
+
         $Params = @{
             OutputFolder                 = $OutputFolder 
             DurationInMinutes            = $VSI_Target_DurationInMinutes 
@@ -763,6 +1047,38 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $monitoringJob = Start-VSINTNXMonitoring @params
         $Params = $null
 
+        # Update Test Dashboard
+        if ($VSI_Target_Files -ne "") { $Message = "Starting Nutanix Files Monitor Run $($i)" } else { $Message = "Skipping Nutanix Files Monitoring" }
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "$Message" 
+            TotalPhase     = "$($RunPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentRunPhase++
+
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Currently Executing Run $($i)" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
+
         if ($VSI_Target_Files -ne "") {
             $Params = @{
                 OutputFolder                 = $OutputFolder 
@@ -775,6 +1091,39 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $monitoringFilesJob = Start-NTNXFilesMonitoring @Params
             $Params = $null
         }
+
+        # Update Test Dashboard
+        if ($VSI_Target_NetScaler -ne "") { $Message = "Starting Citrix NetScaler Monitor Run $($i)" } else { $Message = "Skipping Citrix NetScaler Monitoring" }
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "$Message" 
+            TotalPhase     = "$($RunPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentRunPhase++
+
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Currently Executing Run $($i)" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
+
         if ($VSI_Target_NetScaler -ne "") {
             $Params = @{
                 OutputFolder      = $OutputFolder 
@@ -789,8 +1138,37 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Start monitoring
 
         #region Wait for test to finish
-        $CurrentPhase = ($Phase * $i) + 11
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($CurrentPhase)" -CurrentMessage "Waiting for test run $($i) to complete"
+
+        # Update Test Dashboard
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "Waiting For Test Run $($i) To Complete" 
+            TotalPhase     = "$($RunPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentRunPhase++
+
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Currently Executing Run $($i)" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
 
         Wait-LETest -testId $testId
         #endregion Wait for test to finish
@@ -806,15 +1184,73 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Cleanup monitoring job
 
         #region Nutanix Curator Start
-        $CurrentPhase = ($Phase * $i) + 12
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($CurrentPhase)" -CurrentMessage "Starting Curator"
+
+        # Update Test Dashboard
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "Starting Nutanix Curator" 
+            TotalPhase     = "$($RunPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentRunPhase++
+
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Currently Executing Run $($i)" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
 
         Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "start"
         #endregion Nutanix Curator Start
 
         #region Write config to OutputFolder
-        $CurrentPhase = ($Phase * $i) + 13
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($CurrentPhase)" -CurrentMessage "Exporting measurements to Output Folder"
+
+        # Update Test Dashboard
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "Exporting Test Data from Login Enterprise" 
+            TotalPhase     = "$($RunPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentRunPhase++
+
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Currently Executing Run $($i)" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
 
         $NTNXInfra.Testinfra.VMCPUCount = [Int]$VSI_Target_NumCPUs * [Int]$VSI_Target_NumCores
         $NTNXInfra.Testinfra.Testname = $FolderName
@@ -832,6 +1268,39 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Check for RDA File and if exists then move it to the output folder
 
         #region Cleanup Nutanix Files Data
+
+        # Update Test Dashboard
+        if ($VSI_Target_Files -ne "") { $Message = "Starting Nutanix Files Data Clean" } else { $Message = "Skipping Nutanix Files Data Clean" }
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "$Message" 
+            TotalPhase     = "$($RunPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentRunPhase++
+
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Currently Executing Run $($i)" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
+
         if ($VSI_Target_Files -ne "") {
             if ($null -ne $TBD_NtxFilesShares) {
                 Write-Log -Message "Processing Nutanix Files Data Removal" -Level Info
@@ -842,8 +1311,38 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Cleanup Nutanix Files Data
 
         #region Upload Data to Influx
-        $CurrentPhase = ($Phase * $i) + 14
-        $null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber $Run -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($CurrentPhase)" -CurrentMessage "Uploading Test Run Data to InfluxDB"
+        
+        # Update Test Dashboard
+        if ($NTNXInfra.Test.UploadResults) { $Message = "Uploading Data to InfluxDB" } else { $Message = "Skipping InfluxDB Data Upload" }
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "$Message" 
+            TotalPhase     = "$($RunPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentRunPhase++
+
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Currently Executing Run $($i)" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
 
         if ($NTNXInfra.Test.UploadResults) {
             Write-Log -Message "Uploading Test Run Data to Influx" -Level Info
@@ -869,12 +1368,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                     Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
                     if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
                         Write-Log -Message "Finished uploading Boot File $($File.Name) to Influx" -Level Info
-                    }
-                    else {
+                    } else {
                         Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
                     }
-                }
-                else {
+                } else {
                     Write-Log -Message "Skipped uploading Boot File $($File.Name) to Influx" -Level Info
                 }
             }
@@ -889,23 +1386,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             foreach ($File in $Files) {
                 if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*")) {
                     Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
-                    $UploadResult = Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName
-                    if ($UploadResult.Return -eq $true) {
+                    if(Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName){
                         Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info -Update
-                        $UploadStatus = "Finished"
+                    } else {
+                        Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
                     }
-                    else {
-                        if ($UploadResult.TagValidated -eq $false) {
-                            Write-Log -Message "Error with empty tag value - check json test result file" -Level Warn
-                            $UploadStatus = "Empty Tag Value"
-                        }
-                        else {
-                            Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
-                            $UploadStatus = "Errored"
-                        }
-                    }
-                }
-                else {
+                } else {
                     Write-Log -Message "Skipped uploading File $($File.Name) to Influx" -Level Info
                 }
             }
@@ -939,6 +1425,41 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
         #endregion Slack update
 
+        #region Finish Test Run
+
+        # Update Test Dashboard
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Complete" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "Test Run $($i) Complete" 
+            TotalPhase     = "$($RunPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentRunPhase++
+
+        $params = @{
+            ConfigFile     = $ConfigFile
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Finished Test Run $($i)" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
+
+        #endregion Finish Test Run
+
     }
     #endregion Iterate through runs
 
@@ -965,8 +1486,22 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 }
 #endregion Execute Test
 
+# Update Test Dashboard
+$params = @{
+    ConfigFile     = $ConfigFile
+    TestName       = $NTNXTestname 
+    RunNumber      = "0" 
+    InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+    InfluxBucket   = $InfluxTestDashBucket 
+    Status         = "Complete" 
+    CurrentPhase   = $CurrentTotalPhase 
+    CurrentMessage = "Test Complete" 
+    TotalPhase     = "$($TotalPhases)"
+}
+$null = Set-TestData  @params
+$params = $null
+
 #endregion Execute
-$null = Set-TestData -ConfigFile $ConfigFile -TestName $NTNXTestname -RunNumber "$($i)" -InfluxUri $NTNXInfra.TestInfra.InfluxDBurl -InfluxBucket $InfluxTestDashBucket -Status "Running" -CurrentPhase "$($RunningPhase)" -CurrentMessage "Starting Run $($i)"
 
 Write-Log -Message "Script Finished" -Level Info
 Break #Temporary! Replace with #Exit 0

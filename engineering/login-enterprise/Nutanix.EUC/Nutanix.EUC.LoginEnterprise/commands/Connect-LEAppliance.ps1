@@ -19,7 +19,7 @@ function Connect-LEAppliance {
 
         if ($null -eq (Get-LEApplications)) {
             Write-Log -Message "Failed to connect to appliance at $url, please check that the URL and Token are correct" -Level Error
-            Break
+            Exit 1
         }
         else {
             Write-Log -Message "Connected to VSI Appliance at URL: $($global:LE_URL)" -Level Info
