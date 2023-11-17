@@ -5,11 +5,11 @@
             "ApplianceToken": "MANDATORY_TO_DEFINE" //Get this from external notifications/public api, make sure to create a system access token with access level: Configuration
         },
         "Launchers": {
-            "NamingPattern": "LE1-2023-", // Create your own Launcher VMs and put them in the Launcher AD OU container. Reboot them 2-3 times after creation to set autologin and registering to LE. Use ansible playbook.
+            "NamingPattern": "LE1-202309-", // Create your own Launcher VMs and put them in the Launcher AD OU container. Reboot them 2-3 times after creation to set autologin and registering to LE. Use ansible playbook.
             "GroupName": "LE1-Launchers" // Launcher group name to be used in login enterprise    
         },
         "Users": {
-            "BaseName": "VSISH", // Use BaseName with your initials.
+            "BaseName": "VSILE1", // Use BaseName with your initials.
             "GroupName": "${Users.BaseName}", // Resolves to "testUser"
             "Password": "SuperSecurePassword!123", // Password of VSI accounts
             "NetBios": "${Domain.NetBios}", // Resolves to "EXAMPLE"
@@ -23,11 +23,11 @@
             "ApplianceToken": "" //Get this from external notifications/public api, make sure to create a system access token with access level: Configuration
         },
         "Launchers": {
-            "NamingPattern": "LE2-2023-", // Create your own Launcher VMs and put them in the Launcher AD OU container. Reboot them 2-3 times after creation to set autologin and registering to LE. Use ansible playbook.
+            "NamingPattern": "LE2-202309-", // Create your own Launcher VMs and put them in the Launcher AD OU container. Reboot them 2-3 times after creation to set autologin and registering to LE. Use ansible playbook.
             "GroupName": "LE2-Launchers" // Launcher group name to be used in login enterprise    
         },
         "Users": {
-            "BaseName": "VSISH", // Use BaseName with your initials.
+            "BaseName": "VSILE2", // Use BaseName with your initials.
             "GroupName": "${Users.BaseName}", // Resolves to "testUser"
             "Password": "SuperSecurePassword!123", // Password of VSI accounts
             "NetBios": "${Domain.NetBios}", // Resolves to "EXAMPLE"
@@ -41,11 +41,11 @@
             "ApplianceToken": "" //Get this from external notifications/public api, make sure to create a system access token with access level: Configuration
         },
         "Launchers": {
-            "NamingPattern": "LE3-2023-", // Create your own Launcher VMs and put them in the Launcher AD OU container. Reboot them 2-3 times after creation to set autologin and registering to LE. Use ansible playbook.
+            "NamingPattern": "LE3-202309-", // Create your own Launcher VMs and put them in the Launcher AD OU container. Reboot them 2-3 times after creation to set autologin and registering to LE. Use ansible playbook.
             "GroupName": "LE3-Launchers" // Launcher group name to be used in login enterprise    
         },
         "Users": {
-            "BaseName": "VSISH", // Use BaseName with your initials.
+            "BaseName": "VSILE3", // Use BaseName with your initials.
             "GroupName": "${Users.BaseName}", // Resolves to "testUser"
             "Password": "SuperSecurePassword!123", // Password of VSI accounts
             "NetBios": "${Domain.NetBios}", // Resolves to "EXAMPLE"

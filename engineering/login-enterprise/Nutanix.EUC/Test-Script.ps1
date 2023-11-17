@@ -225,8 +225,6 @@ $Temp_Module = $null
 #----------------------------------------------------------------------------------------------------------------------------
 Set-VSIConfigurationVariables -ConfigurationFile $ConfigFile
 
-## PlaceHolder: Add LE Global Variable Details here - Note that Set-VSIConfigurationVariables resets all variables. Need some help with the function to replace the below
-########SVENNNNNNN - SANITY CHECK PLEASE
 Set-VSIConfigurationVariablesLEGlobal -ConfigurationFile $LEConfigFile -LEAppliance $LEAppliance
 
 # Fix trailing slash issue

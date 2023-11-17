@@ -53,22 +53,22 @@ function Set-VSIConfigurationVariablesLEGlobal {
     
     # Expand variables
     ########SVENNNNNNN - SANITY CHECK PLEASE
-    Foreach ($VSI_Var in Get-Variable -Scope Global -Name VSI_* | Where-Object {$_.Name -Like "VSI_Users*" -or $_.Name -like "VSI_LoginEnterprise_*" -or $_.Name -like "VSI_Launchers_*" }) {
-        $newVal = $VSI_Var.Value
-        :loop while ($newVal -match "\$\{.+?\}") {
-            foreach ($match in $matches) {
-                $sectionName = ($match[0] -replace "\$\{", "" -replace "\}", "").Split(".")[0]
-                $propertyName = ($match[0] -replace "\$\{", "" -replace "\}", "").Split(".")[1]
-                $TargetVar = $null
-                $TargetVar = Get-Variable -Name "VSI_$($sectionName)_$($propertyName)" -errorAction SilentlyContinue
-                if ($null -ne $TargetVar) {
-                    $expandedMatch = $TargetVar.Value
-                    $newVal = $newVal.Replace($match[0], $expandedMatch)
-                }
-                else { break loop }
-            }
-        }
-            
-        $VSI_Var.Value = $newVal
-    }
+    #Foreach ($VSI_Var in Get-Variable -Scope Global -Name VSI_* | Where-Object {$_.Name -Like "VSI_Users*" -or $_.Name -like "VSI_LoginEnterprise_*" -or $_.Name -like "VSI_Launchers_*" }) {
+    #    $newVal = $VSI_Var.Value
+    #    :loop while ($newVal -match "\$\{.+?\}") {
+    #        foreach ($match in $matches) {
+    #            $sectionName = ($match[0] -replace "\$\{", "" -replace "\}", "").Split(".")[0]
+    #            $propertyName = ($match[0] -replace "\$\{", "" -replace "\}", "").Split(".")[1]
+    #            $TargetVar = $null
+    #           $TargetVar = Get-Variable -Name "VSI_$($sectionName)_$($propertyName)" -errorAction SilentlyContinue
+    #           if ($null -ne $TargetVar) {
+    #                $expandedMatch = $TargetVar.Value
+    #                $newVal = $newVal.Replace($match[0], $expandedMatch)
+    #            }
+    #            else { break loop }
+    #        }
+    #    }
+    #        
+    #    $VSI_Var.Value = $newVal
+    #}
 }
