@@ -1470,6 +1470,9 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             Update-VSISlackImage @params
             $Params = $null
         }
+        else {
+            Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Leve Warn
+        }
         #endregion Slack update
 
         #region Finish Test Run
@@ -1531,6 +1534,9 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
         Update-VSISlackImage @params
         $Params = $Null
+    }
+    else {
+        Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Leve Warn
     }
     #endregion Slack update
 }

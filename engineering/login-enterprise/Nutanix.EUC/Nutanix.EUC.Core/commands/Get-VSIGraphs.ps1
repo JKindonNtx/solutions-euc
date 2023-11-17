@@ -18,7 +18,8 @@ function Get-VSIGraphs {
         $TestConfig,
         $OutputFolder,
         $RunNumber,
-        $TestName
+        $TestName,
+        $ImageDownloadRetryCount = 5 #How many times to rety the download if it fails due to timeout
     )
 
     $BucketName = $TestConfig.test.BucketName
@@ -88,11 +89,27 @@ function Get-VSIGraphs {
             }
             $Uri = "$($TestConfig.Testinfra.GrafanaUriDocs)&var-Bucketname=$($BucketName)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
             Write-Log -Message "Downloading $($OutFile) from Grafana" -Level Info
+            
             try {
                 Invoke-WebRequest -Uri $Uri -outfile $OutFile -ErrorAction Stop
             }
             catch {
                 #What do we want to do here?
+                Write-Log -Message "Download of Image failed. Retrying. Grafana could be busy" -Level Warn
+                Write-Log -Message $_ -Level Warn
+                $count = 0 # Initialize a counter
+                Write-Log -Message "Retrying Download of image $($ImageDownloadRetryCount) times." -Level Info
+                while ($count -lt $ImageDownloadRetryCount) {
+                    $count++
+                    Write-Log -Message "Retry Iteration $($count) of $($ImageDownloadRetryCount)" -Level Info
+                    try {
+                        Invoke-WebRequest -Uri $Uri -outfile $OutFile -ErrorAction Stop
+                    }
+                    catch {
+                        Write-Log -Message "Download of Image failed. Retries left: $($ImageDownloadRetryCount - $count)" -Level Warn
+                    }
+                }
+                Write-Log -Message "Image Failed to download" -Level Error
             }
                 
         }
