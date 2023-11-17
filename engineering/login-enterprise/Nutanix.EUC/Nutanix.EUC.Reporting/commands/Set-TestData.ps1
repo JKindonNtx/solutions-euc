@@ -58,7 +58,7 @@ function Set-TestData {
             [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$RunNumber,
             [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$InfluxUri,
             [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$InfluxBucket,
-            [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][ValidateSet("Planned","Running","Complete","Error")]$Status,
+            [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][ValidateSet("Planned","Running","Completed","Error")]$Status,
             [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$false)]$ErrorMessage,
             [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$CurrentPhase,
             [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$TotalPhase,
@@ -99,13 +99,13 @@ function Set-TestData {
             {
                 "Planned" { $StatusInt = "0"}
                 "Running" { $StatusInt = "1"}
-                "Complete" { $StatusInt = "2"}
+                "Completed" { $StatusInt = "2"}
                 "Error" { $StatusInt = "3"}
             }
             $Fields = "TestStatus=$($StatusInt)"
 
             # Build the Test Tags
-            $LEAppliance = ($ConfigJSON.Users.BaseName).Replace("VSI", "")
+            $LEAppliance = ($VSI_LoginEnterprise_ApplianceURL).Replace("https://", "")
             $Tag = (
                 "Run=$($RunNumber)," +
                 "ImageIterations=$($ConfigJSON.Target.ImageIterations)," +
@@ -168,7 +168,8 @@ function Set-TestData {
                 "DataCenter=$($ConfigJSON.testinfra.Datacenter)," + 
                 "ClusterName=$($ConfigJSON.testinfra.ClusterName)," + 
                 "LEAppliance=$($LEAppliance)," + 
-                "User=$($ConfigJSON.Target.CVM_admin)"
+                "User=$($ConfigJSON.Target.CVM_admin)," +
+                "Bucket=$($ConfigJSON.Test.BucketName)"
             )
 
             if($StatusInt -eq "3"){

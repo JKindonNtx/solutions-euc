@@ -202,6 +202,7 @@ if ($Type -eq "Horizon") {
 
 #region remove existing SSH Keys ***UPDATE****
 #----------------------------------------------------------------------------------------------------------------------------
+Write-Log -Message "Searching all modules for Posh-SSH" -Level Info
 $Temp_Module = (Get-Module -ListAvailable *) | Where-Object { $_.Name -eq "Posh-SSH" }
 if ($Null -ne $Temp_Module) {
     Write-Log -Message "Module Posh-SSH Found. Clearing existing SSH Keys if present" -Level Info
@@ -322,7 +323,7 @@ if ($VSI_Target_Files -ne "") {
 #Set the multiplier for the Workloadtype. This adjusts the required MHz per user setting.
 ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     Set-VSIConfigurationVariables -ImageConfiguration $ImageToTest
-
+#}
     #region Validate Workload Profiles
     #----------------------------------------------------------------------------------------------------------------------------
     if ($VSI_Target_Workload -notin $Validated_Workload_Profiles ) {
@@ -345,6 +346,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     Write-Log -Message "Setting up Test Details" -Level Info
     $NTNXid = (New-Guid).Guid.SubString(1, 6)
     $NTNXTestname = "$($NTNXid)_$($VSI_Target_NodeCount)n_A$($NTNXInfra.Testinfra.AOSversion)_$($NTNXInfra.Testinfra.HypervisorType)_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
+    Write-Log -Message "Testname configured: $($NTNXTestname)" -Level Info
     #endregion Setup testname
 
     #region Setup Test Dashboard Data
@@ -596,11 +598,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $ContainerId = Get-NTNXStorageUUID -Storage $VSI_Target_CVM_storage
         $Hostuuid = Get-NTNXHostUUID -NTNXHost $VSI_Target_NTNXHost
         $IPMI_ip = Get-NTNXHostIPMI -NTNXHost $VSI_Target_NTNXHost
-        if ($Mode -eq "CitrixVAD" -or $Mode -eq "CitrixDaaS") {
+        if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
             ## Placeholder Block to capture the relevent settings below - will change with different tech
+            $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $VSI_Target_HypervisorConnection + "\" + $VSI_Target_HypervisorNetwork + ".network" }
+            $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
         }
-        $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $VSI_Target_HypervisorConnection + "\" + $VSI_Target_HypervisorNetwork + ".network" }
-        $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
+        
 
         #endregion Get Nutanix Info
 
@@ -638,38 +641,39 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $params = $null
         $CurrentTotalPhase++
 
-        if ($Mode -eq "CitrixVAD" -or $Mode -eq "CitrixDaaS") {
+        if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
             ## Placeholder Block to capture the relevent settings below - will change with different tech
+            $params = @{
+                ParentVM             = $ParentVM
+                HypervisorConnection = $VSI_Target_HypervisorConnection
+                HypervisorType       = $NTNXInfra.Testinfra.HypervisorType
+                Networkmap           = $networkMap
+                CpuCount             = $VSI_Target_NumCPUs
+                CoresCount           = $VSI_Target_NumCores
+                MemoryGB             = $VSI_Target_MemoryGB
+                ContainerID          = $ContainerId
+                NamingPattern        = $VSI_Target_NamingPattern
+                OU                   = $VSI_Target_ADContainer
+                DomainName           = $VSI_Target_DomainName
+                SessionsSupport      = $VSI_Target_SessionsSupport
+                DesktopPoolName      = $VSI_Target_DesktopPoolName
+                ZoneName             = $VSI_Target_ZoneName
+                Force                = $Force.IsPresent ## Command line required this -Force:$Force.IsPresent note the :
+                EntitledGroup        = $VSI_Users_BaseName
+                SkipImagePrep        = $VSI_Target_SkipImagePrep
+                FunctionalLevel      = $VSI_Target_FunctionalLevel
+                CloneType            = $VSI_Target_CloneType
+                DDC                  = $VSI_Target_DDC
+            }
+            $CreatePool = Set-VSICTXDesktopPoolNTNX @params
+    
+            $NTNXInfra.Testinfra.MaxAbsoluteActiveActions = $CreatePool.MaxAbsoluteActiveActions
+            $NTNXInfra.Testinfra.MaxAbsoluteNewActionsPerMinute = $CreatePool.MaxAbsoluteNewActionsPerMinute
+            $NTNXInfra.Testinfra.MaxPercentageActiveActions = $CreatePool.MaxPercentageActiveActions
         }
-        $params = @{
-            ParentVM             = $ParentVM
-            HypervisorConnection = $VSI_Target_HypervisorConnection
-            HypervisorType       = $NTNXInfra.Testinfra.HypervisorType
-            Networkmap           = $networkMap
-            CpuCount             = $VSI_Target_NumCPUs
-            CoresCount           = $VSI_Target_NumCores
-            MemoryGB             = $VSI_Target_MemoryGB
-            ContainerID          = $ContainerId
-            NamingPattern        = $VSI_Target_NamingPattern
-            OU                   = $VSI_Target_ADContainer
-            DomainName           = $VSI_Target_DomainName
-            SessionsSupport      = $VSI_Target_SessionsSupport
-            DesktopPoolName      = $VSI_Target_DesktopPoolName
-            ZoneName             = $VSI_Target_ZoneName
-            Force                = $Force.IsPresent ## Command line required this -Force:$Force.IsPresent note the :
-            EntitledGroup        = $VSI_Users_BaseName
-            SkipImagePrep        = $VSI_Target_SkipImagePrep
-            FunctionalLevel      = $VSI_Target_FunctionalLevel
-            CloneType            = $VSI_Target_CloneType
-            DDC                  = $VSI_Target_DDC
-        }
-        $CreatePool = Set-VSICTXDesktopPoolNTNX @params
 
-        $NTNXInfra.Testinfra.MaxAbsoluteActiveActions = $CreatePool.MaxAbsoluteActiveActions
-        $NTNXInfra.Testinfra.MaxAbsoluteNewActionsPerMinute = $CreatePool.MaxAbsoluteNewActionsPerMinute
-        $NTNXInfra.Testinfra.MaxPercentageActiveActions = $CreatePool.MaxPercentageActiveActions
 
-        if ($Mode -eq "Horizon") {
+        if ($Type -eq "Horizon") {
             #Need to check with Sven here - which config do we use Horizon-NTNX.ps1 or NorizonView.Ps1?
             $params = @{
                 Name                      = $VSI_Target_DesktopPoolName
@@ -752,7 +756,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         $params = $null
 
-        if ($Mode -eq "CitrixVAD" -or $Mode -eq "CitrixDaaS") {
+        if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
             #Placeholder block to capture the below settings
             $params = @{
                 DesktopPoolName = $VSI_Target_DesktopPoolName
@@ -771,8 +775,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     
             $Params = $null
         }
-        
-        if ($Mode -eq "Horizon") {
+
+        if ($Type -eq "Horizon") {
             # Need to check with Sven on this
             if ($VSI_Target_PoolType -eq "RDSH") {
                 $Boot = Enable-VSIHVDesktopPool -Name $VSI_Target_DesktopPoolName -VMAmount $VSI_Target_NumberOfVMs -Increment $VSI_Target_VMPoolIncrement -RDSH
@@ -791,14 +795,14 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #region Get Build Tattoo Information and update variable with new values
         #----------------------------------------------------------------------------------------------------------------------------
-        if ($Mode -eq "CitrixVAD" -or $Mode -eq "CitrixDaaS") {
+        if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
             ## Placeholder Block to capture the relevent settings below - will change with different tech
             $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $VSI_Target_DesktopPoolName -MaxRecordCount $MaxRecordCount
             $RegisteredVMs = ($BrokerVMS | Where-Object { $_.RegistrationState -eq "Registered" })
             $MasterImageDNS = $RegisteredVMs[0].DNSName
         }
         
-        if ($Mode -eq "Horizon") {
+        if ($Type -eq "Horizon") {
             # Need to check with Sven on this
             ## Placeholder to get the Horizon First Machine FQND into $MasterImageDNS
         }
@@ -835,19 +839,21 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
 
         try {
+            Write-Log -Message "Getting Image Tattoo" -Level Info
             $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTatoo } -ErrorAction Stop 
+            $NTNXInfra.Target.ImagesToTest.TargetOS = $Tattoo.OSName
+            $NTNXInfra.Target.ImagesToTest.TargetOSVersion = $Tattoo.OSVersion
+            $NTNXInfra.Target.ImagesToTest.OfficeVersion = $Tattoo.OfficeName
+            $NTNXInfra.Target.ImagesToTest.ToolsGuestVersion = $Tattoo.GuestToolsVersion
+            $NTNXInfra.Target.ImagesToTest.OptimizerVendor = $Tattoo.Optimizer
+            $NTNXInfra.Target.ImagesToTest.OptimizationsVersion = $Tattoo.OptimizerVersion
+            $NTNXInfra.Target.ImagesToTest.DesktopBrokerAgentVersion = $Tattoo.VdaVersion
         }
         catch {
             Write-Log -Message $_ -Level Error
             Break #Temporary! Replace with #Break
         }
-        $NTNXInfra.Target.ImagesToTest.TargetOS = $Tattoo.OSName
-        $NTNXInfra.Target.ImagesToTest.TargetOSVersion = $Tattoo.OSVersion
-        $NTNXInfra.Target.ImagesToTest.OfficeVersion = $Tattoo.OfficeName
-        $NTNXInfra.Target.ImagesToTest.ToolsGuestVersion = $Tattoo.GuestToolsVersion
-        $NTNXInfra.Target.ImagesToTest.OptimizerVendor = $Tattoo.Optimizer
-        $NTNXInfra.Target.ImagesToTest.OptimizationsVersion = $Tattoo.OptimizerVersion
-        $NTNXInfra.Target.ImagesToTest.DesktopBrokerAgentVersion = $Tattoo.VdaVersion
+        
         #endregion Get Build Tattoo Information and update variable with new values
 
         #region Set number of sessions per launcher

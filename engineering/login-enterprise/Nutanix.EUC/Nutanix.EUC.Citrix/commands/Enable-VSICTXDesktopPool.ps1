@@ -25,35 +25,36 @@ function Enable-VSICTXDesktopPool {
     $Boot = "" | Select-Object -Property bootstart, boottime
 
     #region Power off VMs
-    $desktops = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount 2500
-    $totalDesktops = $desktops.Count
+    if(!($null -eq $desktops)){
+        $desktops = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount 2500
+        $totalDesktops = $desktops.Count
 
-    Start-Sleep 2
-    Write-Log -Message "Initiate the shutdown for all the VMs." -Level Info
-    foreach ($desktop in $desktops) { 
-        $desktop | New-BrokerHostingPowerAction -Action TurnOff | Out-Null
-    }
-
-    $desktops = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $totalDesktops | Where-Object { $_.PowerState -eq "On" }	
-
-    $startTime = Get-Date
-    $date = Get-Date
-    $timeout = 180
-
-    while ($desktops.Count -ne 0) {
-        $desktops = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $totalDesktops | Where-Object { $_.PowerState -eq "On" }	
-        Write-Log -Update -Message "$($desktops.Count) of $($totalDesktops) still running." -Level Info
-         
-        $date = Get-Date
-        if (($date - $startTime).TotalMinutes -gt $timeout) {
-            Write-Log -Message "Shutdown took to long." -Level Error
-            Break
+        Start-Sleep 2
+        Write-Log -Message "Initiate the shutdown for all the VMs." -Level Info
+        foreach ($desktop in $desktops) { 
+            $desktop | New-BrokerHostingPowerAction -Action TurnOff | Out-Null
         }
-        Start-Sleep 10
-    }
-    Write-Log -Message "All VMs are down." -Level Info
-    #endregion Power off VMs
 
+        $desktops = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $totalDesktops | Where-Object { $_.PowerState -eq "On" }	
+
+        $startTime = Get-Date
+        $date = Get-Date
+        $timeout = 180
+
+        while ($desktops.Count -ne 0) {
+            $desktops = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $totalDesktops | Where-Object { $_.PowerState -eq "On" }	
+            Write-Log -Update -Message "$($desktops.Count) of $($totalDesktops) still running." -Level Info
+            
+            $date = Get-Date
+            if (($date - $startTime).TotalMinutes -gt $timeout) {
+                Write-Log -Message "Shutdown took to long." -Level Error
+                Break
+            }
+            Start-Sleep 10
+        }
+        Write-Log -Message "All VMs are down." -Level Info
+        #endregion Power off VMs
+    }
     if ($CloneType -eq "MCS") {
         $ExistingVMCount = (Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -MaxRecordCount $MaxRecordCount | Measure-Object).Count
     }
@@ -86,7 +87,7 @@ function Enable-VSICTXDesktopPool {
             }
             catch {
             }
-            Write-Log -Update "$totalPercent% Complete:" -percentComplete $totalpercent
+            Write-Log -Update "$($totalPercent)% Complete" -level Info
             Start-Sleep 3
             $provtask = Get-ProvTask -AdminAddress $DDC -TaskId $provTaskId
         }

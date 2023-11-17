@@ -1,18 +1,16 @@
 function New-LELauncherGroup {
-    
-    [CmdletBinding()]
-
+    [CmdletBinding(DefaultParametersetName = 'None')] 
     Param (
-        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)] [string]$Name,
         [Parameter(ParameterSetName = 'Filter', Mandatory = $false)][switch]$Filter,      
         [Parameter(ParameterSetName = 'Filter', Mandatory = $true)][string]$Condition,
-        [Parameter(Mandatory = $false)][array]$LauncherNames,
-        [Parameter(Mandatory = $false)][string]$Description
+        [array]$LauncherNames,
+        [string]$Description
     )
 
     if ($Filter.IsPresent) {
         $Body = @{
-            'type'      = "Filter"
+            'type'     = "Filter"
             groupId     = New-Guid
             name        = $Name
             description = $Description
@@ -21,20 +19,13 @@ function New-LELauncherGroup {
     }
     else {
         $Body = @{
-            'type'        = "Selection"
+            'type'       = "Selection"
             groupId       = New-Guid
             name          = $Name
             description   = $Description
             launcherNames = $LauncherNames
         } | ConvertTo-Json
     }
-    try {
-        $Response = Invoke-PublicApiMethod -Method "POST" -Path "v6/launcher-groups" -Body $Body -ErrorAction Stop
-        $Response.id
-    }
-    catch {
-        Write-Log -Message $_ -Level Error
-        Break
-    }
-
+    $Response = Invoke-PublicApiMethod -Method "POST" -Path "v6/launcher-groups" -Body $Body
+    $Response.id
 }

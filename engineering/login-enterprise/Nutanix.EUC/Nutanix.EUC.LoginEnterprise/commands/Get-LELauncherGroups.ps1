@@ -1,12 +1,11 @@
 function Get-LELauncherGroups {
 
-    [CmdletBinding()]
 
     Param (
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][string]$orderBy = "Name",
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][string]$Direction = "asc",
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)] [string]$Count = "50",
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)] [string]$Include = "none"
+        $orderBy = "Name",
+        $Direction = "asc",
+        $Count = "50",
+        $Include = "none"
     )
 
     $Body = @{

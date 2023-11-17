@@ -10,7 +10,7 @@ function Remove-LELauncherGroups {
 
     try {
         $Response = Invoke-PublicApiMethod -Method "DELETE" -Path "v6/launcher-groups" -Body $Body
-        $Response.id
+        
     }
     catch {
         Write-Log -Message $_ -Level Error

@@ -13,10 +13,10 @@ For any issues please see: https://github.com/nutanix-enterprise/solutions-euc/e
 Current Contributors:
 
 The Big Man       - Kees Baggerman
-The Speed         - Sven Huisman
+The Doc           - Sven Huisman
 The Aussie        - James Kindon
 The Hair          - Jarian Gibson
-The Brit          - Dave Brett
+Mr Ultra          - Dave Brett
 
 "@        
 

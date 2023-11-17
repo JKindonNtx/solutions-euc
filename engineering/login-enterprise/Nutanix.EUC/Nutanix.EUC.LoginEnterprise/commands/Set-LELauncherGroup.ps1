@@ -1,10 +1,9 @@
 function Set-LELauncherGroup {
 
-    [CmdletBinding()]
 
     Param (
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][System.String]$LauncherGroupName,
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][System.String]$NamingPattern
+        $LauncherGroupName,
+        $NamingPattern
     )
 
     $ExistingLauncherGroup = Get-LELauncherGroups | Where-Object { $_.name -eq $LauncherGroupName }

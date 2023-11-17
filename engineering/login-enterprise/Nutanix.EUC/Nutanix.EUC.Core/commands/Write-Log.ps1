@@ -30,7 +30,7 @@ Writes an Info Output to the console
 
     Param (
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)][String]$Message,
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][Switch]$Update,
+        [Switch]$Update,
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][ValidateSet("Error", "Warn", "Info", "Validation")][String]$Level = "Info"
     )
 
@@ -38,7 +38,7 @@ Writes an Info Output to the console
     switch ($Level) {
         'Error' {
             if ($Update.IsPresent) {
-                Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message" -NoNewline
+                Write-Host "`r$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message" -NoNewline
             }
             else {
                 Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message"
@@ -46,7 +46,7 @@ Writes an Info Output to the console
         }
         'Warn' {
             if ($Update.IsPresent) {
-                Write-Host "$([char]0x1b)[33m[$([char]0x1b)[33m$(Get-Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message" -NoNewline
+                Write-Host "`r$([char]0x1b)[33m[$([char]0x1b)[33m$(Get-Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message" -NoNewline
             }
             else {
                 Write-Host "$([char]0x1b)[33m[$([char]0x1b)[33m$(Get-Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message"
@@ -54,7 +54,7 @@ Writes an Info Output to the console
         }
         'Info' {
             if ($Update.IsPresent) {
-                Write-Host "$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message" -NoNewline
+                Write-Host "`r$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message" -NoNewline
             }
             else {
                 Write-Host "$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message"

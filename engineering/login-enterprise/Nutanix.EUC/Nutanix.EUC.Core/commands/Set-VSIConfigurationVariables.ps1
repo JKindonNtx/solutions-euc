@@ -1,10 +1,10 @@
-function Set-VSIConfigurationVariables {
+function Set-VSIConfigurationVariablesDAVE {
 
     [CmdletBinding()]
 
     Param (
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][String]$ConfigurationFile,
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][String]$ImageConfiguration
+        $ConfigurationFile,
+        $ImageConfiguration
     )
 
     if ($null -ne $ConfigurationFile) {
