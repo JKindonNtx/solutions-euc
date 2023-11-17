@@ -33,6 +33,7 @@
     13.10.2023: Added Nutanix Files Individual Runs to Nutanix Files Section. (Panel ID 127,128,129,130)
     13.10.2023: Moved icons array to variables section. Added a check for icon existence. If the file exists, it will no longer be downloaded. This speeds up iterative documentation versions.
     24.10.2023: Added Panels for Files stats breakouts, both Individual Runs and Averages (Panel ID 131-152)
+    26.10.2023: Added Panels for Individual run CPU Usage (Panel ID 156)
 - To Do
  -> Function this sucker - Inject between section headers
     # Add Page Break
@@ -57,17 +58,17 @@ Param(
     [string]$ImageSuffix, #shortname for image ouput - helpful for multi run documentation. moves an image from image_name.png to image_name_suffix.png
 
     [Parameter(Mandatory = $false)]
-    [string]$influxDbUrl = "http://10.57.64.119:8086/api/v2/query?orgID=bca5b8aeb2b51f2f",
+    [string]$influxDbUrl = "http://10.57.64.25:8086/api/v2/query?orgID=bca5b8aeb2b51f2f",
 
     [Parameter(Mandatory = $false)]
-    [string]$InfluxToken = "b4yxMiQGOAlR3JftuLHuqssnwo-SOisbC2O6-7od7noAE5W1MLsZxLF7e63RzvUoiOHObc9G8_YOk1rnCLNblA==",
+    [string]$InfluxToken = "8PsWoQV6QTmg98hk-dmVW61RbFs5SPOcVJII56Kp6Qi2E0Svyz6kHOAA8euFO6mzH_cgPODezlRe6qXlLLWgng==",
 
     [Parameter(Mandatory = $false)]
-    [string]$iconsSource = "http://10.57.64.119:3000/public/img/nutanix/",
+    [string]$iconsSource = "http://10.57.64.25:3000/public/img/nutanix/",
 
     [Parameter(Mandatory = $false)]
-    [ValidateSet("LoginEnterpriseResults","HostResources","ClusterResources","LoginTimes","Applications","VsiEuxMeasurements","RDA","BootInfo","IndividualRuns","NutanixFiles","CitrixNetScaler","None")]
-    [Array]$ExcludedComponentList = ("BootInfo","IndividualRuns","NutanixFiles","CitrixNetScaler") # Items to exclude
+    [ValidateSet("BootInfo","LoginEnterpriseResults","HostResources","ClusterResources","LoginTimes","Applications","VsiEuxMeasurements","RDA","IndividualRuns","NutanixFiles","CitrixNetScaler","None")]
+    [Array]$ExcludedComponentList = ("IndividualRuns","NutanixFiles","CitrixNetScaler") # Items to exclude
 
 )
 
@@ -212,6 +213,7 @@ function Get-Graphs {
                 89 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_iops.png" }
                 95 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_iops_individual_runs.png" }
                 93 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_latency.png" }
+                157 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_cpu.png" }
                 97 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_latency_individual_runs.png" }
                 2 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_vsi_max.png" }
                 5 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_vsi_max_individual_runs.png" }
@@ -244,6 +246,7 @@ function Get-Graphs {
                 70 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_total_logon_time.png" }
                 69 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_controller_latency.png" }
                 119 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_cpu_with_eux_score.png" }
+                156 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_cpu.png" }
                 31 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_start.png" }
                 32 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_open_doc.png" }
                 33 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_save_file.png" }
@@ -329,6 +332,7 @@ function Get-Graphs {
                 89 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_iops_$($ImageSuffix).png" }
                 95 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_iops_individual_runs_$($ImageSuffix).png" }
                 93 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_latency_$($ImageSuffix).png" }
+                157 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_cpu_$($ImageSuffix).png" }
                 97 { $OutFile = Join-Path -Path $imagePath -ChildPath "boot_time_cluster_controller_latency_individual_runs_$($ImageSuffix).png" }
                 2 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_vsi_max_$($ImageSuffix).png" }
                 5 { $OutFile = Join-Path -Path $imagePath -ChildPath "le_results_vsi_max_individual_runs_$($ImageSuffix).png" }
@@ -361,6 +365,7 @@ function Get-Graphs {
                 70 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_total_logon_time_$($ImageSuffix).png" }
                 69 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_controller_latency_$($ImageSuffix).png" }
                 119 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_cpu_with_eux_score_$($ImageSuffix).png" }
+                156 { $OutFile = Join-Path -Path $imagePath -ChildPath "individual_runs_cluster_cpu_$($ImageSuffix).png" }
                 31 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_start_$($ImageSuffix).png" }
                 32 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_open_doc_$($ImageSuffix).png" }
                 33 { $OutFile = Join-Path -Path $imagePath -ChildPath "applications_word_save_file_$($ImageSuffix).png" }
@@ -1248,8 +1253,8 @@ foreach($icon in $icons){
 if ($BootInfo) {
     Write-Screen -Message "Downloading Boot Info Graphs"
     # Build the PanelID Array 
-    $Panels = @('85', '84', '86', '94', '92', '96', '89', '95', '93', '97')   
-    [int]$maxboottime = (($testDetailResults.boottime | measure -Maximum).maximum + 30) * 1000
+    $Panels = @('85', '84', '86', '94', '92', '96', '89', '95', '93', '97', '157')   
+    [int]$maxboottime = (($testDetailResults.boottime | measure -Maximum).maximum + 150) * 1000
     $endtime = 1672534800000 + $maxboottime
     Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 }
@@ -1351,7 +1356,7 @@ else {
 if ($IndividualRuns) {
     Write-Screen -Message "Downloading Individual Runs Graphs"
     # Build the PanelID Array 
-    $Panels = @('66', '67', '68', '70', '69', '119')  
+    $Panels = @('66', '67', '68', '70', '69', '119', '156')  
     $endtime = "1672538820000"
     Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 }

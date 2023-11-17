@@ -1,4 +1,8 @@
 ---
+- name: Pause for 1 minutes
+  ansible.builtin.pause:
+    minutes: 1
+    
 - name: Run Citrix Optimizer - Nutanix Defaults
   ansible.windows.win_powershell:
     script: |
