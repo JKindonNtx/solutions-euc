@@ -92,7 +92,7 @@ $Validated_OS_Types = @("multisession", "singlesession")
 $VSI_Target_RampupInMinutes = 48 ##// This needs to move to JSON
 $MaxRecordCount = 5000 ##// This needs to move to Variables
 $InfluxTestDashBucket = "Tests" ##// This needs to move to Variables
-$LEAppliance = "LE1" ##// This needs to change to JSON input
+$LEAppliance = "LE1" ##// This needs to change to JSON input ########SVENNNNNNN - SANITY CHECK PLEASE
 #endregion Variables
 
 #Region Execute
