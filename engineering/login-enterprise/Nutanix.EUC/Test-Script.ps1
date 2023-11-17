@@ -227,44 +227,7 @@ Set-VSIConfigurationVariables -ConfigurationFile $ConfigFile
 
 ## PlaceHolder: Add LE Global Variable Details here - Note that Set-VSIConfigurationVariables resets all variables. Need some help with the function to replace the below
 ########SVENNNNNNN - SANITY CHECK PLEASE
-#Set-VSIConfigurationVariablesLEGlobal -ConfigurationFile $LEConfigFile -LEAppliance $LEAppliance
-
-#$LEGlobal_ConfigFile = Get-Content -Path $LEConfigFile -ErrorAction Stop
-#$LEGlobal_ConfigFile = $LEGlobal_ConfigFile -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/'
-#$LEGlobal_Config = $LEGlobal_ConfigFile | ConvertFrom-Json -ErrorAction Stop
-#if ($LEAppliance -eq "LE1") {
-#    Set-Variable -Name VSI_LoginEnterprise_ApplianceURL -Value $LEGlobal_Config.LE1.LoginEnterprise.ApplianceURL -Scope Global
-#    Set-Variable -Name VSI_LoginEnterprise_ApplianceToken -Value $LEGlobal_Config.LE1.LoginEnterprise.ApplianceToken -Scope Global
-#    Set-Variable -Name VSI_Launchers_GroupName -Value $LEGlobal_Config.LE1.Launchers.GroupName -Scope Global
-#    Set-Variable -Name VSI_Launchers_NamingPattern -Value $LEGlobal_Config.LE1.Launchers.NamingPattern -Scope Global
-#    Set-Variable -Name VSI_Users_BaseName -Value $LEGlobal_Config.LE1.Users.BaseName -Scope Global
-#    Set-Variable -Name VSI_Users_GroupName -Value $LEGlobal_Config.LE1.Users.GroupName -Scope Global
-#    Set-Variable -Name VSI_Users_NetBios -Value $LEGlobal_Config.LE1.Users.NetBios -Scope Global
-#    Set-Variable -Name VSI_Users_OU -Value $LEGlobal_Config.LE1.Users.OU -Scope Global
-#    Set-Variable -Name VSI_Users_NumberOfDigits -Value $LEGlobal_Config.LE1.Users.NumberOfDigits -Scope Global
-#}
-#if ($LEAppliance -eq "LE2") {
-#    Set-Variable -Name VSI_LoginEnterprise_ApplianceURL -Value $LEGlobal_Config.LE2.LoginEnterprise.ApplianceURL -Scope Global
-#    Set-Variable -Name VSI_LoginEnterprise_ApplianceToken -Value $LEGlobal_Config.LE2.LoginEnterprise.ApplianceToken -Scope Global
-#    Set-Variable -Name VSI_Launchers_GroupName -Value $LEGlobal_Config.LE2.Launchers.GroupName -Scope Global
-#    Set-Variable -Name VSI_Launchers_NamingPattern -Value $LEGlobal_Config.LE2.Launchers.NamingPattern -Scope Global
-#    Set-Variable -Name VSI_Users_BaseName -Value $LEGlobal_Config.LE2.Users.BaseName -Scope Global
-#    Set-Variable -Name VSI_Users_GroupName -Value $LEGlobal_Config.LE2.Users.GroupName -Scope Global
-#    Set-Variable -Name VSI_Users_NetBios -Value $LEGlobal_Config.LE2.Users.NetBios -Scope Global
-#    Set-Variable -Name VSI_Users_OU -Value $LEGlobal_Config.LE2.Users.OU -Scope Global
-#    Set-Variable -Name VSI_Users_NumberOfDigits -Value $LEGlobal_Config.LE2.Users.NumberOfDigits -Scope Global
-#}
-#if ($LEAppliance -eq "LE3") {
-#    Set-Variable -Name VSI_LoginEnterprise_ApplianceURL -Value $LEGlobal_Config.LE3.LoginEnterprise.ApplianceURL -Scope Global
-#    Set-Variable -Name VSI_LoginEnterprise_ApplianceToken -Value $LEGlobal_Config.LE3.LoginEnterprise.ApplianceToken -Scope Global
-#    Set-Variable -Name VSI_Launchers_GroupName -Value $LEGlobal_Config.LE3.Launchers.GroupName -Scope Global
-#    Set-Variable -Name VSI_Launchers_NamingPattern -Value $LEGlobal_Config.LE3.Launchers.NamingPattern -Scope Global
-#    Set-Variable -Name VSI_Users_BaseName -Value $LEGlobal_Config.LE3.Users.BaseName -Scope Global
-#    Set-Variable -Name VSI_Users_GroupName -Value $LEGlobal_Config.LE3.Users.GroupName -Scope Global
-#    Set-Variable -Name VSI_Users_NetBios -Value $LEGlobal_Config.LE3.Users.NetBios -Scope Global
-#    Set-Variable -Name VSI_Users_OU -Value $LEGlobal_Config.LE3.Users.OU -Scope Global
-#    Set-Variable -Name VSI_Users_NumberOfDigits -Value $LEGlobal_Config.LE3.Users.NumberOfDigits -Scope Global
-#}
+Set-VSIConfigurationVariablesLEGlobal -ConfigurationFile $LEConfigFile -LEAppliance $LEAppliance
 
 # Fix trailing slash issue
 $VSI_LoginEnterprise_ApplianceURL = $VSI_LoginEnterprise_ApplianceURL.TrimEnd("/")

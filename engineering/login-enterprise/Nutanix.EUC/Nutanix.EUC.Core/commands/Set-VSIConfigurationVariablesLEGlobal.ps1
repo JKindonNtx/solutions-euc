@@ -30,27 +30,30 @@ function Set-VSIConfigurationVariablesLEGlobal {
 
         ########SVENNNNNNN - SANITY CHECK PLEASE
         Get-Variable -Name VSI_* | Where-Object {$_.Name -Like "VSI_Users*" -or $_.Name -like "VSI_LoginEnterprise_*" -or $_.Name -like "VSI_Launchers_*" } -ErrorAction SilentlyContinue | Remove-Variable -ErrorAction SilentlyContinue
-        
         ########SVENNNNNNN!
         # Process config from configflie
-        foreach ($section in $config.PSObject.Properties) {
+        foreach ($section in $config.PSObject.Properties | Where-Object {$_.Name -eq $LEAppliance}) {
             foreach ($var in $section.Value.PSObject.Properties) { 
-                Set-Variable -Name "VSI_$($section.Name)_$($var.Name)" -Value $var.Value -Scope Global
+                foreach ($Obj in $var.Value) {
+                    foreach ($Obj in $Obj.PSObject.Properties) {
+                        Set-Variable -Name "VSI_$($var.Name)_$($Obj.Name)" -Value $Obj.Value -Scope Global
+                    }
+                }
             }
         }
     }
     
     # Process config from envVars, overwrites existing values
     ########SVENNNNNNN - SANITY CHECK PLEASE
-    foreach ($envVar in (Get-ChildItem env:VSI_* | Where-Object {$_.Name -Like "VSI_Users*" -or $_.Name -like "VSI_LoginEnterprise_*" -or $_.Name -like "VSI_Launchers_*" })) { 
-        $sectionName = $envVar.Name.SubString(4).Split("_")[0]
-        $propertyName = $envVar.Name.SubString(4).Split("_")[1]
-        Set-Variable -Name "VSI_$($sectionName)_$($propertyName)" -Value $envVar.Value -Scope Global
-    }
+    #foreach ($envVar in (Get-ChildItem env:VSI_* | Where-Object {$_.Name -Like "VSI_Users*" -or $_.Name -like "VSI_LoginEnterprise_*" -or $_.Name -like "VSI_Launchers_*" })) { 
+    #    $sectionName = $envVar.Name.SubString(4).Split("_")[0]
+    #    $propertyName = $envVar.Name.SubString(4).Split("_")[1]
+    #    Set-Variable -Name "VSI_$($sectionName)_$($propertyName)" -Value $envVar.Value -Scope Global
+    #}
     
     # Expand variables
     ########SVENNNNNNN - SANITY CHECK PLEASE
-    Foreach ($VSI_Var in Get-Variable -Scope Global -Name VSI_* | Where-Object {$_.Name -Like "VSI_Users*" -or $_.Name -like "VSI_LoginEnterprise_*" -or $_.Name -like "VSI_Launchers_*" }  -Exclude VSI_Target_ImagesToTest) {
+    Foreach ($VSI_Var in Get-Variable -Scope Global -Name VSI_* | Where-Object {$_.Name -Like "VSI_Users*" -or $_.Name -like "VSI_LoginEnterprise_*" -or $_.Name -like "VSI_Launchers_*" }) {
         $newVal = $VSI_Var.Value
         :loop while ($newVal -match "\$\{.+?\}") {
             foreach ($match in $matches) {
