@@ -232,7 +232,7 @@ function Start-InfluxUpload {
                         $Fields = $Fields.Replace('null', '0')
 
                         # Format the Tag to allow for influx upload
-                        $tag = $tag.replace(' ','\ ')
+                        $tag = $tag.replace(' ','_')
 
                         # Get the timestamp for the line and calculate the delta Start Time
                         $CSVDate = $($line.Timestamp)

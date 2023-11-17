@@ -32,6 +32,8 @@ function Start-VSINTNXMonitoring {
         #Import-Module "$Path\modules\VSI.ResourceMonitor.NTNX\src\internal\Invoke-PublicApiMethodNTNXv1.ps1" -Force
         #Import-Module "$Path\modules\VSI.ResourceMonitor.NTNX\src\internal\Invoke-PublicApiMethodNTNX.ps1" -Force
         #Import-Module "$Path\modules\VSI.ResourceMonitor.NTNX\src\internal\Invoke-PublicApiMethodRedfish.ps1" -Force
+        $var_ModuleName = "Nutanix.EUC"
+        Import-Module "$Path\$var_ModuleName.psd1" -Force -ErrorAction Stop
 
         if (-not (Test-Path $OutputFolder)) { New-Item -ItemType Directory -Path $OutputFolder | Out-Null }
         If ($DurationInMinutes -eq "Boot") {

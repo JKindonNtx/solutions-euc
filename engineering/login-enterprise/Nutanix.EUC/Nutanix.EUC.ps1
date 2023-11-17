@@ -22,5 +22,5 @@ Mr Ultra          - Dave Brett
 
 # Common Global Variables
 # Add any variables here that you want to have globally available
-New-Variable -Name RunPhases -Value 17 -Option ReadOnly
+New-Variable -Name RunPhases -Value 18 -Option ReadOnly
 New-Variable -Name PreRunPhases -Value 6 -Option ReadOnly

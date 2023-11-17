@@ -33,7 +33,7 @@ function Invoke-PublicApiMethodNTNX {
         while ($done -eq $false) {
             $count++
             try {
-                $URL = "https://$($VSI_Target_CVM):9440/api/nutanix/v2.0/$Path"
+                $URL = "https://$($VSI_Target_CVM):9440/PrismGateway/services/rest/v2.0/$Path"
                 if ([string]::IsNullOrWhiteSpace($Body)) {
                     if ($null -ne $OutFile) {
                         Invoke-RestMethod -Body $Body -Method $Method -Uri $URL -Headers $Header -SkipCertificateCheck -OutFile $OutFile -ErrorAction Stop
@@ -94,7 +94,7 @@ function Invoke-PublicApiMethodNTNX {
         while ($done -eq $false) {
             $count++
             try {
-                $URL = "https://$($VSI_Target_CVM):9440/api/nutanix/v2.0/$Path"
+                $URL = "https://$($VSI_Target_CVM):9440/PrismGateway/services/rest/v2.0/$Path"
                 if (!([string]::IsNullOrWhiteSpace($Body))) {
                     if ($null -ne $OutFile) {
                         Invoke-RestMethod -Body $Body -Method $Method -Uri $URL -Headers $Header -OutFile $OutFile -ErrorAction Stop

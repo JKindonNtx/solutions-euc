@@ -23,11 +23,10 @@ function Get-VSIResults {
     Project Site: https://github.com/nutanix-enterprise/solutions-euc/blob/main/engineering/login-enterprise/Nutanix.EUC
 
 #>
-    [CmdletBinding()]
 
     Param (
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][System.String]$TestName,
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][System.String]$Path
+        $TestName,
+        $Path
     )
 
     if (-not (Test-Path "$($Path)\testresults")) { New-Item -ItemType Directory -Path "$($Path)\testresults" | Out-Null }

@@ -196,6 +196,7 @@ function Set-TestData {
         end {
     
             # Return data for the function
+            Start-sleep -Seconds 1
             return $Return
     
         } # end

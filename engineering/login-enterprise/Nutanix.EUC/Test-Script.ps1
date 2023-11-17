@@ -90,7 +90,7 @@ Param(
 If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $ScriptRoot = $PSScriptRoot }
 $Validated_Workload_Profiles = @("Task Worker", "Knowledge Worker")
 $Validated_OS_Types = @("multisession", "singlesession")
-$VSI_Target_RampupInMinutes = 48 ##// This needs to move to JSON
+$VSI_Target_RampupInMinutes = 10 ##// This needs to move to JSON
 $MaxRecordCount = 5000 ##// This needs to move to Variables
 $InfluxTestDashBucket = "Tests" ##// This needs to move to Variables
 $LEAppliance = "LE1" ##// This needs to change to JSON input ########SVENNNNNNN - SANITY CHECK PLEASE
@@ -322,7 +322,7 @@ if ($VSI_Target_Files -ne "") {
 #----------------------------------------------------------------------------------------------------------------------------
 #Set the multiplier for the Workloadtype. This adjusts the required MHz per user setting.
 ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
-    Set-VSIConfigurationVariables -ImageConfiguration $ImageToTest
+    $null = Set-VSIConfigurationVariables -ImageConfiguration $ImageToTest
 #}
     #region Validate Workload Profiles
     #----------------------------------------------------------------------------------------------------------------------------
@@ -939,7 +939,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $params = $null
         $CurrentTotalPhase++
 
-        if ($Mode -eq "CitrixVAD" -or $Mode -eq "CitrixDaaS") {
+        if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
             ## Placeholder Block to capture the relevent settings below - will change with different tech
             $Params = @{
                 TestName          = $VSI_Test_Name
@@ -968,7 +968,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #region Stop and cleanup monitoring job Boot phase
         #----------------------------------------------------------------------------------------------------------------------------
-        $monitoringJob | Stop-Job | Remove-Job
+        $monitoringJob | Stop-Job
+        $monitoringJob | Remove-Job
         #endregion Stop and cleanup monitoring job Boot phase
 
         #region Set RDA Source and Destination files and clean out source files if they still exist
@@ -1056,6 +1057,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $params = $null
         $CurrentTotalPhase++
 
+        Write-Log -Message "Stopping Nutanix Curator Service" -Level Info
         Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "stop"
         #endregion Nutanix Curator Stop
 
@@ -1093,6 +1095,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $params = $null
         $CurrentTotalPhase++
 
+        Write-Log -Message "Starting Test $($testId)" -Level Info
         Start-LETest -testId $testId -Comment "$FolderName-$VSI_Target_Comment"
         $TestRun = Get-LETestRuns -testId $testId | Select-Object -Last 1
         #endregion Start the test
@@ -1146,6 +1149,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Update Test Dashboard
         if ($VSI_Target_Files -ne "") { $Message = "Starting Nutanix Files Monitor Run $($i)" } else { $Message = "Skipping Nutanix Files Monitoring" }
+        Write-Log -Message "$($Message)" -Level Info
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -1191,6 +1195,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Update Test Dashboard
         if ($VSI_Target_NetScaler -ne "") { $Message = "Starting Citrix NetScaler Monitor Run $($i)" } else { $Message = "Skipping Citrix NetScaler Monitoring" }
+        Write-Log -Message "$($Message)" -Level Info
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -1268,17 +1273,33 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $params = $null
         $CurrentTotalPhase++
 
-        Wait-LETest -testId $testId
+        # Update Test Dashboard
+        $Waitparams = @{
+            ConfigFile     = $NTNXInfra
+            TestName       = $NTNXTestname 
+            RunNumber      = "$($i)" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentRunPhase 
+            CurrentMessage = "Waiting for Test to Complete" 
+            TotalPhase     = "$($RunPhases)"
+        }
+
+        Wait-LETest -testId $testId -waitParams $Waitparams
         #endregion Wait for test to finish
 
         #region Cleanup monitoring job
         #----------------------------------------------------------------------------------------------------------------------------
-        $monitoringJob | Wait-Job | Remove-Job
+        $monitoringJob | Wait-Job
+        $monitoringJob | Remove-Job
         if ($VSI_Target_Files -ne "") {
-            $monitoringFilesJob | Wait-Job | Remove-Job
+            $monitoringFilesJob | Wait-Job
+            $monitoringFilesJob | Remove-Job
         }
         if ($VSI_Target_NetScaler -ne "") {
-            $monitoringNSJob | Wait-Job | Remove-Job
+            $monitoringNSJob | Wait-Job
+            $monitoringNSJob | Remove-Job
         }
         #endregion Cleanup monitoring job
 
@@ -1316,6 +1337,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $params = $null
         $CurrentTotalPhase++
 
+        Write-Log -Message "Starting Nutanix Curator Service" -Level Info
         Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "start"
         #endregion Nutanix Curator Start
 
@@ -1363,6 +1385,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #region Check for RDA File and if exists then move it to the output folder
         #----------------------------------------------------------------------------------------------------------------------------
         if (Test-Path -Path $RDASource) {
+            Write-Log -Message "Exporting RDA Data to output folder" -Level Info
             $csvData = get-content $RDASource | ConvertFrom-String -Delimiter "," -PropertyNames Timestamp, screenResolutionid, encoderid, movingImageCompressionConfigurationid, preferredColorDepthid, videoCodecid, VideoCodecUseid, VideoCodecTextOptimizationid, VideoCodecColorspaceid, VideoCodecTypeid, HardwareEncodeEnabledid, VisualQualityid, FramesperSecondid, RDHSMaxFPS, currentCPU, currentRAM, totalCPU, currentFps, totalFps, currentRTT, NetworkLatency, NetworkLoss, CurrentBandwidthEDT, totalBandwidthusageEDT, averageBandwidthusageEDT, currentavailableEDTBandwidth, EDTInUseId, currentBandwithoutput, currentLatency, currentavailableBandwidth, totalBandwidthusage, averageBandwidthUsage, averageBandwidthAvailable, GPUusage, GPUmemoryusage, GPUmemoryInUse, GPUvideoEncoderusage, GPUvideoDecoderusage, GPUtotalUsage, GPUVideoEncoderSessions, GPUVideoEncoderAverageFPS, GPUVideoEncoderLatency | Select -Skip 1
             $csvData | Export-Csv -Path $RDADestination -NoTypeInformation
             Remove-Item -Path $RDASource -ErrorAction SilentlyContinue
@@ -1547,7 +1570,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             RunNumber      = "$($i)" 
             InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
-            Status         = "Complete" 
+            Status         = "Completed" 
             CurrentPhase   = $CurrentRunPhase 
             CurrentMessage = "Test Run $($i) Complete" 
             TotalPhase     = "$($RunPhases)"
@@ -1578,7 +1601,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
     #region Analyze Run results
     #----------------------------------------------------------------------------------------------------------------------------
-    Get-VSIResults -TestName $NTNXTestname -Path $ScriptRoot
+    $null = Get-VSIResults -TestName $NTNXTestname -Path $ScriptRoot
     #endregion Analyze Run results
 
     #region Slack update
@@ -1611,7 +1634,7 @@ $params = @{
     RunNumber      = "0" 
     InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
     InfluxBucket   = $InfluxTestDashBucket 
-    Status         = "Complete" 
+    Status         = "Completed" 
     CurrentPhase   = $CurrentTotalPhase 
     CurrentMessage = "Test Complete" 
     TotalPhase     = "$($TotalPhases)"

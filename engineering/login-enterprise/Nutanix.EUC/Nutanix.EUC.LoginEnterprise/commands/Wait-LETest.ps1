@@ -3,7 +3,8 @@ function Wait-LETest {
     [CmdletBinding()]
 
     Param (
-        [Parameter(Mandatory = $true)][AllowEmptyString()][string] $testId
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string] $testId,
+        $Waitparams
     )
 
     if (-not ([string]::IsNullOrEmpty($testId))) {
