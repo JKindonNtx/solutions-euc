@@ -20,7 +20,7 @@ function Enable-VSIHVDesktopPool {
         Start-Sleep 2
         Write-Log "Initiate the shutdown for all the VMs."
         foreach ($desktop in $desktops.base.Name) { 
-            Shutdown-VMGuest -VM $desktop -Confirm:$False | Out-Null
+            Stop-VM -VM $desktop -Confirm:$False | Out-Null
         }
         $boot.firstvmname = $desktops[0].base.dnsname
 
