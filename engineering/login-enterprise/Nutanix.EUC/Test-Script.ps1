@@ -33,6 +33,7 @@ TODO
 | Review LE Switching Logic and best Placement - search for "$placeholder_var_LEAppliance" | James | Dave/Sven | 16.11.2023 |
 | Review Output Logic - Search for "Report Output here on relevent variables" | James | Dave/Sven | 16.11.2023 |
 | Review Current JSON File - do we need values that are now auto calculated? | James | Sven | 16.11.2023 |
+| Review new SetVSIConfigurationVariablesLE function and execute logic. Look for ########SVENNNNNNN - SANITY CHECK PLEASE | James | Sven | 17.11.2023 |
 | Review Remove-NutanixFilesData.ps1 Function. Search for $TBD_NtxFilesShares - Need provide a list of shares (JSON?). There is a Validation and Execution Phase | James | Dave | 16.11.2023 |
 ------------------------------------------------------
 
@@ -130,17 +131,15 @@ if ($PSVersionTable.PSVersion.Major -lt 5) {
     Break #Temporary! Replace with #Break
 }
 
-if ($PSVersionTable.PSVersion.Major -gt 6) { 
-    Write-Log -Message "You cannot use PowerShell $($PSVersionTable.PSVersion.Major) with Citrix snapins. Please revert to PowerShell 5.x" -Level Warn
-    Break #Temporary! Replace with #Break
-}
 #endregion PowerShell Versions
-
-##//TODO: Consider any other snapins - if only citrix, move the above check to the Citrix Type only.
 
 #region Citrix Snapin Import
 #----------------------------------------------------------------------------------------------------------------------------
 if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
+    if ($PSVersionTable.PSVersion.Major -gt 6) { 
+        Write-Log -Message "You cannot use PowerShell $($PSVersionTable.PSVersion.Major) with Citrix snapins. Please revert to PowerShell 5.x" -Level Warn
+        Break #Temporary! Replace with #Break
+    }
     try {
         Write-Log -Message "Importing Citrix Snapins" -Level Info
         Add-PSSnapin Citrix* -ErrorAction Stop
@@ -154,6 +153,52 @@ if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
     }
 }
 #endregion Citrix Snapin Import
+
+#region VMWare Module Import
+if ($Type -eq "Horizon") {
+    Write-Log -Message "Importing VMware Modules" -Level Info
+    try {
+        $Modules = @("VMware.VimAutomation.Core", "VMware.VimAutomation.HorizonView")
+        foreach ($moduleName in $Modules) {
+            if (-not(Get-Module -Name $moduleName)){
+                Write-Log -Message "Module: $($moduleName) does not exist. Attempting to install."
+                try {
+                    Install-Module $moduleName -ErrorAction Stop -Force -AllowClobber
+                    Import-Module $moduleName -SkipEditionCheck -Force -ErrorAction Stop -DisableNameChecking -Verbose:$false | Out-Null
+                }
+                catch {
+                    Write-Log -Message "Failed to Install Mode: $($moduleName)" -Level Error
+                    Write-Log -Message $_ -Level Error
+                    Break #Temporary! Replace with #Exit 1
+                }
+            }
+        }
+        
+        Write-Log -Message "Importing VMWare Helper Module" -Level Info
+        $moduleName = (Get-Item $ScriptRoot\Nutanix.EUC.VMware\commands\VMware.Hv.Helper).FullName
+        if ($moduleName) {
+            try {
+                Import-Module $moduleName -Force -ErrorAction Stop -SkipEditionCheck -Verbose:$false | Out-Null
+            }
+            catch {
+                Write-Log -Message "Failed to Install Mode: $($moduleName)" -Level Error
+                Write-Log -Message $_ -Level Error
+                Break #Temporary! Replace with #Exit 1
+            }
+            
+        }
+        else {
+            Write-Log -Message "Module: VMware.Hv.Helper not Found" -Level Error
+            Break #Temporary! Replace with #Exit 1
+        }
+    }
+    catch {
+        Write-Log -Message "Failed to Import Modules" -Level Error
+        Write-Log -Message $_ -Level Info
+        Break #Temporary! Replace with #Exit 1
+    }
+}
+#endregion VMWare Module Import
 
 #region remove existing SSH Keys ***UPDATE****
 #----------------------------------------------------------------------------------------------------------------------------
@@ -428,6 +473,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         Connect-VSICTX -DDC $VSI_Target_DDC
     }
     #endregion Citrix validation
+
+    if ($Type -eq "Horizon") {
+        #placeholder for Horizon
+    }
 
     #region LE Test Check
     #----------------------------------------------------------------------------------------------------------------------------
