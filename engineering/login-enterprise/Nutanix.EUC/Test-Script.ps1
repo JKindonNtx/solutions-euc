@@ -49,6 +49,9 @@ Param(
     [string]$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-CitrixOnPrem-FSLogix.jsonc",
 
     [Parameter(Mandatory = $false)]
+    [string]$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Nutanix.EUC\ExampleConfig-LoginEnterpriseGlobal.jsonc",
+
+    [Parameter(Mandatory = $false)]
     [string]$ReportConfigFile = ".\ReportConfigurationNTNX.jsonc",
 
     [Parameter(Mandatory = $false)]
@@ -89,6 +92,7 @@ $Validated_OS_Types = @("multisession", "singlesession")
 $VSI_Target_RampupInMinutes = 48 ##// This needs to move to JSON
 $MaxRecordCount = 5000 ##// This needs to move to Variables
 $InfluxTestDashBucket = "Tests" ##// This needs to move to Variables
+$LEAppliance = "LE1" ##// This needs to change to JSON input
 #endregion Variables
 
 #Region Execute
@@ -114,6 +118,7 @@ catch {
 #region Param Output
 #----------------------------------------------------------------------------------------------------------------------------
 Write-Log -Message "Configuration File is:        $($ConfigFile)" -Level Validation
+Write-Log -Message "LE Configuration File is:     $($LEConfigFile)" -Level Validation
 Write-Log -Message "Report Configuration File is: $($ReportConfigFile)" -Level Validation
 Write-Log -Message "Test Type is:                 $($Type)" -Level Validation
 #endregion Param Output
@@ -174,6 +179,46 @@ $Temp_Module = $null
 #region variable setting
 #----------------------------------------------------------------------------------------------------------------------------
 Set-VSIConfigurationVariables -ConfigurationFile $ConfigFile
+
+## PlaceHolder: Add LE Global Variable Details here - Note that Set-VSIConfigurationVariables resets all variables. Need some help with the function to replace the below
+#Set-VSIConfigurationVariablesLEGlobal -ConfigurationFile $LEConfigFile -LEAppliance $LEAppliance
+
+#$LEGlobal_ConfigFile = Get-Content -Path $LEConfigFile -ErrorAction Stop
+#$LEGlobal_ConfigFile = $LEGlobal_ConfigFile -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/'
+#$LEGlobal_Config = $LEGlobal_ConfigFile | ConvertFrom-Json -ErrorAction Stop
+#if ($LEAppliance -eq "LE1") {
+#    Set-Variable -Name VSI_LoginEnterprise_ApplianceURL -Value $LEGlobal_Config.LE1.LoginEnterprise.ApplianceURL -Scope Global
+#    Set-Variable -Name VSI_LoginEnterprise_ApplianceToken -Value $LEGlobal_Config.LE1.LoginEnterprise.ApplianceToken -Scope Global
+#    Set-Variable -Name VSI_Launchers_GroupName -Value $LEGlobal_Config.LE1.Launchers.GroupName -Scope Global
+#    Set-Variable -Name VSI_Launchers_NamingPattern -Value $LEGlobal_Config.LE1.Launchers.NamingPattern -Scope Global
+#    Set-Variable -Name VSI_Users_BaseName -Value $LEGlobal_Config.LE1.Users.BaseName -Scope Global
+#    Set-Variable -Name VSI_Users_GroupName -Value $LEGlobal_Config.LE1.Users.GroupName -Scope Global
+#    Set-Variable -Name VSI_Users_NetBios -Value $LEGlobal_Config.LE1.Users.NetBios -Scope Global
+#    Set-Variable -Name VSI_Users_OU -Value $LEGlobal_Config.LE1.Users.OU -Scope Global
+#    Set-Variable -Name VSI_Users_NumberOfDigits -Value $LEGlobal_Config.LE1.Users.NumberOfDigits -Scope Global
+#}
+#if ($LEAppliance -eq "LE2") {
+#    Set-Variable -Name VSI_LoginEnterprise_ApplianceURL -Value $LEGlobal_Config.LE2.LoginEnterprise.ApplianceURL -Scope Global
+#    Set-Variable -Name VSI_LoginEnterprise_ApplianceToken -Value $LEGlobal_Config.LE2.LoginEnterprise.ApplianceToken -Scope Global
+#    Set-Variable -Name VSI_Launchers_GroupName -Value $LEGlobal_Config.LE2.Launchers.GroupName -Scope Global
+#    Set-Variable -Name VSI_Launchers_NamingPattern -Value $LEGlobal_Config.LE2.Launchers.NamingPattern -Scope Global
+#    Set-Variable -Name VSI_Users_BaseName -Value $LEGlobal_Config.LE2.Users.BaseName -Scope Global
+#    Set-Variable -Name VSI_Users_GroupName -Value $LEGlobal_Config.LE2.Users.GroupName -Scope Global
+#    Set-Variable -Name VSI_Users_NetBios -Value $LEGlobal_Config.LE2.Users.NetBios -Scope Global
+#    Set-Variable -Name VSI_Users_OU -Value $LEGlobal_Config.LE2.Users.OU -Scope Global
+#    Set-Variable -Name VSI_Users_NumberOfDigits -Value $LEGlobal_Config.LE2.Users.NumberOfDigits -Scope Global
+#}
+#if ($LEAppliance -eq "LE3") {
+#    Set-Variable -Name VSI_LoginEnterprise_ApplianceURL -Value $LEGlobal_Config.LE3.LoginEnterprise.ApplianceURL -Scope Global
+#    Set-Variable -Name VSI_LoginEnterprise_ApplianceToken -Value $LEGlobal_Config.LE3.LoginEnterprise.ApplianceToken -Scope Global
+#    Set-Variable -Name VSI_Launchers_GroupName -Value $LEGlobal_Config.LE3.Launchers.GroupName -Scope Global
+#    Set-Variable -Name VSI_Launchers_NamingPattern -Value $LEGlobal_Config.LE3.Launchers.NamingPattern -Scope Global
+#    Set-Variable -Name VSI_Users_BaseName -Value $LEGlobal_Config.LE3.Users.BaseName -Scope Global
+#    Set-Variable -Name VSI_Users_GroupName -Value $LEGlobal_Config.LE3.Users.GroupName -Scope Global
+#    Set-Variable -Name VSI_Users_NetBios -Value $LEGlobal_Config.LE3.Users.NetBios -Scope Global
+#    Set-Variable -Name VSI_Users_OU -Value $LEGlobal_Config.LE3.Users.OU -Scope Global
+#    Set-Variable -Name VSI_Users_NumberOfDigits -Value $LEGlobal_Config.LE3.Users.NumberOfDigits -Scope Global
+#}
 
 # Fix trailing slash issue
 $VSI_LoginEnterprise_ApplianceURL = $VSI_LoginEnterprise_ApplianceURL.TrimEnd("/")
