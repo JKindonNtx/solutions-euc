@@ -34,6 +34,7 @@
     13.10.2023: Moved icons array to variables section. Added a check for icon existence. If the file exists, it will no longer be downloaded. This speeds up iterative documentation versions.
     24.10.2023: Added Panels for Files stats breakouts, both Individual Runs and Averages (Panel ID 131-152)
     26.10.2023: Added Panels for Individual run CPU Usage (Panel ID 156)
+    20.11.2023: Moved Image lookup to external CSV File
 - To Do
  -> Function this sucker - Inject between section headers
     # Add Page Break
@@ -58,17 +59,21 @@ Param(
     [string]$ImageSuffix, #shortname for image ouput - helpful for multi run documentation. moves an image from image_name.png to image_name_suffix.png
 
     [Parameter(Mandatory = $false)]
-    [string]$influxDbUrl = "http://10.57.64.25:8086/api/v2/query?orgID=bca5b8aeb2b51f2f",
+    #[string]$influxDbUrl = "http://10.57.64.25:8086/api/v2/query?orgID=bca5b8aeb2b51f2f",
+    [string]$influxDbUrl = "http://10.57.64.25:8086/api/v2/query?orgID=a9e06d965633a9ed",  
 
     [Parameter(Mandatory = $false)]
     [string]$InfluxToken = "8PsWoQV6QTmg98hk-dmVW61RbFs5SPOcVJII56Kp6Qi2E0Svyz6kHOAA8euFO6mzH_cgPODezlRe6qXlLLWgng==",
 
     [Parameter(Mandatory = $false)]
-    [string]$iconsSource = "http://10.57.64.25:3000/public/img/nutanix/",
+    [string]$iconsSource = "http://10.57.64.101:3000/public/img/nutanix/",
 
     [Parameter(Mandatory = $false)]
     [ValidateSet("BootInfo","LoginEnterpriseResults","HostResources","ClusterResources","LoginTimes","Applications","VsiEuxMeasurements","RDA","IndividualRuns","NutanixFiles","CitrixNetScaler","None")]
-    [Array]$ExcludedComponentList = ("IndividualRuns","NutanixFiles","CitrixNetScaler") # Items to exclude
+    [Array]$ExcludedComponentList = ("IndividualRuns","NutanixFiles","CitrixNetScaler"), # Items to exclude
+
+    [Parameter(Mandatory = $false)]
+    [string]$ImageReferenceCSV
 
 )
 
@@ -200,6 +205,27 @@ function Get-Graphs {
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
         $Uri = $UpdatedUri + "&from=1672534800000&to=$($EndTime)&panelId=$($Panel)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
 
+        # Check if the PanelId exists in the imported CSV data
+        $matchedEntry = $ImageReferenceList | Where-Object { $_.PanelId -eq $Panel }
+        
+        #If a match is found, set the ImageName
+        if ($matchedEntry) {
+            $ImageName = $matchedEntry.ImageName
+
+            if (!$ImageSuffix) {
+                $OutFile = Join-Path -Path $imagePath -ChildPath $ImageName
+            }
+            else {
+                $ImageName = $ImageName -Replace ".png",""
+                $ImageName = $ImageName + "_" + $ImageSuffix + ".png"
+                $OutFile = Join-Path -Path $imagePath -ChildPath $ImageName
+            }
+        }
+        else {
+            Write-Screen "PanelId $PanelId not found in the CSV"
+        }
+
+        <#
         # Get output Filename
         if (!$ImageSuffix) {
             # Use default image names
@@ -438,6 +464,7 @@ function Get-Graphs {
                 114 { $OutFile = Join-Path -Path $imagePath -ChildPath "rdanalyzer_available_bandwidth_edt_$($ImageSuffix).png" }
             }
         }
+        #>
 
         # Download the image
         ## Test it first
@@ -693,6 +720,25 @@ This document is part of the Nutanix Solutions Architecture Artifacts. We wrote 
 # Section - Display Options and Start Report
 # -----------------------------------------------------------------------------------------------------------------------
 
+#region Check Image CSV Import
+if (!($ImageReferenceCSV)) {
+    $ImageReference = (Split-Path $MyInvocation.MyCommand.Path) + "\" + "ImageReference.csv"
+}
+else {
+    $ImageReference = $ImageReferenceCSV
+}
+Write-Screen "Image CSV reference is set to: $ImageReference"
+
+try {
+    $ImageReferenceList = Import-CSV -Path $ImageReference
+}
+catch {
+    Write-Screen "Failed to Import CSV: $($ImageReference). Please check source file"
+    Exit 1
+}
+
+#endregion Check Image CSV Import
+
 #region Checkoutput Directory
 # Convert the Report Title to PascalCase and Create Report Output Directory
 Write-Screen -Message "Checking Output Directory"
@@ -796,7 +842,8 @@ Write-Host "Applications:                  $($Applications)"
 Write-Host "Vsi Eux Measurements:          $($VsiEuxMeasurements)"
 Write-Host "Nutanix Files:                 $($NutanixFiles)"
 Write-Host "Citrix NetScaler:              $($CitrixNetScaler)"
-Write-Host "Sections Excluded by Param     $($ExcludedComponentList)"
+Write-Host "Sections Excluded by Param:    $($ExcludedComponentList)"
+Write-Host "Image Reference CSV is:        $($ImageReference)"  
 Write-Host "
 --------------------------------------------------------------------------------------------------------"
 #endregion SnazzyHeader

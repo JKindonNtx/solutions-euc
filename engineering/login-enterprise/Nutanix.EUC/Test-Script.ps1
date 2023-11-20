@@ -8,10 +8,7 @@ The JSON file containing the test configuration
 Specify the type of test to be run, CitrixVAD, CitrixDaaS, Horizon, RAS
 .NOTES
 TODO
-- Consolidate different configuration options into single script - DaaS, CVAD, Horizon, Parallels etc.
-- Validate behaviour on anything with a -VALIDATE switch currently in the Write-Log function - odd behaviour
 - Validate what should be in JSON, vs Param vs Variables
-- Consider any other snapins - if only citrix, move the PowerShell check to the Citrix Type only.
 - Fixup the Params in this script for Config File etc
 - Consider Template JSON output based on -Planning Switch
 - Switch setup -> API / Influx DB LE1 = 
@@ -27,13 +24,11 @@ TODO
 ### REVIEW NOTES - WORK IN PROGRESS - REMOVE ONCE VALIDATED
 ------------------------------------------------------
 | Item | Requester | Reviewer | Date |
-| Review Horizon Input Logic - Search for "$Mode -eq "Horizon"" | James | Sven | 16.11.2023 |
+| Review Horizon Input Logic - Search for "$Type -eq "Horizon"" | James | Sven | 16.11.2023 |
 | Move HV Helper and HV Functions into new framework (review functions for logging etc) | James | James/Sven/Dave | 16.11.2023 |
 | Review Files Auth Validation Logic - Search for "Invoke-NutanixFilesAuthCheck" | James | Dave | 16.11.2023 |
-| Review LE Switching Logic and best Placement - search for "$placeholder_var_LEAppliance" | James | Dave/Sven | 16.11.2023 |
 | Review Output Logic - Search for "Report Output here on relevent variables" | James | Dave/Sven | 16.11.2023 |
 | Review Current JSON File - do we need values that are now auto calculated? | James | Sven | 16.11.2023 |
-| Review new SetVSIConfigurationVariablesLE function and execute logic. Look for ########SVENNNNNNN - SANITY CHECK PLEASE | James | Sven | 17.11.2023 |
 | Review Remove-NutanixFilesData.ps1 Function. Search for $TBD_NtxFilesShares - Need provide a list of shares (JSON?). There is a Validation and Execution Phase | James | Dave | 16.11.2023 |
 ------------------------------------------------------
 
@@ -47,7 +42,7 @@ TODO
 # ============================================================================
 Param(
     [Parameter(Mandatory = $false)]
-    [string]$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-CitrixOnPrem-FSLogix.jsonc",
+    [string]$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Nutanix.EUC\ExampleConfig-Kindon-Cleansed.jsonc",
 
     [Parameter(Mandatory = $false)]
     [string]$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Nutanix.EUC\ExampleConfig-LoginEnterpriseGlobal.jsonc",
@@ -112,7 +107,7 @@ try {
 catch {
     Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: Failed to import $var_ModuleName module. Exit script"
     Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $_"
-    Break #Temporary! Replace with #Break
+    Break #Temporary! Replace with #Exit 1
 }
 #endregion Nutanix Module Import
 
@@ -128,7 +123,7 @@ Write-Log -Message "Test Type is:                 $($Type)" -Level Validation
 #----------------------------------------------------------------------------------------------------------------------------
 if ($PSVersionTable.PSVersion.Major -lt 5) { 
     Write-Log -Message "You must upgrade to PowerShell 5.x to run this script" -Level Warn
-    Break #Temporary! Replace with #Break
+    Break #Temporary! Replace with #Exit 1
 }
 
 #endregion PowerShell Versions
@@ -138,7 +133,7 @@ if ($PSVersionTable.PSVersion.Major -lt 5) {
 if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
     if ($PSVersionTable.PSVersion.Major -gt 6) { 
         Write-Log -Message "You cannot use PowerShell $($PSVersionTable.PSVersion.Major) with Citrix snapins. Please revert to PowerShell 5.x" -Level Warn
-        Break #Temporary! Replace with #Break
+        Break #Temporary! Replace with #Exit 1
     }
     try {
         Write-Log -Message "Importing Citrix Snapins" -Level Info
@@ -149,7 +144,7 @@ if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
     catch {
         Write-Log -Message "Failed to import Citrix Snapins" -Level Error
         Write-Log -Message $_ -Level Error
-        Break #Temporary! Replace with #Break
+        Break #Temporary! Replace with #Exit 1
     }
 }
 #endregion Citrix Snapin Import
@@ -211,12 +206,12 @@ if ($Null -ne $Temp_Module) {
 else {
     Write-Log -Message "Failed to find Posh-SSH Module. Attempting to Install" -Level Info
     try {
-        Install-Module -Name Posh-SSH -Force -ErrorAction Stop
+        Install-Module -Name Posh-SSH -RequiredVersion 2.3.0 -Force -ErrorAction Stop
         Write-Log -Message "Successfully installed Posh-SSH Module" -Level Info
     }
     catch {
         Write-Log -Message $_ -Level Error
-        Break #Temporary! Replace with #Break
+        Break #Temporary! Replace with #Exit 1
     }
 }
 $Temp_Module = $null
@@ -226,7 +221,15 @@ $Temp_Module = $null
 #----------------------------------------------------------------------------------------------------------------------------
 Set-VSIConfigurationVariables -ConfigurationFile $ConfigFile
 
-Set-VSIConfigurationVariablesLEGlobal -ConfigurationFile $LEConfigFile -LEAppliance $LEAppliance
+$LEAppliance = $VSI_Test_LEAppliance
+if ($null -ne $LEAppliance) {
+    Set-VSIConfigurationVariablesLEGlobal -ConfigurationFile $LEConfigFile -LEAppliance $LEAppliance
+}
+else {
+    Write-Log -Message "Missing Logon Appliance Detail. Please check config file." -Level Warn
+    Break #Temporary! Replace with #Exit 1
+}
+
 
 # Fix trailing slash issue
 $VSI_LoginEnterprise_ApplianceURL = $VSI_LoginEnterprise_ApplianceURL.TrimEnd("/")
@@ -242,7 +245,7 @@ try {
 catch {
     Write-Log -Message "Failed to import config file: $($configFile)" -Level Error
     Write-Log -Message $_ -Level Error
-    Break #Temporary! Replace with #Break
+    Break #Temporary! Replace with #Exit 1
 }
 
 $configFileData = $configFileData -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/'
@@ -252,7 +255,7 @@ try {
 }
 catch {
     Write-Log -Message $_ -Level Error
-    Break #Temporary! Replace with #Break
+    Break #Temporary! Replace with #Exit 1
 }
 #endregion Config File
 
@@ -263,10 +266,17 @@ $NTNXInfra = Get-NTNXinfo -Config $config
 
 #endregion variable setting
 
-#region Handle Automated LE Settings Mapping
+#region Script behaviour from file (params)
 #----------------------------------------------------------------------------------------------------------------------------
 
-#endregion Handle Automated LE Settings Mapping 
+$SkipADUsers = $VSI_Test_SkipADUsers
+$SkipLEUsers = $VSI_Test_SkipLEUsers
+$SkipLaunchers = $VSI_Test_SkipLaunchers
+$SkipPDFExport = $VSI_Test_SkipPDFExport
+$VSI_Target_RampupInMinutes = $VSI_Test_Target_RampupInMinutes
+$InfluxTestDashBucket = $VSI_Test_InfluxTestDashBucket
+
+#endregion Script behaviour from file (params)
 
 #region Validation
 #----------------------------------------------------------------------------------------------------------------------------
@@ -308,10 +318,10 @@ if ($VSI_Target_Files -ne "") {
     
     Invoke-NutanixFilesAuthCheck
 
-    if ($null -ne $TBD_NtxFilesShares) {
+    if ($null -ne $VSI_Test_Nutanix_Files_Shares -and $VSI_Test_Delete_Files_Data -eq $true) {
         ##TODO Need to validate this
         Write-Log -Message "Processing Nutanix Files Data Removal Validation" -Level Info
-        ##Remove-NutanixFilesData -Shares $TBD_NtxFilesShares -Mode Validate
+        ##Remove-NutanixFilesData -Shares $VSI_Test_Nutanix_Files_Shares -Mode Validate
     }
 }
 #endregion Nutanix Files Pre Flight Checks
@@ -328,7 +338,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #----------------------------------------------------------------------------------------------------------------------------
     if ($VSI_Target_Workload -notin $Validated_Workload_Profiles ) {
         Write-Log -Message "Worker Profile: $($VSI_Target_Workload) is not a valid profile for testing. Please check config file" -Level Error
-        Break #Temporary! Replace with #Break
+        Break #Temporary! Replace with #Exit 1
     }
     if ($VSI_Target_Workload -eq "Task Worker") {
         $LEWorkload = "TW"
@@ -415,31 +425,63 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #region Citrix validation
     #----------------------------------------------------------------------------------------------------------------------------
 
-    # Update Test Dashboard
-    $params = @{
-        ConfigFile     = $NTNXInfra
-        TestName       = $NTNXTestname 
-        RunNumber      = "0" 
-        InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
-        InfluxBucket   = $InfluxTestDashBucket 
-        Status         = "Running" 
-        CurrentPhase   = $CurrentTotalPhase 
-        CurrentMessage = "Validating Citrix Connectivity" 
-        TotalPhase     = "$($TotalPhases)"
-    }
-    $null = Set-TestData  @params
-    $params = $null
-    $CurrentTotalPhase++
-
     if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
         Write-Log -Message "Validating Citrix" -Level Info
+
+        # Update Test Dashboard
+        $params = @{
+            ConfigFile     = $NTNXInfra
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Validating Citrix Connectivity" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
+
         Connect-VSICTX -DDC $VSI_Target_DDC
     }
     #endregion Citrix validation
 
+    #region Horizon validation
+    #----------------------------------------------------------------------------------------------------------------------------
     if ($Type -eq "Horizon") {
+        Write-Log -Message "Validating Horizon" -Level Info
+
+        # Update Test Dashboard
+        $params = @{
+            ConfigFile     = $NTNXInfra
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Validating Horizon Connectivity" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData  @params
+        $params = $null
+        $CurrentTotalPhase++
+
         #placeholder for Horizon
+        $params = @{
+            Server          = $VSI_Target_ConnectionServer 
+            User            = $VSI_Target_ConnectionServerUser 
+            Password        = $VSI_Target_ConnectionServerUserPassword 
+            vCenterServer   = $VSI_Target_vCenterServer 
+            vCenterUserName = $VSI_Target_vCenterUsername 
+            vCenterPassword = $VSI_Target_vCenterPassword
+        }
+        Connect-VSIHVConnectionServer @params
+        $Params = $Null
     }
+    #endregion Horizon validation
 
     #region LE Test Check
     #----------------------------------------------------------------------------------------------------------------------------
@@ -548,6 +590,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     $Params = $null
     #endregion AD Users
 
+    if ($Type -eq "Horizon") {
+        if ($Force.IsPresent) {
+            Write-Log -Message "Removing Horizon Desktop Pool due to force switch" -Level Info
+            Remove-VSIHVDesktopPool -Name $VSI_Target_DesktopPoolName
+        }
+    }
+
     #region Iterate through runs
     #----------------------------------------------------------------------------------------------------------------------------
     for ($i = 1; $i -le $VSI_Target_ImageIterations; $i++) {
@@ -598,13 +647,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $ContainerId = Get-NTNXStorageUUID -Storage $VSI_Target_CVM_storage
         $Hostuuid = Get-NTNXHostUUID -NTNXHost $VSI_Target_NTNXHost
         $IPMI_ip = Get-NTNXHostIPMI -NTNXHost $VSI_Target_NTNXHost
+        
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
             ## Placeholder Block to capture the relevent settings below - will change with different tech
             $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $VSI_Target_HypervisorConnection + "\" + $VSI_Target_HypervisorNetwork + ".network" }
             $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
         }
         
-
         #endregion Get Nutanix Info
 
         #region Configure Desktop Pool
@@ -619,7 +668,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
-            CurrentMessage = "Creating $($Mode) Desktop Pool" 
+            CurrentMessage = "Creating $($Type) Desktop Pool" 
             TotalPhase     = "$($RunPhases)"
         }
         $null = Set-TestData  @params
@@ -720,7 +769,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
-            CurrentMessage = "Booting $($Mode) Desktops" 
+            CurrentMessage = "Booting $($Type) Desktops" 
             TotalPhase     = "$($RunPhases)"
         }
         $null = Set-TestData  @params
@@ -796,15 +845,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #region Get Build Tattoo Information and update variable with new values
         #----------------------------------------------------------------------------------------------------------------------------
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
-            ## Placeholder Block to capture the relevent settings below - will change with different tech
             $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $VSI_Target_DesktopPoolName -MaxRecordCount $MaxRecordCount
             $RegisteredVMs = ($BrokerVMS | Where-Object { $_.RegistrationState -eq "Registered" })
             $MasterImageDNS = $RegisteredVMs[0].DNSName
         }
         
         if ($Type -eq "Horizon") {
-            # Need to check with Sven on this
-            ## Placeholder to get the Horizon First Machine FQND into $MasterImageDNS
+            $MasterImageDNS = $boot.firstvmname
         }
 
         # Update Test Dashboard
@@ -851,7 +898,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Break #Temporary! Replace with #Break
+            Break #Temporary! Replace with #Exit 1
         }
         
         #endregion Get Build Tattoo Information and update variable with new values
@@ -1428,10 +1475,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
 
         if ($VSI_Target_Files -ne "") {
-            if ($null -ne $TBD_NtxFilesShares) {
+            if ($null -ne $VSI_Test_Nutanix_Files_Shares -and $VSI_Test_Delete_Files_Data -eq $true) { #Need to update the above messaging to reflect these detetion rules
                 Write-Log -Message "Processing Nutanix Files Data Removal" -Level Info
                 # TODO: Need to Validate this configuation
-                ##Remove-NutanixFilesData -Shares $TBD_NtxFilesShares -Mode Execute
+                ##Remove-NutanixFilesData -Shares $VSI_Test_Nutanix_Files_Shares -Mode Execute
             }
         }
         #endregion Cleanup Nutanix Files Data

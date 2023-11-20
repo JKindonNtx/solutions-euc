@@ -1,0 +1,139 @@
+{
+    "Domain": {
+        "NetBios": "WSPERF",
+        // Alternatively use LDAP://DC=example,DC=loginvsi,DC=com when current machine/user is part of the domain
+        "LDAPPath": "",
+        // leave empty if current machine/user is part of the domain and has rights to create resources in AD
+        "LDAPUsername": "", // remember it's json, so \ needs to be escaped
+        // leave empty if current machine/user is part of the domain and has rights to create resources in AD
+        "LDAPPassword": ""
+    },
+    "Target": {
+        "DeliveryType":  "Citrix", // Citrix or VMware (currently only Citrix is functional)
+        "DesktopBrokerVersion":  "7.2203_2", // Broker version
+        "CloneType":  "MCS", // Used for reporting database. MCS or Instant Clones
+        "DDC": "WS-CDC1.wsperf.nutanix.com", // Citrix Delivery controller
+        "ZoneName": "Primary", // Zonename in Citrix
+        "SessionCfg":  "ICA", // ICA, PCoIP or Blast - used for reporting database
+        "SessionsSupport": "SingleSession", // SingleSession or MultiSession
+        "HypervisorConnection": "DRMNX8KB-A-AHV", // Hypervisor connection as known in the Citrix Host connection. AHV-TRPTEST83-LAN for example
+        "HypervisorNetwork": "VLAN164", // Hypervisor network as known on the cluster and in the Citrix Host connection
+        "NTNXHost": "DRMNX8KB-1", // The Hostname where you want to test on. DRMAMDKB-1 for example
+        "NodeCount":  8, // Number of nodes you want to test on, usually 1 or 4
+        "CVM": "10.56.68.185", // (cluster)IP of the CVM
+        "CVM_admin": "MANDATORY_TO_DEFINE",
+        "CVM_password": "Nutanix/4u$",
+        "IPMI_admin": "MANDATORY_TO_DEFINE", // Used to get power consumption of host
+        "IPMI_password": "MANDATORY_TO_DEFINE", // Used to get power consumption of host
+        "CVMsshpassword":  "MANDATORY_TO_DEFINE", // Used to set affinity on VMs
+        "CVM_storage": "VDI", // Storage container where VMs are deployed
+        "Files": "ws-profile.wsperf.nutanix.com", // Specify Nutanix Files url if you want to capture files stats. Leave empty if not used.
+        "Files_api": "MANDATORY_TO_DEFINE", // Specify the Nutanix Files API user, make sure to create this user.
+        "Files_password": "MANDATORY_TO_DEFINE", // Specify the Nutanix Files API password
+        "NetScaler": "", // The Citrix NetScaler NSIP
+        "NetScaler_Password": "MANDATORY_TO_DEFINE", // The NSROOT password for the Citrix NetScaler
+        "FunctionalLevel": "L7_9", // L5, L7, L7_6, L7_7, L7_8, L7_9, L7_20, L7_25
+        "NamingPattern": "W10-FSL-####", // Naming pattern of VMs. Also used to set affinity
+        "ADContainer": "OU=FSLogix,OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com",
+        "DomainName": "wsperf.nutanix.com",
+        "StorefrontURL": "http://ws-CDC1.wsperf.nutanix.com/Citrix/Store",
+        "Workload": "Knowledge Worker", // Knowledge Worker or Task Worker
+        "DesktopPoolName": "LE-W10-FSLogix", // Poolname is used to create the desktop pool
+        "MinutesToWaitAfterIdleVMs": 30, //30
+        "SkipImagePrep": true, //Optionally skip imageprep fase of MCS if you image is already generalized.
+        // You can override any variable from the target section within the imagestotest array
+        "ImagesToTest": [
+            {
+                "ParentVM": "W10-22H2-2ce8_Snap_Optimized.template", //AHV use: snapshotname.template. ESXi use: "vm-name.vm\\snapshotname.snapshot\\snapshotname2.snapshot"
+                "NumCPUs": 1,
+                "NumCores": 2,
+                "MemoryGB": 4,
+                "SecureBoot": true,
+                "vTPM": false,
+                "CredentialGuard": false,
+                "DurationInMinutes": 20, // Steady state time
+                "AutocalcVMs": false, // Will automatically calculate the number of VMs and sessions based on hardware
+                "Max": false, // Used with AutocalcVMs. If set to true, more sessions will be used to get a VSImax. If set to false, CPU 80% is the target
+                "NumberOfSessions": 1000, // This is ignored when Autocalc is set to true
+                "NumberOfVMs": 1000, // This is ignored when Autocalc is set to true
+                "PowerOnVMs": 1000, // Amount of VMs to poweron initially, set to same value as amount of VM's by default. This is ignored when Autocalc is set to true
+                "TargetOS":  "", // Autofilled
+                "TargetOSVersion":  "", // Autofilled
+                "DesktopBrokerAgentVersion":  "", // Autofilled
+                "OfficeVersion":  "", // Autofilled
+                "ToolsGuestVersion":  "", // Autofilled
+                "OptimizerVendor":  "", // Autofilled
+                "OptimizationsVersion":  "", // Autofilled
+                "GPUProfile":  "None", // GPU profile. T4-B1, A16-B2 for example
+                "Comment": "Windows 10 Profile FSLogix - All On" // A short comment about this test. Will be added to the Login Enterprise database.
+            }
+        ],
+        "ImageIterations": 3 // How many runs per Image?
+    },
+    "Test": {
+        "Name": "LE1-FSLogix", // Test name in Login Enterprise.
+        "Uploadresults":  true, // Upload results to the Nutanix database
+        "BucketName": "LoginDocuments", // Specify the Bucket Name in Influx to upload to. Can be either 'LoginRegression' or 'LoginDocuments'
+        "DocumentName": "ENG-2077", // If using LoginDocuments please enter a Document Name starting ENG-, BLOG-, BP-, TN-, RA-.
+        "SkipADUsers": false,
+        "SkipLEUsers": false,
+        "SkipWaitForIdleVMs": false,
+        "LEAppliance": "LE1",
+        "SkipPDFExport": true,
+        "SkipLaunchers": false,
+        "Target_RampupInMinutes": 48,
+        "InfluxTestDashBucket": "Tests",
+        "Delete_Files_Data": false, // Delete Nutanix Files Data after each run (Effectively making each run a Run1 from a Files perspective)
+        "Nutanix_Files_Shares": [
+            "\\Server\\Share","\\Server2\\Share"
+        ]
+    },
+    "TestInfra": {
+        "Datacenter":  "Durham", // Datacenter of this Login Enterprise installation
+        "CVMpresent":  true, // Is a CVM present on the node. In case a test is performed on non-nutanix
+        "CVMDisabled":  false, // Is the CVM disabled? Default is false
+        "SSDCount":  6, // How many SSDs in the node? Manual input for now.
+        "VMCPUCount":  null, // Autofilled
+        "SingleNodeTest":  null, // Autofilled
+        "SetAffinity":  null, // Autofilled to true if testing on single node
+        "TestName":  null, // Autofilled
+        "ClusterName":  null, // Autofilled
+        "HardwareType":  null, // Autofilled
+        "ipmiAddress":  null, // Autofilled
+        "Hostip":  null, // Autofilled
+        "HostCVMip": null, // Autofilled
+        "NodeSerial":  null, // Autofilled
+        "BlockSerial":  null, // Autofilled
+        "FullVersion":  null, // Autofilled
+        "HostGPUs":  [
+                        null
+                     ], // Autofilled
+        "GPUDriver":  null, // Autofilled
+        "CPUBrand":  null, // Autofilled
+        "CPUType":  null, // Autofilled
+        "AOSVersion":  null, // Autofilled
+        "HypervisorBrand": null, // Autofilled
+        "HypervisorType": null, // Autofilled
+        "HypervisorVersion":  null, // Autofilled
+        "BIOS":  null, // Autofilled
+        "TotalNodes":  null, // Autofilled
+        "CPUCores":  null, // Autofilled
+        "CPUThreadCount":  null, // Autofilled
+        "CPUSocketCount":  null, // Autofilled
+        "CPUSpeed":  null, // Autofilled
+        "MemoryGB":  null, // Autofilled
+        "MaxAbsoluteActiveActions": null, // Autofilled
+        "MaxAbsoluteNewActionsPerMinute": null, // Autofilled
+        "MaxPercentageActiveActions": null, // Autofilled
+        "BootStart":   null, // Autofilled
+        "Boottime":   null, // Autofilled
+        "Slack":  "MANDATORY_TO_DEFINE", // Enter the Slack hook for reporting purposes.
+        "InfluxDBurl": "MANDATORY_TO_DEFINE",
+        "InfluxToken": "MANDATORY_TO_DEFINE",
+        "RDAPath": "\\\\ws-files.wsperf.nutanix.com\\automation\\RDA-Logging",
+        "GrafanaUriDocs": "MANDATORY_TO_DEFINE",
+        "GrafanaUriRegression": "MANDATORY_TO_DEFINE",
+        "SlackChannel": "MANDATORY_TO_DEFINE",
+        "SlackToken": "MANDATORY_TO_DEFINE"
+    }
+}
