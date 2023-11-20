@@ -1,6 +1,15 @@
 # Document Name Test Matrix
 
+## Test Naming Convention
+
+The following naming convention will be used (if possible) when running the tests, comments should be added to display real world test information in the document as these will get exported as part of the graphs.
+
+``<random_6_digit_guid>_<nodes>n_<hv_version>_<hv_type>_<number_of_vms>V_<number_of_users>U_<workload_type>``
+
+for example ``c10289_1n_A6.5.4_AHV_120V_120U_KW``
+
 ## Icon Set
+
 | Running | Completed | Not Started | Problem |
 | :---: | :---: | :---: | :---: |
 | 🏃🏻‍♂️ | ✅ | ❌ | ⚠️ |
