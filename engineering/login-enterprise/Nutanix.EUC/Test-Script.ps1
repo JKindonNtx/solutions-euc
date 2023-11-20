@@ -1563,7 +1563,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*")) {
                     Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
                     if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
-                        Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info -Update
+                        Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
                     }
                     else {
                         Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn

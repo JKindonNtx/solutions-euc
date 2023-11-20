@@ -19,12 +19,16 @@ function Wait-LELaunchers {
         $LaunchersOnline = (Get-LELaunchers | Where-Object { $_.machineName -like "$($NamingPattern)*" } | Measure-Object).Count
         Write-Log -Update -Message "$LaunchersOnline/$Amount launchers registered" -Level Info
         if ($LaunchersOnline -ge $Amount) { break }
+        
         Write-Log -Message "Waiting 60 seconds" -Level Info
         Start-Sleep -Seconds 60
+        
         $TimeSpan = New-TimeSpan -Start $StartStamp -End (Get-Date)
+        
         if ($TimeSpan.TotalMinutes -ge $TimeOutMinutes) {
             Write-Log -Message "Only $Launcher/$Amount launchers registered with LE within $TimoutMinutes minutes" -Level Error
-            Break
+            Break #Temporary! Replace with #Exit 1
         }
     }
+    Write-Log -Message " " -Level Info
 }

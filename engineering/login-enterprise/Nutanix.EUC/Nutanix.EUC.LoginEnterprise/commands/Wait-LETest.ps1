@@ -23,7 +23,7 @@ function Wait-LETest {
             Write-Log -Update -Message "Test state: $($TestRun.State), $([Math]::Round($TimeSpan.TotalMinutes,0)) of $($test.rampupDurationInMinutes + $test.testDurationInMinutes + $test.rampDownDurationInMinutes ) estimated minutes elapsed, $($TestRun.loginCounts.successCount)/$($TestRun.loginCounts.totalCount) logins, $($TestRun.engineCounts.successCount)/$($TestRun.engineCounts.totalCount) engines, $($TestRun.appExecutionCounts.successCount)/$($TestRun.appExecutionCounts.totalCount) applications"
             $state = (Get-LETest -testId $testid -include "none").state
         }
-        #Write-Log -Message ""
+        Write-Log -Message " " -Level Info
         Write-Log -Message "Test finished" -Level Info
     } 
 }

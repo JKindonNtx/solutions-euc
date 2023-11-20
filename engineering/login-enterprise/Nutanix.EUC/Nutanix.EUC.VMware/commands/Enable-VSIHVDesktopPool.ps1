@@ -40,7 +40,8 @@ function Enable-VSIHVDesktopPool {
             }
             Write-Log -Message "Sleeping for 10 Seconds" -Level Info
             Start-Sleep 10
-        }    
+        }
+        Write-Log -Message " " -Level Info    
         Write-Log -Message "All VMs are down." -Level Info
 
     } 
@@ -150,6 +151,7 @@ function WaitFor-AvailableMachines {
                 $GetNext = $true
             }
             while ($queryResults.remainingCount -gt 0)
+
             $queryService.QueryService_Delete($hvservice, $queryResults.id)
             $Machines = $Results
             $MachineNames = $Machines | ForEach-Object { $_.base | Select-Object -ExpandProperty Name }
@@ -178,6 +180,7 @@ function WaitFor-AvailableMachines {
             if ($availableCount -eq $VMAmount) { break }
             Start-Sleep -Seconds 10
         }
+        Write-Log -Message " " -Level Info 
     }
     else {
         while ($true) {
@@ -218,5 +221,6 @@ function WaitFor-AvailableMachines {
             }
             Start-Sleep -Seconds 10
         }
+        Write-Log -Message " " -Level Info 
     }
 }

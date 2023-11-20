@@ -127,6 +127,7 @@ function Set-VSIHVDesktopPool {
                     Write-Log -Update -Message "Progress:  $($Poolstatus.PendingImageProgress)" -Level Info
                     Start-Sleep -Seconds 10
                 }
+                Write-Log -Message " " -Level Info 
             }
             "RDSH" {
 
@@ -144,7 +145,7 @@ function Set-VSIHVDesktopPool {
                         -FarmDisplayName "F_$Name" `
                         -Description $Description | Out-Null
                     
-                        Write-Log -Message "Waiting 60 seconds for Farm F_$Name to be ready" -Level Info
+                    Write-Log -Message "Waiting 60 seconds for Farm F_$Name to be ready" -Level Info
                     Start-Sleep -Seconds 60
                 }
 
@@ -154,6 +155,7 @@ function Set-VSIHVDesktopPool {
                     Write-Log -Update -Message "Progress:  $($FarmStatus.PendingImageProgress)" -Level Info
                     Start-Sleep -Seconds 10
                 }
+                Write-Log -Message " " -Level Info 
 
                 New-HVPool -Rds `
                     -PoolName $Name `
