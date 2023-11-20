@@ -38,7 +38,7 @@ function Connect-VSICTX {
         try {
             Write-Log -Message "Handling Citrix Credentials and Validating Citrix On Prem Site" -Level Info
             Set-XDCredentials -ProfileType OnPrem -StoreAs ctxonprem -ErrorAction Stop
-            Get-XDAuthentication -ProfileName ctxonprem -ErrorAction Stop
+            $CitrixAuth = Get-XDAuthentication -ProfileName ctxonprem -ErrorAction Stop
             Get-BrokerSite -AdminAddress $DDC -ErrorAction Stop | Out-Null
             Write-Log -Message "Validation completed successfully" -Level Info
         }
@@ -68,7 +68,7 @@ function Connect-VSICTX {
             Write-Log -Message $_  -Level Error
             Break
         }
-        $token = $response.Content | ConvertFrom-Json
+        $global:token = $response.Content | ConvertFrom-Json
         $global:VSICTX_AuthHeader = @{
             "Authorization" = "CwsAuth Bearer=$($token.access_token)"
         }
@@ -80,7 +80,7 @@ function Connect-VSICTX {
         # Loading of ctx pssnapins has to happen outside of module, because powershell is weird like that
         try {
             Set-XDCredentials -ProfileType CloudApi -CustomerId $CustomerID -APIKey $ClientID -SecretKey $Secret -StoreAs ctxcloud -ErrorAction Stop
-            Get-XDAuthentication -CustomerID $CustomerID -BearerToken $token.access_token -ErrorAction Stop
+            $CitrixAuth = Get-XDAuthentication -CustomerID $CustomerID -BearerToken $token.access_token -ErrorAction Stop
             Write-Log -Message "Validation completed successfully"  -Level Info
         }
         catch {
@@ -89,5 +89,7 @@ function Connect-VSICTX {
             Break
         }
     }
+
+    Return $CitrixAuth
 
 }

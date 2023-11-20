@@ -24,39 +24,49 @@ Function Enable-VSICTXDesktopPool {
         Get-XDAuthentication -ProfileName ctxonprem -ErrorAction Stop
     }
     if ($Type -eq "CitrixDaaS") {
-        Get-XDAuthentication -CustomerID $CustomerID -BearerToken $token.access_token -ErrorAction Stop
+        # Update this once we figure out the JSON formatting
+        Get-XDAuthentication -CustomerID $VSI_Target_CustomerID -BearerToken $token.access_token -ErrorAction Stop
     }
     
 
-    #Power off VMs
+    # Power off VMs
+    # Replace the Power Actions with Native API NTNX Calls
     $desktops = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $MaxRecordCount
-    $totalDesktops = (Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $MaxRecordCount).Count
+    $DesktopMeasure = $desktops | Measure-Object
+    $totalDesktops = $DesktopMeasure.Count
 
-    Start-Sleep 2
-    Write-Log -Message "Initiate the shutdown for all the VMs." -Level Info
-    foreach ($desktop in $desktops) { 
-        $desktop | New-BrokerHostingPowerAction -Action TurnOff | Out-Null
-        #Start-Sleep 1
-    }
- 
-    $desktops = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $totalDesktops | Where-Object {$_.PowerState -eq "On"}	
-  
-    $startTime = Get-Date
-    $date = Get-Date
-    $timeout = 180
-    while ($desktops.Count -ne 0) {
-        $desktops = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $totalDesktops | Where-Object {$_.PowerState -eq "On"}	
-        Write-Log -Update -Message "$($desktops.Count) of $($totalDesktops) still running." -Level Info
-     
-        $date = Get-Date
-        if (($date - $startTime).TotalMinutes -gt $timeout) {
-            Write-Log -Message "Shutdown took to long." -Level Error
-            Exit 1
+
+    $desktopson = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $MaxRecordCount | Where-Object {$_.PowerState -eq "On"}	
+    $DesktopsOnMeasure = $desktopson | Measure-Object
+
+    if(!($DesktopsOnMeasure.Count -eq 0)){
+        Start-Sleep 2
+        Write-Log -Message "Initiate the shutdown for all the VMs." -Level Info
+        foreach ($desktop in $desktopson) { 
+            $desktop | New-BrokerHostingPowerAction -Action TurnOff | Out-Null
+            #Start-Sleep 1
         }
-        Start-Sleep 10
+
+        $startTime = Get-Date
+        $date = Get-Date
+        $timeout = 180
+        while ($DesktopsOnMeasure.Count -ne 0) {
+            $desktopson = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $MaxRecordCount | Where-Object {$_.PowerState -eq "On"}	
+            $DesktopsOnMeasure = $desktopson | Measure-Object
+            Write-Log -Update -Message "$($DesktopsOnMeasure.Count) of $($totalDesktops) still running." -Level Info
+        
+            $date = Get-Date
+            if (($date - $startTime).TotalMinutes -gt $timeout) {
+                Write-Log -Message "Shutdown took to long." -Level Error
+                Exit 1
+            }
+            Start-Sleep 10
+        }
+        Write-Log -Message " " -Level Info
+        Write-Log -Message "All VMs are down." -Level Info
+    } else {
+        Write-Log -Message "All VMs are already down." -Level Info
     }
-    Write-Log -Message " " -Level Info
-    Write-Log -Message "All VMs are down." -Level Info
 
     # End Power off VMs
     if ($CloneType -eq "MCS"){
