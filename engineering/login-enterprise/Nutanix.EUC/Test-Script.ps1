@@ -342,11 +342,10 @@ if ($NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
     Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name
 }
 if ($NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
+    #TBD
 
-    $James = "vm-name.vm\\snapshotname.snapshot\\snapshotname2.snapshot"
-
-    if ($James -match '^([^\\]+)\.') { $cleansed_vm_name = $matches[1] }
-    if ($James -match '\\([^\\]+)\.snapshot$') { $cleansed_snapshot_name = $matches[1] }
+    if ($VSI_Target_ImagesToTest.ParentVM -match '^([^\\]+)\.') { $cleansed_vm_name = $matches[1] }
+    if ($VSI_Target_ImagesToTest.ParentVM -match '\\([^\\]+)\.snapshot$') { $cleansed_snapshot_name = $matches[1] }
 
     Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name -VM $cleaned_vm_name
 }
