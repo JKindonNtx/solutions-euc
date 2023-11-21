@@ -13,7 +13,8 @@ Function Enable-VSICTXDesktopPool {
         $CVMSSHPassword,
         $VMnameprefix,
         $CloneType,
-        $Hosts
+        $Hosts,
+        $Type
     )
 
     $MaxRecordCount = "5000"

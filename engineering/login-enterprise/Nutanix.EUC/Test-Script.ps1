@@ -54,23 +54,27 @@ Param(
     [ValidateSet("CitrixVAD", "CitrixDaaS", "Horizon", "RAS")]
     [string]$Type,
 
-    #[Parameter(Mandatory = $false)]
-    #[switch]$Force,
+    [Parameter(Mandatory = $false)]
+    [switch]$Force,
 
-    #[Parameter(Mandatory = $false)]
-    #[switch]$SkipWaitForIdleVMs,
+    [Parameter(Mandatory = $false)]
+    [switch]$SkipWaitForIdleVMs,
 
-    #[Parameter(Mandatory = $false)]
-    #[switch]$SkipPDFExport,
+    [Parameter(Mandatory = $false)]
+    [switch]$SkipPDFExport,
 
     [Parameter(Mandatory = $false)]
     [switch]$SkipADUsers,
 
     [Parameter(Mandatory = $false)]
-    [switch]$SkipLEUsers
+    [switch]$SkipLEUsers,
 
-    #[Parameter(Mandatory = $false)]
-    #[switch]$SkipLaunchers
+    [Parameter(Mandatory = $false)]
+    [switch]$SkipLaunchers,
+
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("LE1", "LE2", "LE3", "LE4")]
+    [String]$LEAppliance
 
 )
 #endregion Params
@@ -85,10 +89,9 @@ Param(
 If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $ScriptRoot = $PSScriptRoot }
 $Validated_Workload_Profiles = @("Task Worker", "Knowledge Worker")
 $Validated_OS_Types = @("multisession", "singlesession")
-$VSI_Target_RampupInMinutes = 10 ##// This needs to move to JSON
+#$VSI_Target_RampupInMinutes = 10 ##// This needs to move to JSON
 $MaxRecordCount = 5000 ##// This needs to move to Variables
-$InfluxTestDashBucket = "Tests" ##// This needs to move to Variables
-$LEAppliance = "LE1" ##// This needs to change to JSON input ########SVENNNNNNN - SANITY CHECK PLEASE
+#$InfluxTestDashBucket = "Tests" ##// This needs to move to Variables
 #endregion Variables
 
 #Region Execute
@@ -199,15 +202,17 @@ if ($Type -eq "Horizon") {
 #----------------------------------------------------------------------------------------------------------------------------
 Write-Log -Message "Searching all modules for Posh-SSH" -Level Info
 $Temp_Module = (Get-Module -ListAvailable *) | Where-Object { $_.Name -eq "Posh-SSH" }
-if ($Null -ne $Temp_Module) {
+
+if ($Null -ne $Temp_Module -and $Temp_Module.Version -contains "2.3.0") {
     Write-Log -Message "Module Posh-SSH Found. Clearing existing SSH Keys if present" -Level Info
     Get-SSHTrustedHost | Remove-SSHTrustedHost
 } 
 else {
-    Write-Log -Message "Failed to find Posh-SSH Module. Attempting to Install" -Level Info
+    Write-Log -Message "Failed to find appropriate Posh-SSH Module. Attempting to Install" -Level Info
     try {
         Install-Module -Name Posh-SSH -RequiredVersion 2.3.0 -Force -ErrorAction Stop
         Write-Log -Message "Successfully installed Posh-SSH Module" -Level Info
+        Get-SSHTrustedHost | Remove-SSHTrustedHost
     }
     catch {
         Write-Log -Message $_ -Level Error
@@ -269,12 +274,17 @@ $NTNXInfra = Get-NTNXinfo -Config $config
 #region Script behaviour from file (params)
 #----------------------------------------------------------------------------------------------------------------------------
 
-$SkipADUsers = $VSI_Test_SkipADUsers
-$SkipLEUsers = $VSI_Test_SkipLEUsers
-$SkipLaunchers = $VSI_Test_SkipLaunchers
-$SkipPDFExport = $VSI_Test_SkipPDFExport
+## Allow the script to override JSON values via parameter
+if ($SkipADUsers.IsPresent) { $SkipADUsers = $true } else { $SkipADUsers = $VSI_Test_SkipADUsers }
+if ($SkipLEUsers.IsPresent) { $SkipLEUsers = $true } else { $SkipLEUsers = $VSI_Test_SkipLEUsers }
+if ($SkipLaunchers.IsPresent) { $SkipLaunchers = $true } else { $SkipLaunchers = $VSI_Test_SkipLaunchers }
+if ($SkipPDFExport.IsPresent) { $SkipPDFExport = $true } else { $SkipPDFExport = $VSI_Test_SkipPDFExport }
+if ($SkipWaitForIdleVMs.IsPresent) { $SkipWaitForIdleVMs = $true } else { $SkipWaitForIdleVMs = $VSI_Test_SkipWaitForIdleVMs }
+if (-not $LEAppliance) {$LEAppliance = $VSI_Test_LEAppliance}
+
 $VSI_Target_RampupInMinutes = $VSI_Test_Target_RampupInMinutes
 $InfluxTestDashBucket = $VSI_Test_InfluxTestDashBucket
+
 
 #endregion Script behaviour from file (params)
 
@@ -325,6 +335,22 @@ if ($VSI_Target_Files -ne "") {
     }
 }
 #endregion Nutanix Files Pre Flight Checks
+
+#region Nutanix Snapshot Pre Flight Checks
+if ($NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
+    $cleansed_snapshot_name = $VSI_Target_ImagesToTest.ParentVM -replace ".template",""
+    Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name
+}
+if ($NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
+    #TBD
+
+    if ($VSI_Target_ImagesToTest.ParentVM -match '^([^\\]+)\.') { $cleansed_vm_name = $matches[1] }
+    if ($VSI_Target_ImagesToTest.ParentVM -match '\\([^\\]+)\.snapshot$') { $cleansed_snapshot_name = $matches[1] }
+
+    Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name -VM $cleaned_vm_name
+}
+
+#endregion Nutanix Snapshot Pre Flight Checks
 
 #endregion Validation
 
@@ -819,6 +845,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 VMnameprefix    = $NTNXInfra.Target.NamingPattern
                 CloneType       = $VSI_Target_CloneType
                 Hosts           = $NTNXInfra.Testinfra.Hostip
+                Type            = $Type
             }
             $Boot = Enable-VSICTXDesktopPool @params
     
@@ -1563,7 +1590,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*")) {
                     Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
                     if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
-                        Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info -Update
+                        Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
                     }
                     else {
                         Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
