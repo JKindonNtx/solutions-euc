@@ -84,7 +84,8 @@ function Set-TestData {
             }
 
             # Build Unix Date
-            $StartDate = Get-Date
+            $OriginalDate = Get-Date
+            $StartDate = $OriginalDate.ToUniversalTime()  
             $UnixStartedDate = Get-Date -Date $StartDate -UFormat %s
             $NewStartDate = $UnixStartedDate.Split(".")
             $FormattedStartDate = $NewStartDate[0]
