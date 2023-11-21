@@ -845,6 +845,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 VMnameprefix    = $NTNXInfra.Target.NamingPattern
                 CloneType       = $VSI_Target_CloneType
                 Hosts           = $NTNXInfra.Testinfra.Hostip
+                Type            = $Type
             }
             $Boot = Enable-VSICTXDesktopPool @params
     
