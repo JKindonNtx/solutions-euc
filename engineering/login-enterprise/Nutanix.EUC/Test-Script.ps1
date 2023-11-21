@@ -339,7 +339,7 @@ if ($VSI_Target_Files -ne "") {
 #region Nutanix Snapshot Pre Flight Checks
 if ($NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
     $cleansed_snapshot_name = $VSI_Target_ImagesToTest.ParentVM -replace ".template",""
-    Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name
+    Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType
 }
 if ($NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
     #TBD
@@ -347,7 +347,7 @@ if ($NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
     if ($VSI_Target_ImagesToTest.ParentVM -match '^([^\\]+)\.') { $cleansed_vm_name = $matches[1] }
     if ($VSI_Target_ImagesToTest.ParentVM -match '\\([^\\]+)\.snapshot$') { $cleansed_snapshot_name = $matches[1] }
 
-    Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name -VM $cleaned_vm_name
+    Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name -VM $cleaned_vm_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType
 }
 
 #endregion Nutanix Snapshot Pre Flight Checks
