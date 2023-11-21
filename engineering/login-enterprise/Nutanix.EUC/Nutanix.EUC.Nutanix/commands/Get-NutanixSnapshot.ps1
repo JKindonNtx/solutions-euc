@@ -3,19 +3,20 @@ function Get-NutanixSnapshot {
     [CmdletBinding()]
     Param (
         [Parameter(Mandatory = $true)][String]$SnapshotName,
-        [Parameter(Mandatory = $false)][String]$VM
+        [Parameter(Mandatory = $false)][String]$VM,
+        [Parameter(Mandatory = $false)][String]$HypervisorType
     )
 
     Write-Log -Message "Validating Snapshot $($SnapshotName) exists on Target Cluster $($VSI_Target_CVM)" -Level Info
 
-    if ($NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
+    if ($HypervisorType -eq "AHV") {
 
         $All_Snapshots = Invoke-PublicApiMethodNTNX -Method "GET" -Path "snapshots"
     
         $snap_validated = $All_Snapshots.entities | Where-Object {$_.snapshot_name -eq $SnapshotName}
     
     }
-    if ($NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
+    if ($HypervisorType -eq "ESXi") {
         try {
             $temp_vsphere_connection = Connect-VIServer -Server $VSI_Target_vCenterServer -User $VSI_Target_vCenterUsername -Password $VSI_Target_vCenterPassword -Force -ErrorAction Stop
             $snap_validated = Get-Snapshot -VM $VM -Name $SnapshotName -Server $temp_vsphere_connection -ErrorAction Stop
