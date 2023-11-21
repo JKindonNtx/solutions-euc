@@ -347,7 +347,7 @@ if ($NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
     if ($VSI_Target_ImagesToTest.ParentVM -match '^([^\\]+)\.') { $cleansed_vm_name = $matches[1] }
     if ($VSI_Target_ImagesToTest.ParentVM -match '\\([^\\]+)\.snapshot$') { $cleansed_snapshot_name = $matches[1] }
 
-    Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name -VM $cleaned_vm_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType
+    Get-NutanixSnapshot -VM $cleansed_vm_name -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType
 }
 
 #endregion Nutanix Snapshot Pre Flight Checks
