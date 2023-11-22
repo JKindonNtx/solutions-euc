@@ -57,13 +57,13 @@ function Set-CitrixHostingConnection {
         Process
         {
             # Display Function Parameters
-            Write-Host (Get-Date)":VLAN: $VLAN" 
+            Write-Host (Get-Date)":Creating Hosting Connection" 
     
             Add-PSSnapin Citrix.*
             Set-XDCredentials -ProfileType OnPrem -StoreAs ctxonprem -ErrorAction Stop
             Get-XDAuthentication -ProfileName ctxonprem -ErrorAction Stop
 
-            $ClusterName = (Get-NutanixApiv2 -IP $IP -UserName $UserName -Password $Password -APIPath "cluster").name
+            $ClusterName = (Invoke-NutanixApi -IP $IP -UserName $UserName -Password $Password -APIPath "cluster").name
     
             $Connection = Get-BrokerHypervisorConnection -AdminAddress "$($DDC)" | Where-Object {$_.name -like "*$($ClusterName)*" }
             if($null -eq $Connection){
@@ -87,13 +87,13 @@ function Set-CitrixHostingConnection {
 
     
             # Adding Nutanix Connection
-            Write-Host "Adding Nutanix Hosting Configuration" -Verbose
+            Write-Host (Get-Date)":Adding Nutanix Hosting Configuration" -Verbose
             Set-HypAdminConnection -AdminAddress "$($DDC)"
             $Connection = New-Item -ConnectionType "Custom" -CustomProperties "" -HypervisorAddress @("$IP")  -Metadata @{"Citrix_Broker_ExtraSpinUpTime"="120";"Citrix_Broker_MaxAbsoluteNewActionsPerMinute"="50";"Citrix_Broker_MaxAbsolutePvDPowerActions"="50";"Citrix_Broker_MaxPvdPowerActionsPercentageOfDesktops"="25";"Citrix_Broker_MaxPowerActionsPercentageOfDesktops"="20";"Citrix_Broker_MaxAbsoluteActiveActions"="100"} -Path @("XDHyp:\Connections\$($ClusterName)") -Persist -PluginId "AcropolisFactory" -Scope @() -SecurePassword $Pwd -UserName $UserName
             $NewConnection = New-BrokerHypervisorConnection  -AdminAddress "$($DDC)" -HypHypervisorConnectionUid $Connection.HypervisorConnectionUid
             $NewItem = New-Item -HypervisorConnectionName $ClusterName -NetworkPath @("$NetworkPath") -Path @("XDHyp:\HostingUnits\$($ClusterName)-AHV") -PersonalvDiskStoragePath @() -RootPath $RootPath -StoragePath @("XDHyp:\Connections\$($ClusterName)\VDI.storage")
             
-            write-host "Added Hosting Connection for $($ClusterName)"
+            Write-Host (Get-Date)":Added Hosting Connection for $($ClusterName)"
         } # Process
         
         End

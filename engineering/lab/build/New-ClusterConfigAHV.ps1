@@ -46,6 +46,18 @@ If ($GitHub.UserName -like "* *") {
     Write-Host (Get-Date) ":Updated UserName is: $($GitHub.UserName)"
 }
 
+# Ask for confirmation to start the build - if no the quit
+Clear-Host
+Do { $confirmationNC2 = Read-Host "Is this cluster running on NC2? [y/n]" } Until (($confirmationNC2 -eq "y") -or ($confirmationNC2 -eq "n"))
+
+if ($confirmationNC2 -eq 'y') { 
+    Write-Host "This script CANNOT be used on NC2 due to the limitations with CVM access"
+    Write-Host "Please configure the cluster manually"
+    exit 
+} else {
+    Clear-Host
+}
+
 # Write out a "SNAZZY" header
 Write-Host "
    ____ _           _               ____             __ _            _    _   ___     __
@@ -67,6 +79,7 @@ Write-Host "Container Name:         $($JSON.VM.Container)"
 Write-Host "ISO Image:              $($JSON.VM.ISO)"
 Write-Host "ISO Url:                $($JSON.VM.ISOUrl)"
 Write-Host "Create Hosting:         True"
+Write-Host "Register to PC:         $($JSON.Cluster.PCIP)"
 Write-Host "
 --------------------------------------------------------------------------------------------------------"
 
@@ -186,9 +199,15 @@ if ($confirmationStart -eq 'n') {
     $ClusterName = $Clusterinfo.name
 
     # Create Citrix Hosting Connection
-    # Set-CitrixHostingConnection -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VLAN "$($VLANName)" -DDC "$($JSON.Citrix.DDC)"
-    # $SlackMessage = $SlackMessage + "Hosting Connection Created: $($ClusterName)`n"
-    # $SendToSlack = "y"
+    Set-CitrixHostingConnection -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VLAN "$($VLANName)" -DDC "$($JSON.Citrix.DDC)"
+    $SlackMessage = $SlackMessage + "Hosting Connection Created: $($ClusterName)`n"
+    $SendToSlack = "y"
+
+    # Register Cluster with Prism Central
+    Remove-PrismCentral -PCIP "$($JSON.Cluster.PCIP)" -PCPassword "$($JSON.Cluster.PCPassword)" -ClusterName $ClusterName
+    Set-PrismCentral -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.CVMsshpassword)" -PCIP "$($JSON.Cluster.PCIP)" -PCPassword "$($JSON.Cluster.PCPassword)"
+    $SlackMessage = $SlackMessage + "$($ClusterName) registered with Prism Central $($PCIP)`n"
+    $SendToSlack = "y"
 
     # Update Slack Channel
     if ($SendToSlack -eq "y") {
