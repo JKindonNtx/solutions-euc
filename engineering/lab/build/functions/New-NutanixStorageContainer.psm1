@@ -87,12 +87,6 @@ function New-NutanixStorageContainer {
         # Display Function Parameters
         Write-Host (Get-Date)":Container: $Container" 
 
-        # Build JSON and connect to cluster for information
-        $credPair = "$($UserName):$($Password)"
-        $encodedCredentials = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($credPair))
-        $headers = @{ Authorization = "Basic $encodedCredentials" }
-        $URL = "https://$($IP):9440/PrismGateway/services/rest/v2.0/storage_containers"
-
         # Create JSON Payload
         $Payload = "{ `
             ""compression_delay_in_secs"":""" + "0" + """, `
@@ -104,12 +98,10 @@ function New-NutanixStorageContainer {
 
         # Invoke the RestMethod
         try {
-            $task = Invoke-RestMethod -Uri $URL -method "POST" -body $Payload -ContentType 'application/json' -SkipCertificateCheck -headers $headers;
+            $task = Invoke-NutanixAPI -IP "$($IP)" -Password "$($Password)" -UserName "$($UserName)" -APIpath "storage_containers" -method "POST" -body $Payload
         }
         catch {
-            Start-Sleep 10
-            Write-Host (Get-Date) ": Going once"
-            $task = Invoke-RestMethod -Uri $URL -method "POST" -body $Payload -ContentType 'application/json' -SkipCertificateCheck -headers $headers;
+            write-host "Error creating Storage Container $($Container)"
         }
     } # Process
     

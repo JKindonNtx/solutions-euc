@@ -74,11 +74,45 @@ function Update-Slack {
             )
         }
         $RestError = $null
-        Try {
-            Invoke-RestMethod -uri $Slack -Method Post -body $body -ContentType 'application/json' | Out-Null
-        } Catch {
-            $RestError = $_
+
+      if ($PSEdition -eq "Core") {
+            try {
+                Invoke-RestMethod -uri $Slack -Method Post -body $body -ContentType 'application/json' -SkipCertificateCheck 
+            }
+            catch {
+                Write-Host -Message "Error Updating Slack"
+            }
+        } else {
+            if (-not("SSLValidator" -as [type])) {
+                add-type -TypeDefinition @"
+using System;
+using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
+
+public static class SSLValidator {
+    public static bool ReturnTrue(object sender,
+        X509Certificate certificate,
+        X509Chain chain,
+        SslPolicyErrors sslPolicyErrors) { return true; }
+
+    public static RemoteCertificateValidationCallback GetDelegate() {
+        return new RemoteCertificateValidationCallback(SSLValidator.ReturnTrue);
+    }
+}
+"@
+            }
+
+            #[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Ssl3 -bor [System.Net.SecurityProtocolType]::Tls -bor [System.Net.SecurityProtocolType]::Tls11 -bor [System.Net.SecurityProtocolType]::Tls12
+            [System.Net.ServicePointManager]::ServerCertificateValidationCallback = [SSLValidator]::GetDelegate()
+            try {
+                Invoke-RestMethod -uri $Slack -Method Post -body $body -ContentType 'application/json'
+            }
+            catch {
+                Write-Host -Message "Error Updating Slack"
+            }
         }
+
     }
     
     End
