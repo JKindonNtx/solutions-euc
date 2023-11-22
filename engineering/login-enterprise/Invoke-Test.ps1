@@ -78,7 +78,7 @@ If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $
 $Validated_Workload_Profiles = @("Task Worker", "Knowledge Worker")
 $Validated_OS_Types = @("multisession", "singlesession")
 #$VSI_Target_RampupInMinutes = 10 ##// This needs to move to JSON
-$MaxRecordCount = 5000 ##// This needs to move to JSON Input
+#$MaxRecordCount = 5000 ##// This needs to move to JSON Input
 #$InfluxTestDashBucket = "Tests" ##// This needs to move to Variables
 #endregion Variables
 
@@ -210,6 +210,16 @@ else {
 $Temp_Module = $null
 #endregion remove existing SSH Keys
 
+#region Validate JSON
+
+#if(Get-ValidJSON -JSON $ConfigFile){
+    #Passed
+#} else {
+    #Failed - Break
+#}
+
+#endregion Validate JSON
+
 #region variable setting
 #----------------------------------------------------------------------------------------------------------------------------
 Set-VSIConfigurationVariables -ConfigurationFile $ConfigFile
@@ -272,7 +282,7 @@ if (-not $LEAppliance) {$LEAppliance = $VSI_Test_LEAppliance}
 
 $VSI_Target_RampupInMinutes = $VSI_Test_Target_RampupInMinutes
 $InfluxTestDashBucket = $VSI_Test_InfluxTestDashBucket
-#$Global:MaxRecordCount = $VSI_Target_MaxRecordCount
+$Global:MaxRecordCount = $VSI_Target_MaxRecordCount
 
 
 #endregion Script behaviour from file (params)
