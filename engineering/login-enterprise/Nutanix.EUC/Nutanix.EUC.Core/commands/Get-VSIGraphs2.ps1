@@ -22,13 +22,7 @@ function Get-VSIGraphs {
     Write-Log -Message "BucketName: $($Bucketname)" -Level Info
 
     # Check on Bucketname and build Uri accordingly
-    if ($BucketName -eq "LoginDocuments") {
-        $bucket_uri = $TestConfig.Testinfra.GrafanaUriDocs
-    }
-    elseif ($BucketName -eq "LoginRegression" ) {
-        $bucket_uri = $TestConfig.Testinfra.GrafanaUriRegression
-    }
-    else {
+    if (!($BucketName -eq "LoginDocuments") -or !($BucketName -eq "LoginRegression")) {
         Write-Log -Mesage "Invalid Bucket: $($BucketName)" -Level Warn
         break
     }
@@ -49,8 +43,15 @@ function Get-VSIGraphs {
             $OutFile = Join-Path -Path "$($OutputFolder)" -ChildPath "$($TestName)_Run$($RunNumber)_Cluster_CPU_With_EUX.png"
         }
         $Run = "&var-Run=$($TestName)_Run$($RunNumber)"
-        #$Uri = "$($TestConfig.Testinfra.GrafanaUriDocs)&var-Bucketname=$($BucketName)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
-        $Uri = "$($bucket_uri)&var-Bucketname=$($BucketName)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
+
+        # Build Uri for download
+        if ($BucketName -eq "LoginDocuments") {
+            #$Uri = "$($TestConfig.Testinfra.GrafanaUriDocs)&var-Bucketname=$($BucketName)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
+            $Uri = "$($TestConfig.Testinfra.GrafanaUriDocs)&var-Bucketname=$($BucketName)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
+        } elseif ($BucketName -eq "LoginRegression" ) {
+            # Placeholder for Uri to get Filters for Regression Graph $TestConfig.Testinfra.GrafanaUriRegression
+        }
+
         Write-Log -Message "Downloading $($OutFile) from Grafana" -Level Info
         try {
             Invoke-WebRequest -Uri $Uri -outfile $OutFile -ErrorAction Stop
@@ -90,8 +91,15 @@ function Get-VSIGraphs {
         for ($i = 1 ; $i -le ($TestConfig.target.ImageIterations) ; $i++) {
             $Run = "$($Run)&var-Run=$($TestName)_Run$($i)"
         }
-        #$Uri = "$($TestConfig.Testinfra.GrafanaUriDocs)&var-Bucketname=$($BucketName)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
-        $Uri = "$($bucket_uri)&var-Bucketname=$($BucketName)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
+
+        # Build Uri for download
+        if ($BucketName -eq "LoginDocuments") {
+            #$Uri = "$($TestConfig.Testinfra.GrafanaUriDocs)&var-Bucketname=$($BucketName)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
+            $Uri = "$($TestConfig.Testinfra.GrafanaUriDocs)&var-Bucketname=$($BucketName)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
+        } elseif ($BucketName -eq "LoginRegression" ) {
+            # Placeholder for Uri to get Filters for Regression Graph $TestConfig.Testinfra.GrafanaUriRegression
+        }
+
         Write-Log -Message "Downloading $($OutFile) from Grafana" -Level Info
         try {
             Invoke-WebRequest -Uri $Uri -outfile $OutFile -ErrorAction Stop
