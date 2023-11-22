@@ -3,6 +3,8 @@
 		"ip": "10.10.10.10",
       	"password": "password",
 	  	"CVMsshpassword": "password"
+		"pcip": "11.11.11.11",
+		"PCPassword": "password"
 	},
 	"VMwareCluster": {
 		"ip": "10.10.10.10",
