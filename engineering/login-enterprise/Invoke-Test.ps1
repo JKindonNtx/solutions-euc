@@ -36,7 +36,7 @@ Param(
     [string]$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Nutanix.EUC\ExampleConfig-LoginEnterpriseGlobal.jsonc",
 
     [Parameter(Mandatory = $false)]
-    [string]$ReportConfigFile = ".\ReportConfigurationNTNX.jsonc",
+    [string]$ReportConfigFile = ".\ReportConfiguration.jsonc",
 
     [Parameter(Mandatory = $false)]
     [ValidateSet("CitrixVAD", "CitrixDaaS", "Horizon", "RAS")]
@@ -92,7 +92,7 @@ $MaxRecordCount = 5000 ##// This needs to move to JSON Input
 $var_ModuleName = "Nutanix.EUC"
 Write-Host "$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: Trying to import $var_ModuleName module"
 try {
-    Import-Module "$ScriptRoot\$var_ModuleName.psd1" -Force -ErrorAction Stop
+    Import-Module "$ScriptRoot\$var_ModuleName\$var_ModuleName.psd1" -Force -ErrorAction Stop
     Write-Log -Message "Successfully imported $var_ModuleName Module" -Level Info
 }
 catch {
@@ -161,7 +161,7 @@ if ($Type -eq "Horizon") {
         }
         
         Write-Log -Message "Importing VMWare Helper Module" -Level Info
-        $moduleName = (Get-Item $ScriptRoot\Nutanix.EUC.VMware\commands\VMware.Hv.Helper).FullName
+        $moduleName = (Get-Item $ScriptRoot\$var_ModuleName\Nutanix.EUC.VMware\commands\VMware.Hv.Helper).FullName
         if ($moduleName) {
             try {
                 Import-Module $moduleName -Force -ErrorAction Stop -SkipEditionCheck -Verbose:$false | Out-Null

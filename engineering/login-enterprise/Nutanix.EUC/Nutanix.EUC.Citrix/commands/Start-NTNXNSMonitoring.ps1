@@ -22,7 +22,8 @@ function Start-NTNXNSMonitoring {
             $StopMonitoringCheckFile
         )
     
-        #Import-Module "$Path\modules\VSI.ResourceMonitor.NTNX\src\internal\Invoke-NetScalerStats.ps1" -Force
+        $var_ModuleName = "Nutanix.EUC"
+        Import-Module "$Path\$var_ModuleName\$var_ModuleName.psd1" -Force -ErrorAction Stop
     
         if (-not (Test-Path $OutputFolder)) { New-Item -ItemType Directory -Path $OutputFolder | Out-Null }
     

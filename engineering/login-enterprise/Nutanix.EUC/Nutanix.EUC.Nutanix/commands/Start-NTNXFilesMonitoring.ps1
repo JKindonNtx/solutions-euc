@@ -8,7 +8,7 @@ function Start-NTNXFilesMonitoring {
         [Parameter(Mandatory = $false)] [switch]$AsJob,
         [Parameter(Mandatory = $true)] [string]$Path,
         [Parameter(Mandatory = $true)] [string]$OutputFolder,
-        [Parameter(Mandatory = $true)] [string]$NTNXCounterConfigurationFile = ".\ReportConfigurationNTNX.jsonc",
+        [Parameter(Mandatory = $true)] [string]$NTNXCounterConfigurationFile = ".\ReportConfiguration.jsonc",
         [Parameter(Mandatory = $false)] [string]$StopMonitoringCheckFile = "$env:temp\VSIMonitoring_Stop.chk"
     )
 
@@ -25,7 +25,9 @@ function Start-NTNXFilesMonitoring {
             $NTNXCounterConfiguration,
             $StopMonitoringCheckFile
         )
-        #Import-Module "$Path\modules\VSI.ResourceMonitor.NTNX\src\internal\Invoke-PublicApiMethodFiles.ps1" -Force
+        
+        $var_ModuleName = "Nutanix.EUC"
+        Import-Module "$Path\$var_ModuleName\$var_ModuleName.psd1" -Force -ErrorAction Stop
     
         if (-not (Test-Path $OutputFolder)) { New-Item -ItemType Directory -Path $OutputFolder | Out-Null }
     

@@ -7,7 +7,7 @@ function Start-VSINTNXMonitoring {
         [Parameter(Mandatory = $true)] [string]$IPMI_ip,
         [Parameter(Mandatory = $true)] [string]$Path,
         [Parameter(Mandatory = $true)] [string]$OutputFolder,
-        [Parameter(Mandatory = $true)] [string]$NTNXCounterConfigurationFile = ".\ReportConfigurationNTNX.jsonc",
+        [Parameter(Mandatory = $true)] [string]$NTNXCounterConfigurationFile = ".\ReportConfiguration.jsonc",
         [Parameter(Mandatory = $false)] [string]$StopMonitoringCheckFile = "$env:temp\VSIMonitoring_Stop.chk"
     )
 
@@ -29,11 +29,9 @@ function Start-VSINTNXMonitoring {
             $NTNXCounterConfiguration,
             $StopMonitoringCheckFile
         )
-        #Import-Module "$Path\modules\VSI.ResourceMonitor.NTNX\src\internal\Invoke-PublicApiMethodNTNXv1.ps1" -Force
-        #Import-Module "$Path\modules\VSI.ResourceMonitor.NTNX\src\internal\Invoke-PublicApiMethodNTNX.ps1" -Force
-        #Import-Module "$Path\modules\VSI.ResourceMonitor.NTNX\src\internal\Invoke-PublicApiMethodRedfish.ps1" -Force
+     
         $var_ModuleName = "Nutanix.EUC"
-        Import-Module "$Path\$var_ModuleName.psd1" -Force -ErrorAction Stop
+        Import-Module "$Path\$var_ModuleName\$var_ModuleName.psd1" -Force -ErrorAction Stop
 
         if (-not (Test-Path $OutputFolder)) { New-Item -ItemType Directory -Path $OutputFolder | Out-Null }
         If ($DurationInMinutes -eq "Boot") {
