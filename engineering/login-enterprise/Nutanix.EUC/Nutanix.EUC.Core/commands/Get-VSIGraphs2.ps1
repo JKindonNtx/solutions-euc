@@ -23,7 +23,7 @@ function Get-VSIGraphs {
 
     # Check on Bucketname and build Uri accordingly
     if (!($BucketName -eq "LoginDocuments") -or !($BucketName -eq "LoginRegression")) {
-        Write-Log -Mesage "Invalid Bucket: $($BucketName)" -Level Warn
+        Write-Log -Message "Invalid Bucket: $($BucketName)" -Level Warn
         break
     }
 
