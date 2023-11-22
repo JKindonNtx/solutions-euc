@@ -35,12 +35,13 @@ function Get-VSIResults {
     Write-Log -Message "Analyzing test results." -Level Info
     $testNameFilter = $TestName + "_Run"
     $testDirectories = Get-ChildItem -Path "$Path\results" -Directory | Where-Object { $_.Name.StartsWith($testNameFilter) }
+    $TestDirMeasure = $testDirectories | Measure-Object
 
-    Write-Log -Message "Found $($testDirectories.Count) tests to analyze." -Level Info
+    Write-Log -Message "Found $($TestDirMeasure.Count) tests to analyze." -Level Info
     $count = 1
     $result = @()
     foreach ($test in $testDirectories) {
-        Write-Log -Message "Analyzing $count of $($testDirectories.Count) tests." -Level Info
+        Write-Log -Message "Analyzing $count of $($TestDirMeasure.Count) tests." -Level Info
         $data = Import-Csv "$Path\results\$($TestName)_Run$count\VSI-results.csv"
         $result += $data
         $count++
