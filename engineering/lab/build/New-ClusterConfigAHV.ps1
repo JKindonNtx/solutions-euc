@@ -18,8 +18,9 @@
 # ====================================================================================================================================================
 
 # Define the Variables for the script
-$functions = get-childitem -Path "/workspaces/solutions-euc/engineering/lab/build/functions/*.psm1"
-$JSONFile = "/workspaces/solutions-euc/engineering/lab/build/LabConfig.json"
+If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $ScriptRoot = $PSScriptRoot }
+$functions = get-childitem -Path "$($ScriptRoot)\functions\*.psm1"
+$JSONFile = "$($ScriptRoot)\LabConfig.json"
 
 # Import all the functions required
 foreach($function in $functions){ Write-Host (Get-Date)":Importing - $function." ; import-module $function }
@@ -65,6 +66,7 @@ Write-Host "VLAN Name:              $VLANName"
 Write-Host "Container Name:         $($JSON.VM.Container)"
 Write-Host "ISO Image:              $($JSON.VM.ISO)"
 Write-Host "ISO Url:                $($JSON.VM.ISOUrl)"
+Write-Host "Create Hosting:         True"
 Write-Host "
 --------------------------------------------------------------------------------------------------------"
 
@@ -109,7 +111,7 @@ if ($confirmationStart -eq 'n') {
     }
     
     # Check and Update the Network
-    $VLANinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "networks"
+    $VLANinfo = Get-NutanixAPIv2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "networks"
     $VLANUUID = ($VLANinfo.entities | Where-Object {$_.name -eq $VLANName}).uuid
     if($null -eq $VLANUUID){
         # VLAN not available
@@ -127,7 +129,7 @@ if ($confirmationStart -eq 'n') {
     }
 
     # Check and Update the Storage Containers
-    $Storageinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "storage_containers"
+    $Storageinfo = Get-NutanixAPIv2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "storage_containers"
     $StorageUUID = ($Storageinfo.entities | Where-Object {$_.name -eq $($JSON.VM.Container)}).storage_container_uuid
     if($null -eq $StorageUUID){
         # Storage Container not available
@@ -145,7 +147,7 @@ if ($confirmationStart -eq 'n') {
     }
 
     #Check and Update the ISO Image
-    $ISOinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "images"
+    $ISOinfo = Get-NutanixAPIv2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "images"
     $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($JSON.VM.ISO)}).vm_disk_id
     if($null -eq $ISOUUID){
         # ISO file not available
@@ -180,8 +182,13 @@ if ($confirmationStart -eq 'n') {
     }
 
     # Get Cluster Name and update Slack Message
-    $Clusterinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "cluster"
+    $Clusterinfo = Get-NutanixAPIv2 -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "cluster"
     $ClusterName = $Clusterinfo.name
+
+    # Create Citrix Hosting Connection
+    Set-CitrixHostingConnection -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VLAN "$($VLANName)" -DDC "$($JSON.Citrix.DDC)"
+    $SlackMessage = $SlackMessage + "Hosting Connection Created: $($ClusterName)`n"
+    $SendToSlack = "y"
 
     # Update Slack Channel
     if ($SendToSlack -eq "y") {

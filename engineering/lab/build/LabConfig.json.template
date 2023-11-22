@@ -25,6 +25,9 @@
         "Hypervisor": "AHV",
 	    "Method": "MDT"
 	},
+	"Citrix": {
+		"DDC": "ddc.domain.com"
+	},
 	"MDTconfig": {
 	   	"serverIP" : "10.10.10.10",
 	   	"share" : "MDT$",

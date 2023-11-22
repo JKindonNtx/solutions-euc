@@ -75,7 +75,7 @@ function Update-Slack {
         }
         $RestError = $null
         Try {
-            Invoke-RestMethod -uri $Slack -Method Post -body $body -SkipCertificateCheck -ContentType 'application/json' | Out-Null
+            Invoke-RestMethod -uri $Slack -Method Post -body $body -ContentType 'application/json' | Out-Null
         } Catch {
             $RestError = $_
         }

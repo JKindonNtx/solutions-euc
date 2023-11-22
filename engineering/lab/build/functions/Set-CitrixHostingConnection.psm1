@@ -41,44 +41,11 @@ function Set-CitrixHostingConnection {
     
         Param
         (
-            [Parameter(
-                Mandatory=$true, 
-                ValueFromPipeline=$true,
-                ValueFromPipelineByPropertyName=$true
-            )]
-            [Alias('ClusterIP')]
-            [system.string[]]$IP,
-    
-            [Parameter(
-                Mandatory=$true, 
-                ValueFromPipeline=$true,
-                ValueFromPipelineByPropertyName=$true
-            )]
-            [Alias('User')]
-            [system.string[]]$UserName,
-    
-            [Parameter(
-                Mandatory=$true, 
-                ValueFromPipeline=$true,
-                ValueFromPipelineByPropertyName=$true
-            )]
-            [Alias('Pass')]
-            [system.string[]]$Password,
-    
-            [Parameter(
-                Mandatory=$true, 
-                ValueFromPipeline=$true,
-                ValueFromPipelineByPropertyName=$true
-            )]
-            [system.string[]]$VLAN,
-    
-            [Parameter(
-                Mandatory=$true, 
-                ValueFromPipeline=$true,
-                ValueFromPipelineByPropertyName=$true
-            )]
-            [ValidateSet("Create", "Delete")]
-            [system.string[]]$Action
+            $IP,
+            $UserName,
+            $Password,
+            $VLAN,
+            $DDC
         )
     
         Begin
@@ -91,52 +58,47 @@ function Set-CitrixHostingConnection {
         {
             # Display Function Parameters
             Write-Host (Get-Date)":VLAN: $VLAN" 
-            Write-Host (Get-Date)":Action: $Action" 
     
-            $credPair = "$($UserName):$($Password)"
-            $encodedCredentials = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($credPair))
-            $headers = @{ Authorization = "Basic $encodedCredentials" }
-            $URL = "https://$($IP):9440/PrismGateway/services/rest/v2.0/$APIpath"
-    
-            # Build Payload
-            $Payload = @{
-                "transition"="$($Action)"
-            } 
-            $JSON = $Payload | convertto-json
-    
-            # Invoke Rest Method
-            try {
-                $task = Invoke-RestMethod -Uri $URL -method "POST" -body $JSON -ContentType 'application/json' -SkipCertificateCheck -headers $headers;
-            }
-            catch {
-                Start-Sleep 10
-                Write-Host (Get-Date) ": Going once"
-                $task = Invoke-RestMethod -Uri $URL -method "POST" -body $JSON -ContentType 'application/json' -SkipCertificateCheck -headers $headers;
-            }
             Add-PSSnapin Citrix.*
-            $NetName = "vlan_100"
-            $ConnectionName = "nutanix_ahv"
-            $ResourceName = "$NetName"
-            $Pwd = $Pwd | ConvertTo-SecureString -asPlainText -Force
-            $RootPath = "XDHyp:\Connections\$ConnectionName\"
-            $NetworkPath = "$RootPath" + "$Netname.network"
+            Set-XDCredentials -ProfileType OnPrem -StoreAs ctxonprem -ErrorAction Stop
+            Get-XDAuthentication -ProfileName ctxonprem -ErrorAction Stop
 
+            $ClusterName = (Get-NutanixApiv2 -IP $IP -UserName $UserName -Password $Password -APIPath "cluster").name
+    
+            $Connection = Get-BrokerHypervisorConnection -AdminAddress "$($DDC)" | Where-Object {$_.name -like "*$($ClusterName)*" }
+            if($null -eq $Connection){
+                Write-Host (Get-Date)":Connection $($ClusterName) Does Not Exist" 
+            } else {
+                Write-Host (Get-Date)":Connection $($ClusterName) Exists - Deleting" 
+                try {
+                    Remove-Item -AdminAddress "$($DDC)" -path "xdhyp:\HostingUnits\$($ClusterName)-AHV"
+                    Remove-BrokerHypervisorConnection -Name $ClusterName
+                    Remove-Item -AdminAddress "$($DDC)" -path "xdhyp:\Connections\$($ClusterName)"
+                } catch {
+                    write-host "Error removing Hypervisor Connection"
+                    write-host $_
+                    
+                }
+            }
+            
+            $Pwd = $Password | ConvertTo-SecureString -asPlainText -Force
+            $RootPath = "XDHyp:\Connections\$ClusterName"
+            $NetworkPath = "$RootPath\" + "$VLAN.network"
+
+    
             # Adding Nutanix Connection
-            Write-Verbose "Adding Nutanix Configuration" -Verbose
-            Set-HypAdminConnection -AdminAddress "$XDC01:443"
-            New-Item -ConnectionType "Custom" -CustomProperties "" -HypervisorAddress @("$CVM") -Path @("$RootPath") -Persist -PluginId "AcropolisFactory" -Scope @() -SecurePassword $Pwd -UserName $User
-            $Hyp = Get-ChildItem -Path @('XDHyp:\Connections')
-            $HypGUID = $Hyp.HypervisorConnectionUid.Guid
-            New-BrokerHypervisorConnection -AdminAddress "$XDC01:443" -HypHypervisorConnectionUid "$HypGUID"
-            $job = [Guid]::NewGuid()
-            New-Item -HypervisorConnectionName $ConnectionName -JobGroup $job -NetworkPath @("$NetworkPath") -Path @("XDHyp:\HostingUnits\$ResourceName") -PersonalvDiskStoragePath @() -RootPath $RootPath -StoragePath @()
-
+            Write-Host "Adding Nutanix Hosting Configuration" -Verbose
+            Set-HypAdminConnection -AdminAddress "$($DDC)"
+            $Connection = New-Item -ConnectionType "Custom" -CustomProperties "" -HypervisorAddress @("$IP")  -Metadata @{"Citrix_Broker_ExtraSpinUpTime"="120";"Citrix_Broker_MaxAbsoluteNewActionsPerMinute"="50";"Citrix_Broker_MaxAbsolutePvDPowerActions"="50";"Citrix_Broker_MaxPvdPowerActionsPercentageOfDesktops"="25";"Citrix_Broker_MaxPowerActionsPercentageOfDesktops"="20";"Citrix_Broker_MaxAbsoluteActiveActions"="100"} -Path @("XDHyp:\Connections\$($ClusterName)") -Persist -PluginId "AcropolisFactory" -Scope @() -SecurePassword $Pwd -UserName $UserName
+            $NewConnection = New-BrokerHypervisorConnection  -AdminAddress "$($DDC)" -HypHypervisorConnectionUid $Connection.HypervisorConnectionUid
+            $NewItem = New-Item -HypervisorConnectionName $ClusterName -NetworkPath @("$NetworkPath") -Path @("XDHyp:\HostingUnits\$($ClusterName)-AHV") -PersonalvDiskStoragePath @() -RootPath $RootPath -StoragePath @("XDHyp:\Connections\$($ClusterName)\VDI.storage")
+            
+            write-host "Added Hosting Connection for $($ClusterName)"
         } # Process
         
         End
         {
             Write-Host (Get-Date)":Finishing $($PSCmdlet.MyInvocation.MyCommand.Name)" 
-            Return $task
         } # End
     
     } # Set-NutanixVMPower
