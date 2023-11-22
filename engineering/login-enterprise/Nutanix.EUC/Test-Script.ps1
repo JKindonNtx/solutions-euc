@@ -8,28 +8,16 @@ The JSON file containing the test configuration
 Specify the type of test to be run, CitrixVAD, CitrixDaaS, Horizon, RAS
 .NOTES
 TODO
-- Validate what should be in JSON, vs Param vs Variables
-- Fixup the Params in this script for Config File etc
-- Consider Template JSON output based on -Planning Switch
-- Switch setup -> API / Influx DB LE1 = 
-    - Common -> JSON based?
-    - CVAD -> Validate only the appropriate JSON config for CVAD
-    - DaaS
-    - Horizon -> 
-    - NetScaler
 - Query Inlfux for running tests against LE appliance
 - Remember to replace BREAK with Break! Temporarily using Break
-
+- MaxRecordCount coming in from JSON file. Need to update the functions to include this value wherever a Get-BrokerMachine lookup occurs? Check with Dave on the best way to pull that through globally (line 275)
+- Do we want to cset the $Type Parameter to align with the DeliveryType value in the JSON file?
 ------------------------------------------------------------------------------------------
 ### REVIEW NOTES - WORK IN PROGRESS - REMOVE ONCE VALIDATED
 ------------------------------------------------------
 | Item | Requester | Reviewer | Date |
-| Review Horizon Input Logic - Search for "$Type -eq "Horizon"" | James | Sven | 16.11.2023 |
 | Move HV Helper and HV Functions into new framework (review functions for logging etc) | James | James/Sven/Dave | 16.11.2023 |
-| Review Files Auth Validation Logic - Search for "Invoke-NutanixFilesAuthCheck" | James | Dave | 16.11.2023 |
 | Review Output Logic - Search for "Report Output here on relevent variables" | James | Dave/Sven | 16.11.2023 |
-| Review Current JSON File - do we need values that are now auto calculated? | James | Sven | 16.11.2023 |
-| Review Remove-NutanixFilesData.ps1 Function. Search for $TBD_NtxFilesShares - Need provide a list of shares (JSON?). There is a Validation and Execution Phase | James | Dave | 16.11.2023 |
 ------------------------------------------------------
 
 -----------------------------------------------------------------------------------------
@@ -90,7 +78,7 @@ If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $
 $Validated_Workload_Profiles = @("Task Worker", "Knowledge Worker")
 $Validated_OS_Types = @("multisession", "singlesession")
 #$VSI_Target_RampupInMinutes = 10 ##// This needs to move to JSON
-$MaxRecordCount = 5000 ##// This needs to move to Variables
+$MaxRecordCount = 5000 ##// This needs to move to JSON Input
 #$InfluxTestDashBucket = "Tests" ##// This needs to move to Variables
 #endregion Variables
 
@@ -284,6 +272,7 @@ if (-not $LEAppliance) {$LEAppliance = $VSI_Test_LEAppliance}
 
 $VSI_Target_RampupInMinutes = $VSI_Test_Target_RampupInMinutes
 $InfluxTestDashBucket = $VSI_Test_InfluxTestDashBucket
+#$Global:MaxRecordCount = $VSI_Target_MaxRecordCount
 
 
 #endregion Script behaviour from file (params)
@@ -291,25 +280,7 @@ $InfluxTestDashBucket = $VSI_Test_InfluxTestDashBucket
 #region Validation
 #----------------------------------------------------------------------------------------------------------------------------
 ##// Report Output here on relevent variables- Dave wants a Snazzy Header
-#foreach ($Item in $Config) {
-#    foreach ($SectionName in $Item.PSObject.Properties.Name) {
-#        Write-Log -Message "Section $sectionName contains the following defined values:" -Level Validation
-#        $properties = @()
-#        # Access the properties within each section
-#        foreach ($property in $Item.$sectionName.PSObject.Properties) {
-#            if ($null -ne $property.value -and $property.value -ne "") {
-#                $properties += [PSCustomObject]@{
-#                    Name  = $property.Name
-#                    Value = $property.Value
-#                }
-#            }
-#        }
-#        # Output properties in a tabular format
-#        [System.Console]::ForegroundColor = [System.ConsoleColor]::Cyan
-#        $properties | Format-Table -AutoSize -HideTableHeaders
-#        [System.Console]::ResetColor()
-#    }
-#} #// How to handle nested Array (ImagesToTest)
+# We might use a standard JSON string lookup here and simply report on values that have no been set (but should be set).
 
 ##// Write out a prompt here post validation work - make sure all is good before going
 $answer = read-host "Test details correct for test? yes or no? "
@@ -342,7 +313,6 @@ if ($NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
     Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType
 }
 if ($NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
-    #TBD
 
     if ($VSI_Target_ImagesToTest.ParentVM -match '^([^\\]+)\.') { $cleansed_vm_name = $matches[1] }
     if ($VSI_Target_ImagesToTest.ParentVM -match '\\([^\\]+)\.snapshot$') { $cleansed_snapshot_name = $matches[1] }
@@ -405,7 +375,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Scheduled Test Run" 
             TotalPhase     = "$($Phases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
     }
 
@@ -426,7 +396,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         CurrentMessage = "Setting Affinity Rules" 
         TotalPhase     = "$($TotalPhases)"
     }
-    $null = Set-TestData  @params
+    $null = Set-TestData @params
     $params = $null
     $CurrentTotalPhase++
 
@@ -466,7 +436,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Validating Citrix Connectivity" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -491,7 +461,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Validating Horizon Connectivity" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -524,7 +494,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         CurrentMessage = "Getting/Completing Existing LE Tests" 
         TotalPhase     = "$($TotalPhases)"
     }
-    $null = Set-TestData  @params
+    $null = Set-TestData @params
     $params = $null
     $CurrentTotalPhase++
 
@@ -549,7 +519,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         CurrentMessage = "$($Message)" 
         TotalPhase     = "$($TotalPhases)"
     }
-    $null = Set-TestData  @params
+    $null = Set-TestData @params
     $params = $null
     $CurrentTotalPhase++
 
@@ -577,7 +547,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         CurrentMessage = "$($Message)" 
         TotalPhase     = "$($TotalPhases)"
     }
-    $null = Set-TestData  @params
+    $null = Set-TestData @params
     $params = $null
     $CurrentTotalPhase++
 
@@ -651,7 +621,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Gathering Nutanix Information" 
             TotalPhase     = "$($RunPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentRunPhase++
 
@@ -666,7 +636,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Currently Executing Run $($i)" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -697,7 +667,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Creating $($Type) Desktop Pool" 
             TotalPhase     = "$($RunPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentRunPhase++
 
@@ -712,7 +682,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Currently Executing Run $($i)" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -798,7 +768,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Booting $($Type) Desktops" 
             TotalPhase     = "$($RunPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentRunPhase++
 
@@ -813,7 +783,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Currently Executing Run $($i)" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -893,7 +863,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Getting Image Tattoo" 
             TotalPhase     = "$($RunPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentRunPhase++
 
@@ -908,7 +878,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Currently Executing Run $($i)" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -945,7 +915,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Rebooting Login Enterprise Launchers" 
             TotalPhase     = "$($RunPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentRunPhase++
 
@@ -960,7 +930,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Currently Executing Run $($i)" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -994,7 +964,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Updating Login Enterprise Test Details" 
             TotalPhase     = "$($RunPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentRunPhase++
 
@@ -1009,7 +979,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Currently Executing Run $($i)" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -1074,7 +1044,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Waiting $($VSI_Target_MinutesToWaitAfterIdleVMs) Minutes Before Test" 
             TotalPhase     = "$($RunPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentRunPhase++
 
@@ -1089,7 +1059,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Currently Executing Run $($i)" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -1112,7 +1082,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Stopping Nutanix Curator" 
             TotalPhase     = "$($RunPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentRunPhase++
 
@@ -1127,7 +1097,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Currently Executing Run $($i)" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -1150,7 +1120,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Starting Test Run $($i)" 
             TotalPhase     = "$($RunPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentRunPhase++
 
@@ -1165,7 +1135,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Currently Executing Run $($i)" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -1189,7 +1159,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Starting Login Enterprise Test Monitor Run $($i)" 
             TotalPhase     = "$($RunPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentRunPhase++
 
@@ -1204,7 +1174,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Currently Executing Run $($i)" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -1235,7 +1205,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "$Message" 
             TotalPhase     = "$($RunPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentRunPhase++
 
@@ -1250,7 +1220,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Currently Executing Run $($i)" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -1281,7 +1251,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "$Message" 
             TotalPhase     = "$($RunPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentRunPhase++
 
@@ -1296,7 +1266,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Currently Executing Run $($i)" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -1328,7 +1298,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Waiting For Test Run $($i) To Complete" 
             TotalPhase     = "$($RunPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentRunPhase++
 
@@ -1343,7 +1313,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Currently Executing Run $($i)" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -1392,7 +1362,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Starting Nutanix Curator" 
             TotalPhase     = "$($RunPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentRunPhase++
 
@@ -1407,7 +1377,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Currently Executing Run $($i)" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -1430,7 +1400,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Exporting Test Data from Login Enterprise" 
             TotalPhase     = "$($RunPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentRunPhase++
 
@@ -1445,7 +1415,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Currently Executing Run $($i)" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -1482,7 +1452,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "$Message" 
             TotalPhase     = "$($RunPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentRunPhase++
 
@@ -1497,7 +1467,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Currently Executing Run $($i)" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -1526,7 +1496,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "$Message" 
             TotalPhase     = "$($RunPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentRunPhase++
 
@@ -1541,7 +1511,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Currently Executing Run $($i)" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -1630,7 +1600,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $Params = $null
         }
         else {
-            Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Leve Warn
+            Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Level Warn
         }
         #endregion Slack update
 
@@ -1649,7 +1619,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Test Run $($i) Complete" 
             TotalPhase     = "$($RunPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentRunPhase++
 
@@ -1664,7 +1634,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Finished Test Run $($i)" 
             TotalPhase     = "$($TotalPhases)"
         }
-        $null = Set-TestData  @params
+        $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
 
@@ -1695,7 +1665,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $Params = $Null
     }
     else {
-        Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Leve Warn
+        Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Level Warn
     }
     #endregion Slack update
 }
@@ -1713,7 +1683,7 @@ $params = @{
     CurrentMessage = "Test Complete" 
     TotalPhase     = "$($TotalPhases)"
 }
-$null = Set-TestData  @params
+$null = Set-TestData @params
 $params = $null
 
 #endregion Execute
