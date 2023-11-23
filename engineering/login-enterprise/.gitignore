@@ -2,6 +2,7 @@
 *.csv
 *.jsonc
 *.pdf
+*.png
 /results/*
 /testresults/*
 !ExampleConfig*.jsonc

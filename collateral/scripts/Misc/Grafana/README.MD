@@ -5,11 +5,12 @@
 -  `SourceUri`. Mandatory **`String`**. The source Url of the grafana report. Build the report and either copy the URL from the browser, or use the Granfana share link.
 -  `ReportTitle`. Mandatory **`String`**. A Title for the report output. This will create a report output folder named accordingly and dump the markdown and images into sub folders.
 -  `mdFile`. Optional **`String`**. You can choose a custom markdown file name, else the default will be `README.MD` under the `md` directory under the `ReportTitle` directory.
--  `ImageSuffix`. Optional **`String`**. You can shoose to inject a suffix into the image name to make it easier when doing multiple reports and runs.
+-  `ImageSuffix`. Optional **`String`**. You can choose to inject a suffix into the image name to make it easier when doing multiple reports and runs.
 -  `influxDbUrl`. Optional **`String`**. This is hardcoded currently to the Influx Database URL.
 -  `InfluxToken`. Optional **`String`**. This is hardcoded currently with a provided Token.
 -  `iconsSource`. Optional **`String`**. The source if icon files. This is hardcoded currently to `http://10.57.64.119:3000/public/img/nutanix/`
 -  `ExcludedComponentList`. Optional **`Array`**. A list of sections to exclude. The default exclusion list is `"BootInfo","IndividualRuns","NutanixFiles","CitrixNetScaler"`.
+-  `ImageReferenceCSV`. Optional. **`String`**. A CSV file containing a list of Grafana Panel IDs to image names. Defaults to `ImageReference.csv` found in the same path as the script.
 
 ```
 .\New-GrafanaReport.ps1 -SourceUri "http://grafanareport" -ReportTitle "RAS_WinServ2022_Linked_vs_Full_Clone" -ImageSuffix "2022_prov"
@@ -23,8 +24,8 @@ Add a new Graph to the image download:
 
 -  Identify the panel ID in grafana from the share link for the panel. E.g. `119`
 -  Identify the section you are dealing with, E.g. `Individual Runs`
+-  Add the Panel ID to the source `ImageReference.csv` file and give it a name.
 -  Find the `$Panels` Array for the appropriate section. Add the Panel ID `119`
--  Alter the `Get-Graphs` function. Add a switch value for the `panel ID`, and give it a download name. Do this for both the `Default` and `ImageSuffix` switch sections
 
 # Using FixMDOutput.ps1
 

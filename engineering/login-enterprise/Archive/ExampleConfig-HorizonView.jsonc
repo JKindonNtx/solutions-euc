@@ -1,0 +1,98 @@
+{
+    "Domain": {
+        "NetBios": "EXAMPLE",
+        // Alternatively use LDAP://DC=example,DC=loginvsi,DC=com when current machine/user is part of the domain
+        "LDAPPath": "LDAP://Example-DC01/DC=example,DC=loginvsi,DC=com",
+        // leave empty if current machine/user is part of the domain and has rights to create resources in AD
+        "LDAPUsername": "example\\henk", // remember it's json, so \ needs to be escaped
+        // leave empty if current machine/user is part of the domain and has rights to create resources in AD
+        "LDAPPassword": "MySuperSecurePassword!123"
+    },
+    "Users": {
+        "BaseName": "testUser",
+        "GroupName": "${Users.BaseName}", // Resolves to "testUser"
+        "Password": "SuperSecurePassword!123",
+        "NetBios": "${Domain.NetBios}", // Resolves to "EXAMPLE"
+        "OU": "OU=TestUsers",
+        "NumberOfDigits": 3 // usernames will be basename + numberofdigits, e.g. testUser001 etc in this example
+    },
+    "LoginEnterprise": {
+        "ApplianceURL": "https://loginenterprise.example.loginvsi.com",
+        "ApplianceToken": "" //Get this from external notifications/public api, make sure to create a system access token with access level: Configuration
+    },
+    "Launchers": {
+        //In this example same vcenter is used for launchers and targets
+        "vCenterServer": "${Target.vCenterServer}",
+        "vCenterUsername": "${Target.vCenterUsername}",
+        "vCenterPassword": "${Target.vCenterPassword}",
+        "CustomizationSpec": "Launchers",
+        "ParentVM": "EXAMPLE-LauncherParent",
+        "Snapshot": "MyFirstSnapshot",
+        "VMHost": "Launchers01",
+        "Datastore": "EXAMPLE-LAUNCHERS",
+        "NamingPattern": "Launcher_",
+        "GroupName": "Toolbox" // Launcher group name to be used in login enterprise
+    },
+    "Target": {
+        "ConnectionServer": "vcs01.example.loginvsi.com",
+        "ConnectionServerUser": "henk@example.loginvsi.com",
+        "ConnectionServerUserPassword": "MySuperSecurePassword!123",
+        "vCenterServer": "vcenter.example.loginvsi.com",
+        "vCenterUsername": "example\\henk", //remember it's json so \ needs to be escaped
+        "vCenterPassword": "MySuperSecurePassword!123",
+        "DesktopPoolName": "ExamplePool", // Desktop Pool in Horizon view to be created/used
+        "VMFolder": "/EXAMPLE/vm/VMware Horizon", //Get these values from the details page of an existing pool
+        "Cluster": "/EXAMPLE/host/ExampleCluster",
+        "ResourcePool": "${Target.Cluster}/Resources",
+        "ReplicaDatastore": "${Target.Cluster}/ExampleDatastore",
+        "InstantCloneDatastores": [
+            "${Target.ReplicaDatastore}"
+        ],
+        "RefreshOsDiskAfterLogoff": "ALWAYS", // or NEVER
+        "UserAssignment": "DEDICATED", // or FLOATING
+        "UseViewStorageAccelerator": false,
+        "enableGRIDvGPUs": false,
+        "NamingPattern": "ex-",
+        "NetBiosName": "${Domain.NetBios}",
+        "Entitlements": "EXAMPLE\\Domain Users",
+        "ProvisioningMode": "AllMachinesUpFront", //Valid values are AllMachinesUpFront and OnDemand
+        // Determines how many VM's are provisioned at a time, set this to 0 to let Horizon control the provisioning amount according to it's settings, only valid when using allmachinesupfront provisioning
+        "VMPoolIncrement": 0,
+        // When ProvisiongMode is OnDemand, this controls the Spare (Powered On) Machines
+        "NumberOfSpareVMs": 1,
+        // MHz below which a VM is considered to be idle
+        "VMCPUsageMHzThreshold": 100,
+        "MinutesToWaitAfterIdleVMs": 1,
+        "NumberOfVMs": 50,
+        "NumberOfSessions": 50,
+        "DurationInMinutes": 30,
+        "LogonsPerMinute": 5,
+        "PoolType": "InstantClone",
+        "Protocol": "Blast", // OR PCoIP or RDP
+        "ADContainer": "OU=TargetVMs",
+        "vTPM": false,
+        "Snapshot": "AV_1CPU",
+        "ParentVM": "Win10-21H2",
+        "Comment": "This is a comment that will appear in the report",
+        // Any variable set in "Target" section can be overriden per imagetotest entry
+        "ImagesToTest": [
+            {
+                "ParentVM": "Win10-21H2",
+                "Snapshot": "AV_1CPU",
+                "vTPM": false,
+                "ADContainer": "OU=TargetVMs",
+                "Protocol": "Blast", // OR PCoIP or RDP,
+                "PoolType": "InstantClone",
+                "LogonsPerMinute": 5,
+                "DurationInMinutes": 5, //How long should the test continue to run after all sessions have logged on
+                "NumberOfSessions": 10,
+                "NumberOfVMs": 10
+            }
+        ],
+        // Number of tests to perform with a single image
+        "ImageIterations": 1
+    },
+    "Test": {
+        "Name": "ExampleTest" //Name of the test in LoginEnterprise
+    }
+}

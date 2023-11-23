@@ -99,12 +99,6 @@ function New-NutanixVLAN {
         Write-Host (Get-Date)":VLAN: $VLAN" 
         Write-Host (Get-Date)":VLANName: $VLANName" 
 
-        # Build JSON and connect to cluster for information
-        $credPair = "$($UserName):$($Password)"
-        $encodedCredentials = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($credPair))
-        $headers = @{ Authorization = "Basic $encodedCredentials" }
-        $URL = "https://$($IP):9440/PrismGateway/services/rest/v2.0/networks"
-
         # Create JSON Payload
         $Payload = "{ `
             ""name"":""" + $VLANName + """, `
@@ -113,12 +107,11 @@ function New-NutanixVLAN {
 
         # Invoke RestMethod
         try {
-            $task = Invoke-RestMethod -Uri $URL -method "POST" -body $Payload -ContentType 'application/json' -SkipCertificateCheck -headers $headers;
+            $task = Invoke-NutanixAPI -IP "$($IP)" -Password "$($Password)" -UserName "$($UserName)" -APIpath "networks" -method "POST" -body $Payload 
         }
         catch {
-            Start-Sleep 10
-            Write-Host (Get-Date) ": Going once"
-            $task = Invoke-RestMethod -Uri $URL -method "POST" -body $Payload -ContentType 'application/json' -SkipCertificateCheck -headers $headers;
+            write-host "Error creating VLAN $($VLANName) - quitting"
+            Break
         }
     } # Process
     

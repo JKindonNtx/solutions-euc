@@ -112,12 +112,6 @@ function New-NutanixISO {
         Write-Host (Get-Date)":ISOurl: $ISOurl" 
         Write-Host (Get-Date)":ISOname: $ISOname" 
 
-        # Build JSON and connect to cluster for information
-        $credPair = "$($UserName):$($Password)"
-        $encodedCredentials = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($credPair))
-        $headers = @{ Authorization = "Basic $encodedCredentials" }
-        $URL = "https://$($IP):9440/PrismGateway/services/rest/v2.0/images"
-
         # Build JSON Payload
         $Payload = "{ `
             ""image_import_spec"": `
@@ -130,12 +124,10 @@ function New-NutanixISO {
 
         # Invoke the RestMethod
         try {
-            $task = Invoke-RestMethod -Uri $URL -method "POST" -body $Payload -ContentType 'application/json' -SkipCertificateCheck -headers $headers;
+            $task = Invoke-NutanixAPI -IP "$($IP)" -Password "$($Password)" -UserName "$($UserName)" -APIPath "images" -method "POST" -body $Payload
         }
         catch {
-            Start-Sleep 10
-            Write-Host (Get-Date) ": Going once"
-            $task = Invoke-RestMethod -Uri $URL -method "POST" -body $Payload -ContentType 'application/json' -SkipCertificateCheck -headers $headers;
+            write-host "Error uploading ISO File $($ISOname)"
         }
     } # Process
     

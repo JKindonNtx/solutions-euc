@@ -18,8 +18,9 @@
 # ====================================================================================================================================================
 
 # Define the Variables for the script
-$functions = get-childitem -Path "/workspaces/solutions-euc/engineering/lab/build/functions/*.psm1"
-$JSONFile = "/workspaces/solutions-euc/engineering/lab/build/LabConfig.json"
+If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $ScriptRoot = $PSScriptRoot }
+$functions = get-childitem -Path "$($ScriptRoot)\functions\*.psm1"
+$JSONFile = "$($ScriptRoot)\LabConfig.json"
 
 # Import all the functions required
 foreach($function in $functions){ Write-Host (Get-Date)":Importing - $function." ; import-module $function }
@@ -45,6 +46,18 @@ If ($GitHub.UserName -like "* *") {
     Write-Host (Get-Date) ":Updated UserName is: $($GitHub.UserName)"
 }
 
+# Ask for confirmation to start the build - if no the quit
+Clear-Host
+Do { $confirmationNC2 = Read-Host "Is this cluster running on NC2? [y/n]" } Until (($confirmationNC2 -eq "y") -or ($confirmationNC2 -eq "n"))
+
+if ($confirmationNC2 -eq 'y') { 
+    Write-Host "This script CANNOT be used on NC2 due to the limitations with CVM access"
+    Write-Host "Please configure the cluster manually"
+    exit 
+} else {
+    Clear-Host
+}
+
 # Write out a "SNAZZY" header
 Write-Host "
    ____ _           _               ____             __ _            _    _   ___     __
@@ -65,6 +78,8 @@ Write-Host "VLAN Name:              $VLANName"
 Write-Host "Container Name:         $($JSON.VM.Container)"
 Write-Host "ISO Image:              $($JSON.VM.ISO)"
 Write-Host "ISO Url:                $($JSON.VM.ISOUrl)"
+Write-Host "Create Hosting:         True"
+Write-Host "Register to PC:         $($JSON.Cluster.PCIP)"
 Write-Host "
 --------------------------------------------------------------------------------------------------------"
 
@@ -109,14 +124,14 @@ if ($confirmationStart -eq 'n') {
     }
     
     # Check and Update the Network
-    $VLANinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "networks"
+    $VLANinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "networks"
     $VLANUUID = ($VLANinfo.entities | Where-Object {$_.name -eq $VLANName}).uuid
-    if($null -eq $VLANUUID){
+    if([string]::IsNullOrEmpty($VLANUUID)){
         # VLAN not available
         Write-Host (Get-Date) ":VLAN not found, creating"
         $VLAN = New-NutanixVLAN -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VLAN "$($JSON.VM.VLAN)" -VLANName "$VLANName"
         Start-Sleep 5
-        $VLANinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "networks"
+        $VLANinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "networks"
         $VLANUUID = ($VLANinfo.entities | Where-Object {$_.name -eq $VLANName}).uuid
         if(!($null -eq $VLANUUID)) { Write-Host (Get-Date) ":VLAN Created" } else { Write-Host (Get-Date) ":Error Creating VLAN"; Exit}
         $SlackMessage = $SlackMessage + "VLAN Added: $VLANName`n"
@@ -127,14 +142,14 @@ if ($confirmationStart -eq 'n') {
     }
 
     # Check and Update the Storage Containers
-    $Storageinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "storage_containers"
+    $Storageinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "storage_containers"
     $StorageUUID = ($Storageinfo.entities | Where-Object {$_.name -eq $($JSON.VM.Container)}).storage_container_uuid
-    if($null -eq $StorageUUID){
+    if([string]::IsNullOrEmpty($StorageUUID)){
         # Storage Container not available
         Write-Host (Get-Date) ":Storage Container not found, creating"
         $Storage = New-NutanixStorageContainer -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -Container "$($JSON.VM.Container)"
         Start-Sleep 5
-        $Storageinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "storage_containers"
+        $Storageinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "storage_containers"
         $StorageUUID = ($Storageinfo.entities | Where-Object {$_.name -eq $($JSON.VM.Container)}).storage_container_uuid
         if(!($null -eq $StorageUUID)) { Write-Host (Get-Date) ":Storage Container Created" } else { Write-Host (Get-Date) ":Error Creating Storage Container"; Exit}
         $SlackMessage = $SlackMessage + "Storage Container Added: $($JSON.VM.Container)`n"
@@ -145,9 +160,9 @@ if ($confirmationStart -eq 'n') {
     }
 
     #Check and Update the ISO Image
-    $ISOinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "images"
+    $ISOinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "images"
     $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($JSON.VM.ISO)}).vm_disk_id
-    if($null -eq $ISOUUID){
+    if([string]::IsNullOrEmpty($ISOUUID)){
         # ISO file not available
         Write-Host (Get-Date) ":ISO file not found, uploading"
         $ISOURL = "$($JSON.VM.ISOUrl)" + "$($JSON.VM.ISO)"
@@ -157,7 +172,7 @@ if ($confirmationStart -eq 'n') {
         $ISOTaskUUID = $ISOTask.task_uuid
         Write-Host (Get-Date)":Wait for ISO Upload ($ISOTaskUUID) to finish" 
         Do {
-            $ISOtaskinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "tasks/$($ISOTaskUUID)"
+            $ISOtaskinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "tasks/$($ISOTaskUUID)"
             $ISOtaskstatus = $ISOtaskinfo.percentage_complete
             If ( $ISOtaskstatus -ne 100) {
                 Start-Sleep -Seconds 5
@@ -169,7 +184,7 @@ if ($confirmationStart -eq 'n') {
         Until ($ISOtaskstatus -eq 100)
 
         # Confirm that ISO is availavle
-        $ISOinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "images"
+        $ISOinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "images"
         $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($JSON.VM.ISO)}).vm_disk_id
         if(!($null -eq $ISOUUID)) { Write-Host (Get-Date) ":ISO Uploaded" } else { Write-Host (Get-Date) ":Error Uploading ISO"; Exit}
         $SlackMessage = $SlackMessage + "ISO Uploaded: $($JSON.VM.ISO)`n"
@@ -180,8 +195,19 @@ if ($confirmationStart -eq 'n') {
     }
 
     # Get Cluster Name and update Slack Message
-    $Clusterinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "cluster"
+    $Clusterinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "cluster"
     $ClusterName = $Clusterinfo.name
+
+    # Create Citrix Hosting Connection
+    Set-CitrixHostingConnection -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VLAN "$($VLANName)" -DDC "$($JSON.Citrix.DDC)"
+    $SlackMessage = $SlackMessage + "Hosting Connection Created: $($ClusterName)`n"
+    $SendToSlack = "y"
+
+    # Register Cluster with Prism Central
+    Remove-PrismCentral -PCIP "$($JSON.Cluster.PCIP)" -PCPassword "$($JSON.Cluster.PCPassword)" -ClusterName $ClusterName
+    Set-PrismCentral -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.CVMsshpassword)" -PCIP "$($JSON.Cluster.PCIP)" -PCPassword "$($JSON.Cluster.PCPassword)"
+    $SlackMessage = $SlackMessage + "$($ClusterName) registered with Prism Central $($PCIP)`n"
+    $SendToSlack = "y"
 
     # Update Slack Channel
     if ($SendToSlack -eq "y") {
