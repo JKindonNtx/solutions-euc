@@ -142,4 +142,4 @@ if(!([string]::IsNullOrEmpty($Run))){
 #endregion Execute
 
 Write-Log -Message "Script Finished" -Level Info
-Break #Temporary! Replace with #Exit 0
+Exit 0
