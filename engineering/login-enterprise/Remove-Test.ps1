@@ -48,6 +48,23 @@ If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $
 # Execute
 # ============================================================================
 
+#region Validate Bucket
+#----------------------------------------------------------------------------------------------------------------------------
+if($Bucket -eq "LoginDocuments"){
+    $MainBucket = $Bucket
+    $BootBucket = "BootBucket"
+} else {
+    if($Bucket -eq "LoginRegression"){
+        $MainBucket = $Bucket
+        $BootBucket = "BootBucketRegression"
+    } else {
+        Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: Bucket not currently supported. Exit script"
+        Exit 1
+    }
+}
+
+#endregion Validate Bucket
+
 #region Nutanix Module Import
 #----------------------------------------------------------------------------------------------------------------------------
 $var_ModuleName = "Nutanix.EUC"
@@ -59,7 +76,7 @@ try {
 catch {
     Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: Failed to import $var_ModuleName module. Exit script"
     Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $_"
-    Break #Temporary! Replace with #Exit 1
+    Exit 1
 }
 #endregion Nutanix Module Import
 
@@ -87,7 +104,7 @@ try {
 catch {
     Write-Log -Message "Failed to import config file: $($configFile)" -Level Error
     Write-Log -Message $_ -Level Error
-    Break #Temporary! Replace with #Exit 1
+    Exit 1
 }
 
 $configFileData = $configFileData -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/'
@@ -97,7 +114,7 @@ try {
 }
 catch {
     Write-Log -Message $_ -Level Error
-    Break #Temporary! Replace with #Exit 1
+    Exit 1
 }
 #endregion Config File
 
@@ -106,12 +123,18 @@ catch {
 if(!([string]::IsNullOrEmpty($Run))){
     Write-Log -Message "Processing Delete $($Test) Run Number $($Run)" -Level Info
     Write-Log -Message "Please wait while the data is removed (this may take some time)" -Level Info
-    $null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($Bucket)" -Test "$($Test)" -Run "$($Run)" -Token "$($config.InfluxToken)"
+    $null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($MainBucket)" -Test "$($Test)" -Run "$($Run)" -Token "$($config.InfluxToken)"
+    Write-Log -Message "Processing Boot Information Delete $($Test) Run Number $($Run)" -Level Info
+    Write-Log -Message "Please wait while the data is removed (this may take some time)" -Level Info
+    $null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($BootBucket)" -Test "$($Test)" -Run "$($Run)" -Token "$($config.InfluxToken)"
     Write-Log -Message "$($Test) Run Number $($Run) Deleted" -Level Info
 } else {
     Write-Log -Message "Processing Delete $($Test) All Runs" -Level Info
     Write-Log -Message "Please wait while the data is removed (this may take some time)" -Level Info
-    $null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($Bucket)" -Test "$($Test)" -Token "$($config.InfluxToken)"
+    $null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($MainBucket)" -Test "$($Test)" -Token "$($config.InfluxToken)"
+    Write-Log -Message "Processing Boot Information Delete $($Test) All Runs" -Level Info
+    Write-Log -Message "Please wait while the data is removed (this may take some time)" -Level Info
+    $null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($BootBucket)" -Test "$($Test)" -Token "$($config.InfluxToken)"
     Write-Log -Message "$($Test) Deleted" -Level Info
 }
 #endregion Remove Test
