@@ -2,22 +2,36 @@
 .SYNOPSIS
 .DESCRIPTION
 .PARAMETER ConfigFile
-The JSON file containing the test configuration
+Mandatory. The JSON file containing the test configuration
 .PARAMETER ReportConfigFile
+Mandatory.
 .PARAMETER Type
-Specify the type of test to be run, CitrixVAD, CitrixDaaS, Horizon, RAS
+Mandatory. Specify the type of test to be run, CitrixVAD, CitrixDaaS, Horizon, RAS
+.PARAMETER LEConfigFile
+Mandatory. Config file that holds the Login Enterprise Appliance Information.
+.PARAMETER SkipWaitForIdleVMs
+Configured in the test configuration file. Can be overriden by this parameter. Do not wait for VM's to become Idle before starting test.
+.PARAMETER SkipADUsers
+Configured in the test configuration file. Can be overriden by this parameter. Do not recreate the Active Directory user accounts.
+.PARAMETER SkipLEUsers
+Configured in the test configuration file. Can be overriden by this parameter. Do not recreate the Login Enterprise accounts.
+.PARAMETER SkipLaunchers
+Configured in the test configuration file. Can be overriden by this parameter.
+.PARAMETER LEAppliance
+Configured in the test configuration file. Can be overriden by this parameter. The Login Enterprise Appliance. LE1, LE2, LE3, LE4 etc.
+.PARAMETER SkipPDFExport
+Configured in the test configuration file. Can be overriden by this parameter
+.PARAMETER Force
+Optional. Forces the recreation of the Horizon desktop pool.
 .NOTES
 TODO
 - Query Inlfux for running tests against LE appliance
 - Remember to replace BREAK with Break! Temporarily using Break
-- MaxRecordCount coming in from JSON file. Need to update the functions to include this value wherever a Get-BrokerMachine lookup occurs? Check with Dave on the best way to pull that through globally (line 275)
 - Do we want to cset the $Type Parameter to align with the DeliveryType value in the JSON file?
 ------------------------------------------------------------------------------------------
 ### REVIEW NOTES - WORK IN PROGRESS - REMOVE ONCE VALIDATED
 ------------------------------------------------------
 | Item | Requester | Reviewer | Date |
-| Move HV Helper and HV Functions into new framework (review functions for logging etc) | James | James/Sven/Dave | 16.11.2023 |
-| Review Output Logic - Search for "Report Output here on relevent variables" | James | Dave/Sven | 16.11.2023 |
 ------------------------------------------------------
 
 -----------------------------------------------------------------------------------------
@@ -30,10 +44,10 @@ TODO
 # ============================================================================
 Param(
     [Parameter(Mandatory = $false)]
-    [string]$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Nutanix.EUC\ExampleConfig-Kindon-Cleansed.jsonc",
+    [string]$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\ExampleConfig-Test-Template.jsonc",
 
     [Parameter(Mandatory = $false)]
-    [string]$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Nutanix.EUC\ExampleConfig-LoginEnterpriseGlobal.jsonc",
+    [string]$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\ExampleConfig-LoginEnterpriseGlobal.jsonc",
 
     [Parameter(Mandatory = $false)]
     [string]$ReportConfigFile = ".\ReportConfiguration.jsonc",
@@ -75,11 +89,7 @@ Param(
 # ============================================================================
 
 If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $ScriptRoot = $PSScriptRoot }
-$Validated_Workload_Profiles = @("Task Worker", "Knowledge Worker")
-$Validated_OS_Types = @("multisession", "singlesession")
-#$VSI_Target_RampupInMinutes = 10 ##// This needs to move to JSON
-#$MaxRecordCount = 5000 ##// This needs to move to JSON Input
-#$InfluxTestDashBucket = "Tests" ##// This needs to move to Variables
+
 #endregion Variables
 
 #Region Execute
@@ -212,11 +222,13 @@ $Temp_Module = $null
 
 #region Validate JSON
 
-#if(Get-ValidJSON -JSON $ConfigFile){
-    #Passed
-#} else {
-    #Failed - Break
-#}
+if (Get-ValidJSON -ConfigFile $ConfigFile) {
+    Write-Log -Message "Config file $($ConfigFile) has been validated for appropriate value selection" -Level Info
+} 
+else {
+    Write-Log -Message "Config File $($ConfigFile) contains invalid options. Please review logfile and configfile." -Level Warn
+    Break #Temporary! Replace with #Exit 1
+}
 
 #endregion Validate JSON
 
@@ -233,10 +245,9 @@ else {
     Break #Temporary! Replace with #Exit 1
 }
 
-
 # Fix trailing slash issue
 $VSI_LoginEnterprise_ApplianceURL = $VSI_LoginEnterprise_ApplianceURL.TrimEnd("/")
-# Populates the $global:LE_URL
+
 Connect-LEAppliance -Url $VSI_LoginEnterprise_ApplianceURL -Token $VSI_LoginEnterprise_ApplianceToken
 
 #region Config File
@@ -284,22 +295,30 @@ $VSI_Target_RampupInMinutes = $VSI_Test_Target_RampupInMinutes
 $InfluxTestDashBucket = $VSI_Test_InfluxTestDashBucket
 $Global:MaxRecordCount = $VSI_Target_MaxRecordCount
 
-
 #endregion Script behaviour from file (params)
 
 #region Validation
 #----------------------------------------------------------------------------------------------------------------------------
-##// Report Output here on relevent variables- Dave wants a Snazzy Header
-# We might use a standard JSON string lookup here and simply report on values that have no been set (but should be set).
+$Mandatory_Undedfined_Config_Entries = Get-Variable -Name VSI* | where-Object {$_.Value -match "MANDATORY_TO_DEFINE"}
 
-##// Write out a prompt here post validation work - make sure all is good before going
-$answer = read-host "Test details correct for test? yes or no? "
-if ($answer -ne "yes" -and $answer -ne "y") { 
-    Write-Log -Message "Input not confirmed. Exit" -Level Info
-    Break #Temporary! Replace with #Exit 0
+if ($null -ne $Mandatory_Undedfined_Config_Entries) {
+    Write-Log -Message "There are $(($Mandatory_Undedfined_Config_Entries | Measure-Object).Count) Undefined values that must be specified" -Level Warn
+    foreach ($Item in $Mandatory_Undedfined_Config_Entries) {
+        #$Mandatory_Undedfined_Config_Entries | Format-Table -HideTableHeaders
+        Write-Log -Message "Setting: $($Item.Name) must be set. Current value: $($Item.Value)" -Level Warn
+    }
 }
-else {
-    Write-Log -Message "Input confirmed" -Level Info
+
+if (($Mandatory_Undedfined_Config_Entries | Measure-Object).Count -gt 0) {
+    ##// Write out a prompt here post validation work - make sure all is good before going
+    $answer = read-host "Test details correct for test? yes or no? "
+    if ($answer -ne "yes" -and $answer -ne "y") { 
+        Write-Log -Message "Input not confirmed. Exit" -Level Info
+        Break #Temporary! Replace with #Exit 0
+    }
+    else {
+        Write-Log -Message "Input confirmed" -Level Info
+    }
 }
 
 #region Nutanix Files Pre Flight Checks
@@ -334,18 +353,21 @@ if ($NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
 
 #endregion Validation
 
+#region Start Infrastructure Monitoring
+if ($VSI_Test_ServersToMonitor) {
+    Write-Log -Message "Starting Infrastructure Monitoring" -Level Info
+    Start-ServerMonitoring -ServersToMonitor $VSI_Test_ServersToMonitor -Mode StartMonitoring -ServiceName "Telegraf"
+}
+#endregion Start Infrastructure Monitoring
+
 #region Execute Test
 #----------------------------------------------------------------------------------------------------------------------------
 #Set the multiplier for the Workloadtype. This adjusts the required MHz per user setting.
 ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     $null = Set-VSIConfigurationVariables -ImageConfiguration $ImageToTest
-#}
-    #region Validate Workload Profiles
+
+    #region Define Workload Profiles
     #----------------------------------------------------------------------------------------------------------------------------
-    if ($VSI_Target_Workload -notin $Validated_Workload_Profiles ) {
-        Write-Log -Message "Worker Profile: $($VSI_Target_Workload) is not a valid profile for testing. Please check config file" -Level Error
-        Break #Temporary! Replace with #Exit 1
-    }
     if ($VSI_Target_Workload -eq "Task Worker") {
         $LEWorkload = "TW"
         $WLmultiplier = 0.8
@@ -355,7 +377,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $WLmultiplier = 1.1
     }
     Write-Log -Message "LE Worker Profile is: $($VSI_Target_Workload) and the Workload is set to: $($LEWorkload)" -Level Info
-    #endregion Validate Workload Profiles
+    #endregion Define Workload Profiles
 
     #region Setup testname
     #----------------------------------------------------------------------------------------------------------------------------
@@ -596,12 +618,14 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     $Params = $null
     #endregion AD Users
 
+    #region Force Desktop Pool recreation
     if ($Type -eq "Horizon") {
         if ($Force.IsPresent) {
             Write-Log -Message "Removing Horizon Desktop Pool due to force switch" -Level Info
             Remove-VSIHVDesktopPool -Name $VSI_Target_DesktopPoolName
         }
     }
+    #endregion Force Desktop Pool recreation
 
     #region Iterate through runs
     #----------------------------------------------------------------------------------------------------------------------------
@@ -1680,6 +1704,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #endregion Slack update
 }
 #endregion Execute Test
+
+#region Stop Infrastructure Monitoring
+if ($VSI_Test_ServersToMonitor) {
+    Write-Log -Message "Stopping Infrastructure Monitoring" -Level Info
+    Start-ServerMonitoring -ServersToMonitor $VSI_Test_ServersToMonitor -Mode StopMonitoring -ServiceName "Telegraf"
+}
+#endregion Stop Infrastructure Monitoring
 
 # Update Test Dashboard
 $params = @{
