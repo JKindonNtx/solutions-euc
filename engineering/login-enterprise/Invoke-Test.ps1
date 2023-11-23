@@ -196,7 +196,7 @@ if ($Type -eq "Horizon") {
 }
 #endregion VMWare Module Import
 
-#region remove existing SSH Keys ***UPDATE****
+#region remove existing SSH Keys 
 #----------------------------------------------------------------------------------------------------------------------------
 Write-Log -Message "Searching all modules for Posh-SSH" -Level Info
 $Temp_Module = (Get-Module -ListAvailable *) | Where-Object { $_.Name -eq "Posh-SSH" }
