@@ -236,7 +236,19 @@ else {
 #----------------------------------------------------------------------------------------------------------------------------
 Set-VSIConfigurationVariables -ConfigurationFile $ConfigFile
 
-$LEAppliance = $VSI_Test_LEAppliance
+if ($VSI_Test_LEAppliance -eq "MANDATORY_TO_DEFINE" -and (!$LEAppliance)) {
+    # Neither Option is OK due to ValidateSet on the LEAppliance Param
+    Write-Log -Message "You must define an LE appliance either in the $($ConfigFile) file or via the Script Parameter" -Level Error
+    Break #Temporary! Replace with #Exit 1
+}
+elseif ($VSI_Test_LEAppliance -eq "MANDATORY_TO_DEFINE" -and $LEAppliance) {
+    #Set LEAppliance based on Param
+    $LEAppliance = $LEAppliance
+} else {
+    #Use the valid value from the Config JSON
+    $LEAppliance = $VSI_Test_LEAppliance
+}
+
 if ($null -ne $LEAppliance) {
     Set-VSIConfigurationVariablesLEGlobal -ConfigurationFile $LEConfigFile -LEAppliance $LEAppliance
 }
@@ -289,7 +301,6 @@ if ($SkipLEUsers.IsPresent) { $SkipLEUsers = $true } else { $SkipLEUsers = $VSI_
 if ($SkipLaunchers.IsPresent) { $SkipLaunchers = $true } else { $SkipLaunchers = $VSI_Test_SkipLaunchers }
 if ($SkipPDFExport.IsPresent) { $SkipPDFExport = $true } else { $SkipPDFExport = $VSI_Test_SkipPDFExport }
 if ($SkipWaitForIdleVMs.IsPresent) { $SkipWaitForIdleVMs = $true } else { $SkipWaitForIdleVMs = $VSI_Test_SkipWaitForIdleVMs }
-if (-not $LEAppliance) {$LEAppliance = $VSI_Test_LEAppliance}
 
 $VSI_Target_RampupInMinutes = $VSI_Test_Target_RampupInMinutes
 $InfluxTestDashBucket = $VSI_Test_InfluxTestDashBucket
@@ -344,7 +355,7 @@ if ($NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
 }
 if (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
     # A Citrix on ESXi test
-    Get-NutanixSnapshot -VM $VSI_Target_ImagesToTest.ParentVM -HostingConnection $VSI_Target_HypervisorConnection -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type -DDC $VSI_Target_DDC
+    Get-NutanixSnapshot -VM $VSI_Target_ImagesToTest.ParentVM -HostingConnection $VSI_Target_HypervisorConnection -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type -DDC $VSI_Target_DDC -SnapshotName $VSI_Target_ImagesToTest.ParentVM
 }
 if ($Type -eq "Horizon") {
     # A Horizon test
