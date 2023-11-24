@@ -35,6 +35,7 @@ if($null -eq ($JSON = (Get-JSON -JSONFile $JSONFile))){
 
 # Build VLAN Name 
 $VLANName = "VLAN" + $($JSON.VM.VLAN)
+$Hypervisor = $($JSON.VM.Hypervisor)
 
 # Fetching local GitHub user to report owner
 $GitHub = Get-GitHubInfo

@@ -58,8 +58,12 @@ if($Bucket -eq "LoginDocuments"){
         $MainBucket = $Bucket
         $BootBucket = "BootBucketRegression"
     } else {
-        Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: Bucket not currently supported. Exit script"
-        Exit 1
+        if($Bucket -eq "Tests"){
+            $MainBucket = $Bucket
+        } else {
+            Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: Bucket not currently supported. Exit script"
+            Exit 1
+        }
     }
 }
 
@@ -125,17 +129,22 @@ if(!([string]::IsNullOrEmpty($Run))){
     Write-Log -Message "Please wait while the data is removed (this may take some time)" -Level Info
     $null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($MainBucket)" -Test "$($Test)" -Run "$($Run)" -Token "$($config.InfluxToken)"
     Write-Log -Message "Processing Boot Information Delete $($Test) Run Number $($Run)" -Level Info
-    Write-Log -Message "Please wait while the data is removed (this may take some time)" -Level Info
-    $null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($BootBucket)" -Test "$($Test)" -Run "$($Run)" -Token "$($config.InfluxToken)"
-    Write-Log -Message "$($Test) Run Number $($Run) Deleted" -Level Info
+    if(!($MainBucket -eq "Tests")){
+        Write-Log -Message "Please wait while the data is removed (this may take some time)" -Level Info
+        $null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($BootBucket)" -Test "$($Test)" -Run "$($Run)" -Token "$($config.InfluxToken)"
+        Write-Log -Message "$($Test) Run Number $($Run) Deleted" -Level Info
+    }
 } else {
     Write-Log -Message "Processing Delete $($Test) All Runs" -Level Info
     Write-Log -Message "Please wait while the data is removed (this may take some time)" -Level Info
     $null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($MainBucket)" -Test "$($Test)" -Token "$($config.InfluxToken)"
     Write-Log -Message "Processing Boot Information Delete $($Test) All Runs" -Level Info
-    Write-Log -Message "Please wait while the data is removed (this may take some time)" -Level Info
-    $null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($BootBucket)" -Test "$($Test)" -Token "$($config.InfluxToken)"
-    Write-Log -Message "$($Test) Deleted" -Level Info
+    if(!($MainBucket -eq "Tests")){
+        Write-Log -Message "Please wait while the data is removed (this may take some time)" -Level Info
+        $null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($BootBucket)" -Test "$($Test)" -Token "$($config.InfluxToken)"
+        Write-Log -Message "$($Test) Deleted" -Level Info
+    }
+
 }
 #endregion Remove Test
 
