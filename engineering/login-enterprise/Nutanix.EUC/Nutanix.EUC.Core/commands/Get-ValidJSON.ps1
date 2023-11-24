@@ -22,7 +22,7 @@ The configuration file to parse and validate
 
         #Target Section Valid Settings
         $Validated_Delivery_Types = @("Citrix","VMware","RAS")
-        $Validated_Clone_Types = @("MCS", "Instant Clones", "Full Clone", "Linked Clone")
+        $Validated_Clone_Types = @("MCS", "Instant Clones", "Full Clone", "Linked Clone", "PVS")
         $Validated_SessionCfg =@("ICA","PCoIP","Blast","RDP")
         $Validated_Workload_Profiles = @("Task Worker", "Knowledge Worker")
         $Validated_Session_Support = @("multisession", "singlesession")

@@ -331,22 +331,27 @@ if ($VSI_Target_Files -ne "") {
     if ($null -ne $VSI_Test_Nutanix_Files_Shares -and $VSI_Test_Delete_Files_Data -eq $true) {
         ##TODO Need to validate this
         Write-Log -Message "Processing Nutanix Files Data Removal Validation" -Level Info
-        ##Remove-NutanixFilesData -Shares $VSI_Test_Nutanix_Files_Shares -Mode Validate
+        Remove-NutanixFilesData -Shares $VSI_Test_Nutanix_Files_Shares -Mode Validate
     }
 }
 #endregion Nutanix Files Pre Flight Checks
 
 #region Nutanix Snapshot Pre Flight Checks
 if ($NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
+    # A purely AHV Test
     $cleansed_snapshot_name = $VSI_Target_ImagesToTest.ParentVM -replace ".template",""
-    Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType
+    Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type
 }
-if ($NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
-
+if (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
+    # A Citrix on ESXi test
+    Get-NutanixSnapshot -VM $VSI_Target_ImagesToTest.ParentVM -HostingConnection $VSI_Target_HypervisorConnection -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type -DDC $VSI_Target_DDC
+}
+if ($Type -eq "Horizon") {
+    # A Horizon test
     if ($VSI_Target_ImagesToTest.ParentVM -match '^([^\\]+)\.') { $cleansed_vm_name = $matches[1] }
     if ($VSI_Target_ImagesToTest.ParentVM -match '\\([^\\]+)\.snapshot$') { $cleansed_snapshot_name = $matches[1] }
 
-    Get-NutanixSnapshot -VM $cleansed_vm_name -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType
+    Get-NutanixSnapshot -VM $cleansed_vm_name -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type
 }
 
 #endregion Nutanix Snapshot Pre Flight Checks
@@ -354,7 +359,7 @@ if ($NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
 #endregion Validation
 
 #region Start Infrastructure Monitoring
-if ($VSI_Test_ServersToMonitor) {
+if ($VSI_Test_StartInfrastructureMonitoring -eq $true -and $VSI_Test_ServersToMonitor) {
     Write-Log -Message "Starting Infrastructure Monitoring" -Level Info
     Start-ServerMonitoring -ServersToMonitor $VSI_Test_ServersToMonitor -Mode StartMonitoring -ServiceName "Telegraf"
 }
@@ -1509,7 +1514,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             if ($null -ne $VSI_Test_Nutanix_Files_Shares -and $VSI_Test_Delete_Files_Data -eq $true) { #Need to update the above messaging to reflect these detetion rules
                 Write-Log -Message "Processing Nutanix Files Data Removal" -Level Info
                 # TODO: Need to Validate this configuation
-                ##Remove-NutanixFilesData -Shares $VSI_Test_Nutanix_Files_Shares -Mode Execute
+                Remove-NutanixFilesData -Shares $VSI_Test_Nutanix_Files_Shares -Mode Execute
             }
         }
         #endregion Cleanup Nutanix Files Data
@@ -1706,7 +1711,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 #endregion Execute Test
 
 #region Stop Infrastructure Monitoring
-if ($VSI_Test_ServersToMonitor) {
+if ($VSI_Test_StartInfrastructureMonitoring -eq $true -and $VSI_Test_ServersToMonitor) {
     Write-Log -Message "Stopping Infrastructure Monitoring" -Level Info
     Start-ServerMonitoring -ServersToMonitor $VSI_Test_ServersToMonitor -Mode StopMonitoring -ServiceName "Telegraf"
 }
