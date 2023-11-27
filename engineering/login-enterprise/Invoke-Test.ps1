@@ -25,9 +25,10 @@ Configured in the test configuration file. Can be overriden by this parameter
 Optional. Forces the recreation of the Horizon desktop pool.
 .NOTES
 TODO
-- Query Inlfux for running tests against LE appliance
+- Query Influx for running tests against LE appliance
 - Remember to replace BREAK with Break! Temporarily using Break
 - Do we want to cset the $Type Parameter to align with the DeliveryType value in the JSON file?
+- Use UploadResults value to split test execution and test data management
 ------------------------------------------------------------------------------------------
 ### REVIEW NOTES - WORK IN PROGRESS - REMOVE ONCE VALIDATED
 ------------------------------------------------------
@@ -235,6 +236,12 @@ else {
 #region variable setting
 #----------------------------------------------------------------------------------------------------------------------------
 Set-VSIConfigurationVariables -ConfigurationFile $ConfigFile
+
+if ($VSI_Test_SkipLEMetricsDownload -eq $true -and $VSI_Test_Uploadresults -eq $true) { ##Dave_Please_Review
+    #You can't skip a download and enable an upload
+    Write-Log -Message "You cannot skip LE metric download (SkipLEMetricsDownload) and enable Influx upload (Uploadresults). This is not a valid test configuration." -Level Error
+    Exit 1
+}
 
 if ($VSI_Test_LEAppliance -eq "MANDATORY_TO_DEFINE" -and (!$LEAppliance)) {
     # Neither Option is OK due to ValidateSet on the LEAppliance Param
@@ -513,7 +520,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $params = $null
         $CurrentTotalPhase++
 
-        #placeholder for Horizon
+        # Horizon
         $params = @{
             Server          = $VSI_Target_ConnectionServer 
             User            = $VSI_Target_ConnectionServerUser 
@@ -1435,9 +1442,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "start"
         #endregion Nutanix Curator Start
 
-        #region Write config to OutputFolder
+        #region Write config to OutputFolder and Download LE Metrics
         #----------------------------------------------------------------------------------------------------------------------------
 
+        if ($VSI_Test_SkipLEMetricsDownload -eq $true) { $Message = "Skipping Exporting Test Data from Login Enterprise" } else { $Message = "Exporting Test Data from Login Enterprise" } ##Dave_Please_Review
         # Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
@@ -1447,7 +1455,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
-            CurrentMessage = "Exporting Test Data from Login Enterprise" 
+            #CurrentMessage = "Exporting Test Data from Login Enterprise" 
+            CurrentMessage = $Message  ##Dave_Please_Review
             TotalPhase     = "$($RunPhases)"
         }
         $null = Set-TestData @params
@@ -1472,9 +1481,14 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $NTNXInfra.Testinfra.VMCPUCount = [Int]$VSI_Target_NumCPUs * [Int]$VSI_Target_NumCores
         $NTNXInfra.Testinfra.Testname = $FolderName
         $NTNXInfra | ConvertTo-Json -Depth 20 | Set-Content -Path $OutputFolder\Testconfig.json -Force
-        Write-Log -Message "Exporting LE Measurements to output folder" -Level Info
-        Export-LEMeasurements -Folder $OutputFolder -TestRun $TestRun -DurationInMinutes $VSI_Target_DurationInMinutes
-        #endregion Write config to OutputFolder
+
+        if ($VSI_Test_SkipLEMetricsDownload -eq $true){ ##Dave_Please_Review
+            Write-Log -Message "Skipping download of LE Metrics" -Level Info
+        } else {
+            Write-Log -Message "Exporting LE Measurements to output folder" -Level Info
+            Export-LEMeasurements -Folder $OutputFolder -TestRun $TestRun -DurationInMinutes $VSI_Target_DurationInMinutes
+        }
+        #endregion Write config to OutputFolder and Download LE Metrics
 
         #region Check for RDA File and if exists then move it to the output folder
         #----------------------------------------------------------------------------------------------------------------------------
@@ -1628,12 +1642,22 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #endregion Upload Data to Influx
 
-        $Testresult = import-csv "$OutputFolder\VSI-results.csv"
-        $Appsuccessrate = $Testresult."Apps success" / $Testresult."Apps total" * 100
+        if ($VSI_Test_SkipLEMetricsDownload -eq $true){ ##Dave_Please_Review
+            Write-Log -Message "Skipped download of LE Metrics so no analysis occuring" -Level Info
+        } 
+        else {
+            $Testresult = import-csv "$OutputFolder\VSI-results.csv"
+            $Appsuccessrate = $Testresult."Apps success" / $Testresult."Apps total" * 100
+        }
 
         #region Slack update
         #----------------------------------------------------------------------------------------------------------------------------
-        $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName). $($Testresult.activesessionCount) sessions active of $($Testresult."login total") total sessions. EUXscore: $($Testresult."EUX score") - VSImax: $($Testresult.vsiMax). App Success rate: $($Appsuccessrate.tostring("#.###"))"
+        if ($VSI_Test_SkipLEMetricsDownload -eq $true){ ##Dave_Please_Review
+            $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName)."
+        } 
+        else {
+            $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName). $($Testresult.activesessionCount) sessions active of $($Testresult."login total") total sessions. EUXscore: $($Testresult."EUX score") - VSImax: $($Testresult.vsiMax). App Success rate: $($Appsuccessrate.tostring("#.###"))"
+        }
         Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
 
         $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -RunNumber $i -TestName $NTNXTestname

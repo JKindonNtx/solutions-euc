@@ -37,6 +37,11 @@ function Get-VSIResults {
     $testDirectories = Get-ChildItem -Path "$Path\results" -Directory | Where-Object { $_.Name.StartsWith($testNameFilter) }
     $TestDirMeasure = $testDirectories | Measure-Object
 
+    if ($TestDirMeasure.Count -lt 1) { ##Dave_Please_Review
+        Write-Log -Message "There are no test results to analyze" -Level Warn
+        Break #Temporary! Replace with #Exit 1
+    }
+
     Write-Log -Message "Found $($TestDirMeasure.Count) tests to analyze." -Level Info
     $count = 1
     $result = @()

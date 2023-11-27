@@ -115,7 +115,8 @@
     },
     "Test": {
         "Name": "LE1-FSLogix", // Test name in Login Enterprise.
-        "Uploadresults":  true, // Upload results to the Nutanix database
+        "Uploadresults":  true, // Upload results to the Nutanix database. Cannot be set to true if SkipLEMetricsDownload is set to true
+        "SkipLEMetricsDownload": false, //Skip the download of LE metrics. Cannot be configured as true with Uploadresults also set to true.
         "BucketName": "LoginDocuments", // Specify the Bucket Name in Influx to upload to. Can be either 'LoginRegression' or 'LoginDocuments'
         "DocumentName": "MANDATORY_TO_DEFINE", // If using LoginDocuments please enter a Document Name starting ENG-, BLOG-, BP-, TN-, RA-.
         "SkipADUsers": false, // Do not recreate the AD User Accounts for LE. Relevant if thinking about using the same profiles for different test iterations rather than new (think about SID matching in FSLogix)

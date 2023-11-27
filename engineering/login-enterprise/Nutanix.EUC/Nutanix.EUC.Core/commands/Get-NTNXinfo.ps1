@@ -9,14 +9,18 @@ function Get-NTNXinfo {
     $NTNXHost = $($Config.Target.NTNXHost)
     try {
         $Clusterinfo = Invoke-PublicApiMethodNTNX -Method "GET" -Path "cluster" -ErrorAction Stop
-        $HostData = Invoke-PublicApiMethodNTNX -Method "GET" -Path "hosts"
+        $HostData = Invoke-PublicApiMethodNTNX -Method "GET" -Path "hosts" -ErrorAction Stop
     }
     catch {
         Write-Log -Message $_ -Level Error
-        Break
+        Break #Temporary! Replace with #Exit 1
     }
         
     $Hostitem = $Hostdata.entities | Where-Object { $_.name -eq $NTNXHost }
+    if ($null -eq $Hostitem) {
+        Write-Log -Message "The defined host: $($NTNXHost) was not found under the Nutanix cluster: $($Clusterinfo.name). Please check the configuration file." -Level Warn
+        Break #Temporary! Replace with #Exit 1
+    }
     $Config.Testinfra.HardwareType = $Hostitem.block_model_name
     $config.Testinfra.CPUType = $Hostitem.cpu_model -Replace ("\(R\)", "") -Replace ("Intel ", "") -Replace ("AMD ", "") -Replace ("  ", "")
     if ($Hostitem.cpu_model -Like 'Intel*') {
