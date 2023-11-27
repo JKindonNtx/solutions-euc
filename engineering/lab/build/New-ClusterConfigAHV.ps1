@@ -47,6 +47,12 @@ If ($GitHub.UserName -like "* *") {
     Write-Host (Get-Date) ":Updated UserName is: $($GitHub.UserName)"
 }
 
+# Build Cluster name and Storage Name
+$AOSCluster = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "cluster"
+$AOSClusterName = $AOSCluster.Name
+$AOSHosts = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "hosts"
+$StorageName = "EUC-$($AOSClusterName)"
+
 # Ask for confirmation to start the build - if no the quit
 Clear-Host
 Do { $confirmationNC2 = Read-Host "Is this cluster running on NC2? [y/n]" } Until (($confirmationNC2 -eq "y") -or ($confirmationNC2 -eq "n"))
@@ -76,7 +82,7 @@ Write-Host "Cluster IP:             $($JSON.Cluster.IP)"
 Write-Host "Cluster user:           $($github.username)"
 Write-Host "VLAN:                   $($JSON.VM.VLAN)"
 Write-Host "VLAN Name:              $VLANName"
-Write-Host "Container Name:         $($JSON.VM.Container)"
+Write-Host "Container Name:         $($StorageName)"
 Write-Host "ISO Image:              $($JSON.VM.ISO)"
 Write-Host "ISO Url:                $($JSON.VM.ISOUrl)"
 Write-Host "Create Hosting:         True"
@@ -124,75 +130,174 @@ if ($confirmationStart -eq 'n') {
         $SendToSlack = "y"
     }
     
+    # Install PowerCLI and get Clusters if configuring a VMware Cluster
+    if($JSON.VM.Hypervisor -eq "VMware"){
+        Write-Host (Get-Date) ":Installing VMware PowerCli" 
+        $null = Install-Module VMware.PowerCLI -Force
+        Write-Host (Get-Date) ":Connecting to VMware vSphere" 
+        $Connection = Connect-VIServer -Server $JSON.VMwareCluster.ip -Protocol https -User $JSON.VMwareCluster.user -Password $JSON.VMwareCluster.password -Force
+        if($connection){
+            Write-Host (Get-Date) ":Connected to vSphere"
+        } else {
+            Write-Host (Get-Date) ":Connection to vSphere Failed - quitting"
+            break 
+        }
+    }
+
+    # Remove and re-add Host and Cluster to vSphere if applicable
+    if($JSON.VM.Hypervisor -eq "VMware"){
+
+        # Remove Hosts from vSphere
+        foreach($AOSHost in $AOSHosts.entities){
+            $HostIP = $AOSHost.hypervisor_address
+            $CurrentHost = Get-VMHost -Name $HostIP -ErrorAction SilentlyContinue
+            if(!([string]::IsNullOrEmpty($CurrentHost))){
+                Write-Host (Get-Date) ":Host $($HostIP) Exists" 
+                Write-Host (Get-Date) ":Disconnecting $($HostIP)" 
+                $task = Set-VMHost -VMHost $HostIP -State "Disconnected" -Confirm:$false
+                Write-Host (Get-Date) ":Removing $($HostIP)" 
+                $task = Remove-VMHost -VMHost $HostIP -Confirm:$false
+                Write-Host (Get-Date) ":Host $($HostIP) Removed" 
+            } else {
+                Write-Host (Get-Date) ":Host $($HostIP) not present in vSphere" 
+            }
+        }
+
+        # Remove Cluster from vSphere
+        $ClusterExists = Get-Cluster -Name $AOSClusterName -ErrorAction SilentlyContinue
+        if(!([string]::IsNullOrEmpty($ClusterExists))){
+            Write-Host (Get-Date) ":Cluster $($AOSClusterName) exists, removing hosts"
+            $ClusterExists  | Get-VMHost | ForEach-Object {
+                Write-Host (Get-Date) ":Disconnecting $($_.Name)" 
+                $task = Set-VMHost $_ -State "Disconnected" -Confirm:$false
+                Write-Host (Get-Date) ":Removing $($_.Name)" 
+                $task = Remove-VMHost -VMHost $_ -Confirm:$false
+                Write-Host (Get-Date) ":Host $($_.Name) Removed" 
+            }
+            Write-Host (Get-Date) ":Removing $($AOSClusterName)"
+            $ClusterExists | Remove-Cluster -Confirm:$false
+            Write-Host (Get-Date) ":Cluster $($AOSClusterName) Removed"
+        } else {
+            Write-Host (Get-Date) ":Cluster $($AOSClusterName) not present in vSphere" 
+        }
+
+        # Create the new Cluster
+        Write-Host (Get-Date) ":Creating $($AOSClusterName)"
+        $task = New-Cluster -Name $($AOSClusterName) -Location "EUC-Solutions"
+
+        # Add the hosts to the cluster
+        $i = 1
+        foreach($AOSHost in $AOSHosts.entities){
+            $HostIP = $AOSHost.hypervisor_address
+            Write-Host (Get-Date) ":Adding $($HostIP) to vSphere"
+            $task = Add-VMHost -Server $JSON.VMwareCluster.ip -Name $HostIP -Location "EUC-Solutions" -User "root" -Password $JSON.Cluster.CVMsshpassword
+            if($i -eq 1){
+                $MasterHost = $HostIP
+                $i++
+            }
+            Write-Host (Get-Date) ":Adding NTP Server to $($HostIP)"
+            $task = Get-VMHost -Name $HostIP | Add-VMHostNtpServer -ntpserver "10.56.1.177" -ErrorAction SilentlyContinue
+            $task = Get-VMHost -Name $HostIP | Get-VMHostFirewallException | where {$_.name -eq "NTP client"} | Set-VMHostFirewallException -enabled $true -ErrorAction SilentlyContinue
+            $task = Get-VMHost -Name $HostIP | Get-VMHostService | where {$_.key -eq "ntpd"} | Start-VMHostService -ErrorAction SilentlyContinue
+            Write-Host (Get-Date) ":Setting High Performance Power Plan for $($HostIP)"
+            $task = (Get-View (Get-VMHost -Name $HostIP | Get-View).ConfigManager.PowerSystem).ConfigurePowerPolicy(1)
+            Write-Host (Get-Date) ":Adding VLAN $($VLANName) to $($HostIP)"
+            $task = Get-VMHost -Name $HostIP | Get-VirtualSwitch -name "vSwitch0" | New-VirtualPortGroup -Name $VLANName -VLanId $JSON.VM.VLAN -ErrorAction SilentlyContinue
+        }
+        
+        Write-Host (Get-Date) ":Moving $($MasterHost) to Cluster $($AOSClusterName)"
+        $task = Move-VMHost -VMHost $MasterHost -Destination $AOSClusterName
+    }
+
     # Check and Update the Network
-    $VLANinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "networks"
-    $VLANUUID = ($VLANinfo.entities | Where-Object {$_.name -eq $VLANName}).uuid
-    if([string]::IsNullOrEmpty($VLANUUID)){
-        # VLAN not available
-        Write-Host (Get-Date) ":VLAN not found, creating"
-        $VLAN = New-NutanixVLAN -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VLAN "$($JSON.VM.VLAN)" -VLANName "$VLANName"
-        Start-Sleep 5
+    if($JSON.VM.Hypervisor -eq "AHV"){
         $VLANinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "networks"
         $VLANUUID = ($VLANinfo.entities | Where-Object {$_.name -eq $VLANName}).uuid
-        if(!($null -eq $VLANUUID)) { Write-Host (Get-Date) ":VLAN Created" } else { Write-Host (Get-Date) ":Error Creating VLAN"; Exit}
-        $SlackMessage = $SlackMessage + "VLAN Added: $VLANName`n"
-        $SendToSlack = "y"
-    } else {
-        # VLAN is present on the cluster
-        Write-Host (Get-Date) ":VLAN found"
+        if([string]::IsNullOrEmpty($VLANUUID)){
+            # VLAN not available
+            Write-Host (Get-Date) ":VLAN not found, creating"
+            $VLAN = New-NutanixVLAN -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VLAN "$($JSON.VM.VLAN)" -VLANName "$VLANName"
+            Start-Sleep 5
+            $VLANinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "networks"
+            $VLANUUID = ($VLANinfo.entities | Where-Object {$_.name -eq $VLANName}).uuid
+            if(!($null -eq $VLANUUID)) { Write-Host (Get-Date) ":VLAN Created" } else { Write-Host (Get-Date) ":Error Creating VLAN"; Exit}
+            $SlackMessage = $SlackMessage + "VLAN Added: $VLANName`n"
+            $SendToSlack = "y"
+        } else {
+            # VLAN is present on the cluster
+            Write-Host (Get-Date) ":VLAN found"
+        }
     }
 
     # Check and Update the Storage Containers
     $Storageinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "storage_containers"
-    $StorageUUID = ($Storageinfo.entities | Where-Object {$_.name -eq $($JSON.VM.Container)}).storage_container_uuid
+    $StorageUUID = ($Storageinfo.entities | Where-Object {$_.name -eq $($StorageName)}).storage_container_uuid
     if([string]::IsNullOrEmpty($StorageUUID)){
         # Storage Container not available
         Write-Host (Get-Date) ":Storage Container not found, creating"
-        $Storage = New-NutanixStorageContainer -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -Container "$($JSON.VM.Container)"
+        $Storage = New-NutanixStorageContainer -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -Container "$($StorageName)"
         Start-Sleep 5
         $Storageinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "storage_containers"
-        $StorageUUID = ($Storageinfo.entities | Where-Object {$_.name -eq $($JSON.VM.Container)}).storage_container_uuid
+        $StorageUUID = ($Storageinfo.entities | Where-Object {$_.name -eq $($StorageName)}).storage_container_uuid
         if(!($null -eq $StorageUUID)) { Write-Host (Get-Date) ":Storage Container Created" } else { Write-Host (Get-Date) ":Error Creating Storage Container"; Exit}
-        $SlackMessage = $SlackMessage + "Storage Container Added: $($JSON.VM.Container)`n"
+        $SlackMessage = $SlackMessage + "Storage Container Added: $($StorageName)`n"
         $SendToSlack = "y"
     } else {
         # Storage Container is present on the cluster
         Write-Host (Get-Date) ":Storage Container found"
     }
 
+    # Mount Storage Container to vSphere
+    if($JSON.VM.Hypervisor -eq "VMware"){
+        $ESXi = New-ESXiDatastore -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -Container "$($StorageName)"
+    }
+
     #Check and Update the ISO Image
-    $ISOinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "images"
-    $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($JSON.VM.ISO)}).vm_disk_id
-    if([string]::IsNullOrEmpty($ISOUUID)){
-        # ISO file not available
-        Write-Host (Get-Date) ":ISO file not found, uploading"
-        $ISOURL = "$($JSON.VM.ISOUrl)" + "$($JSON.VM.ISO)"
-        $ISOTask = New-NutanixISO -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -StorageUUID $StorageUUID -ISOurl "$ISOURL" -ISOname "$($JSON.VM.ISO)"
-
-        # Wait for upload task to complete
-        $ISOTaskUUID = $ISOTask.task_uuid
-        Write-Host (Get-Date)":Wait for ISO Upload ($ISOTaskUUID) to finish" 
-        Do {
-            $ISOtaskinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "tasks/$($ISOTaskUUID)"
-            $ISOtaskstatus = $ISOtaskinfo.percentage_complete
-            If ( $ISOtaskstatus -ne 100) {
-                Start-Sleep -Seconds 5
-            }
-            Else {
-                Write-Host (Get-Date)":Task is completed"
-            }
-        }
-        Until ($ISOtaskstatus -eq 100)
-
-        # Confirm that ISO is availavle
+    if($JSON.VM.Hypervisor -eq "VMware"){
+        Write-Host (Get-Date) ":Getting Datastore $($StorageName)"
+        $DS = Get-Datastore -Name $StorageName
+        Write-Host (Get-Date) ":Creating ISO Directory"
+        $task = New-Item -Path $DS.DatastoreBrowserPath -Name "ISO" -ItemType Directory -ErrorAction SilentlyContinue
+        Write-Host (Get-Date) ":Downloading $($JSON.VM.ISO) - This will take some time"
+        $task = invoke-webrequest -Uri $ISOURL -outfile "$($JSON.VM.ISO)" 
+        $Source = Join-Path -Path $ScriptRoot -ChildPath $JSON.VM.ISO
+        $Destination = Join-Path -Path $DS.DatastoreBrowserPath -ChildPath "ISO\"
+        Write-Host (Get-Date) ":Copying $($JSON.VM.ISO) to Datastore - This will take some time"
+        $task = Copy-DatastoreItem -Item $Source -Destination $Destination -Force
+    } else {
         $ISOinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "images"
         $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($JSON.VM.ISO)}).vm_disk_id
-        if(!($null -eq $ISOUUID)) { Write-Host (Get-Date) ":ISO Uploaded" } else { Write-Host (Get-Date) ":Error Uploading ISO"; Exit}
-        $SlackMessage = $SlackMessage + "ISO Uploaded: $($JSON.VM.ISO)`n"
-        $SendToSlack = "y"
-    } else {
-        # ISO file is present on the cluster
-        Write-Host (Get-Date) ":ISO file found"
+        if([string]::IsNullOrEmpty($ISOUUID)){
+            # ISO file not available
+            Write-Host (Get-Date) ":ISO file not found, uploading"
+            $ISOURL = "$($JSON.VM.ISOUrl)" + "$($JSON.VM.ISO)"
+            $ISOTask = New-NutanixISO -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -StorageUUID $StorageUUID -ISOurl "$ISOURL" -ISOname "$($JSON.VM.ISO)"
+
+            # Wait for upload task to complete
+            $ISOTaskUUID = $ISOTask.task_uuid
+            Write-Host (Get-Date)":Wait for ISO Upload ($ISOTaskUUID) to finish" 
+            Do {
+                $ISOtaskinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "tasks/$($ISOTaskUUID)"
+                $ISOtaskstatus = $ISOtaskinfo.percentage_complete
+                If ( $ISOtaskstatus -ne 100) {
+                    Start-Sleep -Seconds 5
+                }
+                Else {
+                    Write-Host (Get-Date)":Task is completed"
+                }
+            }
+            Until ($ISOtaskstatus -eq 100)
+
+            # Confirm that ISO is availavle
+            $ISOinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "images"
+            $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($JSON.VM.ISO)}).vm_disk_id
+            if(!($null -eq $ISOUUID)) { Write-Host (Get-Date) ":ISO Uploaded" } else { Write-Host (Get-Date) ":Error Uploading ISO"; Exit}
+            $SlackMessage = $SlackMessage + "ISO Uploaded: $($JSON.VM.ISO)`n"
+            $SendToSlack = "y"
+        } else {
+            # ISO file is present on the cluster
+            Write-Host (Get-Date) ":ISO file found"
+        }
     }
 
     # Get Cluster Name and update Slack Message
@@ -200,9 +305,15 @@ if ($confirmationStart -eq 'n') {
     $ClusterName = $Clusterinfo.name
 
     # Create Citrix Hosting Connection
-    Set-CitrixHostingConnection -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VLAN "$($VLANName)" -DDC "$($JSON.Citrix.DDC)"
-    $SlackMessage = $SlackMessage + "Hosting Connection Created: $($ClusterName)`n"
-    $SendToSlack = "y"
+    if($JSON.VM.Hypervisor -eq "VMware"){
+        Set-CitrixHostingConnectionESXi -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VLAN "$($VLANName)" -DDC "$($JSON.Citrix.DDC)"
+        $SlackMessage = $SlackMessage + "VMware Hosting Connection Created: $($ClusterName)`n"
+        $SendToSlack = "y"
+    } else {
+        Set-CitrixHostingConnection -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VLAN "$($VLANName)" -DDC "$($JSON.Citrix.DDC)"
+        $SlackMessage = $SlackMessage + "Hosting Connection Created: $($ClusterName)`n"
+        $SendToSlack = "y"
+    }
 
     # Register Cluster with Prism Central
     Remove-PrismCentral -PCIP "$($JSON.Cluster.PCIP)" -PCPassword "$($JSON.Cluster.PCPassword)" -ClusterName $ClusterName
