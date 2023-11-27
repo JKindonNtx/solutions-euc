@@ -23,6 +23,14 @@ Details any warnings or considerations that need to be reviewed as part of the t
 | ⚠️ | Warning Item Number 1 |
 | ⚠️ | Warning Item Number 2 |
 
+## Custom Telegraf Configuration
+
+Details any custom Telegraf configuration over and above the default required before the test.
+
+| Server | Detail |
+| :---: | :--- |
+| Session Recording Server 1 | Enable Perfmon Counters |
+
 ## Test to Delete
 
 Any tests run as part of the document that require deleting before producing the final document.

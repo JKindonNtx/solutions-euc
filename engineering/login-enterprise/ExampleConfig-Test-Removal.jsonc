@@ -1,0 +1,5 @@
+{   
+        "InfluxDBurl": "MANDATORY_TO_DEFINE", // The root InfluxDB Uri (example: http://influx.domain.com:8086)
+        "InfluxToken": "MANDATORY_TO_DEFINE", //The authentication Api Token for InfluxDB
+        "InfluxOrg": "MANDATORY_TO_DEFINE" //The InfluxDB Org (example: Nutanix)
+}
