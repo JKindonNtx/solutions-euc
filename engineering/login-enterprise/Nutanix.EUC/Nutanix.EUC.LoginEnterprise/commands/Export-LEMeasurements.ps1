@@ -19,21 +19,6 @@ function Export-LEMeasurements {
             $LoginTimesCollection += $LoginTime
         }
         $LoginTimesCollection | Export-Csv -Path "$($Folder)\Raw Login Times.csv" -NoTypeInformation
-
-        $EUXMeasurements = Get-LERawEUX -testRunId $testRun.Id
-        $TimerCollection = @()
-        foreach ($Measurement in $EUXMeasurements) {
-            $EuxUser = $Measurement.euxMeasurements
-            foreach ($EuxMeasurement in $EuxUser) {
-                $Timer = New-Object PSObject
-                $Timer | Add-Member -MemberType NoteProperty -Name "userSessionid" -Value $Measurement.UserSessionId
-                $Timer | Add-Member -MemberType NoteProperty -Name "timestamp" -Value $EuxMeasurement.timestamp
-                $Timer | Add-Member -MemberType NoteProperty -Name "timer" -Value $EuxMeasurement.timer
-                $Timer | Add-Member -MemberType NoteProperty -Name "duration" -Value $EuxMeasurement.duration
-                $TimerCollection += $Timer
-            }
-        }
-        $TimerCollection | Export-Csv -Path "$($Folder)\Raw Timer Results.csv" -NoTypeInformation
     
         #lookup table
         $Applications = Get-LEApplications
@@ -56,30 +41,6 @@ function Export-LEMeasurements {
         }
         $AppMeasurements | Export-Csv -Path "$($Folder)\Raw AppMeasurements.csv" -NoTypeInformation
 
-        $EUXMeasurements = Get-LEtestrunResults -testRunId $testRun.Id -path "/eux-results"
-        $EUXCollection = @()
-        foreach ($Measurement in $EUXMeasurements) {
-            $EUXscore = New-Object PSObject
-            $EUXscore | Add-Member -MemberType NoteProperty -Name "TimeStamp" -Value $Measurement.timestamp
-            $EUXscore | Add-Member -MemberType NoteProperty -Name "EUXScore" -Value $Measurement.score
-            $EUXCollection += $EUXscore
-        }
-        $EUXCollection | Export-Csv -Path "$($Folder)\EUX-score.csv" -NoTypeInformation
-
-        ## EUX timer results
-        $EUXtimerMeasurements = Get-LEtestrunResults -testRunId $testRun.Id -path "/eux-timer-results?euxTimer=diskMyDocs&euxTimer=diskMyDocsLatency&euxTimer=diskAppData&euxTimer=diskAppDataLatency&euxTimer=cpuSpeed&euxTimer=highCompression&euxTimer=fastCompression&euxTimer=appSpeed&euxTimer=appSpeedUserInput"
-        $EUXtimerCollection = @()
-        foreach ($timerMeasurement in $EUXtimerMeasurements) {
-            $EUXtimerscore = New-Object PSObject
-            $EUXtimerscore | Add-Member -MemberType NoteProperty -Name "TimeStamp" -Value $timerMeasurement.timestamp
-            $EUXtimerscore | Add-Member -MemberType NoteProperty -Name "EUXTimer" -Value $timerMeasurement.euxTimer
-            $EUXtimerscore | Add-Member -MemberType NoteProperty -Name "Score" -Value $timerMeasurement.score
-            $EUXtimerCollection += $EUXtimerscore
-        }
-        $EUXtimerCollection | Export-Csv -Path "$($Folder)\EUX-timer-score.csv" -NoTypeInformation
-
-        
-
         $VSIresults = Get-LEtestrunResults -testRunId $testRun.Id
         $VSICollection = @()
         foreach ($result in $VSIresults) {
@@ -94,15 +55,24 @@ function Export-LEMeasurements {
             $VSIresult | Add-Member -MemberType NoteProperty -Name "login engine total" -Value $result.engineCounts.totalCount
             $VSIresult | Add-Member -MemberType NoteProperty -Name "Apps success" -Value $result.appExecutionCounts.successCount
             $VSIresult | Add-Member -MemberType NoteProperty -Name "Apps total" -Value $result.appExecutionCounts.totalCount
-            $VSIresult | Add-Member -MemberType NoteProperty -Name "EUX score" -Value $result.euxScore.score
-            $VSIresult | Add-Member -MemberType NoteProperty -Name "EUX version" -Value $result.euxScore.version
+            if ($result.euxScore.state -eq "disabled") {
+                $VSIresult | Add-Member -MemberType NoteProperty -Name "EUX score" -Value "0"
+                $VSIresult | Add-Member -MemberType NoteProperty -Name "EUX version" -Value "N/A"
+            } Else {
+                $VSIresult | Add-Member -MemberType NoteProperty -Name "EUX score" -Value $result.euxScore.score
+                $VSIresult | Add-Member -MemberType NoteProperty -Name "EUX version" -Value $result.euxScore.version
+            }
             $VSIresult | Add-Member -MemberType NoteProperty -Name "EUX state" -Value $result.euxScore.state
             if ($result.vsiMax.maxSessions -eq "") {
                 $VSIresult | Add-Member -MemberType NoteProperty -Name "vsiMax" -Value $result.loginCounts.totalCount
             } Else {
                 $VSIresult | Add-Member -MemberType NoteProperty -Name "vsiMax" -Value $result.vsiMax.maxSessions
             }
-            $VSIresult | Add-Member -MemberType NoteProperty -Name "vsiMax version" -Value $result.vsiMax.version
+            if ($result.vsiMax.state -eq "disabled") {
+                $VSIresult | Add-Member -MemberType NoteProperty -Name "vsiMax version" -Value "N/A"
+            } Else {
+                $VSIresult | Add-Member -MemberType NoteProperty -Name "vsiMax version" -Value $result.vsiMax.version
+            }
             $VSIresult | Add-Member -MemberType NoteProperty -Name "vsiMax state" -Value $result.vsiMax.state
             $VSIresult | Add-Member -MemberType NoteProperty -Name "Comment" -Value $result.comment
             $VSIresult | Add-Member -MemberType NoteProperty -Name "started" -Value $result.started
@@ -111,8 +81,56 @@ function Export-LEMeasurements {
         }
         $VSICollection | Export-Csv -Path "$($Folder)\VSI-results.csv" -NoTypeInformation
 
+        # if EUXenabled =true
+        if ($VSI_Target_EUXEnabled) {
+            $EUXMeasurements = Get-LERawEUX -testRunId $testRun.Id
+            $TimerCollection = @()
+            foreach ($Measurement in $EUXMeasurements) {
+                $EuxUser = $Measurement.euxMeasurements
+                foreach ($EuxMeasurement in $EuxUser) {
+                    $Timer = New-Object PSObject
+                    $Timer | Add-Member -MemberType NoteProperty -Name "userSessionid" -Value $Measurement.UserSessionId
+                    $Timer | Add-Member -MemberType NoteProperty -Name "timestamp" -Value $EuxMeasurement.timestamp
+                    $Timer | Add-Member -MemberType NoteProperty -Name "timer" -Value $EuxMeasurement.timer
+                    $Timer | Add-Member -MemberType NoteProperty -Name "duration" -Value $EuxMeasurement.duration
+                    $TimerCollection += $Timer
+                }
+            }
+            $TimerCollection | Export-Csv -Path "$($Folder)\Raw Timer Results.csv" -NoTypeInformation
 
-     
+            $EUXMeasurements = Get-LEtestrunResults -testRunId $testRun.Id -path "/eux-results"
+            $EUXCollection = @()
+            foreach ($Measurement in $EUXMeasurements) {
+                $EUXscore = New-Object PSObject
+                $EUXscore | Add-Member -MemberType NoteProperty -Name "TimeStamp" -Value $Measurement.timestamp
+                $EUXscore | Add-Member -MemberType NoteProperty -Name "EUXScore" -Value $Measurement.score
+                $EUXCollection += $EUXscore
+            }
+            $EUXCollection | Export-Csv -Path "$($Folder)\EUX-score.csv" -NoTypeInformation
+
+            ## EUX timer results
+            $EUXtimerMeasurements = Get-LEtestrunResults -testRunId $testRun.Id -path "/eux-timer-results?euxTimer=diskMyDocs&euxTimer=diskMyDocsLatency&euxTimer=diskAppData&euxTimer=diskAppDataLatency&euxTimer=cpuSpeed&euxTimer=highCompression&euxTimer=fastCompression&euxTimer=appSpeed&euxTimer=appSpeedUserInput"
+            $EUXtimerCollection = @()
+            foreach ($timerMeasurement in $EUXtimerMeasurements) {
+                $EUXtimerscore = New-Object PSObject
+                $EUXtimerscore | Add-Member -MemberType NoteProperty -Name "TimeStamp" -Value $timerMeasurement.timestamp
+                $EUXtimerscore | Add-Member -MemberType NoteProperty -Name "EUXTimer" -Value $timerMeasurement.euxTimer
+                $EUXtimerscore | Add-Member -MemberType NoteProperty -Name "Score" -Value $timerMeasurement.score
+                $EUXtimerCollection += $EUXtimerscore
+            }
+            $EUXtimerCollection | Export-Csv -Path "$($Folder)\EUX-timer-score.csv" -NoTypeInformation
+        }
+        Else {
+            $EUXMeasurements = Get-LEtestrunResults -testRunId $testRun.Id
+            $EUXCollection = @()
+            foreach ($Measurement in $EUXMeasurements) {
+                $EUXscore = New-Object PSObject
+                $EUXscore | Add-Member -MemberType NoteProperty -Name "TimeStamp" -Value $Measurement.started
+                $EUXscore | Add-Member -MemberType NoteProperty -Name "EUXScore" -Value "0"
+                $EUXCollection += $EUXscore
+            }
+            $EUXCollection | Export-Csv -Path "$($Folder)\EUX-score.csv" -NoTypeInformation
+        }
 
     
 }

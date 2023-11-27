@@ -24,6 +24,7 @@ function Set-LELoadTest {
             $NewTestBody = @{
                 type           = "LoadTest"
                 name           = $TestName
+                euxEnabled     = $VSI_Target_EUXEnabled
                 description    = $ConnectorParams["resource"]
                 connector      = @{
                     type        = "Horizon"
@@ -41,7 +42,7 @@ function Set-LELoadTest {
                 rampUpDurationInMinutes = $RampupInMinutes
                 testDurationInMinutes   = $DurationInMinutes
                 name                    = $TestName
-                euxEnabled              = $true
+                euxEnabled              = $VSI_Target_EUXEnabled
                 description             = $ConnectorParams["resource"]
                 environmentUpdate       = @{
                     connector      = @{
@@ -59,6 +60,7 @@ function Set-LELoadTest {
             $NewTestBody = @{
                 type           = "LoadTest"
                 name           = $TestName
+                euxEnabled     = $VSI_Target_EUXEnabled
                 description    = $ConnectorParams.host
                 connector      = @{
                     type        = "Custom"
@@ -76,7 +78,7 @@ function Set-LELoadTest {
                 rampUpDurationInMinutes = $RampupInMinutes
                 testDurationInMinutes   = $DurationInMinutes
                 name                    = $TestName
-                euxEnabled              = $true
+                euxEnabled              = $VSI_Target_EUXEnabled
                 description             = $ConnectorParams.host
                 environmentUpdate       = @{
                     connector      = @{
@@ -101,6 +103,7 @@ function Set-LELoadTest {
             $NewTestBody = @{
                 type           = "LoadTest"
                 name           = $TestName
+                euxEnabled     = $VSI_Target_EUXEnabled
                 description    = $ConnectorParams.resource
                 connector      = @{
                     type      = "Storefront"
@@ -117,7 +120,7 @@ function Set-LELoadTest {
                 rampUpDurationInMinutes = $RampupInMinutes
                 testDurationInMinutes   = $DurationInMinutes
                 name                    = $TestName
-                euxEnabled              = $true
+                euxEnabled              = $VSI_Target_EUXEnabled
                 description             = $ConnectorParams["resource"]
                 environmentUpdate       = @{
                     connector      = @{
