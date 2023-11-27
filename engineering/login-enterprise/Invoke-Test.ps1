@@ -1675,21 +1675,21 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         if ($VSI_Test_SkipLEMetricsDownload -ne $true){ ##Dave_Please_Review
             $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -RunNumber $i -TestName $NTNXTestname
-        }
 
-        if (Test-Path -path $Filename) {
-            $Params = @{
-                ImageURL     = $FileName 
-                SlackToken   = $NTNXInfra.Testinfra.SlackToken 
-                SlackChannel = $NTNXInfra.Testinfra.SlackChannel 
-                SlackTitle   = "$($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)" 
-                SlackComment = "CPU and EUX score of $($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)"
+            if (Test-Path -path $Filename) {
+                $Params = @{
+                    ImageURL     = $FileName 
+                    SlackToken   = $NTNXInfra.Testinfra.SlackToken 
+                    SlackChannel = $NTNXInfra.Testinfra.SlackChannel 
+                    SlackTitle   = "$($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)" 
+                    SlackComment = "CPU and EUX score of $($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)"
+                }
+                Update-VSISlackImage @params
+                $Params = $null
             }
-            Update-VSISlackImage @params
-            $Params = $null
-        }
-        else {
-            Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Level Warn
+            else {
+                Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Level Warn
+            }
         }
         #endregion Slack update
 
@@ -1741,24 +1741,24 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #----------------------------------------------------------------------------------------------------------------------------
     Update-VSISlackresults -TestName $NTNXTestname -Path $ScriptRoot
     $OutputFolder = "$($ScriptRoot)\testresults\$($NTNXTestname)"
-    
-    if ($VSI_Test_SkipLEMetricsDownload -ne $true){
+
+    if ($VSI_Test_SkipLEMetricsDownload -ne $true){ ##Dave_Please_Review
         $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -TestName $NTNXTestname
-    } ##Dave_Please_Review
     
-    if (Test-Path -path $Filename) {
-        $Params = @{
-            ImageURL     = $FileName 
-            SlackToken   = $NTNXInfra.Testinfra.SlackToken 
-            SlackChannel = $NTNXInfra.Testinfra.SlackChannel 
-            SlackTitle   = "$($NTNXInfra.Target.ImagesToTest[0].Comment)" 
-            SlackComment = "CPU and EUX scores of $($NTNXInfra.Target.ImagesToTest[0].Comment) - All Runs"
+        if (Test-Path -path $Filename) {
+            $Params = @{
+                ImageURL     = $FileName 
+                SlackToken   = $NTNXInfra.Testinfra.SlackToken 
+                SlackChannel = $NTNXInfra.Testinfra.SlackChannel 
+                SlackTitle   = "$($NTNXInfra.Target.ImagesToTest[0].Comment)" 
+                SlackComment = "CPU and EUX scores of $($NTNXInfra.Target.ImagesToTest[0].Comment) - All Runs"
+            }
+            Update-VSISlackImage @params
+            $Params = $Null
         }
-        Update-VSISlackImage @params
-        $Params = $Null
-    }
-    else {
-        Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Level Warn
+        else {
+            Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Level Warn
+        }
     }
     #endregion Slack update
 }
