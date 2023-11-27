@@ -242,7 +242,21 @@ if ($VSI_Test_SkipLEMetricsDownload -eq $true -and $VSI_Test_Uploadresults -eq $
     Write-Log -Message "You cannot skip LE metric download (SkipLEMetricsDownload) and enable Influx upload (Uploadresults). This is not a valid test configuration." -Level Error
     Exit 1
 }
+if ($VSI_Test_Uploadresults -eq $false) { ##Dave_Please_Review
+    #You can't skip a download and enable an upload
+    Write-Log -Message "You are executing a test with no Influx Data upload (Uploadresults: false). There will be no grafana or influx reporting for this test." -Level Info
+    $answer = read-host "Test details correct for test? yes or no?"
+    if ($answer -ne "yes" -and $answer -ne "y") { 
+        Write-Log -Message "Input not confirmed. Exit" -Level Info
+        Break #Temporary! Replace with #Exit 0
+    }
+    else {
+        Write-Log -Message "Input confirmed" -Level Info
+    }
+}
 
+
+#Define the LE appliance detail
 if ($VSI_Test_LEAppliance -eq "MANDATORY_TO_DEFINE" -and (!$LEAppliance)) {
     # Neither Option is OK due to ValidateSet on the LEAppliance Param
     Write-Log -Message "You must define an LE appliance either in the $($ConfigFile) file or via the Script Parameter" -Level Error
@@ -260,7 +274,7 @@ if ($null -ne $LEAppliance) {
     Set-VSIConfigurationVariablesLEGlobal -ConfigurationFile $LEConfigFile -LEAppliance $LEAppliance
 }
 else {
-    Write-Log -Message "Missing Logon Appliance Detail. Please check config file." -Level Warn
+    Write-Log -Message "Missing LE Appliance Detail. Please check config file." -Level Warn
     Break #Temporary! Replace with #Exit 1
 }
 
@@ -322,7 +336,6 @@ $Mandatory_Undedfined_Config_Entries = Get-Variable -Name VSI* | where-Object {$
 if ($null -ne $Mandatory_Undedfined_Config_Entries) {
     Write-Log -Message "There are $(($Mandatory_Undedfined_Config_Entries | Measure-Object).Count) Undefined values that must be specified" -Level Warn
     foreach ($Item in $Mandatory_Undedfined_Config_Entries) {
-        #$Mandatory_Undedfined_Config_Entries | Format-Table -HideTableHeaders
         Write-Log -Message "Setting: $($Item.Name) must be set. Current value: $($Item.Value)" -Level Warn
     }
 }
@@ -1660,7 +1673,9 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
         Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
 
-        $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -RunNumber $i -TestName $NTNXTestname
+        if ($VSI_Test_SkipLEMetricsDownload -ne $true){ ##Dave_Please_Review
+            $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -RunNumber $i -TestName $NTNXTestname
+        }
 
         if (Test-Path -path $Filename) {
             $Params = @{
@@ -1726,7 +1741,11 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #----------------------------------------------------------------------------------------------------------------------------
     Update-VSISlackresults -TestName $NTNXTestname -Path $ScriptRoot
     $OutputFolder = "$($ScriptRoot)\testresults\$($NTNXTestname)"
-    $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -TestName $NTNXTestname
+    
+    if ($VSI_Test_SkipLEMetricsDownload -ne $true){
+        $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -TestName $NTNXTestname
+    } ##Dave_Please_Review
+    
     if (Test-Path -path $Filename) {
         $Params = @{
             ImageURL     = $FileName 
