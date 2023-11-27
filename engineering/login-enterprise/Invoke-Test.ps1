@@ -237,12 +237,12 @@ else {
 #----------------------------------------------------------------------------------------------------------------------------
 Set-VSIConfigurationVariables -ConfigurationFile $ConfigFile
 
-if ($VSI_Test_SkipLEMetricsDownload -eq $true -and $VSI_Test_Uploadresults -eq $true) { ##Dave_Please_Review
+if ($VSI_Test_SkipLEMetricsDownload -eq $true -and $VSI_Test_Uploadresults -eq $true) {
     #You can't skip a download and enable an upload
     Write-Log -Message "You cannot skip LE metric download (SkipLEMetricsDownload) and enable Influx upload (Uploadresults). This is not a valid test configuration." -Level Error
     Exit 1
 }
-if ($VSI_Test_Uploadresults -eq $false) { ##Dave_Please_Review
+if ($VSI_Test_Uploadresults -eq $false) { 
     #You can't skip a download and enable an upload
     Write-Log -Message "You are executing a test with no Influx Data upload (Uploadresults: false). There will be no grafana or influx reporting for this test." -Level Info
     $answer = read-host "Test details correct for test? yes or no?"
@@ -1457,7 +1457,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #region Write config to OutputFolder and Download LE Metrics
         #----------------------------------------------------------------------------------------------------------------------------
 
-        if ($VSI_Test_SkipLEMetricsDownload -eq $true) { $Message = "Skipping Exporting Test Data from Login Enterprise" } else { $Message = "Exporting Test Data from Login Enterprise" } ##Dave_Please_Review
+        if ($VSI_Test_SkipLEMetricsDownload -eq $true) { $Message = "Skipping Exporting Test Data from Login Enterprise" } else { $Message = "Exporting Test Data from Login Enterprise" } 
         # Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
@@ -1468,7 +1468,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
             #CurrentMessage = "Exporting Test Data from Login Enterprise" 
-            CurrentMessage = $Message  ##Dave_Please_Review
+            CurrentMessage = $Message  
             TotalPhase     = "$($RunPhases)"
         }
         $null = Set-TestData @params
@@ -1494,7 +1494,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $NTNXInfra.Testinfra.Testname = $FolderName
         $NTNXInfra | ConvertTo-Json -Depth 20 | Set-Content -Path $OutputFolder\Testconfig.json -Force
 
-        if ($VSI_Test_SkipLEMetricsDownload -eq $true){ ##Dave_Please_Review
+        if ($VSI_Test_SkipLEMetricsDownload -eq $true){ 
             Write-Log -Message "Skipping download of LE Metrics" -Level Info
         } else {
             Write-Log -Message "Exporting LE Measurements to output folder" -Level Info
@@ -1654,7 +1654,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #endregion Upload Data to Influx
 
-        if ($VSI_Test_SkipLEMetricsDownload -eq $true){ ##Dave_Please_Review
+        if ($VSI_Test_SkipLEMetricsDownload -eq $true){ 
             Write-Log -Message "Skipped download of LE Metrics so no analysis occuring" -Level Info
         } 
         else {
@@ -1664,7 +1664,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #region Slack update
         #----------------------------------------------------------------------------------------------------------------------------
-        if ($VSI_Test_SkipLEMetricsDownload -eq $true){ ##Dave_Please_Review
+        if ($VSI_Test_SkipLEMetricsDownload -eq $true){ 
             $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName)."
         } 
         else {
@@ -1672,7 +1672,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
         Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
 
-        if ($VSI_Test_SkipLEMetricsDownload -ne $true){ ##Dave_Please_Review
+        if ($VSI_Test_SkipLEMetricsDownload -ne $true){ 
             $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -RunNumber $i -TestName $NTNXTestname
 
             if (Test-Path -path $Filename) {
@@ -1741,7 +1741,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     Update-VSISlackresults -TestName $NTNXTestname -Path $ScriptRoot
     $OutputFolder = "$($ScriptRoot)\testresults\$($NTNXTestname)"
 
-    if ($VSI_Test_SkipLEMetricsDownload -ne $true){ ##Dave_Please_Review
+    if ($VSI_Test_SkipLEMetricsDownload -ne $true){ 
         $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -TestName $NTNXTestname
     
         if (Test-Path -path $Filename) {
