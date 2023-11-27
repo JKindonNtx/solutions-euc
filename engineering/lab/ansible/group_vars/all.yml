@@ -7,7 +7,7 @@ ansible_become_pass: "nutanix/4u"
 sourcefiles_path: \\ws-files.wsperf.nutanix.com\Automation
 ansible_connection: winrm
 ansible_winrm_server_cert_validation: ignore
-ansible_winrm_connection_timeout: 120
+ansible_winrm_connection_timeout: 300
 ansible_port: 5985
 citrix_delivery_controllers: WS-CDC1.wsperf.nutanix.com,WS-CDC2.wsperf.nutanix.com
 grid_license_server: contmcdc001
@@ -15,3 +15,4 @@ wem_infra_server: ws-cdc1.wsperf.nutanix.com
 session_recording_host: sessionrecording.wsperf.nutanix.com
 session_recording_protocol: "http"
 session_recording_port: "80"
+install_dir: C:\deployment\
