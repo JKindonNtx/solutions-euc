@@ -70,7 +70,7 @@
         "CVM_password": "MANDATORY_TO_DEFINE",
         "IPMI_admin": "MANDATORY_TO_DEFINE", // Used to get power consumption of host
         "IPMI_password": "MANDATORY_TO_DEFINE", // Used to get power consumption of host
-        "CVMsshpassword":  "MANDATORY_TO_DEFINE", // Used to set affinity on VMs
+        "CVMsshpassword":  "MANDATORY_TO_DEFINE", // Used to set affinity on VMs and start/stop curator
         "CVM_storage": "VDI", // Storage container where VMs are deployed
         // -----------------------------------------------------------------------------------
         // Optional_Nutanix_Files_Block
@@ -115,7 +115,8 @@
     },
     "Test": {
         "Name": "LE1-FSLogix", // Test name in Login Enterprise.
-        "Uploadresults":  true, // Upload results to the Nutanix database
+        "Uploadresults":  true, // Upload results to the Nutanix database. Cannot be set to true if SkipLEMetricsDownload is set to true
+        "SkipLEMetricsDownload": false, //Skip the download of LE metrics. Cannot be configured as true with Uploadresults also set to true.
         "BucketName": "LoginDocuments", // Specify the Bucket Name in Influx to upload to. Can be either 'LoginRegression' or 'LoginDocuments'
         "DocumentName": "MANDATORY_TO_DEFINE", // If using LoginDocuments please enter a Document Name starting ENG-, BLOG-, BP-, TN-, RA-.
         "SkipADUsers": false, // Do not recreate the AD User Accounts for LE. Relevant if thinking about using the same profiles for different test iterations rather than new (think about SID matching in FSLogix)
@@ -130,6 +131,7 @@
         "Nutanix_Files_Shares": [ // The shares to delete data from
             "\\Server\\Share","\\Server2\\Share"
         ],
+        "StartInfrastructureMonitoring": false, //Used to ask the script to start/stop the telegraf monitoring for servers list in ServersToMonitor. True False value. Used for special monitoring use cases like Session Recording etc.
         "ServersToMonitor": [ // A list of servers to check telegraf monitoring. If specified, script will start and stop the telegraf service on the remote servers. Assumes a configuration exists.
             "Server1","Server2","Server3"
         ]

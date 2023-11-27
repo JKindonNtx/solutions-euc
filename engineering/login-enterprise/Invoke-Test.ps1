@@ -25,9 +25,10 @@ Configured in the test configuration file. Can be overriden by this parameter
 Optional. Forces the recreation of the Horizon desktop pool.
 .NOTES
 TODO
-- Query Inlfux for running tests against LE appliance
+- Query Influx for running tests against LE appliance
 - Remember to replace BREAK with Break! Temporarily using Break
 - Do we want to cset the $Type Parameter to align with the DeliveryType value in the JSON file?
+- Use UploadResults value to split test execution and test data management
 ------------------------------------------------------------------------------------------
 ### REVIEW NOTES - WORK IN PROGRESS - REMOVE ONCE VALIDATED
 ------------------------------------------------------
@@ -196,7 +197,7 @@ if ($Type -eq "Horizon") {
 }
 #endregion VMWare Module Import
 
-#region remove existing SSH Keys ***UPDATE****
+#region remove existing SSH Keys 
 #----------------------------------------------------------------------------------------------------------------------------
 Write-Log -Message "Searching all modules for Posh-SSH" -Level Info
 $Temp_Module = (Get-Module -ListAvailable *) | Where-Object { $_.Name -eq "Posh-SSH" }
@@ -236,12 +237,44 @@ else {
 #----------------------------------------------------------------------------------------------------------------------------
 Set-VSIConfigurationVariables -ConfigurationFile $ConfigFile
 
-$LEAppliance = $VSI_Test_LEAppliance
+if ($VSI_Test_SkipLEMetricsDownload -eq $true -and $VSI_Test_Uploadresults -eq $true) {
+    #You can't skip a download and enable an upload
+    Write-Log -Message "You cannot skip LE metric download (SkipLEMetricsDownload) and enable Influx upload (Uploadresults). This is not a valid test configuration." -Level Error
+    Exit 1
+}
+if ($VSI_Test_Uploadresults -eq $false) { 
+    #You can't skip a download and enable an upload
+    Write-Log -Message "You are executing a test with no Influx Data upload (Uploadresults: false). There will be no grafana or influx reporting for this test." -Level Info
+    $answer = read-host "Test details correct for test? yes or no?"
+    if ($answer -ne "yes" -and $answer -ne "y") { 
+        Write-Log -Message "Input not confirmed. Exit" -Level Info
+        Break #Temporary! Replace with #Exit 0
+    }
+    else {
+        Write-Log -Message "Input confirmed" -Level Info
+    }
+}
+
+
+#Define the LE appliance detail
+if ($VSI_Test_LEAppliance -eq "MANDATORY_TO_DEFINE" -and (!$LEAppliance)) {
+    # Neither Option is OK due to ValidateSet on the LEAppliance Param
+    Write-Log -Message "You must define an LE appliance either in the $($ConfigFile) file or via the Script Parameter" -Level Error
+    Break #Temporary! Replace with #Exit 1
+}
+elseif ($VSI_Test_LEAppliance -eq "MANDATORY_TO_DEFINE" -and $LEAppliance) {
+    #Set LEAppliance based on Param
+    $LEAppliance = $LEAppliance
+} else {
+    #Use the valid value from the Config JSON
+    $LEAppliance = $VSI_Test_LEAppliance
+}
+
 if ($null -ne $LEAppliance) {
     Set-VSIConfigurationVariablesLEGlobal -ConfigurationFile $LEConfigFile -LEAppliance $LEAppliance
 }
 else {
-    Write-Log -Message "Missing Logon Appliance Detail. Please check config file." -Level Warn
+    Write-Log -Message "Missing LE Appliance Detail. Please check config file." -Level Warn
     Break #Temporary! Replace with #Exit 1
 }
 
@@ -289,7 +322,6 @@ if ($SkipLEUsers.IsPresent) { $SkipLEUsers = $true } else { $SkipLEUsers = $VSI_
 if ($SkipLaunchers.IsPresent) { $SkipLaunchers = $true } else { $SkipLaunchers = $VSI_Test_SkipLaunchers }
 if ($SkipPDFExport.IsPresent) { $SkipPDFExport = $true } else { $SkipPDFExport = $VSI_Test_SkipPDFExport }
 if ($SkipWaitForIdleVMs.IsPresent) { $SkipWaitForIdleVMs = $true } else { $SkipWaitForIdleVMs = $VSI_Test_SkipWaitForIdleVMs }
-if (-not $LEAppliance) {$LEAppliance = $VSI_Test_LEAppliance}
 
 $VSI_Target_RampupInMinutes = $VSI_Test_Target_RampupInMinutes
 $InfluxTestDashBucket = $VSI_Test_InfluxTestDashBucket
@@ -299,12 +331,13 @@ $Global:MaxRecordCount = $VSI_Target_MaxRecordCount
 
 #region Validation
 #----------------------------------------------------------------------------------------------------------------------------
+
+#region Mandatory JSON Value Output
 $Mandatory_Undedfined_Config_Entries = Get-Variable -Name VSI* | where-Object {$_.Value -match "MANDATORY_TO_DEFINE"}
 
 if ($null -ne $Mandatory_Undedfined_Config_Entries) {
     Write-Log -Message "There are $(($Mandatory_Undedfined_Config_Entries | Measure-Object).Count) Undefined values that must be specified" -Level Warn
     foreach ($Item in $Mandatory_Undedfined_Config_Entries) {
-        #$Mandatory_Undedfined_Config_Entries | Format-Table -HideTableHeaders
         Write-Log -Message "Setting: $($Item.Name) must be set. Current value: $($Item.Value)" -Level Warn
     }
 }
@@ -320,6 +353,7 @@ if (($Mandatory_Undedfined_Config_Entries | Measure-Object).Count -gt 0) {
         Write-Log -Message "Input confirmed" -Level Info
     }
 }
+#endregion Mandatory JSON Value Output
 
 #region Nutanix Files Pre Flight Checks
 #----------------------------------------------------------------------------------------------------------------------------
@@ -331,22 +365,27 @@ if ($VSI_Target_Files -ne "") {
     if ($null -ne $VSI_Test_Nutanix_Files_Shares -and $VSI_Test_Delete_Files_Data -eq $true) {
         ##TODO Need to validate this
         Write-Log -Message "Processing Nutanix Files Data Removal Validation" -Level Info
-        ##Remove-NutanixFilesData -Shares $VSI_Test_Nutanix_Files_Shares -Mode Validate
+        Remove-NutanixFilesData -Shares $VSI_Test_Nutanix_Files_Shares -Mode Validate
     }
 }
 #endregion Nutanix Files Pre Flight Checks
 
 #region Nutanix Snapshot Pre Flight Checks
 if ($NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
+    # A purely AHV Test
     $cleansed_snapshot_name = $VSI_Target_ImagesToTest.ParentVM -replace ".template",""
-    Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType
+    Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type
 }
-if ($NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
-
+if (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
+    # A Citrix on ESXi test
+    Get-NutanixSnapshot -VM $VSI_Target_ImagesToTest.ParentVM -HostingConnection $VSI_Target_HypervisorConnection -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type -DDC $VSI_Target_DDC -SnapshotName $VSI_Target_ImagesToTest.ParentVM
+}
+if ($Type -eq "Horizon") {
+    # A Horizon test
     if ($VSI_Target_ImagesToTest.ParentVM -match '^([^\\]+)\.') { $cleansed_vm_name = $matches[1] }
     if ($VSI_Target_ImagesToTest.ParentVM -match '\\([^\\]+)\.snapshot$') { $cleansed_snapshot_name = $matches[1] }
 
-    Get-NutanixSnapshot -VM $cleansed_vm_name -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType
+    Get-NutanixSnapshot -VM $cleansed_vm_name -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type
 }
 
 #endregion Nutanix Snapshot Pre Flight Checks
@@ -354,7 +393,7 @@ if ($NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
 #endregion Validation
 
 #region Start Infrastructure Monitoring
-if ($VSI_Test_ServersToMonitor) {
+if ($VSI_Test_StartInfrastructureMonitoring -eq $true -and $VSI_Test_ServersToMonitor) {
     Write-Log -Message "Starting Infrastructure Monitoring" -Level Info
     Start-ServerMonitoring -ServersToMonitor $VSI_Test_ServersToMonitor -Mode StartMonitoring -ServiceName "Telegraf"
 }
@@ -497,7 +536,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $params = $null
         $CurrentTotalPhase++
 
-        #placeholder for Horizon
+        # Horizon
         $params = @{
             Server          = $VSI_Target_ConnectionServer 
             User            = $VSI_Target_ConnectionServerUser 
@@ -678,12 +717,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $Hostuuid = Get-NTNXHostUUID -NTNXHost $VSI_Target_NTNXHost
         $IPMI_ip = Get-NTNXHostIPMI -NTNXHost $VSI_Target_NTNXHost
         
-        if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
-            ## Placeholder Block to capture the relevent settings below - will change with different tech
-            $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $VSI_Target_HypervisorConnection + "\" + $VSI_Target_HypervisorNetwork + ".network" }
-            $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
-        }
-        
         #endregion Get Nutanix Info
 
         #region Configure Desktop Pool
@@ -721,6 +754,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
 
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
+
+            $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $VSI_Target_HypervisorConnection + "\" + $VSI_Target_HypervisorNetwork + ".network" }
+            $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
+
             ## Placeholder Block to capture the relevent settings below - will change with different tech
             $params = @{
                 ParentVM             = $ParentVM
@@ -836,7 +873,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $params = $null
 
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
-            #Placeholder block to capture the below settings
             $params = @{
                 DesktopPoolName = $VSI_Target_DesktopPoolName
                 NumberofVMs     = $VSI_Target_NumberOfVMS
@@ -857,7 +893,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
 
         if ($Type -eq "Horizon") {
-            # Need to check with Sven on this
             if ($VSI_Target_PoolType -eq "RDSH") {
                 $Boot = Enable-VSIHVDesktopPool -Name $VSI_Target_DesktopPoolName -VMAmount $VSI_Target_NumberOfVMs -Increment $VSI_Target_VMPoolIncrement -RDSH
             }
@@ -1419,9 +1454,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "start"
         #endregion Nutanix Curator Start
 
-        #region Write config to OutputFolder
+        #region Write config to OutputFolder and Download LE Metrics
         #----------------------------------------------------------------------------------------------------------------------------
 
+        if ($VSI_Test_SkipLEMetricsDownload -eq $true) { $Message = "Skipping Exporting Test Data from Login Enterprise" } else { $Message = "Exporting Test Data from Login Enterprise" } 
         # Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
@@ -1431,7 +1467,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
-            CurrentMessage = "Exporting Test Data from Login Enterprise" 
+            #CurrentMessage = "Exporting Test Data from Login Enterprise" 
+            CurrentMessage = $Message  
             TotalPhase     = "$($RunPhases)"
         }
         $null = Set-TestData @params
@@ -1456,9 +1493,14 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $NTNXInfra.Testinfra.VMCPUCount = [Int]$VSI_Target_NumCPUs * [Int]$VSI_Target_NumCores
         $NTNXInfra.Testinfra.Testname = $FolderName
         $NTNXInfra | ConvertTo-Json -Depth 20 | Set-Content -Path $OutputFolder\Testconfig.json -Force
-        Write-Log -Message "Exporting LE Measurements to output folder" -Level Info
-        Export-LEMeasurements -Folder $OutputFolder -TestRun $TestRun -DurationInMinutes $VSI_Target_DurationInMinutes
-        #endregion Write config to OutputFolder
+
+        if ($VSI_Test_SkipLEMetricsDownload -eq $true){ 
+            Write-Log -Message "Skipping download of LE Metrics" -Level Info
+        } else {
+            Write-Log -Message "Exporting LE Measurements to output folder" -Level Info
+            Export-LEMeasurements -Folder $OutputFolder -TestRun $TestRun -DurationInMinutes $VSI_Target_DurationInMinutes
+        }
+        #endregion Write config to OutputFolder and Download LE Metrics
 
         #region Check for RDA File and if exists then move it to the output folder
         #----------------------------------------------------------------------------------------------------------------------------
@@ -1509,7 +1551,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             if ($null -ne $VSI_Test_Nutanix_Files_Shares -and $VSI_Test_Delete_Files_Data -eq $true) { #Need to update the above messaging to reflect these detetion rules
                 Write-Log -Message "Processing Nutanix Files Data Removal" -Level Info
                 # TODO: Need to Validate this configuation
-                ##Remove-NutanixFilesData -Shares $VSI_Test_Nutanix_Files_Shares -Mode Execute
+                Remove-NutanixFilesData -Shares $VSI_Test_Nutanix_Files_Shares -Mode Execute
             }
         }
         #endregion Cleanup Nutanix Files Data
@@ -1612,29 +1654,41 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #endregion Upload Data to Influx
 
-        $Testresult = import-csv "$OutputFolder\VSI-results.csv"
-        $Appsuccessrate = $Testresult."Apps success" / $Testresult."Apps total" * 100
+        if ($VSI_Test_SkipLEMetricsDownload -eq $true){ 
+            Write-Log -Message "Skipped download of LE Metrics so no analysis occuring" -Level Info
+        } 
+        else {
+            $Testresult = import-csv "$OutputFolder\VSI-results.csv"
+            $Appsuccessrate = $Testresult."Apps success" / $Testresult."Apps total" * 100
+        }
 
         #region Slack update
         #----------------------------------------------------------------------------------------------------------------------------
-        $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName). $($Testresult.activesessionCount) sessions active of $($Testresult."login total") total sessions. EUXscore: $($Testresult."EUX score") - VSImax: $($Testresult.vsiMax). App Success rate: $($Appsuccessrate.tostring("#.###"))"
+        if ($VSI_Test_SkipLEMetricsDownload -eq $true){ 
+            $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName)."
+        } 
+        else {
+            $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName). $($Testresult.activesessionCount) sessions active of $($Testresult."login total") total sessions. EUXscore: $($Testresult."EUX score") - VSImax: $($Testresult.vsiMax). App Success rate: $($Appsuccessrate.tostring("#.###"))"
+        }
         Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
 
-        $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -RunNumber $i -TestName $NTNXTestname
+        if ($VSI_Test_SkipLEMetricsDownload -ne $true){ 
+            $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -RunNumber $i -TestName $NTNXTestname
 
-        if (Test-Path -path $Filename) {
-            $Params = @{
-                ImageURL     = $FileName 
-                SlackToken   = $NTNXInfra.Testinfra.SlackToken 
-                SlackChannel = $NTNXInfra.Testinfra.SlackChannel 
-                SlackTitle   = "$($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)" 
-                SlackComment = "CPU and EUX score of $($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)"
+            if (Test-Path -path $Filename) {
+                $Params = @{
+                    ImageURL     = $FileName 
+                    SlackToken   = $NTNXInfra.Testinfra.SlackToken 
+                    SlackChannel = $NTNXInfra.Testinfra.SlackChannel 
+                    SlackTitle   = "$($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)" 
+                    SlackComment = "CPU and EUX score of $($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)"
+                }
+                Update-VSISlackImage @params
+                $Params = $null
             }
-            Update-VSISlackImage @params
-            $Params = $null
-        }
-        else {
-            Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Level Warn
+            else {
+                Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Level Warn
+            }
         }
         #endregion Slack update
 
@@ -1686,27 +1740,31 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #----------------------------------------------------------------------------------------------------------------------------
     Update-VSISlackresults -TestName $NTNXTestname -Path $ScriptRoot
     $OutputFolder = "$($ScriptRoot)\testresults\$($NTNXTestname)"
-    $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -TestName $NTNXTestname
-    if (Test-Path -path $Filename) {
-        $Params = @{
-            ImageURL     = $FileName 
-            SlackToken   = $NTNXInfra.Testinfra.SlackToken 
-            SlackChannel = $NTNXInfra.Testinfra.SlackChannel 
-            SlackTitle   = "$($NTNXInfra.Target.ImagesToTest[0].Comment)" 
-            SlackComment = "CPU and EUX scores of $($NTNXInfra.Target.ImagesToTest[0].Comment) - All Runs"
+
+    if ($VSI_Test_SkipLEMetricsDownload -ne $true){ 
+        $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -TestName $NTNXTestname
+    
+        if (Test-Path -path $Filename) {
+            $Params = @{
+                ImageURL     = $FileName 
+                SlackToken   = $NTNXInfra.Testinfra.SlackToken 
+                SlackChannel = $NTNXInfra.Testinfra.SlackChannel 
+                SlackTitle   = "$($NTNXInfra.Target.ImagesToTest[0].Comment)" 
+                SlackComment = "CPU and EUX scores of $($NTNXInfra.Target.ImagesToTest[0].Comment) - All Runs"
+            }
+            Update-VSISlackImage @params
+            $Params = $Null
         }
-        Update-VSISlackImage @params
-        $Params = $Null
-    }
-    else {
-        Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Level Warn
+        else {
+            Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Level Warn
+        }
     }
     #endregion Slack update
 }
 #endregion Execute Test
 
 #region Stop Infrastructure Monitoring
-if ($VSI_Test_ServersToMonitor) {
+if ($VSI_Test_StartInfrastructureMonitoring -eq $true -and $VSI_Test_ServersToMonitor) {
     Write-Log -Message "Stopping Infrastructure Monitoring" -Level Info
     Start-ServerMonitoring -ServersToMonitor $VSI_Test_ServersToMonitor -Mode StopMonitoring -ServiceName "Telegraf"
 }
