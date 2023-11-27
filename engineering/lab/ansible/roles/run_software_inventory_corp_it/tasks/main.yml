@@ -1,9 +1,6 @@
 # Report on the metrics Corp IT have requested
 
-- name: Create install directory for ansible operations
-  win_file: 
-    path: "{{ install_dir }}"
-    state: directory
+install_dir: C:\deployment\
 
 - name: copy script to server
   win_copy:
