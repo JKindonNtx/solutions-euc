@@ -70,7 +70,7 @@
         "CVM_password": "MANDATORY_TO_DEFINE",
         "IPMI_admin": "MANDATORY_TO_DEFINE", // Used to get power consumption of host
         "IPMI_password": "MANDATORY_TO_DEFINE", // Used to get power consumption of host
-        "CVMsshpassword":  "MANDATORY_TO_DEFINE", // Used to set affinity on VMs
+        "CVMsshpassword":  "MANDATORY_TO_DEFINE", // Used to set affinity on VMs and start/stop curator
         "CVM_storage": "VDI", // Storage container where VMs are deployed
         // -----------------------------------------------------------------------------------
         // Optional_Nutanix_Files_Block

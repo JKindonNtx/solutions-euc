@@ -331,6 +331,8 @@ $Global:MaxRecordCount = $VSI_Target_MaxRecordCount
 
 #region Validation
 #----------------------------------------------------------------------------------------------------------------------------
+
+#region Mandatory JSON Value Output
 $Mandatory_Undedfined_Config_Entries = Get-Variable -Name VSI* | where-Object {$_.Value -match "MANDATORY_TO_DEFINE"}
 
 if ($null -ne $Mandatory_Undedfined_Config_Entries) {
@@ -351,6 +353,7 @@ if (($Mandatory_Undedfined_Config_Entries | Measure-Object).Count -gt 0) {
         Write-Log -Message "Input confirmed" -Level Info
     }
 }
+#endregion Mandatory JSON Value Output
 
 #region Nutanix Files Pre Flight Checks
 #----------------------------------------------------------------------------------------------------------------------------
@@ -714,12 +717,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $Hostuuid = Get-NTNXHostUUID -NTNXHost $VSI_Target_NTNXHost
         $IPMI_ip = Get-NTNXHostIPMI -NTNXHost $VSI_Target_NTNXHost
         
-        if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
-            ## Placeholder Block to capture the relevent settings below - will change with different tech
-            $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $VSI_Target_HypervisorConnection + "\" + $VSI_Target_HypervisorNetwork + ".network" }
-            $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
-        }
-        
         #endregion Get Nutanix Info
 
         #region Configure Desktop Pool
@@ -757,6 +754,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
 
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
+
+            $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $VSI_Target_HypervisorConnection + "\" + $VSI_Target_HypervisorNetwork + ".network" }
+            $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
+
             ## Placeholder Block to capture the relevent settings below - will change with different tech
             $params = @{
                 ParentVM             = $ParentVM
@@ -872,7 +873,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $params = $null
 
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
-            #Placeholder block to capture the below settings
             $params = @{
                 DesktopPoolName = $VSI_Target_DesktopPoolName
                 NumberofVMs     = $VSI_Target_NumberOfVMS
@@ -893,7 +893,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
 
         if ($Type -eq "Horizon") {
-            # Need to check with Sven on this
             if ($VSI_Target_PoolType -eq "RDSH") {
                 $Boot = Enable-VSIHVDesktopPool -Name $VSI_Target_DesktopPoolName -VMAmount $VSI_Target_NumberOfVMs -Increment $VSI_Target_VMPoolIncrement -RDSH
             }
