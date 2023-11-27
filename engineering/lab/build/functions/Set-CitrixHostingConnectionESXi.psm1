@@ -41,9 +41,6 @@ function Set-CitrixHostingConnectionESXi {
     
         Param
         (
-            $IP,
-            $UserName,
-            $Password,
             $VLAN,
             $DDC,
             $ClusterName
@@ -67,28 +64,29 @@ function Set-CitrixHostingConnectionESXi {
             $MasterName = "Shared-vCenter"
     
             $Connection = Get-BrokerHypervisorConnection -AdminAddress "$($DDC)" | Where-Object {$_.name -like "*$($MasterName)*" }
+            $task = Set-HypAdminConnection -AdminAddress "$($DDC)"
             if($null -eq $Connection){
                 Write-Host (Get-Date)":Connection $($ClusterName)-ESXi Does Not Exist" 
             } else {
                 Write-Host (Get-Date)":Connection $($ClusterName)-ESXi Exists - Deleting Connection" 
                 try {
-                    Remove-Item -AdminAddress "$($DDC)" -path "XDHyp:\HostingUnits\$($ClusterName)-ESXi"
+                    if(Test-Path -Path "XDHyp:\HostingUnits\$($ClusterName)-ESXi"){
+                        $task = Remove-Item -AdminAddress "$($DDC)" -path "XDHyp:\HostingUnits\$($ClusterName)-ESXi"
+                    } else {
+                        Write-Host (Get-Date)":Connection $($ClusterName)-ESXi Does Not Exist" 
+                    }
                 } catch {
                     write-host "Error removing Hypervisor Connection"
                     write-host $_
                     
                 }
             }
-            
-            $Pwd = $Password | ConvertTo-SecureString -asPlainText -Force
-            $RootPath = "XDHyp:\Connections\$ClusterName"
-            $NetworkPath = "$RootPath\" + "$VLAN.network"
 
             # Adding Nutanix Connection
             Write-Host (Get-Date)":Adding Nutanix Hosting Configuration" -Verbose
-            Set-HypAdminConnection -AdminAddress "$($DDC)"
-            New-HypStorage -StoragePath @("XDHyp:\Connections\Shared-vCenter\EUC-Solutions.datacenter\$($ClusterName).cluster\EUC-$($ClusterName).storage") -StorageType "TemporaryStorage"
-            New-Item -CustomProperties "" -HypervisorConnectionName "Shared-vCenter" -NetworkPath @("XDHyp:\Connections\Shared-vCenter\EUC-Solutions.datacenter\$($ClusterName).cluster\$($VLAN).network") -Path @("XDHyp:\HostingUnits\$($ClusterName)-ESXi") -PersonalvDiskStoragePath @() -RootPath "XDHyp:\Connections\Shared-vCenter\EUC-Solutions.datacenter\$($ClusterName).cluster" -StoragePath @("XDHyp:\Connections\Shared-vCenter\EUC-Solutions.datacenter\$($ClusterName).cluster\EUC-$($ClusterName).storage")
+            $job = [Guid]::NewGuid()
+            $task = New-HypStorage -JobGroup $job -StoragePath @("XDHyp:\Connections\Shared-vCenter\EUC-Solutions.datacenter\$($ClusterName).cluster\EUC-$($ClusterName).storage") -StorageType "TemporaryStorage"
+            $task = New-Item -JobGroup $job -CustomProperties "" -HypervisorConnectionName "Shared-vCenter" -NetworkPath @("XDHyp:\Connections\Shared-vCenter\EUC-Solutions.datacenter\$($ClusterName).cluster\$($VLAN).network") -Path @("XDHyp:\HostingUnits\$($ClusterName)-ESXi") -PersonalvDiskStoragePath @() -RootPath "XDHyp:\Connections\Shared-vCenter\EUC-Solutions.datacenter\$($ClusterName).cluster" -StoragePath @("XDHyp:\Connections\Shared-vCenter\EUC-Solutions.datacenter\$($ClusterName).cluster\EUC-$($ClusterName).storage")
             
             Write-Host (Get-Date)":Added Hosting Connection for $($ClusterName)-ESXi"
         } # Process

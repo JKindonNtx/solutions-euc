@@ -67,11 +67,11 @@ if ($confirmationNC2 -eq 'y') {
 
 # Write out a "SNAZZY" header
 Write-Host "
-   ____ _           _               ____             __ _            _    _   ___     __
-  / ___| |_   _ ___| |_ ___ _ __   / ___|___  _ __  / _(_) __ _     / \  | | | \ \   / /
- | |   | | | | / __| __/ _ \ '__| | |   / _ \| '_ \| |_| |/ _` |   / _ \ | |_| |\ \ / / 
- | |___| | |_| \__ \ ||  __/ |    | |__| (_) | | | |  _| | (_| |  / ___ \|  _  | \ V /  
-  \____|_|\__,_|___/\__\___|_|     \____\___/|_| |_|_| |_|\__, | /_/   \_\_| |_|  \_/   
+   ____ _           _               ____             __ _           
+  / ___| |_   _ ___| |_ ___ _ __   / ___|___  _ __  / _(_) __ _   
+ | |   | | | | / __| __/ _ \ '__| | |   / _ \| '_ \| |_| |/ _` |  
+ | |___| | |_| \__ \ ||  __/ |    | |__| (_) | | | |  _| | (_| |  
+  \____|_|\__,_|___/\__\___|_|     \____\___/|_| |_|_| |_|\__, | 
                                                           |___/                                                                                                                                                                                                            
 "
 
@@ -79,6 +79,7 @@ Write-Host "
 Write-Host "
 --------------------------------------------------------------------------------------------------------"
 Write-Host "Cluster IP:             $($JSON.Cluster.IP)"
+Write-Host "Hypervisor:             $($JSON.VM.Hypervisor)"
 Write-Host "Cluster user:           $($github.username)"
 Write-Host "VLAN:                   $($JSON.VM.VLAN)"
 Write-Host "VLAN Name:              $VLANName"
@@ -133,7 +134,7 @@ if ($confirmationStart -eq 'n') {
     # Install PowerCLI and get Clusters if configuring a VMware Cluster
     if($JSON.VM.Hypervisor -eq "VMware"){
         Write-Host (Get-Date) ":Installing VMware PowerCli" 
-        $null = Install-Module VMware.PowerCLI -Force
+        #$null = Install-Module VMware.PowerCLI -AllowClobber -Force
         Write-Host (Get-Date) ":Connecting to VMware vSphere" 
         $Connection = Connect-VIServer -Server $JSON.VMwareCluster.ip -Protocol https -User $JSON.VMwareCluster.user -Password $JSON.VMwareCluster.password -Force
         if($connection){
@@ -207,6 +208,10 @@ if ($confirmationStart -eq 'n') {
         
         Write-Host (Get-Date) ":Moving $($MasterHost) to Cluster $($AOSClusterName)"
         $task = Move-VMHost -VMHost $MasterHost -Destination $AOSClusterName
+        $SlackMessage = $SlackMessage + "VMware Cluster Created: $AOSClusterName`n"
+        $SlackMessage = $SlackMessage + "VLAN Added: $VLANName`n"
+        $SlackMessage = $SlackMessage + "VMware NTP and Power Options Set`n"
+        $SendToSlack = "y"
     }
 
     # Check and Update the Network
@@ -259,11 +264,15 @@ if ($confirmationStart -eq 'n') {
         Write-Host (Get-Date) ":Creating ISO Directory"
         $task = New-Item -Path $DS.DatastoreBrowserPath -Name "ISO" -ItemType Directory -ErrorAction SilentlyContinue
         Write-Host (Get-Date) ":Downloading $($JSON.VM.ISO) - This will take some time"
+        $ISOURL = "$($JSON.VM.ISOUrl)" + "$($JSON.VM.ISO)"
+        $ProgressPreference = 'SilentlyContinue'
         $task = invoke-webrequest -Uri $ISOURL -outfile "$($JSON.VM.ISO)" 
         $Source = Join-Path -Path $ScriptRoot -ChildPath $JSON.VM.ISO
         $Destination = Join-Path -Path $DS.DatastoreBrowserPath -ChildPath "ISO\"
         Write-Host (Get-Date) ":Copying $($JSON.VM.ISO) to Datastore - This will take some time"
         $task = Copy-DatastoreItem -Item $Source -Destination $Destination -Force
+        $SlackMessage = $SlackMessage + "ISO Uploaded: $($JSON.VM.ISO)`n"
+        $SendToSlack = "y"
     } else {
         $ISOinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "images"
         $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($JSON.VM.ISO)}).vm_disk_id
@@ -306,7 +315,7 @@ if ($confirmationStart -eq 'n') {
 
     # Create Citrix Hosting Connection
     if($JSON.VM.Hypervisor -eq "VMware"){
-        Set-CitrixHostingConnectionESXi -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VLAN "$($VLANName)" -DDC "$($JSON.Citrix.DDC)"
+        Set-CitrixHostingConnectionESXi -VLAN "$($VLANName)" -DDC "$($JSON.Citrix.DDC)" -ClusterName $ClusterName
         $SlackMessage = $SlackMessage + "VMware Hosting Connection Created: $($ClusterName)`n"
         $SendToSlack = "y"
     } else {
