@@ -1702,8 +1702,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 Write-Log -Message "Uploading Files Cluster $($VSI_Target_Files_Cluster_CVM) Metrics to Influx" -Level Info
             
                 #alter the file names so we have uniqe influx data
-                $Orignal_Files = Get-ChildItem "$($OutputFolder)\Files_Cluster\*.csv"
-                foreach ($File in $Orignal_Files) {
+                $Original_Files = Get-ChildItem "$($OutputFolder)\Files_Cluster\*.csv"
+                foreach ($File in $Original_Files) {
                     try {
                         Rename-Item -Path $File.FullName -NewName ($File.BaseName + " FilesHosting" + $File.Extension) -ErrorAction Stop
                     }
