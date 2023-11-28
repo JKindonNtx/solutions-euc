@@ -4,9 +4,9 @@ function Get-NTNXHostUUID {
 
     Param (
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][System.String]$NTNXHost,
-        [Parameter(Mandatory = $false)][String]$TargetCVM,
-        [Parameter(Mandatory = $false)][String]$TargetCVMAdmin,
-        [Parameter(Mandatory = $false)][String]$TargetCVMPassword
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$TargetCVM,
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$TargetCVMAdmin,
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$TargetCVMPassword
     )
 
     try {
