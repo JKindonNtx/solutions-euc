@@ -79,6 +79,15 @@
         "Files_api": "MANDATORY_TO_DEFINE", // Specify the Nutanix Files API user, make sure to create this user.
         "Files_password": "MANDATORY_TO_DEFINE", // Specify the Nutanix Files API password
         // -----------------------------------------------------------------------------------
+        // Optional_Nutanix_Files_Cluster_Monitoring_Block
+        // -----------------------------------------------------------------------------------
+        "Monitor_Files_Cluster_Performance": false, // Enables monitoring of the cluster hosting Nutanix Files
+        "Files_Cluster_CVM": "MANDATORY_TO_DEFINE", // The CVM of the Cluster hosting Nutanix Files
+        "Files_Cluster_Host": "MANDATORY_TO_DEFINE", // A host in the cluster by name
+        "Files_Cluster_CVM_admin": "${Target.CVM_admin}", // The Admin account. Defaults to the same username as the workload cluster.
+        "Files_Cluster_CVM_password": "${Target.CVM_password}", // The Admin account password. Defaults to the same value as the workload cluster.
+        "Files_Cluster_CVMsshpassword":  "${Target.CVMsshpassword}", // Used to start/stop curator on the Files Cluster. Defaults to the same value as the workload cluster.
+        // -----------------------------------------------------------------------------------
         // Optional_NetScaler_Block
         // -----------------------------------------------------------------------------------
         "NetScaler": "MANDATORY_TO_DEFINE", // The Citrix NetScaler NSIP

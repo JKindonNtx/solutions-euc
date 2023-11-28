@@ -13,7 +13,8 @@ The configuration file to parse and validate
     [CmdletBinding()]
 
     Param (
-        [Parameter(Mandatory = $true)][String]$ConfigFile
+        [Parameter(Mandatory = $true)][String]$ConfigFile,
+        [Parameter(Mandatory = $true)][String]$Type
         #$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\ExampleConfig-Test-Template.jsonc"
     )
 
@@ -98,35 +99,36 @@ The configuration file to parse and validate
         #endregion Target Section Validation - General
         
         #region Target Section Validation - Citrix
-
-        #Target.FunctionalLevel
-        if ($configFileData.Target.FunctionalLevel -notin $Validated_Functional_Levels) {
-            Write-Log -Message "Citrix Functional Level Type $($configFileData.Target.FunctionalLevel) is not a valid type. Please check config file" -Level Error
-            $ErrorCount ++
+        if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
+            #Target.FunctionalLevel
+            if ($configFileData.Target.FunctionalLevel -notin $Validated_Functional_Levels) {
+                Write-Log -Message "Citrix Functional Level Type $($configFileData.Target.FunctionalLevel) is not a valid type. Please check config file" -Level Error
+                $ErrorCount ++
+            }
         }
-
+        
         #endregion Target Section Validation - Citrix
 
         #region Target Section Validation - Horizon
+        if ($Type -eq "Horizon") {
+            #Target.RefreshOsDiskAfterLogoff
+            if ($configFileData.Target.RefreshOsDiskAfterLogoff -notin $Validated_RefreshOsDiskAfterLogoff) {
+                Write-Log -Message "Horizon RefreshOsDiskAfterLogoff Type $($configFileData.Target.RefreshOsDiskAfterLogoff) is not a valid type. Please check config file" -Level Error
+                $ErrorCount ++
+            }
 
-        #Target.RefreshOsDiskAfterLogoff
-        if ($configFileData.Target.RefreshOsDiskAfterLogoff -notin $Validated_RefreshOsDiskAfterLogoff) {
-            Write-Log -Message "Horizon RefreshOsDiskAfterLogoff Type $($configFileData.Target.RefreshOsDiskAfterLogoff) is not a valid type. Please check config file" -Level Error
-            $ErrorCount ++
+            #Target.UserAssignment
+            if ($configFileData.Target.UserAssignment -notin $Validated_User_Assignments) {
+                Write-Log -Message "Horizon UserAssignment Type $($configFileData.Target.UserAssignment) is not a valid type. Please check config file" -Level Error
+                $ErrorCount ++
+            }
+
+            #Target.ProvisioningMode
+            if ($configFileData.Target.ProvisioningMode -notin $Validated_Provisioning_Modes) {
+                Write-Log -Message "Horizon ProvisioningMode Type $($configFileData.Target.ProvisioningMode) is not a valid type. Please check config file" -Level Error
+                $ErrorCount ++
+            }
         }
-
-        #Target.UserAssignment
-        if ($configFileData.Target.UserAssignment -notin $Validated_User_Assignments) {
-            Write-Log -Message "Horizon UserAssignment Type $($configFileData.Target.UserAssignment) is not a valid type. Please check config file" -Level Error
-            $ErrorCount ++
-        }
-
-        #Target.ProvisioningMode
-        if ($configFileData.Target.ProvisioningMode -notin $Validated_Provisioning_Modes) {
-            Write-Log -Message "Horizon ProvisioningMode Type $($configFileData.Target.ProvisioningMode) is not a valid type. Please check config file" -Level Error
-            $ErrorCount ++
-        }
-
         #endregion Target Section Validation - Horizon
 
         #region Test Section

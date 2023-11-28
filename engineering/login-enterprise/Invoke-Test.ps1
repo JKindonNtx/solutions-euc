@@ -26,16 +26,7 @@ Optional. Forces the recreation of the Horizon desktop pool.
 .NOTES
 TODO
 - Query Influx for running tests against LE appliance
-- Remember to replace BREAK with Break! Temporarily using Break
-- Do we want to cset the $Type Parameter to align with the DeliveryType value in the JSON file?
-- Use UploadResults value to split test execution and test data management
-------------------------------------------------------------------------------------------
-### REVIEW NOTES - WORK IN PROGRESS - REMOVE ONCE VALIDATED
-------------------------------------------------------
-| Item | Requester | Reviewer | Date |
-------------------------------------------------------
-
------------------------------------------------------------------------------------------
+- Remember to replace BREAK with Exit! Temporarily using Break
 
 #>
 
@@ -81,8 +72,6 @@ Param(
 
 )
 #endregion Params
-
-##// Add a JSON Builder job here - don't execute anything other than a JSON output
 
 #region Variables
 # ============================================================================
@@ -223,7 +212,7 @@ $Temp_Module = $null
 
 #region Validate JSON
 
-if (Get-ValidJSON -ConfigFile $ConfigFile) {
+if (Get-ValidJSON -ConfigFile $ConfigFile -Type $Type) {
     Write-Log -Message "Config file $($ConfigFile) has been validated for appropriate value selection" -Level Info
 } 
 else {
@@ -261,11 +250,12 @@ if ($VSI_Test_LEAppliance -eq "MANDATORY_TO_DEFINE" -and (!$LEAppliance)) {
     # Neither Option is OK due to ValidateSet on the LEAppliance Param
     Write-Log -Message "You must define an LE appliance either in the $($ConfigFile) file or via the Script Parameter" -Level Error
     Break #Temporary! Replace with #Exit 1
-}
+} 
 elseif ($VSI_Test_LEAppliance -eq "MANDATORY_TO_DEFINE" -and $LEAppliance) {
     #Set LEAppliance based on Param
     $LEAppliance = $LEAppliance
-} else {
+}
+else {
     #Use the valid value from the Config JSON
     $LEAppliance = $VSI_Test_LEAppliance
 }
@@ -344,7 +334,7 @@ if ($null -ne $Mandatory_Undedfined_Config_Entries) {
 
 if (($Mandatory_Undedfined_Config_Entries | Measure-Object).Count -gt 0) {
     ##// Write out a prompt here post validation work - make sure all is good before going
-    $answer = read-host "Test details correct for test? yes or no? "
+    $answer = read-host "Test details correct for test? yes (y) or no? "
     if ($answer -ne "yes" -and $answer -ne "y") { 
         Write-Log -Message "Input not confirmed. Exit" -Level Info
         Break #Temporary! Replace with #Exit 0
@@ -455,7 +445,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #region Set affinity
     #----------------------------------------------------------------------------------------------------------------------------
 
-    # Update Test Dashboard
+    #region Update Test Dashboard
     $params = @{
         ConfigFile     = $NTNXInfra
         TestName       = $NTNXTestname 
@@ -470,6 +460,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     $null = Set-TestData @params
     $params = $null
     $CurrentTotalPhase++
+    #endregion Update Test Dashboard
 
     if ($VSI_Target_NodeCount -eq "1") {
         $NTNXInfra.Testinfra.SetAffinity = $true
@@ -495,7 +486,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
         Write-Log -Message "Validating Citrix" -Level Info
 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -510,6 +501,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         Connect-VSICTX -DDC $VSI_Target_DDC
     }
@@ -520,7 +512,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     if ($Type -eq "Horizon") {
         Write-Log -Message "Validating Horizon" -Level Info
 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -535,6 +527,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         # Horizon
         $params = @{
@@ -553,7 +546,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #region LE Test Check
     #----------------------------------------------------------------------------------------------------------------------------
 
-    # Update Test Dashboard
+    #region Update Test Dashboard
     $params = @{
         ConfigFile     = $NTNXInfra
         TestName       = $NTNXTestname 
@@ -568,6 +561,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     $null = Set-TestData @params
     $params = $null
     $CurrentTotalPhase++
+    #endregion Update Test Dashboard
 
     Write-Log -Message "Polling LE for tests" -Level Info
     $Test = Get-LETests | Where-Object { $_.name -eq $VSI_Test_Name }
@@ -577,7 +571,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #region LE Users
     #----------------------------------------------------------------------------------------------------------------------------
 
-    # Update Test Dashboard
+    #region Update Test Dashboard
     if (($SkipLEUsers)) { $Message = "Skipping Login Enterprise User Creation" } else { $Message = "Creating Login Enterprise Users" }
     $params = @{
         ConfigFile     = $NTNXInfra
@@ -593,6 +587,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     $null = Set-TestData @params
     $params = $null
     $CurrentTotalPhase++
+    #endregion Update Test Dashboard
 
     if (!($SkipLEUsers)) {
         # Create the accounts and accountgroup in LE
@@ -605,7 +600,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #region AD Users
     #----------------------------------------------------------------------------------------------------------------------------
 
-    # Update Test Dashboard
+    #region Update Test Dashboard
     if (($SkipADUsers)) { $Message = "Skipping AD User Creation" } else { $Message = "Creating AD Users" }
     $params = @{
         ConfigFile     = $NTNXInfra
@@ -621,6 +616,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     $null = Set-TestData @params
     $params = $null
     $CurrentTotalPhase++
+    #endregion Update Test Dashboard
 
     if (!($SkipADUsers)) {
         # OUs will be created if they don't exist, will also create a group with the $Basename in the same OU
@@ -682,7 +678,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #region Get Nutanix Info
         #----------------------------------------------------------------------------------------------------------------------------
 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -712,17 +708,24 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         $ContainerId = Get-NTNXStorageUUID -Storage $VSI_Target_CVM_storage
         $Hostuuid = Get-NTNXHostUUID -NTNXHost $VSI_Target_NTNXHost
         $IPMI_ip = Get-NTNXHostIPMI -NTNXHost $VSI_Target_NTNXHost
+
+        if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
+            # Getting details from Nutanix Files Cluster hosting Files
+            $Hostuuid_files_cluster = Get-NTNXHostUUID -NTNXHost $VSI_Target_Files_Cluster_Host
+            $IPMI_ip_files_cluster = Get-NTNXHostIPMI -NTNXHost $VSI_Target_Files_Cluster_Host
+        }
         
         #endregion Get Nutanix Info
 
         #region Configure Desktop Pool
         #----------------------------------------------------------------------------------------------------------------------------
 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -752,6 +755,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
 
@@ -827,7 +831,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #region Start monitoring Boot phase
         #----------------------------------------------------------------------------------------------------------------------------
 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -857,6 +861,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         $params = @{
             OutputFolder                 = $OutputFolder 
@@ -920,7 +925,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $MasterImageDNS = $boot.firstvmname
         }
 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -950,6 +955,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         try {
             Write-Log -Message "Getting Image Tattoo" -Level Info
@@ -972,7 +978,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #region Set number of sessions per launcher
         #----------------------------------------------------------------------------------------------------------------------------
 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -1002,6 +1008,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         if ($($VSI_Target_SessionCfg.ToLower()) -eq "ica") {
             $SessionsperLauncher = 20
@@ -1021,7 +1028,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #region Update the test params/create test if not exist
         #----------------------------------------------------------------------------------------------------------------------------
 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -1051,6 +1058,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
             ## Placeholder Block to capture the relevent settings below - will change with different tech
@@ -1101,7 +1109,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #region VM Idle state
         #----------------------------------------------------------------------------------------------------------------------------
 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -1131,6 +1139,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         Write-Log -Message "Waiting for $VSI_Target_MinutesToWaitAfterIdleVMs minutes before starting test" -Level Info
         Start-sleep -Seconds $($VSI_Target_MinutesToWaitAfterIdleVMs * 60)
@@ -1139,7 +1148,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #region Nutanix Curator Stop
         #----------------------------------------------------------------------------------------------------------------------------
 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -1169,15 +1178,22 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         Write-Log -Message "Stopping Nutanix Curator Service" -Level Info
         Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "stop"
+
+        if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
+            Write-Log -Message "Stopping Nutanix Curator Service on the Nutanix Files Cluster $($VSI_Target_Files_Cluster_CVM)" -Level Info
+            Set-NTNXcurator -ClusterIP $VSI_Target_Files_Cluster_CVM -CVMSSHPassword $VSI_Target_Files_Cluster_CVMsshpassword -Action "stop"
+        }
+
         #endregion Nutanix Curator Stop
 
         #region Start the test
         #----------------------------------------------------------------------------------------------------------------------------
 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -1207,6 +1223,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         Write-Log -Message "Starting Test $($testId)" -Level Info
         Start-LETest -testId $testId -Comment "$FolderName-$VSI_Target_Comment"
@@ -1216,7 +1233,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #region Start monitoring
         #----------------------------------------------------------------------------------------------------------------------------
 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -1246,6 +1263,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         $Params = @{
             OutputFolder                 = $OutputFolder 
@@ -1260,7 +1278,23 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $monitoringJob = Start-VSINTNXMonitoring @params
         $Params = $null
 
-        # Update Test Dashboard
+        #start Monitoring the Files Cluster Hosting Files
+        if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
+            $Params = @{
+                OutputFolder                 = ($OutputFolder + "\" + "Files_Cluster")
+                DurationInMinutes            = $VSI_Target_DurationInMinutes 
+                RampupInMinutes              = $VSI_Target_RampupInMinutes 
+                Hostuuid                     = $Hostuuid_files_cluster 
+                IPMI_ip                      = $IPMI_ip_files_cluster 
+                Path                         = $Scriptroot 
+                NTNXCounterConfigurationFile = $ReportConfigFile 
+                AsJob                        = $true
+            }
+            $monitoringJob_files = Start-VSINTNXMonitoring @params
+            $Params = $null
+        }
+
+        #region Update Test Dashboard
         if ($VSI_Target_Files -ne "") { $Message = "Starting Nutanix Files Monitor Run $($i)" } else { $Message = "Skipping Nutanix Files Monitoring" }
         Write-Log -Message "$($Message)" -Level Info
         $params = @{
@@ -1292,6 +1326,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         if ($VSI_Target_Files -ne "") {
             $Params = @{
@@ -1306,7 +1341,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $Params = $null
         }
 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         if ($VSI_Target_NetScaler -ne "") { $Message = "Starting Citrix NetScaler Monitor Run $($i)" } else { $Message = "Skipping Citrix NetScaler Monitoring" }
         Write-Log -Message "$($Message)" -Level Info
         $params = @{
@@ -1338,6 +1373,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         if ($VSI_Target_NetScaler -ne "") {
             $Params = @{
@@ -1355,7 +1391,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #region Wait for test to finish
         #----------------------------------------------------------------------------------------------------------------------------
 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -1398,6 +1434,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             CurrentMessage = "Waiting for Test to Complete" 
             TotalPhase     = "$($RunPhases)"
         }
+        #endregion Update Test Dashboard
 
         Wait-LETest -testId $testId -waitParams $Waitparams
         #endregion Wait for test to finish
@@ -1406,6 +1443,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #----------------------------------------------------------------------------------------------------------------------------
         $monitoringJob | Wait-Job
         $monitoringJob | Remove-Job
+        if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
+            $monitoringJob_files | Wait-Job
+            $monitoringJob_files | Remove-Job
+        }
         if ($VSI_Target_Files -ne "") {
             $monitoringFilesJob | Wait-Job
             $monitoringFilesJob | Remove-Job
@@ -1419,7 +1460,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #region Nutanix Curator Start
         #----------------------------------------------------------------------------------------------------------------------------
 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -1449,16 +1490,22 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         Write-Log -Message "Starting Nutanix Curator Service" -Level Info
         Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "start"
+        
+        if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
+            Write-Log -Message "Starting Nutanix Curator Service on the Nutanix Files Cluster $($VSI_Target_Files_Cluster_CVM)" -Level Info
+            Set-NTNXcurator -ClusterIP $VSI_Target_Files_Cluster_CVM -CVMSSHPassword $VSI_Target_Files_Cluster_CVMsshpassword -Action "start"
+        }
         #endregion Nutanix Curator Start
 
         #region Write config to OutputFolder and Download LE Metrics
         #----------------------------------------------------------------------------------------------------------------------------
 
         if ($VSI_Test_SkipLEMetricsDownload -eq $true) { $Message = "Skipping Exporting Test Data from Login Enterprise" } else { $Message = "Exporting Test Data from Login Enterprise" } 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -1489,6 +1536,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         $NTNXInfra.Testinfra.VMCPUCount = [Int]$VSI_Target_NumCPUs * [Int]$VSI_Target_NumCores
         $NTNXInfra.Testinfra.Testname = $FolderName
@@ -1515,7 +1563,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #region Cleanup Nutanix Files Data
         #----------------------------------------------------------------------------------------------------------------------------
 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         if ($VSI_Target_Files -ne "") { $Message = "Starting Nutanix Files Data Clean" } else { $Message = "Skipping Nutanix Files Data Clean" }
         $params = @{
             ConfigFile     = $NTNXInfra
@@ -1546,6 +1594,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         if ($VSI_Target_Files -ne "") {
             if ($null -ne $VSI_Test_Nutanix_Files_Shares -and $VSI_Test_Delete_Files_Data -eq $true) { #Need to update the above messaging to reflect these detetion rules
@@ -1559,7 +1608,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #region Upload Data to Influx
         #----------------------------------------------------------------------------------------------------------------------------
 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         if ($NTNXInfra.Test.UploadResults) { $Message = "Uploading Data to InfluxDB" } else { $Message = "Skipping InfluxDB Data Upload" }
         $params = @{
             ConfigFile     = $NTNXInfra
@@ -1590,6 +1639,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         if ($NTNXInfra.Test.UploadResults) {
             Write-Log -Message "Uploading Test Run Data to Influx" -Level Info
@@ -1647,6 +1697,40 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 }
             }
 
+            #region Upload Files Hosting Data to Influx
+            if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
+                Write-Log -Message "Uploading Files Cluster $($VSI_Target_Files_Cluster_CVM) Metrics to Influx" -Level Info
+            
+                #alter the file names so we have uniqe influx data
+                $Original_Files = Get-ChildItem "$($OutputFolder)\Files_Cluster\*.csv"
+                foreach ($File in $Original_Files) {
+                    try {
+                        Rename-Item -Path $File.FullName -NewName ($File.BaseName + " FilesHosting" + $File.Extension) -ErrorAction Stop
+                    }
+                    catch {
+                        Write-Log -Message $_ -Level Error
+                    }
+                }
+            
+                $Files = Get-ChildItem "$($OutputFolder)\Files_Cluster\*.csv"
+            
+                foreach ($File in $Files) {
+                    # We only care about cluster raw data here
+                    if (($File.Name -like "cluster raw*")) {
+                        Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
+                        if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath "$($OutputFolder)\Files_Cluster" -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
+                            Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
+                        }
+                        else {
+                            Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
+                        }
+                    }
+                    else {
+                        Write-Log -Message "Skipped uploading File $($File.Name) to Influx" -Level Info
+                    }
+                }
+            }
+            #endregion Upload Files Hosting Data to Influx
         }
         else {
             Write-Log -Message "Skipping uploading Test Run Data to Influx" -Level Info
@@ -1695,7 +1779,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #region Finish Test Run
         #----------------------------------------------------------------------------------------------------------------------------
 
-        # Update Test Dashboard
+        #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -1725,6 +1809,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $null = Set-TestData @params
         $params = $null
         $CurrentTotalPhase++
+        #endregion Update Test Dashboard
 
         #endregion Finish Test Run
 
@@ -1770,7 +1855,7 @@ if ($VSI_Test_StartInfrastructureMonitoring -eq $true -and $VSI_Test_ServersToMo
 }
 #endregion Stop Infrastructure Monitoring
 
-# Update Test Dashboard
+#region Update Test Dashboard
 $params = @{
     ConfigFile     = $NTNXInfra
     TestName       = $NTNXTestname 
@@ -1784,6 +1869,7 @@ $params = @{
 }
 $null = Set-TestData @params
 $params = $null
+#endregion Update Test Dashboard
 
 #endregion Execute
 
