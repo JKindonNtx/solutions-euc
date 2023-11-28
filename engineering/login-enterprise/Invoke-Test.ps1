@@ -212,7 +212,7 @@ $Temp_Module = $null
 
 #region Validate JSON
 
-if (Get-ValidJSON -ConfigFile $ConfigFile) {
+if (Get-ValidJSON -ConfigFile $ConfigFile -Type $Type) {
     Write-Log -Message "Config file $($ConfigFile) has been validated for appropriate value selection" -Level Info
 } 
 else {
@@ -334,7 +334,7 @@ if ($null -ne $Mandatory_Undedfined_Config_Entries) {
 
 if (($Mandatory_Undedfined_Config_Entries | Measure-Object).Count -gt 0) {
     ##// Write out a prompt here post validation work - make sure all is good before going
-    $answer = read-host "Test details correct for test? yes or no? "
+    $answer = read-host "Test details correct for test? yes (y) or no? "
     if ($answer -ne "yes" -and $answer -ne "y") { 
         Write-Log -Message "Input not confirmed. Exit" -Level Info
         Break #Temporary! Replace with #Exit 0
