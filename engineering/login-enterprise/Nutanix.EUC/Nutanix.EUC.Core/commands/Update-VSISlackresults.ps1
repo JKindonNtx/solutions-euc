@@ -69,7 +69,7 @@ function Update-VSISlackresults {
                     ForEach ($result in $Finalresults) {
                         $Testrun = $($result.Comment)
                         $Testrun = $Testrun -replace "-$($Config.Target.ImagesToTest.Comment)"
-                        $EUXBase = (Import-Csv -path "$($Path)\results\$Testrun\EUX-score.csv").EUXScore[1]
+                        $EUXBase = (Import-Csv -path "$($Path)\results\$Testrun\EUX-score.csv").EUXScore[0]
                         $Testrun = $Testrun -replace "$TestName" -replace "_"
                         $VSIMax = $($result.vsiMax)
                         if ($VSIMax -eq $null) {
