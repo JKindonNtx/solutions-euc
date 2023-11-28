@@ -1721,7 +1721,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                     # We only care about cluster raw data here
                     if (($File.Name -like "cluster raw*")) {
                         Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
-                        if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath "$($OutputFolder)\Files_Cluster" -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
+                        if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
                             Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
                         }
                         else {
