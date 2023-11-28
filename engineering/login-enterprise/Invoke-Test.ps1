@@ -716,8 +716,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
             # Getting details from Nutanix Files Cluster hosting Files
-            $Hostuuid_files_cluster = Get-NTNXHostUUID -NTNXHost $VSI_Target_Files_Cluster_Host
-            $IPMI_ip_files_cluster = Get-NTNXHostIPMI -NTNXHost $VSI_Target_Files_Cluster_Host
+            $Hostuuid_files_cluster = Get-NTNXHostUUID -NTNXHost $VSI_Target_Files_Cluster_Host -TargetCVM $VSI_Target_Files_Cluster_CVM -TargetCVMAdmin $VSI_Target_Files_Cluster_CVM_admin -TargetCVMPassword $VSI_Target_Files_Cluster_CVM_password
+            $IPMI_ip_files_cluster = Get-NTNXHostIPMI -NTNXHost $VSI_Target_Files_Cluster_Host -TargetCVM $VSI_Target_Files_Cluster_CVM -TargetCVMAdmin $VSI_Target_Files_Cluster_CVM_admin -TargetCVMPassword $VSI_Target_Files_Cluster_CVM_password
         }
         
         #endregion Get Nutanix Info
@@ -1287,7 +1287,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 Hostuuid                     = $Hostuuid_files_cluster 
                 IPMI_ip                      = $IPMI_ip_files_cluster 
                 Path                         = $Scriptroot 
-                NTNXCounterConfigurationFile = $ReportConfigFile 
+                NTNXCounterConfigurationFile = $ReportConfigFile
+                TargetCVM                    = $VSI_Target_Files_Cluster_CVM # override the default CVM Value
+                TargetCVMAdmin               = $VSI_Target_Files_Cluster_CVM_admin # override the default CVM Admin Account Value
+                TargetCVMPassword            = $VSI_Target_Files_Cluster_CVM_password # override the default CVM Password Value
                 AsJob                        = $true
             }
             $monitoringJob_files = Start-VSINTNXMonitoring @params

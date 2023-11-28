@@ -7,12 +7,23 @@ function Invoke-PublicApiMethodNTNX {
         $Body,
         $ContentType = 'application/json',
         $OutFile,
-        $Form
+        $Form,
+        [Parameter(Mandatory = $false)][String]$TargetCVM,
+        [Parameter(Mandatory = $false)][String]$TargetCVMAdmin,
+        [Parameter(Mandatory = $false)][String]$TargetCVMPassword
     )
 
-    $header = @{
-        Authorization = "Basic " + [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($($VSI_Target_CVM_admin) + ":" + $($VSI_Target_CVM_Password)))
+    if ($TargetCVM) {
+        $header = @{
+            Authorization = "Basic " + [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($($TargetCVMAdmin) + ":" + $($TargetCVMPassword)))
+        }
     }
+    else {
+        $header = @{
+            Authorization = "Basic " + [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($($VSI_Target_CVM_admin) + ":" + $($VSI_Target_CVM_Password)))
+        }
+    }
+    
 
     if ($PSEdition -eq "Core") {
         $count = 0
@@ -21,7 +32,13 @@ function Invoke-PublicApiMethodNTNX {
         while ($done -eq $false) {
             $count++
             try {
-                $URL = "https://$($VSI_Target_CVM):9440/PrismGateway/services/rest/v2.0/$Path"
+                if ($TargetCVM) {
+                    $URL = "https://$($TargetCVM):9440/PrismGateway/services/rest/v2.0/$Path"
+                }
+                else {
+                    $URL = "https://$($VSI_Target_CVM):9440/PrismGateway/services/rest/v2.0/$Path"
+                }
+                
                 if ($null -ne $Body) {
                     if ($null -ne $OutFile) {
                         Invoke-RestMethod -Body $Body -Method $Method -Uri $URL -Headers $Header -SkipCertificateCheck -OutFile $OutFile
@@ -81,7 +98,13 @@ function Invoke-PublicApiMethodNTNX {
         while ($done -eq $false) {
             $count++
             try {
-                $URL = "https://$($VSI_Target_CVM):9440/PrismGateway/services/rest/v2.0/$Path"
+                if ($TargetCVM) {
+                    $URL = "https://$($TargetCVM):9440/PrismGateway/services/rest/v2.0/$Path"
+                }
+                else {
+                    $URL = "https://$($VSI_Target_CVM):9440/PrismGateway/services/rest/v2.0/$Path"
+                }
+                
                 if ($null -ne $Body) {
                     if ($null -ne $OutFile) {
                         Invoke-RestMethod -Body $Body -Method $Method -Uri $URL -Headers $Header -OutFile $OutFile
@@ -127,7 +150,12 @@ function Invoke-PublicApiMethodNTNX {
                         $fileName = [System.IO.Path]::GetFileName($filePath)
                         $fileContent = New-Object System.Net.Http.StreamContent($fileStream)
                         $content.Add($fileContent, $Form.Keys[0], $fileName)
-                        $client.DefaultRequestHeaders.Authorization = $($VSI_Target_CVM_Password)
+                        if ($TargetCVM) {
+                            $client.DefaultRequestHeaders.Authorization = $($TargetCVMPassword)
+                        }
+                        else {
+                            $client.DefaultRequestHeaders.Authorization = $($VSI_Target_CVM_Password)
+                        }
                         $result = $client.PostAsync($url, $content).Result
                         if ($result.IsSuccessStatusCode -eq $false) {
                             Write-Log -Message "Failed to upload $filePath" -Level Error

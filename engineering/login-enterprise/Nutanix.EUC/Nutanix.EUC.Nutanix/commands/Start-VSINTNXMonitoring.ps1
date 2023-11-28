@@ -8,7 +8,10 @@ function Start-VSINTNXMonitoring {
         [Parameter(Mandatory = $true)] [string]$Path,
         [Parameter(Mandatory = $true)] [string]$OutputFolder,
         [Parameter(Mandatory = $true)] [string]$NTNXCounterConfigurationFile = ".\ReportConfiguration.jsonc",
-        [Parameter(Mandatory = $false)] [string]$StopMonitoringCheckFile = "$env:temp\VSIMonitoring_Stop.chk"
+        [Parameter(Mandatory = $false)] [string]$StopMonitoringCheckFile = "$env:temp\VSIMonitoring_Stop.chk",
+        [Parameter(Mandatory = $false)][String]$TargetCVM,
+        [Parameter(Mandatory = $false)][String]$TargetCVMAdmin,
+        [Parameter(Mandatory = $false)][String]$TargetCVMPassword
     )
 
     $NTNXCounterConfiguration = Get-Content $NTNXCounterConfigurationFile | ConvertFrom-Json
@@ -100,9 +103,16 @@ function Start-VSINTNXMonitoring {
     }
 
     if ($AsJob.IsPresent) {
-        Get-Job -Name VSIMonitoringJob -ErrorAction Ignore | Stop-Job
-        Get-Job -Name VSIMonitoringJob -ErrorAction Ignore | Remove-Job
-        return (Start-Job -ScriptBlock $MonitoringScriptBlock -Name VSIMonitoringJob -ArgumentList @($Path, $Hostuuid, $VSI_Target_CVM, $VSI_Target_CVM_admin, $VSI_Target_CVM_Password, $IPMI_ip, $VSI_Target_IPMI_admin, $VSI_Target_IPMI_Password, $DurationInMinutes, $RampupInMinutes, $OutputFolder, $NTNXCounterConfiguration, $StopMonitoringCheckFile))
+        if ($TargetCVM) {
+            Get-Job -Name VSIFilesMonitoringJob -ErrorAction Ignore | Stop-Job
+            Get-Job -Name VSIFilesMonitoringJob -ErrorAction Ignore | Remove-Job
+            return (Start-Job -ScriptBlock $MonitoringScriptBlock -Name VSIFilesMonitoringJob -ArgumentList @($Path, $Hostuuid, $TargetCVM, $TargetCVMAdmin, $TargetCVMPassword, $IPMI_ip, $VSI_Target_IPMI_admin, $VSI_Target_IPMI_Password, $DurationInMinutes, $RampupInMinutes, $OutputFolder, $NTNXCounterConfiguration, $StopMonitoringCheckFile))    
+        }
+        else {
+            Get-Job -Name VSIMonitoringJob -ErrorAction Ignore | Stop-Job
+            Get-Job -Name VSIMonitoringJob -ErrorAction Ignore | Remove-Job
+            return (Start-Job -ScriptBlock $MonitoringScriptBlock -Name VSIMonitoringJob -ArgumentList @($Path, $Hostuuid, $VSI_Target_CVM, $VSI_Target_CVM_admin, $VSI_Target_CVM_Password, $IPMI_ip, $VSI_Target_IPMI_admin, $VSI_Target_IPMI_Password, $DurationInMinutes, $RampupInMinutes, $OutputFolder, $NTNXCounterConfiguration, $StopMonitoringCheckFile))    
+        }
     }
 
 }
