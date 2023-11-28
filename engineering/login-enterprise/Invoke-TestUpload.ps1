@@ -141,6 +141,41 @@ foreach ($File in $Files) {
 }
 #endregion Upload Data to InfluxDB
 
+#region Upload Files Hosting Data to Influx
+if (Test-Path -Path "$($OutputFolder)\Files_Cluster") {
+    Write-Log -Message "Uploading Files Cluster Metrics to Influx" -Level Info
+
+    #alter the file names so we have uniqe influx data
+    $Original_Files = Get-ChildItem "$($OutputFolder)\Files_Cluster\*.csv"
+    foreach ($File in $Original_Files) {
+        try {
+            Rename-Item -Path $File.FullName -NewName ($File.BaseName + " FilesHosting" + $File.Extension) -ErrorAction Stop
+        }
+        catch {
+            Write-Log -Message $_ -Level Error
+        }
+    }
+
+    $Files = Get-ChildItem "$($OutputFolder)\Files_Cluster\*.csv"
+
+    foreach ($File in $Files) {
+        # We only care about cluster raw data here
+        if (($File.Name -like "cluster raw*")) {
+            Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
+            if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
+                Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
+            }
+            else {
+                Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
+            }
+        }
+        else {
+            Write-Log -Message "Skipped uploading File $($File.Name) to Influx" -Level Info
+        }
+    }
+}
+#endregion Upload Files Hosting Data to Influx
+
 #endregion Execute
 
 Write-Log -Message "Script Finished" -Level Info
