@@ -26,7 +26,7 @@ Optional. Forces the recreation of the Horizon desktop pool.
 .NOTES
 TODO
 - Query Influx for running tests against LE appliance
-- Remember to replace BREAK with Break! Temporarily using Break
+- Remember to replace BREAK with Exit! Temporarily using Break
 
 #>
 
