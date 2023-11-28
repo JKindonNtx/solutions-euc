@@ -42,6 +42,12 @@ if($null -eq ($JSON = (Get-JSON -JSONFile $JSONFile))){
 # Build VLAN Name 
 $VLANName = "VLAN" + $($JSON.VM.VLAN)
 
+# Build Cluster name and Storage Name
+$AOSCluster = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "cluster"
+$AOSClusterName = $AOSCluster.Name
+$AOSHosts = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "hosts"
+$StorageName = "EUC-$($AOSClusterName)"
+
 # Fetching local GitHub user to report owner
 $GitHub = Get-GitHubInfo
 
@@ -59,7 +65,7 @@ if ($JSON.VM.Hypervisor -eq "AHV"){
     $VMTimezone = $Clusterinfo.timezone
     $ClusterName = $Clusterinfo.name
     $Containerinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "storage_containers"
-    $StorageUUID = ($Containerinfo.entities | Where-Object {$_.name -eq $($JSON.VM.Container)}).storage_container_uuid
+    $StorageUUID = ($Containerinfo.entities | Where-Object {$_.name -eq $($StorageName)}).storage_container_uuid
     $Networkinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "networks"
     $VLANUUID = ($Networkinfo.entities | Where-Object {$_.name -eq $VLANName}).uuid
     $ISOinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "images"
@@ -68,7 +74,7 @@ if ($JSON.VM.Hypervisor -eq "AHV"){
     # Validate ISO, Storage Container and VLAN are available for the build
     if (!($ISOinfo.entities | Where-Object {$_.name -eq "$($json.VM.ISO)"})){ Write-Host (Get-Date)":ISO File Not Found"; Write-Host (Get-Date)":Please run New-ClusterConfigAHV.ps1"; exit } else { Write-Host (Get-Date)":ISO file found" }
     if (!($Networkinfo.entities | Where-Object {$_.name -eq "$VLANName"})){ Write-Host (Get-Date)":VLAN File Not Found"; Write-Host (Get-Date)":Please run New-ClusterConfigAHV.ps1"; exit }  else { Write-Host (Get-Date)":VLAN found" }
-    if (!($Containerinfo.entities | Where-Object {$_.name -eq "$($json.VM.Container)"})){ Write-Host (Get-Date)":Storage Container Not Found"; Write-Host (Get-Date)":Please run New-ClusterConfigAHV.ps1"; exit }  else { Write-Host (Get-Date)":Storage Container found" }
+    if (!($Containerinfo.entities | Where-Object {$_.name -eq "$($StorageName)"})){ Write-Host (Get-Date)":Storage Container Not Found"; Write-Host (Get-Date)":Please run New-ClusterConfigAHV.ps1"; exit }  else { Write-Host (Get-Date)":Storage Container found" }
 } else {
     if ($JSON.vm.Hypervisor -eq "VMware"){
         Write-Host (Get-Date) ":Installing VMware PowerCli" 
@@ -154,7 +160,7 @@ if($JSON.vm.Hypervisor -eq "AHV"){
     Write-Host "Cluster Name:           $($JSON.VMwareCluster.ClusterName)"
 }
 Write-Host "Hypervisor:             $($JSON.vm.Hypervisor)"
-Write-Host "Container name:         $($JSON.VM.Container)"
+Write-Host "Container name:         $($StorageName)"
 Write-Host "Configured VLAN:        $VLANName"
 Write-Host "Windows version:        $OSversion"
 Write-Host "Windows Build:          $($OSDetails.WinVerBuild)"
@@ -312,7 +318,7 @@ if ($confirmationStart -eq 'n') {
                         $GuestID = "windows9_64Guest"
                     }
                     
-                    $VMTask = New-VM -Name $($OSDetails.Name) -ResourcePool $Cluster -Datastore $JSON.VM.Container -NumCPU $CPU -CoresPerSocket $JSON.VM.CpuCores -MemoryGB $RAM -DiskGB $JSON.VM.Disksize -NetworkName $VLANName -DiskStorageFormat Thin -GuestID $GuestID
+                    $VMTask = New-VM -Name $($OSDetails.Name) -ResourcePool $Cluster -Datastore $StorageName -NumCPU $CPU -CoresPerSocket $JSON.VM.CpuCores -MemoryGB $RAM -DiskGB $JSON.VM.Disksize -NetworkName $VLANName -DiskStorageFormat Thin -GuestID $GuestID
                     ## set VM NIC to VMXNet3
                     Write-Host (Get-Date)":Set NIC to VMXNET3"
                     Get-VM $($OSDetails.Name) | Get-ScsiController | Set-ScsiController -Type VirtualLsiLogicSAS -Confirm:$false
@@ -350,7 +356,7 @@ if ($confirmationStart -eq 'n') {
 
                 # Connect CD Rom to VM
                 Write-Host (Get-Date)":Attach MDT CD ROM"
-                $CD = New-CDDrive -VM $($OSDetails.Name) -ISOPath "[$($JSON.VM.Container)] ISO/LiteTouchPE_x64-NP.iso"
+                $CD = New-CDDrive -VM $($OSDetails.Name) -ISOPath "[$($StorageName)] ISO/LiteTouchPE_x64-NP.iso"
                 Set-CDDrive -CD $CD -StartConnected $true -Confirm:$false
                 
                 # Power on the VM

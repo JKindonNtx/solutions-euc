@@ -37,3 +37,4 @@ inventory
 *.vsix
 collateral/scripts/Misc/Grafana/Reports/*
 engineering/black-widow/results/*
+engineering/lab/build/LiteTouchPE_x64-NP.iso
