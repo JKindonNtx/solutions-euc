@@ -256,6 +256,8 @@ if ($confirmationStart -eq 'n') {
     # Mount Storage Container to vSphere
     if($JSON.VM.Hypervisor -eq "VMware"){
         $ESXi = New-ESXiDatastore -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -Container "$($StorageName)"
+        $SlackMessage = "Storage Container $($StorageName) mounted to ESXi`n"
+        $SendToSlack = "y"
     }
 
     #Check and Update the ISO Image
@@ -274,6 +276,7 @@ if ($confirmationStart -eq 'n') {
         $task = Copy-DatastoreItem -Item $Source -Destination $Destination -Force
         $SlackMessage = $SlackMessage + "ISO Uploaded: $($JSON.VM.ISO)`n"
         $SendToSlack = "y"
+        remove-item -Path $Source -Force -ErrorAction SilentlyContinue
     } else {
         $ISOinfo = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "images"
         $ISOUUID = ($ISOinfo.entities | Where-Object {$_.name -eq $($JSON.VM.ISO)}).vm_disk_id
@@ -333,7 +336,7 @@ if ($confirmationStart -eq 'n') {
 
     # Update Slack Channel
     if ($SendToSlack -eq "y") {
-        $SlackMessage = "Nutanix Cluster $($ClusterName) Reconfigured by $($github.username) `n`n" + $SlackMessage
+        $SlackMessage = "$($Hypervisor) Cluster $($ClusterName) Reconfigured by $($github.username) `n`n" + $SlackMessage
         Update-Slack -Message $SlackMessage -Slack $($JSON.SlackConfig.Slack)
     } else {
         Write-Host (Get-Date)":Skipped - Updating Slack Channel"
