@@ -42,12 +42,6 @@ if($null -eq ($JSON = (Get-JSON -JSONFile $JSONFile))){
 # Build VLAN Name 
 $VLANName = "VLAN" + $($JSON.VM.VLAN)
 
-# Build Cluster name and Storage Name
-$AOSCluster = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "cluster"
-$AOSClusterName = $AOSCluster.Name
-$AOSHosts = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "hosts"
-$StorageName = "EUC-$($AOSClusterName)"
-
 # Fetching local GitHub user to report owner
 $GitHub = Get-GitHubInfo
 
@@ -57,6 +51,12 @@ If ($GitHub.UserName -like "* *") {
     $GitHub.UserName = $GitHub.UserName -Replace " ",""
     Write-Host (Get-Date) ":Updated UserName is: $($GitHub.UserName)"
 }
+
+# Build Cluster name and Storage Name
+$AOSCluster = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "cluster"
+$AOSClusterName = $AOSCluster.Name
+$AOSHosts = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "hosts"
+$StorageName = "EUC-$($AOSClusterName)"
 
 # Check on build type and if AHV then gather cluster specific information
 if ($JSON.VM.Hypervisor -eq "AHV"){
