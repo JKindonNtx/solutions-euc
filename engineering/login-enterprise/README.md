@@ -33,6 +33,12 @@ As an example, a `Nutanix Files` monitoring job requires a `Files IP`, and an `A
 
 This type of logic is critical to efficiency. As we learn more, we should and will add more upfront validation.
 
+## Continuous Improvement
+
+The Module and associated scripts can be improved as we test more scenarios. If there are gaps, or opportunities to improve, consider using [Github Issues](https://github.com/nutanix-enterprise/solutions-euc/issues) to identify what went wrong, or what could be better.
+
+We have a central update file that can be [referenced for major changes and additions](https://github.com/nutanix-enterprise/solutions-euc/tree/main/engineering/login-enterprise/Invoke-Test-ChangeLog.md).
+
 ## Invoke-Test.ps1
 
 `Invoke-Test.ps1` is an example of a `script` built to consume the `Nutanix.EUC` module. The purpose of this script is to validate, orchestrate, and manage and end to end performance test across a range of different scenarios.
@@ -63,9 +69,20 @@ The below parameters should be set in the `ConfigFile` as a preferential configu
 -  `Force`. Optional. **`Switch`**. Forces a recreation of the desktop pool. Can be set in `LEConfigFile.jsonc`.
 -  `LEAppliance`. Optional. **`String`**. The Login Enterprise Appliance to use. `LE1`,`LE2`,`LE3`,`LE4`. Can be set in `LEConfigFile.jsonc`.
 
-### Step 1: Getting Started
+### Step 1: Getting Started: Planning
 
-To get started with the structure, you need to action the following:
+You will need some advanced planning for test execution. Some things to consider below:
+
+-  Who else is running tests, and which Login Enterprise appliance can you use? Our testing dashboard can show you some current statuses and planned tests.
+-  What are you going to test and where. Which cluster(s) do you need?
+-  Do you need Nutanix Files? If so, is a dedicated cluster required? How many?
+-  Do you need to alter any image builds from the standard? We use Ansible to build our images, is there anything custom that needs to be added to the playbooks?
+-  Do you need to monitor any infrastructure components or just Nutanix Core Services (Cluster, Files, Cluster Hosting Files etc)?
+-  Have you created a test map runbook? You can use [this template](https://github.com/nutanix-enterprise/solutions-euc/blob/main/documentation/_documentation_template/Test%20Report%20Map.md) to help you plan your way through tests and outcomes.
+
+### Step 2: Getting Started with the Script
+
+To get started with the script structure, you need to action the following:
 
 1. Copy the `ExampleConfig-Test-Template.jsonc` and rename it to something appropriate. For example: `LoginEnterpriseGlobalConfig.jsonc`. Alter the file with the appropriate values, including URLS, Tokens etc. This file is now unique to you, and can be used across all tests using Login Enterprise. This will be used by the `LEConfigFile.jsonc` parameter.
 2. Copy the `ExampleConfig-Test-Template.jsonc` and rename it something appropriate. For example: `LE-Citrix-FSLogix.jsonc`. Alter the file with the appropriate values and remove what is not required. For example, remove the Horizon components from a Citrix VAD test You will need to add usernames, passwords, cluster details, slack information etc. This file is now unique to your test. You can have as many as required. This will be used by the `ConfigFile.jsonc` parameter.
