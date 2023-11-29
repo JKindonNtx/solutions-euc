@@ -14,8 +14,6 @@
       $CustomSource = "$BuildSource\custom"
 
       & "$ScriptSource\$Script"
-    register: workspace_installed
 
 - name: Reboot after Workspace App
   ansible.windows.win_reboot:
-  when: workspace_installed.changed
