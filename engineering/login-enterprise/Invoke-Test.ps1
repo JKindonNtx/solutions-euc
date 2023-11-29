@@ -23,6 +23,8 @@ Configured in the test configuration file. Can be overriden by this parameter. T
 Configured in the test configuration file. Can be overriden by this parameter
 .PARAMETER Force
 Optional. Forces the recreation of the Horizon desktop pool.
+.PARAMETER ValidateOnly
+.Optional Allows the ability to Validate without and exectution of testing
 .NOTES
 TODO
 - Query Influx for running tests against LE appliance
@@ -68,7 +70,10 @@ Param(
 
     [Parameter(Mandatory = $false)]
     [ValidateSet("LE1", "LE2", "LE3", "LE4")]
-    [String]$LEAppliance
+    [String]$LEAppliance,
+    
+    [Parameter(Mandatory = $false)]
+    [switch]$ValidateOnly
 
 )
 #endregion Params
@@ -380,6 +385,10 @@ if ($Type -eq "Horizon") {
 
 #endregion Nutanix Snapshot Pre Flight Checks
 
+if ($ValidateOnly.IsPresent) {
+    Write-Log -Message "Script is operating in a validation only mode. Exiting script before any form of execution occurs" -Level Info
+    Break #Temporary! Replace with #Exit 0
+}
 #endregion Validation
 
 #region Start Infrastructure Monitoring
