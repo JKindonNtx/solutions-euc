@@ -98,7 +98,7 @@ $SearchString = "W$($OSversion)"
 
 # If building VM using MDT gather the OS Specifics
 $OSDetails = Get-MdtOSLatest -SearchString $SearchString -OSVersion $OSVersion
-$OSDetails.Name = ($OSDetails.Name).Replace("W10", "$($JSON.VM.Prefix)")
+$OSDetails.Name = ($OSDetails.Name).Replace("$($SearchString)", "$($JSON.VM.Prefix)")
 
 # Ask if an Ansible Playbook should be run after the OS Build
 $PlaybookToRun = Join-Path -Path $JSON.AnsibleConfig.ansiblepath $JSON.AnsibleConfig.ansibleplaybook
@@ -183,7 +183,7 @@ Restore-MDTControl -ControlFile $MDTControlOriginal
 
 # Slack message to inform that MDT job is finished
 Write-Host (Get-Date)":Updating Slack Channel" 
-$MDTmessage = "Launcher VM $($OSDetails.Name) initiated by $($GitHub.UserName) has been created on cluster $($ClusterName) using MDT" 
+$MDTmessage = "Launcher VM`n$($OSDetails.Name)`n`nInitiated by $($GitHub.UserName) has been created on cluster $($ClusterName) using MDT" 
 Update-Slack -Message $MDTMessage -Slack $($JSON.SlackConfig.Slack)
 
 # Remove MDT Build CD-Rom
@@ -272,6 +272,6 @@ $yaml = ConvertFrom-YAML $content
 $GitHub = Get-GitHubInfo
 
 # Update Slack Channel
-$Message = "Launcher VM $($OSDetails.Name) `n Initiated by $($GitHub.UserName) has finished running the Launcher Ansible Playbook and has been shutdown and snapshotted on the AHV Cluster $($ClusterName). `nThe following actions/installs have been executed: `n$($yaml.roles)"  
+$Message = "Launcher VM`n$($OSDetails.Name)`n`nInitiated by $($GitHub.UserName) has finished running the Launcher Ansible Playbook`nThe VM has been shutdown and snapshotted on the AHV Cluster $($ClusterName).`n`nThe following actions/installs have been executed:`n`n$($yaml.roles)"  
 Write-Host (Get-Date)":Updating Slack Channel" 
 Update-Slack -Message $Message -Slack $($JSON.SlackConfig.Slack)
