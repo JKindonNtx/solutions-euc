@@ -1,0 +1,12 @@
+---
+# Install Horizon Client via Chocolatey
+- name: Install Horizon Client via Chocolatey
+  ansible.windows.win_powershell:
+    script: |
+      $Script = "app-choco-horizon-client.ps1"
+      
+      $BuildSource = "C:\deployment"
+      $ScriptSource = "$BuildSource\scripts"
+      $CustomSource = "$BuildSource\custom"
+
+      & "$ScriptSource\$Script"

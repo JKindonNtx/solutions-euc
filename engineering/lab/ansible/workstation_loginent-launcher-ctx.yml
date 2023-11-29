@@ -10,8 +10,8 @@
   - install_ms_net_framework_3.5
   - install_ms_visual_c_2013u5
   - install_citrix_vda_client_2203_2
-  - install_citrix_workspace_app_2107
-  - install_vmware_horizon_client_8_2209
+  - install_latest_workspace_app
+  - install_latest_horizon_client
   - install_loginvsi_launcher
   - run_optimize
   - run_software_inventory_corp_it
