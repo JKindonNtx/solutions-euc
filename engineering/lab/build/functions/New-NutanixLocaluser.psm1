@@ -82,7 +82,7 @@ function New-NutanixLocalUser {
     Process
     {
         # Install the Posh-SSH Module
-        Install-Module -Name Posh-SSH -Force
+        Install-Module -Name Posh-SSH -Force -Scope CurrentUser
 
         # Display Function Parameters
         Write-Host (Get-Date)":Local user: $LocalUser" 
