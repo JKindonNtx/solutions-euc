@@ -347,9 +347,14 @@ if ($confirmationStart -eq 'n') {
             $SendToSlack = "y"
         }
     } else {
-        Set-CitrixHostingConnection -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VLAN "$($VLANName)" -DDC "$($JSON.Citrix.DDC)"
-        $SlackMessage = $SlackMessage + "Hosting Connection Created: $($ClusterName)`n"
-        $SendToSlack = "y"
+        if($WithRegistration){
+            Set-CitrixHostingConnection -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VLAN "$($VLANName)" -DDC "$($JSON.Citrix.DDC)"
+            $SlackMessage = $SlackMessage + "Hosting Connection Created: $($ClusterName)`n"
+            $SendToSlack = "y"
+        } else {
+            $SlackMessage = $SlackMessage + "Skipped Citrix Hosting Connection Creation`n"
+            $SendToSlack = "y"
+        }
     }
 
     # Register Cluster with Prism Central
