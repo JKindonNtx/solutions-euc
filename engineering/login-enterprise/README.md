@@ -1,27 +1,107 @@
-# Executing a Test
+# About the Nutanix.EUC Module
 
-The following components are required for executing a new test:
+The `Nutanix.EUC` Module is a collection of PowerShell functions written to allow a modular approach to action the following tasks:
 
--  `Test-Script.ps1` is responsible for executing the validation and testing phases.
--  `ConfigFile.json` contains general information about the test, including what sort of test is being run. This file is unique to each test.
--  `LEConfigFile.json` contains information about the Login Enterprise Appliances and configuration. It is a global json file required for all tests. the `Test-Script.ps1` script will import this configuration file, and based on the specified Appliance Switch `LEAppliance` will consume and set the appropriate Login Enterprise details.
+-  Configuring and managing `Active Directory` accounts.
+-  Configuring and managing `Login Enterprise` Appliance and test configurations.
+-  Configuring and monitoring `Nutanix AOS` Metrics.
+-  Configuring and monitoring `Nutanix Files` deployments.
+-  Configuring and managing `Citrix Virtual Apps and Desktops` and `Citrix DaaS` deployments (for performance testing).
+-  Configuring and managing `VMWare Horizon` deployments (for performance testing).
+-  Configuring and monitoring of Windows Infrastructure via `Telegraf`.
+-  Managing data manipulation for ingestion into `InfluxDB`.
+-  Download of images from `Grafana` dashboards created from `InfluxDB` data.
+-  Integration with `Slack` for status reporting.
+-  Integration with `Grafana` for real time test monitoring and status, along with real time metric `reporting`.
 
+These modules allow us to write PowerShell scripts to execute performance tests on a range of different configurations and requirements. The modular approach allows to add technologies and capabilities in a reusable fashion.
 
-## Test-Script.Ps1 Mandatory Parameters
+## Configuration vs Execution
+
+We use the following logic to write, manage and enhance our modules and scripts:
+
+-  A `function` should be reusable across multiple different use cases.
+-  A `script` should coordinate the use of `functions`.
+-  A `script` should pull configuration or control options from a `JSONC` based control file. Some parameters are required to control the import of `JSONC` control files.
+-  Github repositories should not contain secrets, passwords, usernames or anything sensitive. We only store example configuration files with placeholder values in github. Other `JSONC` files not named as `Example-*` are excluded from Sync within our repository. This allows you to store your personalized test configuration files locally to your machine.
+
+## Fail Fast. Always
+
+We on principal do our best to **fail fast**. As we add functions, scripts and additional capability, we think upfront about how things can fail. We try and cater for this at the start, even if it means adding additional functions.
+
+As an example, a `Nutanix Files` monitoring job requires a `Files IP`, and an `API User`. The `Files` monitoring portion of the script does not start until the environment has been refreshed, workloads deployed, launcher vms confirmed, and idle wait times completed. This could be an hour worth of wait time before actually starting a test, and thus starting metric collection from Files. We want to know that Files is going to start being monitored successfully or not upfront, so we have a specific `Invoke-NutanixFilesAuthCheck` function which checks everything is OK as part of the validation phase. If it's not going work, then we exit early. And don't waste time.
+
+This type of logic is critical to efficiency. As we learn more, we should and will add more upfront validation.
+
+## Continuous Improvement
+
+The Module and associated scripts can be improved as we test more scenarios. If there are gaps, or opportunities to improve, consider using [Github Issues](https://github.com/nutanix-enterprise/solutions-euc/issues) to identify what went wrong, or what could be better.
+
+We have a central update file that can be [referenced for major changes and additions](https://github.com/nutanix-enterprise/solutions-euc/tree/main/engineering/login-enterprise/Invoke-Test-ChangeLog.md).
+
+## Invoke-Test.ps1
+
+`Invoke-Test.ps1` is an example of a `script` built to consume the `Nutanix.EUC` module. The purpose of this script is to validate, orchestrate, and manage and end to end performance test across a range of different scenarios.
+
+To execute a test, there are four key pieces of information required by the script. These are input as Mandatory parameters:
+
+-  `ConfigFile.jsonc` contains general information about the test, including what sort of test is being run. This file is unique to each test. This file contains what you are testing (Citrix, Horizon, Parallels etc) along with where the tests are being run, and what specific components are needed. This file contains sensitive information, so will exists on your local machine only. An example exists in the root repository as `ExampleConfig-Test-Template.jsonc`. The example contains all configuration options for all tests with placeholder values. You should copy this file and input relevant information for your test requirements.
+-  `LEConfigFile.jsonc` contains information about the Login Enterprise Appliances and configuration. It is a global json file required for all tests. the `Invoke-Test.ps1` script will import this configuration file, and based on the specified Appliance in either `ConfigFile.jsonc` or the Script parameter `LEAppliance`, will consume and set the appropriate Login Enterprise details. This file contains sensitive information, so will exists on your local machine only. An example exists in the root repository as `ExampleConfig-LoginEnterpriseGlobal.jsonc`
+-  `ReportConfiguration.jsonc`
+-  `Type` defines the sort of test we are running. This could be `CitrixVAD`, `CitrixDaaS`, `Horizon`, `Parallels`. The script logic executes based on the provided value.
+
+### Invoke-Test.Ps1 Mandatory Parameters
 
 -  `ConfigFile`. Mandatory **`String`**. Defines the path to the test configuration file.
--  `LEConfigFile`. Mandatory **`String`**. Defines the path for the Global Login Enterprise Configuration File
--  `ReportConfigFile`. Mandatory **`String`**.
+-  `LEConfigFile`. Mandatory **`String`**. Defines the path for the Global Login Enterprise Configuration File.
+-  `ReportConfigFile`. Mandatory **`String`**. Defines the default report configuration file.
 -  `Type`. Mandatory **`String`**. Defines the type of test. `"CitrixVAD", "CitrixDaaS", "Horizon", "RAS"`
 
-## Test-Script.Ps1 Optional Parameters
+### Invoke-Test.ps1 Optional Parameters
 
 The below parameters should be set in the `ConfigFile` as a preferential configuration point, however can be set via script Parameter which will **Override** whatever is set in the `ConfigFile`.
 
 -  `SkipADUsers`. Optional. **`Switch`**. Retains the existing AD User Accounts and does not recreate the accounts.
 -  `SkipLEUsers`. Optional. **`Switch`**. Retains the existing Login Enterprise Accounts and does not recreate the accounts.
--  `SkipLaunchers`. Optional. **`Switch`**.
--  `SkipWaitForIdleVMs`. Optional. **`Switch`**.
--  `SkipPDFExport`. Optional. **`Switch`**.
--  `Force`. Optional. **`Switch`**.
--  `LEAppliance`. Optional. **`String`**.
+-  `SkipLaunchers`. Optional. **`Switch`**. TBD. Can be set in `LEConfigFile.jsonc`.
+-  `SkipWaitForIdleVMs`. Optional. **`Switch`**. Do not wait for test VMs to become Idle. Can be set in `LEConfigFile.jsonc`.
+-  `SkipPDFExport`. Optional. **`Switch`**. TBD. Can be set in `LEConfigFile.jsonc`.
+-  `Force`. Optional. **`Switch`**. Forces a recreation of the desktop pool. Can be set in `LEConfigFile.jsonc`.
+-  `LEAppliance`. Optional. **`String`**. The Login Enterprise Appliance to use. `LE1`,`LE2`,`LE3`,`LE4`. Can be set in `LEConfigFile.jsonc`.
+
+### Step 1: Getting Started: Planning
+
+You will need some advanced planning for test execution. Some things to consider below:
+
+-  Who else is running tests, and which Login Enterprise appliance can you use? Our testing dashboard can show you some current statuses and planned tests.
+-  What are you going to test and where. Which cluster(s) do you need?
+-  Do you need Nutanix Files? If so, is a dedicated cluster required? How many?
+-  Do you need to alter any image builds from the standard? We use Ansible to build our images, is there anything custom that needs to be added to the playbooks?
+-  Do you need to monitor any infrastructure components or just Nutanix Core Services (Cluster, Files, Cluster Hosting Files etc)?
+-  Have you created a test map runbook? You can use [this template](https://github.com/nutanix-enterprise/solutions-euc/blob/main/documentation/_documentation_template/Test%20Report%20Map.md) to help you plan your way through tests and outcomes.
+
+### Step 2: Getting Started with the Script
+
+To get started with the script structure, you need to action the following:
+
+1. Copy the `ExampleConfig-Test-Template.jsonc` and rename it to something appropriate. For example: `LoginEnterpriseGlobalConfig.jsonc`. Alter the file with the appropriate values, including URLS, Tokens etc. This file is now unique to you, and can be used across all tests using Login Enterprise. This will be used by the `LEConfigFile.jsonc` parameter.
+2. Copy the `ExampleConfig-Test-Template.jsonc` and rename it something appropriate. For example: `LE-Citrix-FSLogix.jsonc`. Alter the file with the appropriate values and remove what is not required. For example, remove the Horizon components from a Citrix VAD test You will need to add usernames, passwords, cluster details, slack information etc. This file is now unique to your test. You can have as many as required. This will be used by the `ConfigFile.jsonc` parameter.
+3. The default `ReportConfiguration.jsonc` file will rarely need to be changed. The default file `ReportConfiguration.jsonc` can be used
+
+### Infrastructure Monitoring with Telegraf
+
+To extend monitoring to non-specific infrastructure services, we use `telegraf`, `InfluxDB` and `Grafana`. It is important to note the following:
+
+-  For `telegraf` based monitoring to work, you must both install `telegraf`, and deploy and appropriate `configuration file` with the `metrics` you are interested in on the server you want to monitor. For example, in a Citrix Session Recording test, we may want to capture, monitor and report on **Microsoft Perfmon Counters** and **Event Log Entries**. To do this, we need a telegraf configuration file on ***each*** Session Recording Server with the appropriate metrics defined. We also need the Telegraf Service installed with the **default** service name (`telegraf`).
+-  For each non-standard server you want to monitor, you will can either start the service manually, or allow the script to do so by defining the appropriate values in the `ConfigFile.jsonc` configuration file. This will both start and stop the service on the defined machines as part of the test run.
+-  Given that this data is custom, there are no pre-defined grafana reports. You will need to identify what you would like to see, and how you would like the data presented. We capture the data into `InfluxDB` in a specific bucket.
+
+### Useful URLS
+
+-  The `Invoke-Script.ps1` script will update an [operational dashboard](http://10.57.64.101:3000/d/EN4BGISSk/testing-status?orgId=1&refresh=10s&from=now-24h&to=now). You can view current tests progress and status, along with some basic infrastructure metrics at this dashboard.
+-  The default [document reporting dashboard](http://10.57.64.101:3000/d/N5tnL9EVk/login-documents-v3) is available with data as soon as the test has finished.
+-  You can generate automated documentation from a specific grafana report using the [New-GrafanaReport.ps1 script](https://github.com/nutanix-enterprise/solutions-euc/blob/main/collateral/scripts/Misc/Grafana/New-GrafanaReport.ps1). You can convert the output of the `New-GrafanaReport.ps1` file to a Nutanix Markdown standard using the [FixMDOutput.ps1 script](https://github.com/nutanix-enterprise/solutions-euc/blob/main/collateral/scripts/Misc/Grafana/FixMDOutput.ps1). Read the [readme](https://github.com/nutanix-enterprise/solutions-euc/blob/main/collateral/scripts/Misc/Grafana/README.MD) for instructions.
+
+# Invoke-TestUpload.ps1
+
+# Remove-Test.ps1

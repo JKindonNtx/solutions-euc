@@ -35,6 +35,7 @@
     24.10.2023: Added Panels for Files stats breakouts, both Individual Runs and Averages (Panel ID 131-152)
     26.10.2023: Added Panels for Individual run CPU Usage (Panel ID 156)
     20.11.2023: Moved Image lookup to external CSV File
+    29.11.2023: Added Cluster Hosting Files Panels to Nutanix Files download section (Panel ID: 159-166)
 - To Do
  -> Function this sucker - Inject between section headers
     # Add Page Break
@@ -1454,7 +1455,7 @@ else {
 if ($NutanixFiles) {
     Write-Screen -Message "Downloading Nutanix Files Graphs"
     # Build the PanelID Array 
-    $Panels = @('71', '77', '78', '79', '127', '128', '129', '130', '131', '132', '133', '134', '135', '136', '137', '138', '139', '140', '141', '142', '143', '144', '145', '146', '147', '148', '149', '150', '151', '152', '153', '154')  
+    $Panels = @('71', '77', '78', '79', '127', '128', '129', '130', '131', '132', '133', '134', '135', '136', '137', '138', '139', '140', '141', '142', '143', '144', '145', '146', '147', '148', '149', '150', '151', '152', '153', '154', '159', '161' ,'160', '162', '163', '164', '166', '165')  
     $endtime = "1672538820000"
     Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 }
