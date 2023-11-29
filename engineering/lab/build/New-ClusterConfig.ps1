@@ -16,9 +16,10 @@
 # ====================================================================================================================================================
 # Import the Functions and set the Variables used throughout the remainder of the script
 # ====================================================================================================================================================
-
-[Parameter(Mandatory = $false)]
-[switch]$WithRegistration
+Param(
+    [Parameter(Mandatory = $false)]
+    [switch]$WithRegistration
+)
 
 # Define the Variables for the script
 If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $ScriptRoot = $PSScriptRoot }
@@ -190,6 +191,7 @@ if ($confirmationStart -eq 'n') {
 
             # Add the hosts to the cluster
             $i = 1
+            $LicenseDataManager = Get-LicenseDataManager -ErrorAction SilentlyContinue
             foreach($AOSHost in $AOSHosts.entities){
                 $HostIP = $AOSHost.hypervisor_address
                 Write-Host (Get-Date) ":Adding $($HostIP) to vSphere"
@@ -206,8 +208,10 @@ if ($confirmationStart -eq 'n') {
                 $task = (Get-View (Get-VMHost -Name $HostIP | Get-View).ConfigManager.PowerSystem).ConfigurePowerPolicy(1)
                 Write-Host (Get-Date) ":Adding VLAN $($VLANName) to $($HostIP)"
                 $task = Get-VMHost -Name $HostIP | Get-VirtualSwitch -name "vSwitch0" | New-VirtualPortGroup -Name $VLANName -VLanId $JSON.VM.VLAN -ErrorAction SilentlyContinue
+                Write-Host (Get-Date) ":Assigning VMware License Key to $($HostIP)"
+                $task = Get-VMHost -Name $HostIP | Set-VMhost -LicenseKey "$($JSON.VMwareCluster.license)"
             }
-        
+
             Write-Host (Get-Date) ":Moving $($MasterHost) to Cluster $($AOSClusterName)"
             $task = Move-VMHost -VMHost $MasterHost -Destination $AOSClusterName
             $SlackMessage = $SlackMessage + "VMware Cluster Created: $AOSClusterName`n"

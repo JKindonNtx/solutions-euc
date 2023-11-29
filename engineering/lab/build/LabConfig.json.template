@@ -10,7 +10,7 @@
 		"ip": "10.10.10.10",
 		"user": "Administrator",
       	"password": "password",
-		"ClusterName": "ClusterName"
+		"license": "xxxx-xxxx-xxxx-xxxx-xxxx"
 	},
 	"VM": {
 	    "UEFI": true,
