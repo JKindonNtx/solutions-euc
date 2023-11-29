@@ -89,7 +89,7 @@ services:
 
 ## Backup
 
-Backup is running from WS-GRAF2 VM as scheduled task. Backup is stored on
+Backup is running from WS-GRAF2 VM as scheduled task (backup-script.ps1). Backup is stored on
 \\ws-files.wsperf.nutanix.com\backup\influxdb
 
 
