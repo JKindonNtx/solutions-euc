@@ -1,9 +1,6 @@
 ---
 # Install Workspace App via Chocolatey
 
-- name: Reboot before Workspace App install
-  ansible.windows.win_reboot:
-
 - name: Install Workspace App via Chocolatey
   ansible.windows.win_powershell:
     script: |
@@ -15,5 +12,5 @@
 
       & "$ScriptSource\$Script"
 
-- name: Reboot after Workspace App
+- name: Reboot after Workspace App Install
   ansible.windows.win_reboot:

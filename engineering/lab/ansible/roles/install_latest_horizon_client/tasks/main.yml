@@ -10,3 +10,6 @@
       $CustomSource = "$BuildSource\custom"
 
       & "$ScriptSource\$Script"
+
+- name: Reboot after Horizon App install
+  ansible.windows.win_reboot:
