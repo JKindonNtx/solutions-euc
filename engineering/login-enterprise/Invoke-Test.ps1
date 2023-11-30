@@ -1769,7 +1769,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
 
         if ($VSI_Test_SkipLEMetricsDownload -ne $true){ 
-            $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -RunNumber $i -TestName $NTNXTestname
+            $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -RunNumber $i -TestName $NTNXTestname -TestResult $Testresult
 
             if (Test-Path -path $Filename) {
                 $Params = @{
@@ -1839,7 +1839,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     $OutputFolder = "$($ScriptRoot)\testresults\$($NTNXTestname)"
 
     if ($VSI_Test_SkipLEMetricsDownload -ne $true){ 
-        $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -TestName $NTNXTestname
+        $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -TestName $NTNXTestname -TestResult $Testresult
     
         if (Test-Path -path $Filename) {
             $Params = @{
