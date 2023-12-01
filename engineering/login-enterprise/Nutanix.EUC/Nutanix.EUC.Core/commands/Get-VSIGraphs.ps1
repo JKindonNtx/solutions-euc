@@ -34,7 +34,7 @@ function Get-VSIGraphs {
     $DocName = ($TestConfig.Test.DocumentName).Replace(" ", "_")
 
     if (!($null -eq $RunNumber)) {
-        if($Bucket -eq "LoginDocuments"){
+        if($BucketName -eq "LoginDocuments"){
             if ($TestConfig.Testinfra.SingleNodeTest -eq "true") {
                 # Single Node
                 $PanelID = "83"
@@ -95,7 +95,7 @@ function Get-VSIGraphs {
     else {
         # Graph for Test
         # Graph for Single Run
-        if($Bucket -eq "LoginDocuments"){
+        if($BucketName -eq "LoginDocuments"){
             if ($TestConfig.Testinfra.SingleNodeTest -eq "true") {
                 # Single Node
                 $PanelID = "67" 
