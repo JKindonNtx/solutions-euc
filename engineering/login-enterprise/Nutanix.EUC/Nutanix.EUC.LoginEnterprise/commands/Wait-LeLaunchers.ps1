@@ -10,7 +10,8 @@ function Wait-LELaunchers {
 
     $NamingPattern = $NamingPattern -replace "_", ""
     $Launchers = Get-LELaunchers | Where-Object { $_.machineName -like "$($NamingPattern)*" }
-    Restart-LELaunchers -Launchers $Launchers
+    # Testing without a Launcher Reboot as per Citrix Connection time
+    # Restart-LELaunchers -Launchers $Launchers
     Write-Log -Message "Waiting 15 seconds" -Level Info
     Start-Sleep 15
     $StartStamp = Get-Date
