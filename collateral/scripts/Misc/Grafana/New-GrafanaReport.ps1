@@ -197,14 +197,21 @@ function Get-Graphs {
         $Panels,
         $EndTime,
         $SourceUri,
-        $imagePath
+        $imagePath,
+        [switch]$SteadyState
     )
 
     foreach ($Panel in $Panels) {
 
+        # if steady state then change start time for panel to 1672537916800
         # Build Uri to download image
         $UpdatedUri = $SourceUri.Replace('/d/', '/render/d-solo/')
-        $Uri = $UpdatedUri + "&from=1672534800000&to=$($EndTime)&panelId=$($Panel)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
+        if($SteadyState) {
+            $Start = "1672537910000"
+        } else {
+            $Start = "1672534800000"
+        }
+        $Uri = $UpdatedUri + "&from=$($Start)&to=$($EndTime)&panelId=$($Panel)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
 
         # Check if the PanelId exists in the imported CSV data
         $matchedEntry = $ImageReferenceList | Where-Object { $_.PanelId -eq $Panel }
@@ -214,7 +221,12 @@ function Get-Graphs {
             $ImageName = $matchedEntry.ImageName
 
             if (!$ImageSuffix) {
-                $OutFile = Join-Path -Path $imagePath -ChildPath $ImageName
+                if(!$SteadyState){
+                    $OutFile = Join-Path -Path $imagePath -ChildPath $ImageName
+                } else {
+                    $ImageName = $ImageName.Replace(".png", "_ss.png")
+                    $OutFile = Join-Path -Path $imagePath -ChildPath $ImageName
+                }
             }
             else {
                 $ImageName = $ImageName -Replace ".png",""
@@ -1339,6 +1351,10 @@ if ($HostResources) {
     $Panels = @('13', '83', '14', '9')  
     $endtime = "1672538820000"
     Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+    # Get Steady State Data
+    $Panels = @('14')  
+    $endtime = "1672538820000"
+    Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath -SteadyState
 }
 else {
     Write-Screen -Message "Host Resources Download Skipped"
