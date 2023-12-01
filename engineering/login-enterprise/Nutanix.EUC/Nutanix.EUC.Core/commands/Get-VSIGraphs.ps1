@@ -47,11 +47,11 @@ function Get-VSIGraphs {
         } else {
             if ($TestConfig.Testinfra.SingleNodeTest -eq "true") {
                 # Single Node
-                $PanelID = "83"
+                $PanelID = "67"
                 $OutFile = Join-Path -Path "$($OutputFolder)" -ChildPath "$($TestName)_Run$($RunNumber)_Host_CPU_With_EUX.png"
             }
             else {
-                $PanelID = "53"
+                $PanelID = "67"
                 $OutFile = Join-Path -Path "$($OutputFolder)" -ChildPath "$($TestName)_Run$($RunNumber)_Cluster_CPU_With_EUX.png"
             }
         }
@@ -68,6 +68,7 @@ function Get-VSIGraphs {
             $WorkloadType = ($TestConfig.Target.Workload).Replace(" ", "_")
             $VSIMax = $Testresult."vsiMax state"
             $Uri = "$($TestConfig.Testinfra.GrafanaUriRegression)&var-Bucketname=$($BucketName)&var-Bootbucket=BootBucketRegression&var-Nodes=$($TestConfig.Target.NodeCount)&var-CPUBrand=$($TestConfig.TestInfra.CPUBrand)&var-CPUType=$($CPUType)&var-AOSVersion=$($TestConfig.TestInfra.AOSVersion)&var-Hypervisor=$($TestConfig.TestInfra.HypervisorType)&var-HypervisorVersion=$($TestConfig.TestInfra.HypervisorVersion)&var-Broker=$($TestConfig.Target.DeliveryType)&var-SessionConfig=$($TestConfig.Target.SessionCfg)&var-SessionsSupport=$($TestConfig.Target.SessionsSupport)&var-TargetOS=$($TargetOS)&var-TargetOSVersion=$($TargetOSVersion)&var-Workload=$($WorkloadType)&var-VSIMaxLoad=$($VSIMax)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
+            write-host $uri
         }
 
         Write-Log -Message "Downloading $($OutFile) from Grafana" -Level Info
@@ -133,6 +134,7 @@ function Get-VSIGraphs {
             $WorkloadType = ($TestConfig.Target.Workload).Replace(" ", "_")
             $VSIMax = $Testresult."vsiMax state"
             $Uri = "$($TestConfig.Testinfra.GrafanaUriRegression)&var-Bucketname=$($BucketName)&var-Bootbucket=BootBucketRegression&var-Nodes=$($TestConfig.Target.NodeCount)&var-CPUBrand=$($TestConfig.TestInfra.CPUBrand)&var-CPUType=$($CPUType)&var-AOSVersion=$($TestConfig.TestInfra.AOSVersion)&var-Hypervisor=$($TestConfig.TestInfra.HypervisorType)&var-HypervisorVersion=$($TestConfig.TestInfra.HypervisorVersion)&var-Broker=$($TestConfig.Target.DeliveryType)&var-SessionConfig=$($TestConfig.Target.SessionCfg)&var-SessionsSupport=$($TestConfig.Target.SessionsSupport)&var-TargetOS=$($TargetOS)&var-TargetOSVersion=$($TargetOSVersion)&var-Workload=$($WorkloadType)&var-VSIMaxLoad=$($VSIMax)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
+            write-host $uri
         }
 
         Write-Log -Message "Downloading $($OutFile) from Grafana" -Level Info
