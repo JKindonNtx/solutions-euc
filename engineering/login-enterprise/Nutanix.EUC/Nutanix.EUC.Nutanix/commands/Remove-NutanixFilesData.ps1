@@ -51,7 +51,7 @@ function Remove-NutanixFilesData {
             }
             catch {
                 Write-Log $_ -Level Error
-                Break #Temporary! Replace with #Break
+                Exit 1
             }
 
             if ($Mode -eq "Validate") {
@@ -66,7 +66,7 @@ function Remove-NutanixFilesData {
                 catch {
                     Write-Log -Message "Failed to Create directory on $($Share)" -Level Error
                     Write-Log -Message $_ -Level Error
-                    Break #Temporary! Replace with #Break
+                    Exit 1
                 }
 
                 # Delete Dummy Data
@@ -86,7 +86,7 @@ function Remove-NutanixFilesData {
                     catch {
                         Write-Log -Message "Failed to delete Directory $($DummyFolder) on $($Share)." -Level Error
                         Write-Log -Message $_ -Level Error
-                        Break #Temporary! Replace with #Break
+                        Exit 1
                     }
                 }
 
@@ -108,7 +108,7 @@ function Remove-NutanixFilesData {
                     }
                     else {
                         Write-Log -Message "Continue on Failure is not present. Exiting Script" -Level 
-                        Break #Temporary! Replace with #Break
+                        Exit 1
                     }
                 }
             }
@@ -120,7 +120,7 @@ function Remove-NutanixFilesData {
             }
             else {
                 Write-Log -Message "Share $($Share) does not exist. Please check configuration. Exiting Script" -Level Error
-                Break #Temporary! Replace with #Break
+                Exit 1
             }
         }
     }

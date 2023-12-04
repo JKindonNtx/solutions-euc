@@ -36,7 +36,7 @@ function Enable-VSIHVDesktopPool {
             $date = Get-Date
             if (($date - $startTime).TotalMinutes -gt $timeout) {
                 Write-Log -Message "Shutdown took to long." -Level Error
-                Break #Temporary! Replace with #Exit 1
+                Exit 1
             }
             Write-Log -Message "Sleeping for 10 Seconds" -Level Info
             Start-Sleep 10

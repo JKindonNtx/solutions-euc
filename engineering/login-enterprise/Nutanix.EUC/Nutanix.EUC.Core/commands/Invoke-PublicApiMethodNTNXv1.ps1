@@ -50,7 +50,7 @@ function Invoke-PublicApiMethodNTNXv1 {
             }
             if ($count -eq $maxcount) {
                 Write-Log -Message "API call failed after $($maxcount) times with reason: $reason" -Level Error
-                Break #Temporary! Replace with #Exit 1
+                Exit 1
             }
         }
     }
@@ -147,7 +147,7 @@ function Invoke-PublicApiMethodNTNXv1 {
             }
             if ($count -eq $maxcount) {
                 Write-Log -Message "API call failed after $($maxcount) times with reason: $reason" -Level Error
-                Break #Temporary! Replace with #Exit 1
+                Exit 1
             }
         }
     }

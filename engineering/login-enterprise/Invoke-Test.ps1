@@ -28,7 +28,6 @@ Optional. Forces the recreation of the Horizon desktop pool.
 .NOTES
 TODO
 - Query Influx for running tests against LE appliance
-- Remember to replace BREAK with Exit! Temporarily using Break
 
 #>
 
@@ -37,16 +36,16 @@ TODO
 # Parameters
 # ============================================================================
 Param(
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $true)]
     [string]$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\ExampleConfig-Test-Template.jsonc",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $true)]
     [string]$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\ExampleConfig-LoginEnterpriseGlobal.jsonc",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $true)]
     [string]$ReportConfigFile = ".\ReportConfiguration.jsonc",
 
-    [Parameter(Mandatory = $false)]
+    [Parameter(Mandatory = $true)]
     [ValidateSet("CitrixVAD", "CitrixDaaS", "Horizon", "RAS")]
     [string]$Type,
 
@@ -103,7 +102,7 @@ try {
 catch {
     Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: Failed to import $var_ModuleName module. Exit script"
     Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $_"
-    Break #Temporary! Replace with #Exit 1
+    Exit 1
 }
 #endregion Nutanix Module Import
 
@@ -119,7 +118,7 @@ Write-Log -Message "Test Type is:                 $($Type)" -Level Validation
 #----------------------------------------------------------------------------------------------------------------------------
 if ($PSVersionTable.PSVersion.Major -lt 5) { 
     Write-Log -Message "You must upgrade to PowerShell 5.x to run this script" -Level Warn
-    Break #Temporary! Replace with #Exit 1
+    Exit 1
 }
 
 #endregion PowerShell Versions
@@ -129,7 +128,7 @@ if ($PSVersionTable.PSVersion.Major -lt 5) {
 if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
     if ($PSVersionTable.PSVersion.Major -gt 6) { 
         Write-Log -Message "You cannot use PowerShell $($PSVersionTable.PSVersion.Major) with Citrix snapins. Please revert to PowerShell 5.x" -Level Warn
-        Break #Temporary! Replace with #Exit 1
+        Exit 1
     }
     try {
         Write-Log -Message "Importing Citrix Snapins" -Level Info
@@ -140,7 +139,7 @@ if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
     catch {
         Write-Log -Message "Failed to import Citrix Snapins" -Level Error
         Write-Log -Message $_ -Level Error
-        Break #Temporary! Replace with #Exit 1
+        Exit 1
     }
 }
 #endregion Citrix Snapin Import
@@ -160,7 +159,7 @@ if ($Type -eq "Horizon") {
                 catch {
                     Write-Log -Message "Failed to Install Mode: $($moduleName)" -Level Error
                     Write-Log -Message $_ -Level Error
-                    Break #Temporary! Replace with #Exit 1
+                    Exit 1
                 }
             }
         }
@@ -174,19 +173,19 @@ if ($Type -eq "Horizon") {
             catch {
                 Write-Log -Message "Failed to Install Mode: $($moduleName)" -Level Error
                 Write-Log -Message $_ -Level Error
-                Break #Temporary! Replace with #Exit 1
+                Exit 1
             }
             
         }
         else {
             Write-Log -Message "Module: VMware.Hv.Helper not Found" -Level Error
-            Break #Temporary! Replace with #Exit 1
+            Exit 1
         }
     }
     catch {
         Write-Log -Message "Failed to Import Modules" -Level Error
         Write-Log -Message $_ -Level Info
-        Break #Temporary! Replace with #Exit 1
+        Exit 1
     }
 }
 #endregion VMWare Module Import
@@ -209,7 +208,7 @@ else {
     }
     catch {
         Write-Log -Message $_ -Level Error
-        Break #Temporary! Replace with #Exit 1
+        Exit 1
     }
 }
 $Temp_Module = $null
@@ -222,7 +221,7 @@ if (Get-ValidJSON -ConfigFile $ConfigFile -Type $Type) {
 } 
 else {
     Write-Log -Message "Config File $($ConfigFile) contains invalid options. Please review logfile and configfile." -Level Warn
-    Break #Temporary! Replace with #Exit 1
+    Exit 1
 }
 
 #endregion Validate JSON
@@ -242,19 +241,18 @@ if ($VSI_Test_Uploadresults -eq $false) {
     $answer = read-host "Test details correct for test? yes or no?"
     if ($answer -ne "yes" -and $answer -ne "y") { 
         Write-Log -Message "Input not confirmed. Exit" -Level Info
-        Break #Temporary! Replace with #Exit 0
+        Exit 0
     }
     else {
         Write-Log -Message "Input confirmed" -Level Info
     }
 }
 
-
 #Define the LE appliance detail
 if ($VSI_Test_LEAppliance -eq "MANDATORY_TO_DEFINE" -and (!$LEAppliance)) {
     # Neither Option is OK due to ValidateSet on the LEAppliance Param
     Write-Log -Message "You must define an LE appliance either in the $($ConfigFile) file or via the Script Parameter" -Level Error
-    Break #Temporary! Replace with #Exit 1
+    Exit 1
 } 
 elseif ($VSI_Test_LEAppliance -eq "MANDATORY_TO_DEFINE" -and $LEAppliance) {
     #Set LEAppliance based on Param
@@ -270,7 +268,7 @@ if ($null -ne $LEAppliance) {
 }
 else {
     Write-Log -Message "Missing LE Appliance Detail. Please check config file." -Level Warn
-    Break #Temporary! Replace with #Exit 1
+    Exit 1
 }
 
 # Fix trailing slash issue
@@ -287,7 +285,7 @@ try {
 catch {
     Write-Log -Message "Failed to import config file: $($configFile)" -Level Error
     Write-Log -Message $_ -Level Error
-    Break #Temporary! Replace with #Exit 1
+    Exit 1
 }
 
 $configFileData = $configFileData -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/'
@@ -297,7 +295,7 @@ try {
 }
 catch {
     Write-Log -Message $_ -Level Error
-    Break #Temporary! Replace with #Exit 1
+    Exit 1
 }
 #endregion Config File
 
@@ -342,7 +340,7 @@ if (($Mandatory_Undedfined_Config_Entries | Measure-Object).Count -gt 0) {
     $answer = read-host "Test details correct for test? yes (y) or no? "
     if ($answer -ne "yes" -and $answer -ne "y") { 
         Write-Log -Message "Input not confirmed. Exit" -Level Info
-        Break #Temporary! Replace with #Exit 0
+        Exit 0
     }
     else {
         Write-Log -Message "Input confirmed" -Level Info
@@ -387,7 +385,7 @@ if ($Type -eq "Horizon") {
 
 if ($ValidateOnly.IsPresent) {
     Write-Log -Message "Script is operating in a validation only mode. Exiting script before any form of execution occurs" -Level Info
-    Break #Temporary! Replace with #Exit 0
+    Exit 0
 }
 #endregion Validation
 
@@ -979,7 +977,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Break #Temporary! Replace with #Exit 1
+            Exit 1
         }
         
         #endregion Get Build Tattoo Information and update variable with new values
@@ -1886,4 +1884,4 @@ $params = $null
 #endregion Execute
 
 Write-Log -Message "Script Finished" -Level Info
-Break #Temporary! Replace with #Exit 0
+Exit 0

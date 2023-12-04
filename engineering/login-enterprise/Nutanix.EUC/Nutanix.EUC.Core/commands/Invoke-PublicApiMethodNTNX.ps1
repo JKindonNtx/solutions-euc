@@ -67,7 +67,7 @@ function Invoke-PublicApiMethodNTNX {
             }
             if ($count -eq $maxcount) {
                 Write-Log -Message "API call failed after $($maxcount) times with reason: $reason" -Level Error
-                Break #Temporary! Replace with #Exit 1
+                Exit 1
             }
         }
     }
@@ -159,7 +159,7 @@ function Invoke-PublicApiMethodNTNX {
                         $result = $client.PostAsync($url, $content).Result
                         if ($result.IsSuccessStatusCode -eq $false) {
                             Write-Log -Message "Failed to upload $filePath" -Level Error
-                            Break #Temporary! Replace with #Exit 1
+                            Exit 1
                         }
                         $result.Content.ReadAsStringAsync().Result.Trim("`"")
                     }
@@ -176,7 +176,7 @@ function Invoke-PublicApiMethodNTNX {
             }
             if ($count -eq $maxcount) {
                 Write-Log -Message "API call failed after $($maxcount) times with reason: $reason" -Level Error
-                Break #Temporary! Replace with #Exit 1
+                Exit 1
             }
         }
     }

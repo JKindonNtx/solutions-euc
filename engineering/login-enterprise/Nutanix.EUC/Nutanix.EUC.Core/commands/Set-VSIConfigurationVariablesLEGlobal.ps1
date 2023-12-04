@@ -15,7 +15,7 @@ function Set-VSIConfigurationVariablesLEGlobal {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Break #Temporary! Replace with #Exit 1
+            Exit 1
         }
             
         $configFile = $configFile -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/'
@@ -25,7 +25,7 @@ function Set-VSIConfigurationVariablesLEGlobal {
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Break #Temporary! Replace with #Exit 1
+            Exit 1
         }
 
         Get-Variable -Name VSI_* | Where-Object {$_.Name -Like "VSI_Users*" -or $_.Name -like "VSI_LoginEnterprise_*" -or $_.Name -like "VSI_Launchers_*" } -ErrorAction SilentlyContinue | Remove-Variable -ErrorAction SilentlyContinue

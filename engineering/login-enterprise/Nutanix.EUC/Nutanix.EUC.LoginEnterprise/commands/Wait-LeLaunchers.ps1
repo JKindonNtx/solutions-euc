@@ -28,7 +28,7 @@ function Wait-LELaunchers {
         
         if ($TimeSpan.TotalMinutes -ge $TimeOutMinutes) {
             Write-Log -Message "Only $Launcher/$Amount launchers registered with LE within $TimoutMinutes minutes" -Level Error
-            Break #Temporary! Replace with #Exit 1
+            Exit 1
         }
     }
     Write-Log -Message " " -Level Info

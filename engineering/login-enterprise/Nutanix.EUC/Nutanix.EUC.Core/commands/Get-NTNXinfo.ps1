@@ -13,13 +13,13 @@ function Get-NTNXinfo {
     }
     catch {
         Write-Log -Message $_ -Level Error
-        Break #Temporary! Replace with #Exit 1
+        Exit 1
     }
         
     $Hostitem = $Hostdata.entities | Where-Object { $_.name -eq $NTNXHost }
     if ($null -eq $Hostitem) {
         Write-Log -Message "The defined host: $($NTNXHost) was not found under the Nutanix cluster: $($Clusterinfo.name). Please check the configuration file." -Level Warn
-        Break #Temporary! Replace with #Exit 1
+        Exit 1
     }
     $Config.Testinfra.HardwareType = $Hostitem.block_model_name
     $config.Testinfra.CPUType = $Hostitem.cpu_model -Replace ("\(R\)", "") -Replace ("Intel ", "") -Replace ("AMD ", "") -Replace ("  ", "")
