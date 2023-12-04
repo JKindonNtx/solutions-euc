@@ -62,8 +62,17 @@ function Get-CVADSiteID {
 
 $AccessToken = Get-CVADAccessToken -DDC $DDC -AdminCredential $EncodedAdminCredential
 # Make sure this is never #$null
+if (!$AccessToken) { 
+                    Write-Host "variable is null" 
+                    Break
+                    }
+
 $cvad_site_id = Get-CVADSiteID -DDC $DDC -AccessToken $AccessToken
 # Make sure this is never #$null
+if (!$cvad_site_id) { 
+    Write-Host "variable is null" 
+    Break
+    }
 
 # Create new Headers for CVAD calls moving forward including Site ID
 $Headers = @{
