@@ -26,9 +26,6 @@ Optional. Forces the recreation of the Horizon desktop pool.
 .PARAMETER ValidateOnly
 .Optional Allows the ability to Validate without and exectution of testing
 .NOTES
-TODO
-- Query Influx for running tests against LE appliance
-
 #>
 
 #region Params
