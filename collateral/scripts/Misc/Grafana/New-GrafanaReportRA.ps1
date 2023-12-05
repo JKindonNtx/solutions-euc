@@ -33,6 +33,9 @@ Param(
     [Parameter(Mandatory = $true)]
     [string]$ReportTitle, # Title for the Report
 
+    [Parameter(Mandatory = $true)]
+    [string]$RAReference, # Title for the Report
+
     [Parameter(Mandatory = $false)]
     [string]$mdFile = "README.MD", # Markdown output file name
 
@@ -319,6 +322,44 @@ function Add-Graphs {
 
 } # Add the Graphs
 
+function Create-MDFile {
+    param(
+        $mdPath,
+        $mdFile
+    )
+
+    $mdFullFile = Join-Path -Path $mdPath -ChildPath "$($mdFile).md"
+
+    if (!(Test-Path -Path $mdFullFile)) {
+        Write-Screen -Message "Creating Markdown File: $($mdFile)"
+        try {
+            $mdOutput = New-Item -Path $mdPath -Name "$($mdFile).md" -Force -ItemType File -ErrorAction Stop
+        } catch {
+            Write-Warning "Failed to create markdown file"
+            Write-Warning $_
+            Exit 1
+        }
+    } else {
+        ## Create a new one with a date stamp
+        Write-Screen -Message "Markdown File: $($mdFile) Already exists, creating a new file with a date stamp"
+        try {
+            $dateTime = Get-Date
+            $formattedDateTime = $dateTime.ToString("yyyy-MM-dd_HH-mm-ss")
+            $NewMDFile = ($mdFile + "_" + $formattedDateTime + ".md")
+            #$NewMDFile = $NewMDFile -replace "README.MD","README"
+            $mdOutput = New-Item -path $mdPath -Name "$NewMDFile" -ErrorAction Stop
+            $mdFullFile = $mdPath + "\" + $NewMDFile
+            Write-Screen -Message "Markdown file is $($mdFullFile)"
+        } catch {
+            Write-Warning "Failed to create markdown file"
+            Write-Warning $_
+            Exit 1
+        }
+    }
+
+    return $mdOutput
+} # Create a Markdown Output File
+
 #endregion Functions
 
 #region Variables
@@ -331,7 +372,8 @@ function Add-Graphs {
 # User Input Script Variables
 $maxLength = 65536
 [System.Console]::SetIn([System.IO.StreamReader]::new([System.Console]::OpenStandardInput($maxLength), [System.Console]::InputEncoding, $false, $maxLength))
-$icons = @('Nutanix-Logo','bootinfo','hardware','infrastructure','broker','targetvm','loginenterprise','testicon','leresults','hostresources','clusterresources','logintimes','individualruns','appresults','euxmeasurements','filesicon','citrixnetscaler','base_image','sample-eux-score-graph','sample-login-enterprise-graph','rdainfo','appsperf')   
+$icons = @('Nutanix-Logo','bootinfo','hardware','infrastructure','broker','targetvm','loginenterprise','testicon','leresults','hostresources','clusterresources','logintimes','individualruns','appresults','euxmeasurements','filesicon','citrixnetscaler','base_image','sample-eux-score-graph','sample-login-enterprise-graph','rdainfo','appsperf') 
+$RAFiles = @('executive-summary', 'introduction', 'application-overview', 'virtual-apps-desktops-nutanix', 'solution-design', 'validation-benchmarking', 'validation-results', 'conclusion', 'appendix')    
 
 #region Report Sections
 # -----------------------------------------------------------------------------------------------------------------------
@@ -355,104 +397,558 @@ if ( $ExcludedComponentList -notcontains "NutanixFiles" ) { $NutanixFiles = $tru
 # Section - Boiler Plates
 # -----------------------------------------------------------------------------------------------------------------------
 
-#region Boilerplate Intro
-$BoilerPlateIntroduction = @"
-This document is part of the Nutanix Solutions Architecture Artifacts. We wrote it for individuals responsible for designing, building, managing, testing and supporting Nutanix infrastructures. Readers should be familiar with Nutanix and Citrix products as well as familiar with Login Enterprise testing.
+#region Boiler Plate Exec Summary
 
-"@
-#endregion Boilerplate Intro
-
-#region Boilerplate Appendix
-$BoilerPlateAppendix = @"
-### Login Enterprise
-
-[Login VSI](http://www.loginvsi.com/) provides the industry-standard virtual desktop testing platform, Login Enterprise, which helps organizations benchmark and validate the performance and scalability of their virtual desktop solutions. With Login Enterprise, IT teams can reliably measure the effects of changes to their virtual desktop infrastructure on end-user experience and identify performance issues before they impact the business. Login Enterprise uses synthetic user workloads to simulate real-world user behavior, so IT teams can measure the responsiveness and performance of their virtual desktop environment under different scenarios. Login Enterprise has two built-in workloads: The [task worker](https://support.loginvsi.com/hc/en-us/articles/6949195003932-Task-Worker-Out-of-the-box) and [knowledge worker](https://support.loginvsi.com/hc/en-us/articles/6949191203740-Knowledge-Worker-Out-of-the-box).
-
-<note>You can't compare the Login Enterprise workloads to the workloads included in the previous edition of Login VSI. The Login Enterprise workloads are much more resource intensive.</note>
-
-The following table includes both workloads available in Login Enterprise.
-
-_Table: Login Enterprise Workloads_
-
-| **Task Worker** | **Knowledge Worker** |
-| --- | --- |
-| Light | Medium |
-| 2 vCPU | 2 - 4 vCPU |
-| 2 - 3 apps | 4 - 6 apps |
-| No video | 720p video |
-
-#### Login Enterprise EUX Score
-
-According to the [Login Enterprise documentation](https://support.loginvsi.com/hc/en-us/articles/4408717958162-Login-Enterprise-EUX-Score-), the EUX (End User Experience) Score represents the performance of any Windows machine (virtual, physical, cloud, or on-premises). The score ranges from 0 to 10 and measures the experience of one (minimum) or many virtual users.
-
-<note>As you add more users to your VDI platform, expect your EUX Score to drop. As more users demand a greater share of a VDI systems shared resources, performance and user experience decrease.</note>
-
-We interpret EUX Scores with the grades in the following table.
-
-_Table: EUX Score Grades_
-
-| **EUX Score** | **Grade** |
-| --- | --- |
-| 1 - 5 | Bad |
-| 5 - 6 | Poor |
-| 6 - 7 | Average |
-| 7 - 8 | Good |
-| 8 - 10 | Excellent |
-
-![Sample EUX Score Graph](../images/sample-eux-score-graph.png "Sample EUX Score Graph")
-
-#### Login Enterprise VSImax
-
-For our test results, we used the 2023 EUX Score's version of VSImax. In this version, a number of triggers determine the VSImax (or the maximum number of users). These triggers are CPU- and disk-related operations and can determine whether the user experience is acceptable. EUX Scores below 5.5 are one example of a trigger.
-
-We found that we could use this version of the VSImax to do an A/B comparison, but the VSImax on its own doesn't represent the maximum user density accurately. For a more realistic maximum number of users, we suggest using the number of active users at the moment when the EUX Score is 85 to 90 percent of the initial EUX Score.
-
-<note>In the 2023 release of EUX Score, the disk-related operations of EUX have an unrealistic impact on storage. In our testing, we discovered that the IOPS are up to 10 times higher when the EUX metrics are enabled, with a read-to-write ratio of 70:30 percent during the steady state. In reality, a knowledge worker has a much lower I/O profile and a read-to-write ratio of 20 percent to 30 percent reads and 70 percent to 80 percent writes.</note>
-
-#### Login Enterprise Metrics
-
-We quantified the evaluation using the following metrics:
-
-- EUX base: The average EUX Score of the first 5 minutes.
-- EUX Score: The average EUX Score for the entire test.
-- Steady State Score: The average EUX Score starting 5 minutes after the final logon to the end of the test.
-- Average logon time: The average user logon time.
-- VSImax: If reached, the maximum value of sessions launched before the VSI Index Average reaches one of the thresholds.
-- Maximum CPU usage: The maximum observed CPU usage during the test.
-- CPU usage during steady state: The average CPU usage during the steady state, or the state when all the sessions are active and using applications. This state simulates user activity during the entire day, rather than just during the logon period.
-
-The Baseline and Steady State EUX Scores provide additional dimensions to the simulated user experience. The Standard EUX Score provides a single score for the entire test duration, including the login period and the application interaction period. As you add more users to the system you're testing, it works harder, and the user experience diminishes. The Steady State and Baseline EUX Scores describe the user experience during specific periods of the test run.
-
-Baseline EUX Score
-: The Baseline EUX Score represents the best possible performance of the system and is the average EUX Score of the best 5 minutes of the test. This score indicates how the system performs when it's not under stress. Typically you capture the Baseline EUX Score at the beginning of the test before the system is fully loaded.
-
-Steady State EUX Score
-: The steady state represents the period after all users have logged on (login storm) and the system has started to normalize. The Steady State EUX Score is the average of the EUX Scores captured between 5 minutes after all sessions have logged in and at the end of the test.
-
-### Login Enterprise Graph
-
-The Login Enterprise graph shows the values obtained during the launch for each desktop session. The following figure is an example graph of the test data. The y-axis on the left side measures the EUX Score, the y-axis on the right side measures the number of active sessions, and the x-axis represents the test duration in minutes. We configured our benchmark test to sign in all sessions in 48 minutes, followed by a steady state of 20 minutes.
-
-![Sample Login Enterprise Graph](../images/sample-login-enterprise-graph.png "Sample Login Enterprise Graph")
-
-"@
-#endregion Boilerplate Appendix
-
-#region Boilerplate Exec Summary
 $BoilerPlateExecSummary = @"
+# Executive Summary
+
 Nutanix designed its software to give customers running workloads in a hybrid cloud environment the same experience they expect from on-premises Nutanix clusters. Because Nutanix in a hybrid multicloud environment runs AOS and AHV with the same CLI, UI, and APIs, existing IT processes and third-party integrations continue to work regardless of where they run.
+
+![Overview of the Nutanix Hybrid Multicloud Software](../images/overview-hybrid-multicloud-software.png "Overview of the Nutanix Hybrid Multicloud Software")
 
 Nutanix AOS can withstand hardware failures and software glitches and ensures that application availability and performance are never compromised. Combining features like native rack awareness with public cloud partition placement groups, Nutanix operates freely in a dynamic hybrid multicloud environment.
 
+Citrix Virtual Apps and Desktops on Nutanix is a powerful solution that offers unrivaled user experience, simple administration, and web-scale flexibility and economics. In this reference architecture, we make recommendations for designing, optimizing, and scaling Citrix Virtual Apps and Desktops deployments on Windows desktops on Nutanix AHV with Citrix Machine Creation Services (MCS) and Citrix Provisioning (PVS). We used Login Virtual Session Indexer (Login VSI) and an intelligent scripting framework on Nutanix to simulate real-world workloads in a Virtual Apps and Desktops environment.
+
 In addition to desktop and application performance reliability, you get unlimited scalability, data locality, AHV clones, and a single datastore when you deploy Citrix Virtual Apps and Desktops on Nutanix. Nutanix takes the Citrix commitment to simplicity to another level with streamlined management, reduced rollout time, and lower operating expenses.
 "@
-#endregion Boilerplate Exec Summary
 
-#region Boilerplate Conclusion
-$BoilerPlateConclusion = @"
-This document is part of the Nutanix Solutions Architecture Artifacts. We wrote it for individuals responsible for designing, building, managing, testing and supporting Nutanix infrastructures. Readers should be familiar with Nutanix and Citrix products as well as familiar with Login Enterprise testing.
+#endregion Boiler Plate Exec Summary
+
+#region BP Introduction
+
+$BoilerPlateIntroduction = @"
+# Introduction
+
+## Audience
+
+This reference architecture is part of the Nutanix Solutions Library. We wrote it for individuals responsible for designing, building, managing, and supporting Citrix Virtual Apps and Desktops on Nutanix infrastructures. Readers should be familiar with Nutanix AOS, Prism, AHV, and Citrix Virtual Apps and Desktops.
+
+## Purpose
+
+This document covers the following subject areas:
+
+- Overview of the Nutanix solution.
+- Overview of Citrix Virtual Apps and Desktops and its use cases.
+- The benefits of running Citrix Virtual Apps and Desktops on Nutanix AHV.
+- Design and configuration considerations for building a Citrix Virtual Apps and Desktops solution on Nutanix AHV.
+- <UPDATE_HERE>
+
+## Document Version History 
+
+| Version Number | Published | Notes |
+| :---: | --- | --- |
+| <ADD> | <PREVIOUS> | <VERSIONS> |
+| <UPDATE_HERE> | <UPDATE_HERE> | <UPDATE_HERE> |
 "@
-#endregion Boilerplate Conclusion
+
+#region BP Application Overview
+
+$BoilerPlateApplicationOverview = @"
+# Application Overview
+
+Citrix Virtual Apps and Desktops is a desktop virtualization solution that transforms desktops and applications into secure, on-demand services available to any user, anywhere, on any device. With Virtual Apps and Desktops, you can deliver individual Windows, web, and SaaS applications, and even full virtual desktops to PCs, Macs, tablets, smartphones, laptops, and thin clients with a high-definition user experience.
+
+Citrix Virtual Apps and Desktops provides a complete virtual desktop and application delivery system by integrating several distributed components with advanced configuration tools that simplify the creation and real-time management of the virtual desktop infrastructure.
+
+The following components make up the core of Virtual Apps and Desktops. For more detailed information about these components and guidance for running them on Nutanix, see the [Citrix Virtual Apps and Desktops on Nutanix best practice guide](https://portal.nutanix.com/page/documents/solutions/details?targetId=BP-2079-Citrix-Virtual-Apps-and-Desktops:BP-2079-Citrix-Virtual-Apps-and-Desktops).
+
+Delivery Controller
+: The Delivery Controller authenticates users, manages the assembly of users' virtual desktop environments, and brokers connections between users and their virtual desktops. It's installed on servers in the datacenter and controls the state of the desktops, starting and stopping them based on demand and administrative configuration. In some editions, the Citrix license needed to run Virtual Apps and Desktops also includes profile management to manage user personalization settings in virtualized or physical Windows environments.
+
+Studio
+: Citrix Studio is the management console where you configure and manage your Citrix Virtual Apps and Desktops environment. It provides different wizard-based deployment or configuration scenarios to publish resources using desktops or applications.
+
+Machine Creation Services (MCS)
+: Machine Creation Services is the building mechanism of the Citrix Delivery Controller that automates and orchestrates desktop deployment using a single image. MCS communicates with the orchestration layer of your hypervisor, providing a robust and flexible method of image management.
+
+Provisioning (PVS)
+: Citrix Provisioning creates and provisions virtual desktops from a single desktop image on demand, optimizing storage utilization and providing a pristine virtual desktop to each user every time they log on. Desktop provisioning also simplifies desktop images, provides optimal flexibility, and offers fewer points of desktop management for both applications and desktops.
+
+Virtual Delivery Agent (VDA)
+: The Virtual Delivery Agent is installed on virtual desktops and enables direct FMA (FlexCast Management Architecture) connections between the virtual desktop and user devices.
+
+Workspace app
+: The Citrix Workspace app runs on user devices and enables direct HDX connections from user devices to applications and desktops using Citrix Virtual Apps and Desktops. The Citrix Workspace app allows access to published resources from your desktop, Start menu, web browser, or Citrix Workspace app user interface.
+
+FlexCast
+: Citrix Virtual Apps and Desktops with FlexCast delivers virtual desktops and applications tailored to meet the diverse performance, security, and flexibility requirements of every worker in your organization. Centralized, single-instance management helps you deploy, manage, and secure user desktops easily and efficiently.
+
+## Provisioning Software Development Kit
+
+The Citrix Provisioning Software Development Kit (SDK) is a recent addition to the Virtual Apps and Desktops platform for developers and technology partners. It applies the power and flexibility of Citrix-provisioned VMs to any hypervisor or cloud infrastructure service you choose.
+
+The SDK enables you to create your own Provisioning plug-in, which you can add to the plug-ins installed by default with the Virtual Apps and Desktops products. Once you install your plug-in, the Delivery Controller services discover and load it automatically. It then appears as a new connection type in Citrix Studio, allowing you to easily connect, configure, and provision on your chosen infrastructure platform using two key features:
+
+1. A set of .NET programming interfaces used to call your Provisioning plug-in whenever it needs to act. Your plug-in takes the form of a .NET assembly (DLL) that implements these interfaces. A plug-in must implement several .NET interfaces, but each is designed to be small and easy to understand. Most interfaces have both a synchronous and an asynchronous variant, allowing you to choose the programming pattern that works best.
+2. The Citrix Common Capability Framework, which lets the rest of the product understand the specific custom features of your infrastructure and how you want those features displayed in Citrix Studio. The framework uses a high-level, XML-based description language. Your plug-in uses this language to produce specifications that allow Citrix Studio to intelligently adapt its task flows and wizard pages.
+
+The plug-in you make with the Citrix Provisioning SDK allows you to create the connection between Studio and AHV and gives you access to all the APIs offered through AHV. However, before you can use it, you need to install the Nutanix AHV plug-in for Citrix.
+
+### Nutanix AHV Plug-In for Citrix
+
+We designed the Nutanix AHV plug-in for Citrix (also called the MCS plug-in SDK) to create and manage Citrix-provisioned VMs in an AHV infrastructure environment. We developed the plug-in based on the Citrix-defined plug-in framework.
+
+Install the Nutanix AHV plug-in for Citrix (MCS plug-in SDK) on all Delivery Controllers in the site for single-zone sites. For multizone sites, you must install the AHV plug-in for Citrix on all the primary-zone and satellite-zone Delivery Controllers where you plan to deploy Nutanix. This integration results in the architecture shown in the following figure.
+
+![MCS on AHV Architecture](../images/mcs-on-ahv-architecture.png "MCS on AHV Architecture")
+
+When you load the Nutanix AHV plug-in on an existing Virtual Apps and Desktops installation (versions 7.9 and later), you receive the additional services to deploy and manage your desktops from the Delivery Controller on an AHV cluster, and you have the full native integration that Nutanix supports for Microsoft System Center Virtual Machine Manager (SCVMM) and VMware vCenter.
+
+For detailed information on how to create the connection between Studio and your AHV cluster using the Nutanix AHV plug-in for Citrix, see the Nutanix AHV Plug-In for Citrix: Studio-to-AHV Connection section in the appendix.
+
+Each VM you create from the base has two disks assigned to it: an identity disk and a difference disk. Each VM has a disk chain to the base VM snapshot you used to create the deployed VMs.
+
+![MCS Disk Layout](../images/mcs-disk-layout.png "MCS Disk Layout")
+
+- Base VM: A single base disk residing on a shared datastore that's mounted on the hosts in the cluster and configured with the Studio host connection.
+- Identity disk (or ID disk): A very small disk (16 MB maximum) that contains identity information. This information provides a unique name for the VM and allows it to join Active Directory.
+- Difference disk (write cache): This disk separates the writes from the base disk, but the system still acts as if the write has been committed to the base disk.
+
+The identity disk and the difference disk together make the provisioned VM unique.
+
+### Nutanix AHV Plug-In for Citrix Provisioning 
+
+You must have the Nutanix AHV plug-in for Citrix configured before you can use the Nutanix AHV plug-in for Citrix Provisioning that we developed using the Citrix Provisioning SDK. This configuration allows the Citrix Virtual Apps and Desktops Setup wizard to create and manage Provisioning target devices on AHV and enables the architecture shown in the following figure.
+
+![Provisioning on AHV Architecture](../images/provisioning-on-ahv-architecture.png "Provisioning on AHV Architecture")
+
+Loading the Nutanix AHV plug-in for Citrix Provisioning on an existing Provisioning installation (versions 7.15 and later):
+
+- Enables you to use Provisioning to deploy and manage your desktops.
+- Integrates your AHV cluster with Delivery Controllers.
+- Uses the Citrix Virtual Apps and Desktops Setup wizard to deploy device collections in Provisioning and machine catalogs in Citrix Virtual Apps and Desktops.
+
+This plug-in requires the AHV plug-in for Citrix to allow Delivery Controllers to manage workloads running on Nutanix AHV. Install the AHV plug-in for Citrix Provisioning in the farm for single-site farms or in the same site for multisite farms. This setup has the full native integration that Nutanix supports for SCVMM and vCenter.
+
+For more details on how to create a machine catalog with Provisioning, see the Nutanix AHV Plug-In for Citrix Provisioning: Machine Catalog Creation section in the appendix.
+
+Each VM you create has one disk assigned to it except the Provisioning target device VM, which has a streamed vDisk and a write cache together.
+
+![Provisioning Disk Layout](../images/provisioning-disk-layout.png "Provisioning Disk Layout")
+
+- Base VM: A single base disk residing on a shared datastore that's mounted on the hosts in the cluster and configured with the Studio host connection.
+- Streamed vDisk: A thin-provisioned virtual disk streamed from Citrix Provisioning that contains the OS and applications.
+- Write cache: This disk separates the writes from the base disk, while the system still acts as if the write has been committed to the base disk.
+"@
+#endregion BP Application Overview
+
+#region BP CVAD on Nutanix
+
+$BoilerPlateCVADonNutanix = @"
+# Virtual Apps and Desktops on Nutanix
+
+The Nutanix modular web-scale architecture lets you start small and expand to meet increasing demand—a node, a block, or multiple blocks at a time—with no impact on performance. This design removes the hurdle of a large initial infrastructure purchase, decreasing the time to value for your Virtual Apps and Desktops implementation. Running Citrix Virtual Apps and Desktops on Nutanix enables you to run multiple workloads, all on the same scalable converged infrastructure, while achieving these benefits:
+
+Modular incremental scale
+: With the Nutanix solution you can start small and scale up. A single Nutanix block provides dozens of terabytes of storage and hundreds to thousands of virtual desktops in a compact footprint. Given the modularity of the solution, you can granularly scale by node, by block, or with multiple blocks, accurately matching supply with demand and minimizing the up-front capex.
+
+
+High performance
+: By using system memory caching for read I/O and flash storage for read and write I/O, you can deliver high-performance throughput in a compact form factor.
+
+Change management
+: Maintain environmental control and separation between development, test, staging, and production environments. Snapshots and fast clones can help share production data with nonproduction jobs without requiring full copies and unnecessary data duplication.
+
+Business continuity and data protection
+: User data and desktops are mission-critical and need enterprise-grade data management features, including backup and disaster recovery.
+
+Data efficiency
+: Nutanix storage offers both compression and deduplication to help reduce your storage footprint. The compression functionality is truly VM-centric. Unlike traditional solutions that perform compression mainly at the LUN level, the Nutanix solution provides all these capabilities at the VM and file levels, greatly increasing efficiency and simplicity. These capabilities ensure the highest possible compression and decompression performance, even below the block level.
+
+Enterprise-grade cluster management
+: Nutanix offers a simplified and intuitive approach to managing large clusters, including a converged GUI that serves as a central point for servers and storage, alert notifications, and the bonjour mechanism that automatically detects new nodes in the cluster.
+
+High-density architecture
+: Nutanix uses an advanced server architecture that, using the NX-3000 series as an example, can house eight Intel CPUs (up to 192 cores) and up to 8 TB of memory in a single 2RU appliance. Coupled with data archiving and compression, Nutanix can make the desktop hardware footprint five times smaller.
+
+Time-sliced clusters
+: Like public cloud EC2 environments, Nutanix can provide a truly converged cloud infrastructure, allowing you to run your server and desktop virtualization on a single cloud.
+
+## Virtual Apps and Desktops on AHV
+
+The following figure presents the main architectural components of Virtual Apps and Desktops on AHV and the communication path between services.
+
+![Communication Path](../images/communication-path.png "Communication Path")
+
+## AHV Pod Design
+
+The next tables contain highlights from a high-level snapshot of Virtual Apps and Desktops on a Nutanix-hosted virtual desktop pod.
+
+_Table: AHV Services Pod Detail_
+
+| Item | Quantity |
+| --- | :---: |
+| Number of Delivery Controllers | 2 |
+| Number of StoreFront servers | 2 |
+| Number of Provisioning servers | 2 |
+
+_Table: AHV Control Pod Detail_
+
+| Item | Quantity |
+| --- | :---: |
+| Number of AHV hosts | Up to 16 |
+| Number of Nutanix clusters | 1 |
+| Number of datastores | 1 |
+| Number of desktops | Up to 2,475 |
+
+We recommend a maximum of 16 AHV host nodes per Nutanix AHV cluster. We validated Citrix Virtual Apps and Desktops with Windows desktop VDAs, using 3 vCPU and 4 GB of memory per VM and 165 VMs per node, with 2,475 Windows desktop VDAs per AHV cluster.
+
+<note>
+One node is calculated as a spare (n + 1).
+</note>
+
+If you change the vCPU count or memory, the number of Windows VDAs per node and per cluster change as well.
+
+## Nutanix Compute and Storage
+
+Nutanix provides an ideal combination of high-performance compute and localized storage to meet any demand. True to this capability, this reference architecture contains no reconfiguration or customization of the Nutanix product to optimize for this use case. The following figure shows a high-level example of the relationship between the Nutanix storage pool and containers.
+
+![Nutanix Logical Storage Configuration](../images/nutanix-logical-storage-configuration.png "Nutanix Logical Storage Configuration")
+
+The following table details the Nutanix storage pool and container configuration.
+
+_Table: Nutanix Storage Configuration_
+
+| Name | Role | Details |
+| --- | --- | --- |
+| SP01 | Main storage pool for all data | SSD + HDD |
+| VDI | Container for all VMs | AHV datastore |
+| Default-Container | Container for all data (not used here) | AHV datastore |
+"@
+#endregion BP CVAD on Nutanix
+
+#region BP Solution Design
+
+$BoilerPlateSolutionDesign = @"
+# Solution Design
+
+In the following section, we cover the design decisions and rationale for Virtual Apps and Desktops deployments on Nutanix.
+
+_Table: Platform Design Decisions: General_
+
+| Item | Detail | Rationale |
+| --- | --- | --- |
+| Software versions | Citrix Virtual Apps and Desktops 1912 CU4; Citrix Provisioning 1912 CU4; AOS 5.20.3 |  |
+| Minimum size | 3 Nutanix AOS hosts running AHV | Minimum size requirement |
+| Scale approach | Incremental modular scale | Allows growth from PoC (hundreds of desktops) to massive scale (thousands of desktops) |
+| Scale unit  | Nodes, blocks, or pods | Granular scale to precisely meet capacity demands; scale in n node increments |
+
+_Table: Platform Design Decisions: Nutanix AHV_
+
+| Item | Detail | Rationale |
+| --- | --- | --- |
+| Cluster size | As many as 16 hosts (minimum of 3 hosts) | Isolated fault domains (best practice) |
+| Datastores | 1 Nutanix datastore per pod (Virtual Apps and Desktops server VMs, VM clones, and so on) | Nutanix handles I/O distribution and localization; n-Controller model |
+| Infrastructure services | Small deployments: Shared cluster; Large deployments: Dedicated cluster | Dedicated infrastructure cluster for larger deployments (best practice) |
+
+_Table: Platform Design Decisions: Nutanix_
+  
+| Item | Detail | Rationale |
+| --- | --- | --- |
+| Cluster size | As many as 16 nodes | Isolated fault domains (best practice) |
+| Storage pools | 1 storage pool per cluster | Standard practice; intelligent tiering handles data locality |
+| Containers | 1 container for VMs | Standard practice |
+| Features and enhancements | Increase CVM memory to 24 to 32+ GB. Turn on deduplication and compression for persistent desktops. Turn on compression only for nonpersistent desktops. (We set the CVM to 32 GB for the RA.) | Best practice |
+  
+_Table: Platform Design Decisions: Citrix Virtual Apps and Desktops_
+
+| Item | Detail | Rationale |
+| --- | --- | --- |
+| Delivery Controllers | Minimum: 2 (n + 1); Scale: 1 per additional pod | High availability for Delivery Controllers |
+| Users per controller | Up to 5,000 users | Virtual Apps and Desktops best practice |
+| Load balancing | Built into Delivery Controllers | Ensures availability of Delivery Controllers; balances load between Delivery Controllers |
+| Virtual hardware specs | vCPU: 4; Memory: 4+ GB (local host cache); Disk: 60 GB vDisk | Standard sizing practice |
+
+_Table: Platform Design Decisions: Citrix Provisioning_
+
+| Item | Detail | Rationale |
+| --- | --- | --- |
+| Provisioning servers | Minimum: 2 (n + 1); Scale: 2 per additional pod | High availability for Provisioning server |
+| Load balancing | Built into Provisioning servers | Balances load between Provisioning servers |
+| Virtual hardware specs | vCPU: 4; Memory: 12+ GB (number of vDisks); Disk: 60 GB vDisk | Standard sizing practice |
+| vDisk store | Dedicated disk on Nutanix or Nutanix Files shared vDisk Store | Standard practice |
+| Write cache | On local hard drive | Best practice if the storage can provide enough I/O |
+
+_Table: Platform Design Decisions: Citrix StoreFront_
+
+| Item | Detail | Rationale |
+| --- | --- | --- |
+| StoreFront servers | Minimum: 2 (n + 1) | High availability for StoreFront servers |
+| Load balancing | Citrix NetScaler (including Citrix NetScaler VPX) | Ensures availability of StoreFront servers; balances load between StoreFront servers | 
+| Virtual hardware specs | vCPU: 2+; Memory: 4+ GB; Disk: 60 GB vDisk | Standard sizing practice |
+| NetScaler virtual appliances | Minimum: 2 | High availability for NetScaler (active-passive) |
+| Users per NetScaler virtual appliance | See product data sheet (`https://www.citrix.com/products/citrix-adc/platforms.html`) | Varies per model |
+| Load balancing | NetScaler high availability | Ensures availability of NetScaler virtual appliances; balances load between Application Delivery Controller servers and pods |  
+
+_Table: Infrastructure Design Decisions: Active Directory_
+
+| Item | Detail | Rationale |
+| --- | --- | --- |
+| Global catalog and DNS servers | Minimum: 2 (n + 1) per site | High availability for global catalog and DNS; Microsoft best practice |
+
+_Table: Infrastructure Design Decisions: DHCP_
+
+| Item | Detail | Rationale |
+| --- | --- | --- |
+| DHCP servers | Nutanix IPAM | High availability for Nutanix IPAM is built in |
+| Load balancing | Built-in | Ensures availability of DHCP | 
+
+_Table: Infrastructure Design Decisions: Nutanix Files_
+
+| Item | Detail | Rationale |
+| --- | --- | --- |
+| Nutanix Files | Minimum: 3 per site | High availability for Nutanix Files servers |
+| Load balancing | Built-in | Ensures availability of Nutanix Files; balances load between Nutanix Files servers |
+
+_Table: Infrastructure Design Decisions: SQL Server_
+
+| Item | Detail | Rationale |
+| --- | --- | --- |
+| SQL Servers | Minimum: 2 (n + 1) per site; Scale: 2 per additional pod | High availability for SQL Servers |
+| Data protection | SQL Server clustering, mirroring, or Always On availability groups (including basic availability groups) | Ensures availability of SQL Server instances |
+
+## Desktop Sizing
+
+Nutanix can host Citrix Virtual Apps and Desktops workloads. Densities can vary based on specific images and workloads. For testing, we used [Login VSI](http://www.loginvsi.com), the industry-standard load testing solution for centralized virtualized desktop environments. We based the virtual desktops on knowledge worker workload densities.
+
+The following table contains examples of typical scenarios for desktop deployment and use.
+
+_Table: Desktop Scenario Definition_
+
+| Scenario | Definition |
+| --- | --- |
+| Task workers | Task workers and administrative workers perform repetitive tasks in a small set of applications, usually at a stationary computer. The applications used by task workers generally require less CPU and memory than those used by knowledge workers. Task workers who work specific shifts might all log on to their virtual desktops at the same time. Task workers include call center analysts, retail employees, and warehouse workers. |
+| Office workers | Office workers are similar to task workers, but they use more applications and generate a slightly heavier workload. |
+| Knowledge workers | Knowledge workers' daily tasks include accessing the internet, using email, and creating complex documents, presentations, and spreadsheets. Knowledge workers include accountants, sales managers, and marketing research analysts. |
+| Power workers | Power workers include application developers and people who use graphics-intensive applications. |
+
+The following table contains initial recommendations for sizing a Windows 10 or 11 desktop. We assume that 1 vCPU is unrealistic for most workloads involving Windows 10 or 11—only assume 1 vCPU per desktop for desktops delivering a single application.
+
+<note>
+Modify these general sizing recommendations after a current state analysis.
+</note>
+
+_Table: Desktop Scenario Sizing_
+
+| Scenario | vCPU | Memory | Disks |
+| --- | :---: | :---: | :---: |
+| Task workers | 1 to 2 | 1.5 GB | 40 GB (OS) |
+| Office workers | 2 | 2 to 3 GB | 40 GB (OS) |
+| Knowledge workers | 2 to 4 | 3 to 6 GB | 80 GB (OS) |
+| Power workers | 4 | 6+ GB | 100+ GB (OS) |
+
+## Desktop Optimizations
+
+We generated our design with the following high-level desktop optimization guidelines in mind:
+
+- Size desktops appropriately for each use case.
+- Use a mix of applications installed in template images, application layering, and virtualization.
+- Disable unnecessary OS services and applications.
+- Redirect home directories or use a profile management tool for user profiles and documents.
+
+For more details on desktop optimizations, refer to the [Citrix Windows 10 Optimization Guide](https://support.citrix.com/article/CTX216252) and the [Citrix Optimizer](https://support.citrix.com/article/CTX224676).
+"@
+
+#endregion BP Solution Design
+
+#region BP Validation and Benchmarking
+
+$BoilerPlateValidationandBenchmarking = @"
+# Validation and Benchmarking
+
+We completed the solution design and testing described in this document with Citrix Virtual Apps and Desktops 7 1912 LTSR CU4 deployed on Nutanix. We used Login VSI 4.1 to validate the performance of Citrix Virtual Apps and Desktops running on Nutanix. This section describes the Login VSI benchmarking method and the infrastructure we used for the tests.
+
+## Login VSI Benchmark
+
+[Login VSI](http://www.loginvsi.com) provides performance insights for virtualized desktop and server environments. Enterprise IT departments use Login VSI products in all phases of VDI operations management—from planning to deployment to change management—for more predictable performance, higher availability, and a more consistent user experience. You can find more information about Login VSI test workloads in the blog post [Login VSI Default Workloads Information](https://support.loginvsi.com/hc/en-us/articles/360001046100-Login-VSI-Workloads-Default-workloads-information).
+
+The following table includes all four workloads available on Login VSI 4.1.
+
+_Table: Login VSI 4.1 Workloads_
+
+| Task Worker | Office Worker | Knowledge Worker | Power Worker |
+| --- | --- | --- | --- |
+| Light | Medium | Medium | Heavy |
+| 1 vCPU | 1 vCPU | 2 vCPU | 2 to 4 vCPU |
+| 2 to 3 apps | 4 to 6 apps | 4 to 7 apps | 5 to 9 apps |
+| No video | 240p video | 360p video | 720p video |
+
+### Login VSI Workflows
+
+The [Login VSI Default Workloads Information page](https://support.loginvsi.com/hc/en-us/articles/360001046100-Login-VSI-Workloads-Default-workloads-information) captures the Login VSI workflow base layout in detail.
+
+_Table: Login VSI 4.1 Workflows_
+
+| Configurable | Task Worker | Office Worker | Knowledge Worker | Power Worker |
+| --- | :---: | :---: | :---: | :---: |
+| Apps open | 2 to 7 | 5 to 8 | 5 to 9 | 8 to 12 |
+| CPU usage | 70% | 82% | 100% | 119% |
+| Disk reads | 79% | 90% | 100% | 133% |
+| Disk writes | 77% | 101% | 100% | 123% |
+| IOPS | 6 | 8.1 | 8.5 | 10.8 |
+| Memory | 1 GB | 1.5 GB | 1.5 GB | 2 GB |
+| vCPU | 1 | 1 | 2 | 2+ |
+
+### Interpreting Login VSI Results
+
+Login VSI values represent the time it takes for an application or task to complete (launching Outlook, for example) and aren't in addition to traditional desktop response times. These figures don't refer to the round-trip time (RTT) for network I/O; rather, they refer to the total time to perform an action on the desktop. During the test, we turned on all VMs and started the workload on a new desktop every 30 seconds until all sessions and workloads were active. The workload used a launch window of 2,880 seconds for all tests.
+
+We quantified the evaluation using the [following metrics](https://support.loginvsi.com/hc/en-us/articles/360001069359-Login-VSI-Using-the-Analyzer-and-analyzing-results):
+
+- Minimum Response: The minimum application response time.
+- Average Response: The average application response time.
+- Maximum Response: The maximum application response time.
+- VSI Baseline: The average application response time of the first 15 measurements.
+- VSI Index Average: The average response time, dropping the highest and lowest two percent.
+- VSImax: If reached, the maximum value of sessions launched before the VSI index average reaches 1,000 ms above the VSI baseline.
+- CPU usage during steady state: The state when all the sessions are signed in and continue to use the applications. This state simulates the state of the users during the entire day, rather than just during the logon period.
+
+We recommend that you keep track of these response times as well as the average CPU usage of the hosts used during the test.
+
+_Table: Login VSI Metric Values_
+
+| Metric | Value |
+| --- | :---: |
+| Very good VSI Baseline | \<800 ms |
+| Good VSI Baseline | 800 to 1,200 ms |
+| Average VSI Baseline | \>1,200 ms |
+| Ideal CPU usage during steady state | \<85% |
+
+### Login VSI Graphs
+
+Login VSI graphs show the values obtained during the launch for each desktop session. The following figure shows an example graph of the test data. The y-axis is the response time in milliseconds, and the x-axis is the number of active sessions.
+
+![Sample Login VSI Graph](../images/sample-login-vsi-graph.png "Sample Login VSI Graph")
+
+## Infrastructure Configuration 
+
+In this section you can read about the hardware we used for this reference architecture.
+
+### Management Infrastructure Cluster
+
+We used one Nutanix NX-3060-G7 cluster with four nodes to host all infrastructure and Citrix services and the Login VSI components. Active Directory services, DNS, DHCP, and the SQL Server also ran inside this cluster, which we designated the management infrastructure cluster. With four nodes we had enough resources available to host these servers. The following table shows the Citrix configuration.
+
+_Table: Citrix Configuration_
+
+| VM | Quantity | vCPU | Memory | Disks |
+| --- | :---: | :---: | :---: | :---: |
+| Delivery Controllers | 2 | 4 | 8 GB | 1 times 60 GB (OS) |
+| StoreFront | 1 | 2 | 4 GB | 1 times 60 GB (OS) |
+| SQL | 1 | 4 | 8 GB | 3 times 60 GB (OS, DATA, logs) |
+
+### Login VSI Launcher Cluster
+
+To initiate the sessions to the virtual desktops, Login VSI uses launcher VMs. Depending on the display protocol used, one launcher VM can host up to 25 sessions. For this reference architecture, we used one Nutanix NX-3060-G7 cluster with eight nodes to host 90 launcher VMs. Each launcher VM had 4 vCPU and 4 GB of memory.
+
+### Virtual Desktop Cluster
+
+Eight Nutanix NX-3155G-G8 nodes formed the cluster to host all virtual desktops. The next tables contain the specifications of this cluster.
+
+_Table: Virtual Desktop Cluster Specifications_
+
+| Parameter | Setting |
+| --- | --- |
+| Block type | Nutanix NX-3155G-G8 |
+| Number of blocks | 8 |
+| Number of nodes | 8 |
+| CPU type | Intel Xeon Gold 6354 |
+| Number of CPUs per node | 2 |
+| Number of cores per CPU | 18 |
+| Memory per node | 1,024 GB |
+| Disk config per node | 6 times 1.9 TB SSD |
+| Network | 2 times 25 GbE |
+
+_Table: Nutanix Software Specifications_
+
+| Parameter | Setting | 
+| --- | --- |
+| Nutanix AHV version | 20201105.2244 |
+| Nutanix AOS version | 5.20.3 |
+| CVM vCPU | 12 |
+| CVM memory | 32 GB |
+| Redundancy factor | 2 |
+| Number of datastores for session-host VMs | 1 |
+| Datastore specifications | Compression: On; Compression delay: 0; Deduplication: Off |
+
+_Table: Citrix Software Specifications_ 
+
+| Parameter | Setting |
+| --- | --- |
+| Citrix Virtual Apps and Desktops version | 7.1912 CU4 |
+
+_Table: Windows 10 Template Image Configuration_ 
+
+| Parameter | Setting |
+| --- | --- |
+| Operating system | Windows 10 21H2 (x64) |
+| Windows updates | 1/11/22 |
+| CPU | 2 vCPU |
+| Memory | 4 GB |
+| Video RAM | 64 MB |
+| 3D graphics | Off |
+| NICs | 1 |
+| Virtual network adapter | Nutanix VirtIO Adapter |
+| Virtual SCSI controller 0 | Nutanix VirtIO SCSI passthrough |
+| Virtual disk VMDK1 | 64 GB |
+| Virtual CD/DVD drive 1 | Client |
+| Applications | Adobe Acrobat DC, Adobe Flash Player 11, Doro PDF 1.82, FreeMind, Internet Explorer 11, Microsoft Edge Browser, Microsoft Office 2019 (x64) |
+| Citrix Virtual Desktop Agent | 7.1912 CU4 |
+| Citrix Provisioning Services Target Device | 7.1912 CU4 |
+| Optimizations | Citrix Optimizer |
+"@
+#endregion BP Validation and Benchmarking
+
+#region BP Conslution
+$BoilerPlateConclusion = @"
+# Conclusion
+
+The Citrix Virtual Apps and Desktops and Nutanix solution provides a single high-density platform for virtual desktop delivery. This modular, linear scaling approach lets you grow Virtual Apps and Desktops deployments easily. Localized and distributed caching and integrated disaster recovery enable quick deployments and simplify day-to-day operations. Robust self-healing and multistorage controllers deliver high availability in the face of failure or rolling upgrades.
+<UPDATE_HERE>
+ADD YOUR CONCLUSION DETAILS
+"@
+#endregion BP Conclusion
+
+#region BP Appendix
+$BoilerPlateAppendix = @"
+# Appendix
+
+## Hardware Configuration
+
+Storage and compute:
+
+- <UPDATE_HERE>
+
+Network:
+
+- <UPDATE_HERE>
+
+## Software Configuration
+
+Nutanix
+
+- <UPDATE_HERE>
+
+Citrix Virtual Apps and Desktops
+
+- <UPDATE_HERE>
+
+Windows 
+
+- <UPDATE_HERE>
+
+Infrastructure
+
+- <UPDATE_HERE>
+
+## References
+
+1.  [Login Enterprise](https://www.loginvsi.com/)
+2.  [Login Enterprise EUX Score](https://support.loginvsi.com/hc/en-us/articles/4408717958162-Login-Enterprise-EUX-Score-#h_01GS8W30049HVB851TX60TDKS3)
+3.  [Login Enterprise Workload Templates](https://support.loginvsi.com/hc/en-us/sections/360001765419-Workload-Templates)
+4.  <UPDATE_HERE> - ADD ADDITIONAL REFERENCES
+"@
+#endregion BP Appendix
 
 #endregion Boilerplates
 
@@ -491,7 +987,6 @@ $Directory = (Get-Culture).TextInfo.ToTitleCase($ReportTitle) -Replace " "
 $Directory = "Reports\" + $Directory
 $ImagePath = $Directory + "\images"
 $md = $Directory + "\md"
-$mdFullFile = $md + "\" + $mdFile
 
 if (!(Test-Path -Path $Directory)) {
     Write-Screen -Message "Directory: $($Directory) Does Not Exist, Creating"
@@ -514,32 +1009,15 @@ if (!(Test-Path -Path $Directory)) {
 #endregion Checkoutput Directory
 
 #region Create Report File
-# Create the File path and initial file
-if (!(Test-Path -Path $mdFullFile)) {
-    Write-Screen -Message "Creating Markdown File: $($mdFile)"
-    try {
-        $mdOutput = New-Item -Path $md -Name $mdFile -Force -ItemType File -ErrorAction Stop
-    } catch {
-        Write-Warning "Failed to create markdown file"
-        Write-Warning $_
-        Exit 1
-    }
-} else {
-    ## Create a new one with a date stamp
-    Write-Screen -Message "Markdown File: $($mdFile) Already exists, creating a new file with a date stamp"
-    try {
-        $dateTime = Get-Date
-        $formattedDateTime = $dateTime.ToString("yyyy-MM-dd_HH-mm-ss")
-        $NewMDFile = ($mdFile + "_" + $formattedDateTime + ".MD")
-        $NewMDFile = $NewMDFile -replace "README.MD","README"
-        $mdOutput = New-Item -path $md -Name $NewMDFile -ErrorAction Stop
-        $mdFullFile = $md + "\" + $NewMDFile
-        Write-Screen -Message "Markdown file is $($mdFullFile)"
-    } catch {
-        Write-Warning "Failed to create markdown file"
-        Write-Warning $_
-        Exit 1
-    }
+# Create the File path and initial files
+$MDFileDetails = New-Object -TypeName psobject 
+$i = 1
+foreach($File in $RAFiles){
+    $DocNum = '{0:d2}' -f $i
+    $mdFile = "$($RAReference)-$($DocNum)-$($File)"
+    $FileCreated = Create-MDFile -mdPath $md -mdFile $mdFile
+    $MDFileDetails | Add-Member -MemberType NoteProperty -Name "$($i)" -Value $FileCreated
+    $i++
 }
 
 #endregion Create Report File
@@ -1106,865 +1584,67 @@ if ($NutanixFiles) {
 # -----------------------------------------------------------------------------------------------------------------------
 #region Create Report
 
-#region Create Header
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Create Header
-# -----------------------------------------------------------------------------------------------------------------------
-# Center Section
-Add-Content $mdFullFile "<div style=""text-align: center;"">"
-
-# Add Nutanix Logo
-Write-Screen -Message "Adding Nutanix Logo and Header Image"
-$Link = "<img src=../images/Nutanix-Logo.png alt=Nutanix>"
-Add-Content $mdFullFile "$($Link)"
-
-# Add Team Title
-Add-Content $mdFullFile "<h1> Solutions and Performance Engineering - EUC </h1>"
-
-# Add Boiler Plate Image
-$Link = "<img src=../images/base_image.png alt=Nutanix>"
-Add-Content $mdFullFile "$($Link)"
-
-# Create the Title 
-Write-Screen -Message "Adding Report Title"
-Add-Content $mdFullFile "<h1> $($ReportTitle) </h1>"
-
-# End Centering
-Add-Content $mdFullFile "</div>"
-
-# Create the Exec Summary
+#region Exec Summary
+$ExecFile = ($MDFileDetails.1).Name
+$ExecMD = Join-Path -Path $md -ChildPath $ExecFile
 Write-Screen -Message "Adding Executive Summary"
-Add-Title -mdFullFile $mdFullFile -Title "Executive Summary"
-Add-Content $mdFullFile "$($BoilerPlateExecSummary)"
+Add-Content $ExecMD $BoilerPlateExecSummary
+#endregion Exec Summary
 
-# Create the Introduction
+#region Introduction
+$IntroFile = ($MDFileDetails.2).Name
+$IntroMD = Join-Path -Path $md -ChildPath $IntroFile
 Write-Screen -Message "Adding Introduction"
-Add-Title -mdFullFile $mdFullFile -Title "Introduction"
-Add-Content $mdFullFile "### Audience"
-Add-Content $mdFullFile " "
-Add-Content $mdFullFile "$($BoilerPlateIntroduction)"
-Add-Content $mdFullFile "### Purpose"
-Add-Content $mdFullFile " "
-Add-Content $mdFullFile "This document covers the following subject areas:"
-Add-Content $mdFullFile " - Test Detail Specifics."
-Add-Content $mdFullFile " - Test Results for $($ReportTitle)."
-Add-Content $mdFullFile "  "
-Add-Content $mdFullFile "### Document Version History "
-Add-Content $mdFullFile "  "
-Add-Content $mdFullFile "| Version Number | Published | Notes |"
-Add-Content $mdFullFile "| :---: | --- | --- |"
-$Month = get-date -format "MM"
-$ReportMonth = (Get-Culture).DateTimeFormat.GetMonthName($Month)  
-$ReportYear = get-date -format "yyyy" 
-Add-Content $mdFullFile "| 1.0 | $($ReportMonth) $($ReportYear) | Original publication. |"
-#endregion Create Header
-
-#region Test Detail Specifics
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Test Detail Specifics
-# -----------------------------------------------------------------------------------------------------------------------
-Write-Screen -Message "Add Test Detail Header"
-Add-Title -mdFullFile $mdFullFile -Title "Test Details"
-#endregion Test Detail Specifics
-
-#region Hardware Specifics
-# -----------------------------------------------------------------------------------------------------------------------
-# Hardware Specifics Section
-# -----------------------------------------------------------------------------------------------------------------------
-$Title = "Hardware Specifics"
-Write-Screen -Message "Adding $($Title)"
-
-# Get Filtered Data
-$HardwareFiltered = $TestDetailResults | Select Name, measurement, infrahardwaretype, infracpubrand, infracputype, infracpuspeed, infracpucores, inframemorygb, infracpusocketcount, nodecount, infratotalnodes, infrassdcount, infrabios, hostgpus, comment | Sort-Object Name | Get-Unique -AsString
-
-# Add the Table Header
-Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/hardware.png alt=$($Title)>"
-
-# Build the Table Dataset
-Write-Screen -Message "Building $($Title) Data"
-[string]$HardwareType = "| **Hardware Type** | "
-[string]$CPUBrand = "| **CPU Brand** | "
-[string]$CPUType = "| **CPU Type** | "
-[string]$CPUSpeed = "| **CPU Speed** | "
-[string]$CPUCores = "| **CPU Cores Per Node** | "
-[string]$Memory = "| **Memory Per Node** | "
-[string]$Sockets = "| **Socket Count** | "
-[string]$Nodes = "| **Nodes In Test** | "
-[string]$TotalNodes = "| **Nodes In Cluster** | "
-[string]$SSD = "| **SSD Count Per Node** | "
-[string]$Bios = "| **BIOS Version** | "
-[string]$HostGPU = "| **Host GPU Type** | "
-
-foreach ($Record in $HardwareFiltered) {
-    $HardwareType = $HardwareType + "$(Get-CleanData -Data ($Record.infrahardwaretype)) | "
-    $CPUBrand = $CPUBrand + "$(Get-CleanData -Data ($Record.infracpubrand)) | "
-    $CPUSpeed = $CPUSpeed + "$(Get-CleanData -Data ($Record.infracpuspeed)) GHz | "
-    $Sockets = $Sockets + "$(Get-CleanData -Data ($Record.infracpusocketcount)) | "
-    $CPUCores = $CPUCores + "$(Get-CleanData -Data ($Record.infracpucores)) | "
-    [int]$Mem = Get-CleanData -Data ($Record.inframemorygb)
-    $MemoryFormatted = '{0:N0}' -f $Mem
-    $Memory = $Memory + "$($MemoryFormatted) GB | "
-    $Nodes = $Nodes + "$(Get-CleanData -Data ($Record.nodecount)) | "
-    $TotalNodes = $TotalNodes + "$(Get-CleanData -Data ($Record.infratotalnodes)) | "
-    $SSD = $SSD + "$(Get-CleanData -Data ($Record.infrassdcount)) | "
-    $Bios = $Bios + "$(Get-CleanData -Data ($Record.infrabios)) | "
-    $HostGPU = $HostGPU + "$(Get-CleanData -Data ($Record.hostgpus)) | "
-    $CPUType = $CPUType + "$(Get-CleanData -Data ($Record.infracputype)) | "
-}
-
-# Add the Table
-Write-Screen -Message "Adding $($Title) Data"
-Add-Content $mdFullFile $HardwareType
-Add-Content $mdFullFile $Bios
-Add-Content $mdFullFile $CPUBrand
-Add-Content $mdFullFile $CPUType
-Add-Content $mdFullFile $CPUSpeed
-Add-Content $mdFullFile $CPUBrand
-Add-Content $mdFullFile $Sockets
-Add-Content $mdFullFile $CPUCores
-Add-Content $mdFullFile $Memory
-Add-Content $mdFullFile $SSD
-Add-Content $mdFullFile $HostGPU
-Add-Content $mdFullFile $Nodes
-Add-Content $mdFullFile $TotalNodes
-
-#endregion Hardware Specifics
-
-#region Infrastructure Software specifics
-# -----------------------------------------------------------------------------------------------------------------------
-# Infrastructure Software specifics
-# -----------------------------------------------------------------------------------------------------------------------
-$Title = "Infrastructure Specifics"
-Write-Screen -Message "Adding $($Title)"
-
-# Get Filtered Data
-$InfraFiltered = $TestDetailResults | Select Name, measurement, infraaosversion, infrafullversion, infrahypervisorbrand, infrahypervisortype, infrahypervisorversion, comment | Sort-Object Name | Get-Unique -AsString
-
-# Add the Table Header
-Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/infrastructure.png alt=$($Title)>"
-
-# Build the Table Dataset
-Write-Screen -Message "Building $($Title) Data"
-[string]$infraaosversion = "| **OS Version** | "
-[string]$infrafullversion = "| **OS Full Version** | "
-[string]$infrahypervisorbrand = "| **Hypervisor Brand** | "
-[string]$infrahypervisortype = "| **Hypervisor Type** | "
-[string]$infrahypervisorversion = "| **Hypervisor Version** | "
-
-foreach ($Record in $InfraFiltered) {
-    $infraaosversion = $infraaosversion + "$(Get-CleanData -Data ($Record.infraaosversion)) | "
-    $infrafullversion = $infrafullversion + "$(Get-CleanData -Data ($Record.infrafullversion)) | "
-    $infrahypervisorbrand = $infrahypervisorbrand + "$(Get-CleanData -Data ($Record.infrahypervisorbrand)) | "
-    $infrahypervisortype = $infrahypervisortype + "$(Get-CleanData -Data ($Record.infrahypervisortype)) | "
-    $infrahypervisorversion = $infrahypervisorversion + "$(Get-CleanData -Data ($Record.infrahypervisorversion)) | "
-}
-
-# Add the Table
-Write-Screen -Message "Adding $($Title) Data"
-Add-Content $mdFullFile $infraaosversion
-Add-Content $mdFullFile $infrafullversion
-Add-Content $mdFullFile $infrahypervisorbrand
-Add-Content $mdFullFile $infrahypervisortype
-Add-Content $mdFullFile $infrahypervisorversion
-
-#endregion Infrastructure Software specifics
-
-#region Brokering Specifics
-# -----------------------------------------------------------------------------------------------------------------------
-# Brokering Specifics
-# -----------------------------------------------------------------------------------------------------------------------
-$Title = "Broker Specifics"
-Write-Screen -Message "Adding $($Title)"
-
-# Get Filtered Data
-$BrokerFiltered = $TestDetailResults | Select Name, measurement, deliverytype, desktopbrokerversion, sessionssupport, sessioncfg, comment | Sort-Object Name | Get-Unique -AsString
-
-# Add the Table Header
-Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/broker.png alt=$($Title)>"
-
-# Build the Table Dataset
-Write-Screen -Message "Building $($Title) Data"
-[string]$deliverytype = "| **Delivery Type** | "
-[string]$desktopbrokerversion = "| **Desktop Broker Version** | "
-[string]$sessionssupport = "| **Session Type** | "
-[string]$sessioncfg = "| **Session Config** | "
-
-foreach ($Record in $BrokerFiltered) {
-    $deliverytype = $deliverytype + "$(Get-CleanData -Data ($Record.deliverytype)) | "
-    $desktopbrokerversion = $desktopbrokerversion + "$(Get-CleanData -Data ($Record.desktopbrokerversion)) | "
-    $sessionssupport = $sessionssupport + "$(Get-CleanData -Data ($Record.sessionssupport)) | "
-    $sessioncfg = $sessioncfg + "$(Get-CleanData -Data ($Record.sessioncfg)) | "
-}
-
-# Add the Table
-Write-Screen -Message "Adding $($Title) Data"
-Add-Content $mdFullFile $deliverytype
-Add-Content $mdFullFile $desktopbrokerversion
-Add-Content $mdFullFile $sessionssupport
-Add-Content $mdFullFile $sessioncfg
-
-#endregion Brokering Specifics
-
-#region Target VM Specifics
-# -----------------------------------------------------------------------------------------------------------------------
-# Target VM Specifics
-# -----------------------------------------------------------------------------------------------------------------------
-$Title = "Target VM Specifics"
-Write-Screen -Message "Adding $($Title)"
-
-# Get Filtered Data
-$TargetVMFiltered = $TestDetailResults | Select Name, measurement, numcpus, numcores, memorygb, gpuprofile, secureboot, vtpm, credentialguard, targetos, targetosversion, desktopbrokeragentversion, officeversion, clonetype, toolsguestversion, optimizervendor, optimizerversion, comment | Sort-Object Name | Get-Unique -AsString
-
- # Add the Table Header
-Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/targetvm.png alt=$($Title)>"
-
-# Build the Table Dataset
-Write-Screen -Message "Building $($Title) Data"
-[string]$numcpus = "| **CPU Sockets** | "
-[string]$numcores = "| **Cores per Socket** | "
-[string]$memorygb = "| **Memory** | "
-[string]$gpuprofile = "| **GPU profile** | "
-[string]$secureboot = "| **Secure Boot** | "
-[string]$vtpm = "| **Virtual TPM** | "
-[string]$credentialguard = "| **Credential Guard** | "
-[string]$targetos = "| **Operating System** | "
-[string]$targetosversion = "| **Operating System Version** | "
-[string]$desktopbrokeragentversion = "| **Desktop Broker Agent Version** | "
-[string]$officeversion = "| **Office Version** | "
-[string]$clonetype = "| **Clone Type** | "
-[string]$toolsguestversion = "| **Guest Tools Version** | "
-[string]$optimizervendor = "| **Optimizer Vendor** | "
-[string]$optimizerversion = "| **Optimizer Version** | "
-
-foreach ($Record in $TargetVMFiltered) {
-    $numcpus = $numcpus + "$(Get-CleanData -Data ($Record.numcpus)) | "
-    $numcores = $numcores + "$(Get-CleanData -Data ($Record.numcores)) | "
-    $memorygb = $memorygb + "$(Get-CleanData -Data ($Record.memorygb)) GB | "
-    $gpuprofile = $gpuprofile + "$(Get-CleanData -Data ($Record.gpuprofile)) | "
-    $secureboot = $secureboot + "$(Get-CleanData -Data ($Record.secureboot)) | "
-    $vtpm = $vtpm + "$(Get-CleanData -Data ($Record.vtpm)) | "
-    $credentialguard = $credentialguard + "$(Get-CleanData -Data ($Record.credentialguard)) | "
-    $targetos = $targetos + "$(Get-CleanData -Data ($Record.targetos)) | "
-    $targetosversion = $targetosversion + "$(Get-CleanData -Data ($Record.targetosversion)) | "
-    $desktopbrokeragentversion = $desktopbrokeragentversion + "$(Get-CleanData -Data ($Record.desktopbrokeragentversion)) | "
-    $officeversion = $officeversion + "$(Get-CleanData -Data ($Record.officeversion)) | "
-    $clonetype = $clonetype + "$(Get-CleanData -Data ($Record.clonetype)) | "
-    $toolsguestversion = $toolsguestversion + "$(Get-CleanData -Data ($Record.toolsguestversion)) | "
-    $optimizervendor = $optimizervendor + "$(Get-CleanData -Data ($Record.optimizervendor)) | "
-    $optimizerversion = $optimizerversion + "$(Get-CleanData -Data ($Record.optimizerversion)) | "
-}
-
-# Add the Table
-Write-Screen -Message "Adding $($Title) Data"
-Add-Content $mdFullFile $numcpus
-Add-Content $mdFullFile $numcores
-Add-Content $mdFullFile $memorygb
-Add-Content $mdFullFile $gpuprofile
-Add-Content $mdFullFile $secureboot
-Add-Content $mdFullFile $vtpm
-Add-Content $mdFullFile $credentialguard
-Add-Content $mdFullFile $targetos
-Add-Content $mdFullFile $targetosversion
-Add-Content $mdFullFile $desktopbrokeragentversion
-Add-Content $mdFullFile $officeversion
-Add-Content $mdFullFile $clonetype
-Add-Content $mdFullFile $toolsguestversion
-Add-Content $mdFullFile $optimizervendor
-Add-Content $mdFullFile $optimizerversion
-
-#endregion Target VM Specifics
-
-#region Login Enterprise Specifics
-# -----------------------------------------------------------------------------------------------------------------------
-# Login Enterprise Specifics
-# -----------------------------------------------------------------------------------------------------------------------
-$Title = "Login Enterprise Specifics"
-Write-Screen -Message "Adding $($Title)"
-
-# Get Filtered Data
-$LEspecsFiltered = $TestDetailResults | Select Name, measurement, vsiproductversion, euxversion, vsivsimaxversion, workload, comment | Sort-Object Name | Get-Unique -AsString
-
-# Add the Table Header
-Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/loginenterprise.png alt=$($Title)>"
-
-# Build the Table Dataset
-Write-Screen -Message "Building $($Title) Data"
-[string]$vsiproductversion = "| **Product Version** | "
-[string]$euxversion = "| **EUX Version** | "
-[string]$vsivsimaxversion = "| **VSIMax Version** | "
-[string]$workload = "| **Workload** | "
-
-foreach ($Record in $LEspecsFiltered) {
-    $vsiproductversion = $vsiproductversion + "$(Get-CleanData -Data ($Record.vsiproductversion)) | "
-    $euxversion = $euxversion + "$(Get-CleanData -Data ($Record.euxversion)) | "
-    $vsivsimaxversion = $vsivsimaxversion + "$(Get-CleanData -Data ($Record.vsivsimaxversion)) | "
-    $workload = $workload + "$(Get-CleanData -Data ($Record.workload)) | "
-}
-
-# Add the Table
-Write-Screen -Message "Adding $($Title) Data"
-Add-Content $mdFullFile $vsiproductversion
-Add-Content $mdFullFile $euxversion
-Add-Content $mdFullFile $vsivsimaxversion
-Add-Content $mdFullFile $workload
-
-#endregion Login Enterprise Specifics
-
-#region Test Specifics
-# -----------------------------------------------------------------------------------------------------------------------
-# Test Specifics
-# -----------------------------------------------------------------------------------------------------------------------
-$Title = "Test Specifics"
-Add-Content $mdFullFile " " 
-Write-Screen -Message "Adding $($Title)"
-
-# Get Filtered Data
-$TestFiltered = $TestDetailResults | Select Name, measurement, infrasinglenodetest, numberofvms, numberofsessions, comment | Sort-Object Name | Get-Unique -AsString
-
-# Add the Table Header
-Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/testicon.png alt=$($Title)>"
-
-# Build the Table Dataset
-Write-Screen -Message "Building $($Title) Data"
-[string]$infrasinglenodetest = "| **Single Node Test** | "
-[string]$numberofvms = "| **Number Of VMs** | "
-[string]$numberofsessions = "| **Number Of Sessions** | "
-
-foreach ($Record in $TestFiltered) {
-    $infrasinglenodetest = $infrasinglenodetest + "$(Get-CleanData -Data ($Record.infrasinglenodetest)) | "
-    [int]$VMS = Get-CleanData -Data ($Record.numberofvms)
-    $VMsFormatted = '{0:N0}' -f $VMS
-    $numberofvms = $numberofvms + "$($VMsFormatted) | "
-    [int]$Sessions = Get-CleanData -Data ($Record.numberofsessions)
-    $SessionsFormatted = '{0:N0}' -f $Sessions
-    $numberofsessions = $numberofsessions + "$($SessionsFormatted) | "
-}
-
-# Add the Table
-Write-Screen -Message "Adding $($Title) Data"
-Add-Content $mdFullFile $infrasinglenodetest
-Add-Content $mdFullFile $numberofvms
-Add-Content $mdFullFile $numberofsessions
-
-#endregion Test Specifics
-
-#region Test Results
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Test Results
-# -----------------------------------------------------------------------------------------------------------------------
-Add-Title -mdFullFile $mdFullFile -Title "Test Results"
-#endregion Test Results
-
-#region Boot Information
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Boot Information
-# -----------------------------------------------------------------------------------------------------------------------
-if ($BootInfo) {
-
-    $Title = "Boot Information"
-    Add-Content $mdFullFile " " 
-    Add-Content $mdFullFile "### $($Title)"
-
-    # Add Boot Information Table
-    $Title = "Boot Parmeters"
-    Write-Screen -Message "Adding $($Title)"
-
-    # Get Filtered Data
-    $BootFiltered = $TestDetailResults | Select Name, measurement, maxabsoluteactiveactions, maxabsolutenewactionsperminute, maxpercentageactiveactions, comment | Sort-Object Name | Get-Unique -AsString
-
-    # Add the Table Header
-    Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $HardwareFiltered -TableImage "<img src=../images/bootinfo.png alt=$($Title)>"
-
-    # Build the Table Dataset
-    Write-Screen -Message "Building $($Title) Data"
-    [string]$maxabsoluteactiveactions = "| **Max Absolute Active Actions** | "
-    [string]$maxabsolutenewactionsperminute = "| **Max Absolute Actions Per Minute** | "
-    [string]$maxpercentageactiveactions = "| **Max Percentage Active Actions** | "
-
-    foreach ($Record in $BootFiltered) {
-        $maxabsoluteactiveactions = $maxabsoluteactiveactions + "$(Get-CleanData -Data ($Record.maxabsoluteactiveactions)) | "
-        $maxabsolutenewactionsperminute = $maxabsolutenewactionsperminute + "$(Get-CleanData -Data ($Record.maxabsolutenewactionsperminute)) | "
-        $maxpercentageactiveactions = $maxpercentageactiveactions + "$(Get-CleanData -Data ($Record.maxpercentageactiveactions)) | "
-    }
-
-    # Add the Table
-    Write-Screen -Message "Adding $($Title) Data"
-    Add-Content $mdFullFile $maxabsoluteactiveactions
-    Add-Content $mdFullFile $maxabsolutenewactionsperminute
-    Add-Content $mdFullFile $maxpercentageactiveactions
-    
-    # Add Post Table Line Break
-    Add-Content $mdFullFile " "
-
-    # Add Graphs to report
-    $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq '.png') -and ($_.Name -like "boot_time*") } | Sort-Object CreationTime
-    Add-Graphs -Source $Source -Title "Boot Information" -mdFullFile $mdFullFile
-
-}
-#endregion Boot Information
-
-#region Login Enterprise Results
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Login Enterprise Results
-# -----------------------------------------------------------------------------------------------------------------------
-if ($LoginEnterpriseResults) {
-
-    $Title = "Login Enterprise"
-    Add-Content $mdFullFile " " 
-    Add-Content $mdFullFile "### $($Title)"
-
-    Add-Content $mdFullFile " "
-    Add-Content $mdFullFile "|  | **EUX Base** | **Difference in %** |"
-    Add-Content $mdFullFile "| --- | --- | --- |"
-
-    [decimal]$MaxValue = [math]::Round(($EUXBaseResults.VSIBase | measure -Maximum).maximum, 1)
-
-    foreach ($Result in $EUXBaseResults) {
-        $Name = $(Get-CleanData -Data ($Result.Name))
-        [decimal]$VSIBase = [math]::Round($(Get-CleanData -Data ($Result.VSIBase)), 1).ToString("#.0")
-        [decimal]$Percent = [math]::Round((100 - (($VSIBase / $MaxValue) * 100)), 1)
-        if ($Percent -eq 0) {
-            $PercentValue = "Highest EUX Base"
-        }
-        else {
-            $PercentValue = "-$($Percent)% from Highest EUX Base"
-        }
-        $Line = "| $($Name) | $($VSIBase) | $($PercentValue) |"
-        Add-Content $mdFullFile $Line
-    }
-    Add-Content $mdFullFile " "
-
-    Add-Content $mdFullFile "|  | **EUX Score (Steady State)** | **Difference in %** |"
-    Add-Content $mdFullFile "| --- | --- | --- |"
-
-    [decimal]$MaxValue = [math]::Round(($SSEUXResults.sseux | measure -Maximum).maximum, 1)
-
-    foreach ($Result in $SSEUXResults) {
-        $Name = $(Get-CleanData -Data ($Result.Name))
-        [decimal]$SSEUXBase = [math]::Round($(Get-CleanData -Data ($Result.sseux)), 1).ToString("#.0")
-        [decimal]$Percent = [math]::Round((100 - (($SSEUXBase / $MaxValue) * 100)), 1)
-        if ($Percent -eq 0) {
-            $PercentValue = "Highest EUX Score"
-        }
-        else {
-            $PercentValue = "-$($Percent)% from Highest EUX Score"
-        }
-        $Line = "| $($Name) | $($SSEUXBase) | $($PercentValue) |"
-        Add-Content $mdFullFile $Line
-    }
-    
-    # Add Post Table Line Break
-    Add-Content $mdFullFile " "
-
-    $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq '.png') -and ($_.Name -like "le_results*") } | Sort-Object CreationTime
-    Add-Graphs -Source $Source -Title "Login Enterprise" -mdFullFile $mdFullFile
-}
-#endregion Login Enterprise Results
-
-#region Cluster Resources Results
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Cluster Resources Results
-# -----------------------------------------------------------------------------------------------------------------------
-if ($ClusterResources) {
-
-    $Title = "Cluster Resources"
-    Add-Content $mdFullFile "### $($Title)"
-
-    Add-Content $mdFullFile " "
-    Add-Content $mdFullFile "|  | **Cluster CPU (Steady State)** | **Difference in %** |"
-    Add-Content $mdFullFile "| --- | --- | --- |"
-
-    [decimal]$MinValue = [math]::Round(($SSClusterCPUResults."Cluster CPU" | measure -Minimum).minimum, 1)
-
-    foreach ($Result in $SSClusterCPUResults) {
-        $Name = $(Get-CleanData -Data ($Result.Name))
-        [decimal]$SSClusterCPU = [math]::Round($(Get-CleanData -Data ($Result."Cluster CPU")), 1).ToString("#.0")
-        [decimal]$Percent = [math]::Round(($SSClusterCPU - $MinValue), 1)
-        if ($Percent -eq 0) {
-            $PercentValue = "Lowest CPU Value"
-        }
-        else {
-            $PercentValue = "$($Percent)% Higher CPU Usage"
-        }
-        $Line = "| $($Name) | $($SSClusterCPU) % | $($PercentValue) |"
-        Add-Content $mdFullFile $Line
-    }
-    
-    # Add Post Table Line Break
-    Add-Content $mdFullFile " "
-
-    $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq '.png') -and ($_.Name -like "cluster_resources*") } | Sort-Object CreationTime
-    Add-Graphs -Source $Source -Title "Cluster Resources" -mdFullFile $mdFullFile   
-}
-#endregion Cluster Resources Results
-
-#region Login Times Results
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Login Times Results
-# -----------------------------------------------------------------------------------------------------------------------
-if ($LoginTimes) {
-
-    $Title = "Login Times"
-    Add-Content $mdFullFile " " 
-    Add-Content $mdFullFile "### $($Title)"
-
-    $TableTitle = "Login Time Comparison"
-    Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $TableTitle -TableData ($LoginTimeResults | select-object -Property Name | Get-Unique -AsString | Sort-Object -Property Name) -TableImage "<img src=../images/logintimes.png alt=$($Title)>"
-
-    $LoginTimeList = $LoginTimeResults | select-object -Property Name, LogonPhase, measurement, Value -Unique | Sort-Object -Property Name, LogonPhase, measurement
-
-    $TotalLoginTime = $LoginTimeList | Where-Object { $_.LogonPhase -like "*total_login_time*" } | Select-Object -property Value
-    [decimal]$TotalLoginTimeMinimum = [math]::Round(($TotalLoginTime.Value | Measure-Object -Minimum).Minimum, 1)
-
-    $UserProfile = $LoginTimeList | Where-Object { $_.LogonPhase -like "*user_profile*" } | Select-Object -property Value
-    [decimal]$UserProfileMinimum = [math]::Round(($UserProfile.Value | Measure-Object -Minimum).Minimum, 1)
-
-    $GroupPolicies = $LoginTimeList | Where-Object { $_.LogonPhase -like "*group_policies*" } | Select-Object -property Value
-    [decimal]$GroupPoliciesMinimum = [math]::Round(($GroupPolicies.Value | Measure-Object -Minimum).Minimum, 1)
-
-    $Connection = $LoginTimeList | Where-Object { $_.LogonPhase -like "*connection*" } | Select-Object -property Value
-    [decimal]$ConnectionMinimum = [math]::Round(($Connection.Value | Measure-Object -Minimum).Minimum, 1)
-
-    $PhaseTotalLogin = "| Total Login | "
-    $PhaseUserProfile = "| User Profile | "
-    $PhaseGroupPolicies = "| Group Policies | "
-    $PhaseConnection = "| Connection | "
-
-    foreach ($Record in $LoginTimeList){
-        $Phase = $Record.LogonPhase
-        [decimal]$Value = [math]::Round($Record.Value, 1)
-
-        if($Phase -eq "total_login_time"){
-            if($Value -gt $TotalLoginTimeMinimum) {
-                $Percentage = (($Value / $TotalLoginTimeMinimum) * 100) - 100
-                $FormattedPercentage = $Percentage.ToString("0.0")
-                $PerfTag = "<span style=""color:#E82727"">$($FormattedPercentage) % Slower</span>"
-                $PhaseTotalLogin = $PhaseTotalLogin + "$($Value.ToString(""0.0"")) seconds - $($PerfTag) | "
-            } else {
-                if($Value -eq $TotalLoginTimeMinimum){
-                    $PhaseTotalLogin = $PhaseTotalLogin + "$($Value.ToString(""0.0"")) seconds | "
-                } else {
-                    if($Value -lt $TotalLoginTimeMinimum){
-                        $Percentage = 100 - (($Value / $TotalLoginTimeMinimum) * 100)
-                        $FormattedPercentage = $Percentage.ToString("0.0")
-                        $PerfTag = "<span style=""color:#30DC41"">$($FormattedPercentage) % Faster</span>"
-                        $PhaseTotalLogin = $PhaseTotalLogin + "$($Value.ToString(""0.0"")) seconds - $($PerfTag) | "
-                    }
-                }
-            }
-        }
-
-        if($Phase -eq "user_profile"){
-            if($Value -gt $UserProfileMinimum) {
-                $Percentage = (($Value / $UserProfileMinimum) * 100) - 100
-                $FormattedPercentage = $Percentage.ToString("0.0")
-                $PerfTag = "<span style=""color:#E82727"">$($FormattedPercentage) % Slower</span>"
-                $PhaseUserProfile = $PhaseUserProfile + "$($Value.ToString(""0.0"")) seconds - $($PerfTag) | "
-            } else {
-                if($Value -eq $UserProfileMinimum){
-                    $PhaseUserProfile = $PhaseUserProfile + "$($Value.ToString(""0.0"")) seconds | "
-                } else {
-                    if($Value -lt $UserProfileMinimum){
-                        $Percentage = 100 - (($Value / $UserProfileMinimum) * 100)
-                        $FormattedPercentage = $Percentage.ToString("0.0")
-                        $PerfTag = "<span style=""color:#30DC41"">$($FormattedPercentage) % Faster</span>"
-                        $PhaseUserProfile = $PhaseUserProfile + "$($Value.ToString(""0.0"")) seconds - $($PerfTag) | "
-                    }
-                }
-            }
-        }
-
-        if($Phase -eq "group_policies"){
-            if($Value -gt $GroupPoliciesMinimum) {
-                $Percentage = (($Value / $GroupPoliciesMinimum) * 100) - 100
-                $FormattedPercentage = $Percentage.ToString("0.0")
-                $PerfTag = "<span style=""color:#E82727"">$($FormattedPercentage) % Slower</span>"
-                $PhaseGroupPolicies = $PhaseGroupPolicies + "$($Value.ToString(""0.0"")) seconds - $($PerfTag) | "
-            } else {
-                if($Value -eq $GroupPoliciesMinimum){
-                    $PhaseGroupPolicies = $PhaseGroupPolicies + "$($Value.ToString(""0.0"")) seconds | "
-                } else {
-                    if($Value -lt $GroupPoliciesMinimum){
-                        $Percentage = 100 - (($Value / $GroupPoliciesMinimum) * 100)
-                        $FormattedPercentage = $Percentage.ToString("0.0")
-                        $PerfTag = "<span style=""color:#30DC41"">$($FormattedPercentage) % Faster</span>"
-                        $PhaseGroupPolicies = $PhaseGroupPolicies + "$($Value.ToString(""0.0"")) seconds - $($PerfTag) | "
-                    }
-                }
-            }
-        }
-
-        if($Phase -eq "connection"){
-            if($Value -gt $ConnectionMinimum) {
-                $Percentage = (($Value / $ConnectionMinimum) * 100) - 100
-                $FormattedPercentage = $Percentage.ToString("0.0")
-                $PerfTag = "<span style=""color:#E82727"">$($FormattedPercentage) % Slower</span>"
-                $PhaseConnection = $PhaseConnection + "$($Value.ToString(""0.0"")) seconds - $($PerfTag) | "
-            } else {
-                if($Value -eq $ConnectionMinimum){
-                    $PhaseConnection = $PhaseConnection + "$($Value.ToString(""0.0"")) seconds | "
-                } else {
-                    if($Value -lt $ConnectionMinimum){
-                        $Percentage = 100 - (($Value / $ConnectionMinimum) * 100)
-                        $FormattedPercentage = $Percentage.ToString("0.0")
-                        $PerfTag = "<span style=""color:#30DC41"">$($FormattedPercentage) % Faster</span>"
-                        $PhaseConnection = $PhaseConnection + "$($Value.ToString(""0.0"")) seconds - $($PerfTag) | "
-                    }
-                }
-            }
-        }
-    }
-
-    Add-Content $mdFullFile $PhaseTotalLogin
-    Add-Content $mdFullFile $PhaseUserProfile
-    Add-Content $mdFullFile $PhaseGroupPolicies
-    Add-Content $mdFullFile $PhaseConnection
-
-    # Add Post Table Line Break
-    Add-Content $mdFullFile " "
-
-    $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq '.png') -and ($_.Name -like "login_times*") } | Sort-Object CreationTime
-    Add-Graphs -Source $Source -Title "Login Times" -mdFullFile $mdFullFile
-}
-#endregion Login Times Results
-
-#region Remote Display Analytics Results
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Remote Display Analytics Results
-# -----------------------------------------------------------------------------------------------------------------------
-if ($RDA) {
-
-    $Title = "Remote Display Analytics"
-    Add-Content $mdFullFile "### $($Title)"
-
-    # Add Information Table
-    Write-Screen -Message "Adding $($Title)"
-
-    # Get Filtered Data
-    $RDAFiltered = $RDADetailsResults | Select Name, "Screen Resolution", "Moving Image Compression", "Visual Quality", "Video Codec Text Optimization", "EDT In Use", "Video Codec Use", "Video Codec Colorspace", "Video Codec Type", "Max FPS", "Hardware Encode Enabled", "comment", "measurement", "Preferred ColorDepth", "Video Codec" | Sort-Object Name | Get-Unique -AsString
-
-    # Add the Table Header
-    Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $Title -TableData $RDAFiltered -TableImage "<img src=../images/rdainfo.png alt=$($Title)>"
-
-    # Build the Table Dataset
-    Write-Screen -Message "Building $($Title) Data"
-    [string]$ScreenResolution = "| **Screen Resolution** | "
-    [string]$MovingImageCompression = "| **Moving Image Compression** | "
-    [string]$VisualQuality = "| **Visual Quality** | "
-    [string]$VideoCodecTextOptimization = "| **Video Codec Text Optimization** | "
-    [string]$EDTInUse = "| **EDT In Use** | "
-    [string]$VideoCodecUse = "| **Video Codec Use** | "
-    [string]$VideoCodecColorspace = "| **Video Codec Colorspace** | "
-    [string]$VideoCodecType = "| **Video Codec Type** | "
-    [string]$MaxFPS = "| **Max FPS** | "
-    [string]$HardwareEncodeEnabled = "| **Hardware Encode Enabled** | "
-    [string]$PreferedColorDepth = "| **Prefered Color Depth** | "
-    [string]$VideoCodec = "| **Video Codec** | "
-
-    foreach ($Record in $RDAFiltered) {
-        $ScreenResolution = $ScreenResolution + "$(Get-CleanData -Data ($Record."Screen Resolution")) | "
-        $MovingImageCompression = $MovingImageCompression + "$(Get-CleanData -Data ($Record."Moving Image Compression")) | "
-        $VisualQuality = $VisualQuality + "$(Get-CleanData -Data ($Record."Visual Quality")) | "
-        $VideoCodecTextOptimization = $VideoCodecTextOptimization + "$(Get-CleanData -Data ($Record."Video Codec Text Optimization")) | "
-        $EDTInUse = $EDTInUse + "$(Get-CleanData -Data ($Record."EDT In Use")) | "
-        $VideoCodecUse = $VideoCodecUse + "$(Get-CleanData -Data ($Record."Video Codec Use")) | "
-        $VideoCodecColorspace = $VideoCodecColorspace + "$(Get-CleanData -Data ($Record."Video Codec Colorspace")) | "
-        $VideoCodecType = $VideoCodecType + "$(Get-CleanData -Data ($Record."Video Codec Type")) | "
-        $MaxFPS = $MaxFPS + "$(Get-CleanData -Data ($Record."Max FPS")) | "
-        $HardwareEncodeEnabled = $HardwareEncodeEnabled + "$(Get-CleanData -Data ($Record."Hardware Encode Enabled")) | "
-        $PreferedColorDepth = $PreferedColorDepth + "$(Get-CleanData -Data ($Record."Preferred ColorDepth")) | "
-        $VideoCodec = $VideoCodec + "$(Get-CleanData -Data ($Record."Video Codec")) | "
-    }
-
-    # Add the Table
-    Write-Screen -Message "Adding $($Title) Data"
-    Add-Content $mdFullFile $ScreenResolution
-    Add-Content $mdFullFile $MaxFPS
-    Add-Content $mdFullFile $PreferedColorDepth
-    Add-Content $mdFullFile $VisualQuality
-    Add-Content $mdFullFile $EDTInUse
-    Add-Content $mdFullFile $MovingImageCompression
-    Add-Content $mdFullFile $HardwareEncodeEnabled
-    Add-Content $mdFullFile $VideoCodec
-    Add-Content $mdFullFile $VideoCodecUse
-    Add-Content $mdFullFile $VideoCodecType
-    Add-Content $mdFullFile $VideoCodecTextOptimization
-    Add-Content $mdFullFile $VideoCodecColorspace
-
-    # Add Post Table Line Break
-    Add-Content $mdFullFile " "
-
-    $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq '.png') -and ($_.Name -like "rdanalyzer*") } | Sort-Object CreationTime
-    Add-Graphs -Source $Source -Title "Remote Desktop Analytics" -mdFullFile $mdFullFile
-
-}
-#endregion Remote Display Analytics Results
-
-#region Applications Results
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Applications Results
-# -----------------------------------------------------------------------------------------------------------------------
-if ($Applications) {
-
-    $Title = "Applications"
-    Add-Content $mdFullFile " "
-    Add-Content $mdFullFile "### $($Title)"
-
-    Add-Content $mdFullFile " "
-        
-    $TableTitle = "Login Phase Performance Comparison"
-    Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $TableTitle -TableData ($LoginApplicationsResults | select-object -Property Name | Get-Unique -AsString | Sort-Object -Property Name) -TableImage "<img src=../images/appsperf.png alt=$($Title)>"
-
-    $LoginApplicationsList = $LoginApplicationsResults | select-object -Property AppName, MeasurementId -Unique | Sort-Object -Property AppName, MeasurementId
-
-    foreach ($Record in $LoginApplicationsList) {
-        $AppName = $record.appname
-        $MeasurementId = $record.measurementid
-        $App = (Get-CleanData -Data $record.appname)
-        if ($App.StartsWith("(")) {
-            $Application = $App.SubString(5, ($App.Length) - 5)
-        }
-        else {
-            $Application = $App
-        }
-        $Act = (Get-CleanData -Data $record.measurementid)
-        $TextInfo = (Get-Culture).TextInfo
-        $Action = $TextInfo.ToTitleCase($Act)
-        $RowHeader = "$($Application) - $($Action)"
-        $Data = "| $($RowHeader) | "
-        $i = 1
-        foreach ($Line in $LoginApplicationsResults | Sort-Object -Property Name) {
-            if ($Line.AppName -eq $AppName) {
-                if ($Line.MeasurementId -eq $MeasurementId) {
-                    $Seconds = [math]::Round(($Line.value / 1000), 2)
-                    $FormattedSeconds = $Seconds.ToString("0.00")
-                    if (!($i -eq 1)) {
-                        if ($Seconds -gt $BaseNumber) {
-                            $Percentage = (($Seconds / $BaseNumber) * 100) - 100
-                            $FormattedPercentage = $Percentage.ToString("0.00")
-                            $PerfTag = "<span style=""color:#E82727"">$($FormattedPercentage) % Slower</span>"
-                        }
-                        else {
-                            if ($Seconds -eq $BaseNumber) {
-                                $PerfTag = "Equal"
-                            }
-                            else {
-                                $Percentage = 100 - (($Seconds / $BaseNumber) * 100)
-                                $FormattedPercentage = $Percentage.ToString("0.00")
-                                $PerfTag = "<span style=""color:#30DC41"">$($FormattedPercentage) % Faster</span>"
-                            }
-                        }
-                        $Data = $Data + "$($FormattedSeconds) seconds - $($PerfTag) | "
-                    }
-                    else {
-                        $BaseNumber = $Seconds
-                        $Data = $Data + "$($FormattedSeconds) seconds | "
-                    }
-                    $i++
-                }
-            }
-        }
-        Add-Content $mdFullFile $Data
-    }
-
-    # Add Post Table Line Break
-    Add-Content $mdFullFile " "
-
-    $TableTitle = "Steady State Performance Comparison"
-    Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $TableTitle -TableData ($SSApplicationsResults | select-object -Property Name | Get-Unique -AsString | Sort-Object -Property Name) -TableImage "<img src=../images/appsperf.png alt=$($Title)>"
-
-    $SSApplicationsList = $SSApplicationsResults | select-object -Property AppName, MeasurementId -Unique | Sort-Object -Property AppName, MeasurementId
-
-    foreach ($Record in $SSApplicationsList) {
-        $AppName = $record.appname
-        $MeasurementId = $record.measurementid
-        $App = (Get-CleanData -Data $record.appname)
-        if ($App.StartsWith("(")) {
-            $Application = $App.SubString(5, ($App.Length) - 5)
-        }
-        else {
-            $Application = $App
-        }
-        $Act = (Get-CleanData -Data $record.measurementid)
-        $TextInfo = (Get-Culture).TextInfo
-        $Action = $TextInfo.ToTitleCase($Act)
-        $RowHeader = "$($Application) - $($Action)"
-        $Data = "| $($RowHeader) | "
-        $i = 1
-        foreach ($Line in $SSApplicationsResults | Sort-Object -Property Name) {
-            if ($Line.AppName -eq $AppName) {
-                if ($Line.MeasurementId -eq $MeasurementId) {
-                    $Seconds = [math]::Round(($Line.value / 1000), 2)
-                    $FormattedSeconds = $Seconds.ToString("0.00")
-                    if (!($i -eq 1)) {
-                        if ($Seconds -gt $BaseNumber) {
-                            $Percentage = (($Seconds / $BaseNumber) * 100) - 100
-                            $FormattedPercentage = $Percentage.ToString("0.00")
-                            $PerfTag = "<span style=""color:#E82727"">$($FormattedPercentage) % Slower</span>"
-                        }
-                        else {
-                            if ($Seconds -eq $BaseNumber) {
-                                $PerfTag = "Equal"
-                            }
-                            else {
-                                $Percentage = 100 - (($Seconds / $BaseNumber) * 100)
-                                $FormattedPercentage = $Percentage.ToString("0.00")
-                                $PerfTag = "<span style=""color:#30DC41"">$($FormattedPercentage) % Faster</span>"
-                            }
-                        }
-                        $Data = $Data + "$($FormattedSeconds) seconds - $($PerfTag) | "
-                    }
-                    else {
-                        $BaseNumber = $Seconds
-                        $Data = $Data + "$($FormattedSeconds) seconds | "
-                    }
-                    $i++
-                }
-            }
-        }
-        Add-Content $mdFullFile $Data
-    }
-
-    # Add Post Table Line Break
-    Add-Content $mdFullFile " "
-
-    $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq '.png') -and ($_.Name -like "applications*") } | Sort-Object CreationTime
-    Add-Graphs -Source $Source -Title "Applications" -mdFullFile $mdFullFile
-
-}
-
-#endregion Applications Results
-
-#region Nutanix Files Results
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Nutanix Files Results
-# -----------------------------------------------------------------------------------------------------------------------
-if ($NutanixFiles) {
-
-    $Title = "Nutanix Files"
-    Add-Content $mdFullFile "### $($Title)"
-
-    $Source = Get-Childitem -Path $imagePath -recurse |  Where-Object { ($_.extension -eq '.png') -and ($_.Name -like "nutanix_files*") } | Sort-Object CreationTime
-    Add-Graphs -Source $Source -Title "Nutanix Files" -mdFullFile $mdFullFile
-}
-#endregion Nutanix Files Results
-
-#region Conclusion
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Conclusion
-# -----------------------------------------------------------------------------------------------------------------------
+Add-Content $IntroMD $BoilerPlateIntroduction
+#endregion Introduction
+
+#region Application Overview
+$AppOverviewFile = ($MDFileDetails.3).Name
+$AppOverviewMD = Join-Path -Path $md -ChildPath $AppOverviewFile
+Write-Screen -Message "Adding Application Overview"
+Add-Content $AppOverviewMD $BoilerPlateApplicationOverview
+#endregion Application Overview
+
+#region CVAD on Nutanix
+$CVADFile = ($MDFileDetails.4).Name
+$CVADMD = Join-Path -Path $md -ChildPath $CVADFile
+Write-Screen -Message "Adding CVAD on Nutanix"
+Add-Content $CVADMD $BoilerPlateCVADonNutanix
+#endregion CVAD on Nutanix
+
+#region Solution Design
+$SolutionDesignFile = ($MDFileDetails.5).Name
+$SolutionDesignMD = Join-Path -Path $md -ChildPath $SolutionDesignFile
+Write-Screen -Message "Adding Solution Design"
+Add-Content $SolutionDesignMD $BoilerPlateSolutionDesign
+#endregion Solution Design
+
+#region Validation and Benchmarking
+$ValidationFile = ($MDFileDetails.6).Name
+$ValidationMD = Join-Path -Path $md -ChildPath $ValidationFile
+Write-Screen -Message "Adding Solution Design"
+Add-Content $ValidationMD $BoilerPlateValidationandBenchmarking
+#endregion Validation and Benchmarking
+
+#region Validation Results
+$ResultsFile = ($MDFileDetails.7).Name
+$ResultMD = Join-Path -Path $md -ChildPath $ResultsFile
+Write-Screen -Message "Adding Results"
+# UPDATE WITH RESULTS
+#endregion Validation Results
+
+#region Conclusion Results
+$ConclusionFile = ($MDFileDetails.8).Name
+$ConclusionMD = Join-Path -Path $md -ChildPath $ConclusionFile
 Write-Screen -Message "Adding Conclusion"
-Add-Title -mdFullFile $mdFullFile -Title "Conclusion"
-Add-Content $mdFullFile "$($BoilerPlateConclusion)"
-#endregion Conclusion
+Add-Content $ConclusionMD $BoilerPlateConclusion
+#endregion Conclusion Results
 
 #region Appendix
-# -----------------------------------------------------------------------------------------------------------------------
-# Section - Appendix
-# -----------------------------------------------------------------------------------------------------------------------
-Write-Screen -Message "Adding Appendix"
-Add-Title -mdFullFile $mdFullFile -Title "Appendix"
-Add-Content $mdFullFile "$($BoilerPlateAppendix)"
+$AppendixFile = ($MDFileDetails.9).Name
+$AppendixMD = Join-Path -Path $md -ChildPath $AppendixFile
+Write-Screen -Message "Adding Conclusion"
+Add-Content $AppendixMD $BoilerPlateAppendix
 #endregion Appendix
 
 #endregion Create Report
