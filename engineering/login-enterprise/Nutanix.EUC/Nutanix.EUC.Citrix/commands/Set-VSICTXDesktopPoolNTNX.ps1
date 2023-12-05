@@ -74,7 +74,9 @@ function Set-VSICTXDesktopPoolNTNX {
                     $VM = Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -MaxRecordCount 2500 | Where-Object { $_.ADAccountSid -eq $Task.FailedVirtualMachines[0] }
                     $Task2 = $VM  | Remove-ProvVM -AdminAddress $DDC -ForgetVM
                     if ($Task2.TaskState -ne "Finished") {
-                        throw "Failed to remove existing VM $($VM.VMName) from provisioning scheme"
+                        #throw "Failed to remove existing VM $($VM.VMName) from provisioning scheme"
+                        Write-Log -Message "Failed to remove existing VM $($VM.VMName) from provisioning scheme" -Level Error
+                        Exit 1
                     }
                 }
             }
@@ -126,8 +128,10 @@ function Set-VSICTXDesktopPoolNTNX {
                 -NetworkMapping $networkMap `
                 -CustomProperties $provcustomProperties
             if ($Task.TaskState -ne "Finished") {
-                Write-Log "Failed to create Provisioning scheme"
-                throw $Task.TerminatingError
+                Write-Log -Message "Failed to create Provisioning scheme" -Level Error
+                Write-Log -Message "$($Task.TerminatingError)" -Level Error
+                #throw $Task.TerminatingError
+                Exit 1
             }
             ## ESXi ##
         }
@@ -151,8 +155,10 @@ function Set-VSICTXDesktopPoolNTNX {
                 -NetworkMapping $networkMap `
                 -CustomProperties $provcustomProperties
             if ($Task.TaskState -ne "Finished") {
-                Write-Log "Failed to create Provisioning scheme"
-                throw $Task.TerminatingError
+                Write-Log -Message "Failed to create Provisioning scheme" -Level Error
+                Write-Log -Message "$($Task.TerminatingError)" -Level Error
+                #throw $Task.TerminatingError
+                Exit 1
             }
         }
         
