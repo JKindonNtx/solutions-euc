@@ -68,6 +68,7 @@ The below parameters should be set in the `ConfigFile` as a preferential configu
 -  `SkipPDFExport`. Optional. **`Switch`**. TBD. Can be set in `LEConfigFile.jsonc`.
 -  `Force`. Optional. **`Switch`**. Forces a recreation of the desktop pool. Can be set in `LEConfigFile.jsonc`.
 -  `LEAppliance`. Optional. **`String`**. The Login Enterprise Appliance to use. `LE1`,`LE2`,`LE3`,`LE4`. Can be set in `LEConfigFile.jsonc`.
+-  `ValidateOnly`. Optional. **`Switch`**. Will process only the inputs and pre-execution tasks. Will not process any testing. Use for making sure things look good.
 
 ### Step 1: Getting Started: Planning
 
@@ -105,3 +106,22 @@ To extend monitoring to non-specific infrastructure services, we use `telegraf`,
 # Invoke-TestUpload.ps1
 
 # Remove-Test.ps1
+
+The script removes test data from an InfluxDB. There are 4 main components required to drive the script.
+
+The `Remove-Test.ps1` requires a `ConfigFile.jsonc` file. This file contains the authentication detail for InfluxDB. You will also need to know the test `ID` (for example `a4df64_8n_A6.5.2.7_AHV_1000V_1000U_KW`), the `run` number if you only want to delete a single run, and the Influx Bucket, `Documents`, `Regression`, `Test` etc.
+
+### Remove-Test.Ps1 Mandatory Parameters
+
+-  `ConfigFile`. Mandatory **`String`**. Defines the path to the removal configuration file.
+-  `Bucket`. Mandatory **`String`**. Defines the Influx bucket hosting the data.
+-  `Test`. Mandatory **`String`**. Defines the test ID you wish to delete.
+
+### Remove-Test.Ps1 Optional Parameters
+
+-  `Run`. Optional **`String`**. Defines the run ID to delete if you only want to delete a single run. If not set, all runs will be deleted associated with the defined `Test`.
+
+### Example. Delete all runs of a problematic Test with ID a4df64_8n_A6.5.2.7_AHV_1000V_1000U_KW
+
+`.\Remove-Test.ps1 -ConfigFile .\Test-Removal.jsonc -Bucket LoginDocuments -Test a4df64_8n_A6.5.2.7_AHV_1000V_1000U_KW`
+

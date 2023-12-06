@@ -48,7 +48,7 @@ The configuration file to parse and validate
         catch {
             Write-Log -Message "Failed to import config file: $($configFile)" -Level Error
             Write-Log -Message $_ -Level Error
-            Break #Temporary! Replace with #Exit 1
+            Exit 1
         }
 
         #Now clean and convert the JSON (PowerShell 5.1 requirement)
@@ -59,7 +59,7 @@ The configuration file to parse and validate
         }
         catch {
             Write-Log -Message $_ -Level Error
-            Break #Temporary! Replace with #Exit 1
+            Exit 1
         }
 
         #Validate the provided settings

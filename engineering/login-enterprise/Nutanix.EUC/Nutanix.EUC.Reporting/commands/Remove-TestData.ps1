@@ -41,7 +41,7 @@ function Remove-TestData {
             $InfluxConfig = Start-Process -FilePath $InfluxEXE -Wait -ArgumentList $ConfigCreateParams -WindowStyle Minimized
 
             # Remove Influx Test
-            if(Test-Path variable:Run){
+            if($Run){
                 $Params = "delete --bucket $($Bucket) --start $($Start) --stop $($Stop) --predicate ""_measurement=\""$($Test)\"" and Run=\""$($Run)\"" "" --token $($Token)"
             } else {
                 $Params = "delete --bucket $($Bucket) --start $($Start) --stop $($Stop) --predicate _measurement=\""$($Test)\"" --token $($Token)"

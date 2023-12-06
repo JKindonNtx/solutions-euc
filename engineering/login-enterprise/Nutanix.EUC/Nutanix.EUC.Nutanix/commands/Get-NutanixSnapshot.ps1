@@ -28,7 +28,7 @@ function Get-NutanixSnapshot {
         catch {
             Write-Log -Message "Failed to get snapshot details from Citrix Hosting Connection $($HostingConnection)" -Level Error
             Write-Log -Message $_ -Level Error
-            Break #Temporary! Replace with #Exit 1
+            Exit 1
         }
     }
 
@@ -41,7 +41,7 @@ function Get-NutanixSnapshot {
         catch {
             Write-Log -Message "Failed to get snapshot details from vcenter $($VSI_Target_vCenterServer)" -Level Error
             Write-Log -Message $_ -Level Error
-            Break #Temporary! Replace with #Exit 1
+            Exit 1
         }
     }
 
@@ -50,6 +50,6 @@ function Get-NutanixSnapshot {
     }
     else {
         Write-Log -Message "Snapshot $($SnapshotName) does not exist. Validation Failed." -Level Warn
-        Break #Temporary! Replace with #Exit 1
+        Exit 1
     }
 }
