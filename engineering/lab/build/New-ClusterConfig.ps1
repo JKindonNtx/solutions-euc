@@ -39,7 +39,6 @@ if($null -eq ($JSON = (Get-JSON -JSONFile $JSONFile))){
 
 # Build VLAN Name 
 $VLANName = "VLAN" + $($JSON.VM.VLAN)
-$Hypervisor = $($JSON.VM.Hypervisor)
 
 # Fetching local GitHub user to report owner
 $GitHub = Get-GitHubInfo
@@ -77,7 +76,6 @@ Write-Host "
 Write-Host "
 --------------------------------------------------------------------------------------------------------"
 Write-Host "Cluster IP:             $($JSON.Cluster.IP)"
-Write-Host "Hypervisor:             $($JSON.VM.Hypervisor)"
 Write-Host "Cluster user:           $($github.username)"
 Write-Host "VLAN:                   $($JSON.VM.VLAN)"
 Write-Host "VLAN Name:              $VLANName"
@@ -131,11 +129,17 @@ if ($confirmationStart -eq 'n') {
     # Build Cluster name and Storage Name
     $AOSCluster = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "cluster"
     $AOSClusterName = $AOSCluster.Name
+    if ($AOSCluster.hypervisor_types -eq 'kVMware') {
+        $JSON.VM.Hypervisor = "ESXi"
+    }
+    if ($AOSCluster.hypervisor_types -eq 'kKvm') {
+        $JSON.VM.Hypervisor = "AHV"
+    }
     $AOSHosts = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "hosts"
     $StorageName = "EUC-$($AOSClusterName)"
 
     # Install PowerCLI and get Clusters if configuring a VMware Cluster
-    if($JSON.VM.Hypervisor -eq "VMware"){
+    if($JSON.VM.Hypervisor -eq "ESXi"){
         Write-Host (Get-Date) ":Installing VMware PowerCli" 
         #$null = Install-Module VMware.PowerCLI -AllowClobber -Force
         Write-Host (Get-Date) ":Connecting to VMware vSphere" 
@@ -149,7 +153,7 @@ if ($confirmationStart -eq 'n') {
     }
 
     # Remove and re-add Host and Cluster to vSphere if applicable
-    if($JSON.VM.Hypervisor -eq "VMware"){
+    if($JSON.VM.Hypervisor -eq "ESXi"){
         if($WithRegistration){
             # Remove Hosts from vSphere
             foreach($AOSHost in $AOSHosts.entities){
@@ -264,7 +268,7 @@ if ($confirmationStart -eq 'n') {
     }
 
     # Mount Storage Container to vSphere
-    if($JSON.VM.Hypervisor -eq "VMware"){
+    if($JSON.VM.Hypervisor -eq "ESXi"){
         if(!($DSFound)){
             $ESXi = New-ESXiDatastore -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -Container "$($StorageName)"
             $SlackMessage = "Storage Container $($StorageName) mounted to ESXi`n"
@@ -275,7 +279,7 @@ if ($confirmationStart -eq 'n') {
     }
 
     #Check and Update the ISO Image
-    if($JSON.VM.Hypervisor -eq "VMware"){
+    if($JSON.VM.Hypervisor -eq "ESXi"){
         if($WithRegistration){
             Write-Host (Get-Date) ":Getting Datastore $($StorageName)"
             $DS = Get-Datastore -Name $StorageName
@@ -337,7 +341,7 @@ if ($confirmationStart -eq 'n') {
     $ClusterName = $Clusterinfo.name
 
     # Create Citrix Hosting Connection
-    if($JSON.VM.Hypervisor -eq "VMware"){
+    if($JSON.VM.Hypervisor -eq "ESXi"){
         if($WithRegistration){
             Set-CitrixHostingConnectionESXi -VLAN "$($VLANName)" -DDC "$($JSON.Citrix.DDC)" -ClusterName $ClusterName
             $SlackMessage = $SlackMessage + "VMware Hosting Connection Created: $($ClusterName)`n"
@@ -370,7 +374,7 @@ if ($confirmationStart -eq 'n') {
 
     # Update Slack Channel
     if ($SendToSlack -eq "y") {
-        $SlackMessage = "$($Hypervisor) Cluster $($ClusterName) Reconfigured by $($github.username) `n`n" + $SlackMessage
+        $SlackMessage = "$($JSON.VM.Hypervisor) Cluster $($ClusterName) Reconfigured by $($github.username) `n`n" + $SlackMessage
         Update-Slack -Message $SlackMessage -Slack $($JSON.SlackConfig.Slack)
     } else {
         Write-Host (Get-Date)":Skipped - Updating Slack Channel"

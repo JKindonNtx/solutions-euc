@@ -55,6 +55,12 @@ If ($GitHub.UserName -like "* *") {
 # Build Cluster name and Storage Name
 $AOSCluster = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "cluster"
 $AOSClusterName = $AOSCluster.Name
+if ($AOSCluster.hypervisor_types -eq 'kVMware') {
+    $JSON.VM.Hypervisor = "ESXi"
+}
+if ($AOSCluster.hypervisor_types -eq 'kKvm') {
+    $JSON.VM.Hypervisor = "AHV"
+}
 $AOSHosts = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "hosts"
 $StorageName = "EUC-$($AOSClusterName)"
 
@@ -76,7 +82,7 @@ if ($JSON.VM.Hypervisor -eq "AHV"){
     if (!($Networkinfo.entities | Where-Object {$_.name -eq "$VLANName"})){ Write-Host (Get-Date)":VLAN File Not Found"; Write-Host (Get-Date)":Please run New-ClusterConfigAHV.ps1"; exit }  else { Write-Host (Get-Date)":VLAN found" }
     if (!($Containerinfo.entities | Where-Object {$_.name -eq "$($StorageName)"})){ Write-Host (Get-Date)":Storage Container Not Found"; Write-Host (Get-Date)":Please run New-ClusterConfigAHV.ps1"; exit }  else { Write-Host (Get-Date)":Storage Container found" }
 } else {
-    if ($JSON.vm.Hypervisor -eq "VMware"){
+    if ($JSON.vm.Hypervisor -eq "ESXi"){
         Write-Host (Get-Date) ":Installing VMware PowerCli" 
         $null = Install-Module VMware.PowerCLI -Force
         Write-Host (Get-Date) ":Connecting to VMware vSphere" 
@@ -305,7 +311,7 @@ if ($confirmationStart -eq 'n') {
                 Exit
             }
         } else {
-            if ($JSON.vm.Hypervisor -eq "VMware"){
+            if ($JSON.vm.Hypervisor -eq "ESXi"){
                 # Create the VM
                 Write-Host (Get-Date)":Create the VM with name "$($OSDetails.Name)""
                 try {
@@ -383,7 +389,7 @@ if ($confirmationStart -eq 'n') {
                 if ($JSON.vm.Hypervisor -eq "AHV"){
                     $MDTmessage = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been created on AHV Cluster $($ClusterName) using MDT" 
                 } else {
-                    if ($JSON.vm.Hypervisor -eq "VMware"){
+                    if ($JSON.vm.Hypervisor -eq "ESXi"){
                         $MDTmessage = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been created on VMware Cluster $($JSON.VMwareCluster.ClusterName) using MDT" 
                     }
                 }
@@ -506,7 +512,7 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
     Write-Host (Get-Date)":Updating Slack Channel" 
     Update-Slack -Message $Message -Slack $($JSON.SlackConfig.Slack)
 } else {
-    if ($JSON.vm.Hypervisor -eq "VMware"){
+    if ($JSON.vm.Hypervisor -eq "ESXi"){
         # Power off the VM
         Write-Host (Get-Date)":Power off VM"
         Stop-VMGuest -VM $($OSDetails.Name) -confirm:$false
