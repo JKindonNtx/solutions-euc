@@ -21,7 +21,7 @@
       nos_package: "{{ nos_package_name }}"
       rdma_passthrough: false
       blocks:
-        - block_id: null
+        - block_id: ""
           nodes:
             - manual_mode:
                 cvm_ip: "10.56.68.181"
@@ -32,7 +32,7 @@
                 hypervisor: "kvm"
                 hypervisor_ip: "10.56.69.181"
                 node_position: "A"
-        - block_id: null
+        - block_id: ""
           nodes:
             - manual_mode:
                 cvm_ip: "10.56.68.182"
@@ -43,7 +43,7 @@
                 hypervisor: "kvm"
                 hypervisor_ip: "10.56.69.182"
                 node_position: "A"
-        - block_id: null
+        - block_id: ""
           nodes:
             - manual_mode:
                 cvm_ip: "10.56.68.183"
@@ -54,7 +54,7 @@
                 hypervisor: "kvm"
                 hypervisor_ip: "10.56.69.183"
                 node_position: "A"
-        - block_id: null
+        - block_id: ""
           nodes:
             - manual_mode:
                 cvm_ip: "10.56.68.184"
