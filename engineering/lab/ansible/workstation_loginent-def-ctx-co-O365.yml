@@ -5,7 +5,7 @@
   - run_ms_deployment_scripts
   - install_ms_net_framework_3.5
   - install_ms_visual_c_2013u5
-  - install_citrix_vda_client_2203_2
+  - install_citrix_vda_client_2203_4
   - install_adobe_reader_dc
   - install_ms_office_365_x64
   - run_ms_file_types
