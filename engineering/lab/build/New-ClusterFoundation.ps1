@@ -27,6 +27,16 @@ if($null -eq ($JSON = (Get-JSON -JSONFile $JSONFile))){
     Write-Host (Get-Date) ":JSON configuration file loaded"
 }
 
+# Install the NCP Ansible Collection
+Write-Host (Get-Date) ":Installing Nutanix NCP Ansible Collection"
+$NCP = & ansible-galaxy collection install nutanix.ncp
+if(($NCP -like "*installed successfully*") -or ($NCP -like "*already installed*")){
+    Write-Host (Get-Date) ":Nutanix NCP Ansible Collection Installed"
+} else {
+    Write-Host (Get-Date) ":Nutanix NCP Ansible Collection Install Failed, Quitting"
+    Exit 1
+}
+
 if($($JSON.Cluster.Hypervisor) -eq "AHV"){
     Write-Host (Get-Date)":Hypervisor $($JSON.Cluster.Hypervisor) selected, running foundation."
 
