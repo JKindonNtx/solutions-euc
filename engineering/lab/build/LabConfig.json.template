@@ -4,7 +4,9 @@
       	"password": "password",
 	  	"CVMsshpassword": "password"
 		"pcip": "11.11.11.11",
-		"PCPassword": "password"
+		"PCPassword": "password",
+		"FvmIP": "12.12.12.12",
+		"Hypervisor": "AHV"
 	},
 	"VMwareCluster": {
 		"ip": "10.10.10.10",

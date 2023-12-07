@@ -89,11 +89,15 @@ function Get-AnsiblePlaybooks {
                 Write-Host $i " = " $PlaybookName.substring(12)
                 $Playbooks += $PlaybookName
                 $i++
+            } elseif (($SearchString -like "AHV") -and ($PlaybookName -like "nutanix_foundation_ahv_*")) {
+                Write-Host $i " = " $PlaybookName.substring(23)
+                $Playbooks += $PlaybookName
+                $i++
             }
         }
 
         # Ask for the specific playbook to run
-        $p = Read-Host "Select a playbook you would like to run post OS install"
+        $p = Read-Host "Select a playbook you would like to run"
 
         # Get the Windows version selected out of the array and into a variable
         $PlaybookToRun = $Playbooks[$p-1]

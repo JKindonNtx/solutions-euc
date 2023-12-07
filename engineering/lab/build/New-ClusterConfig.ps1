@@ -18,7 +18,11 @@
 # ====================================================================================================================================================
 Param(
     [Parameter(Mandatory = $false)]
-    [switch]$WithRegistration
+    [switch]$WithRegistration,
+    [Parameter(Mandatory = $false)]
+    [switch]$Silent,
+    [Parameter(Mandatory = $false)]
+    [switch]$ContainerDriven
 )
 
 # Define the Variables for the script
@@ -51,15 +55,16 @@ If ($GitHub.UserName -like "* *") {
 }
 
 # Ask for confirmation to start the build - if no the quit
+if(!($Silent)){
+    Do { $confirmationNC2 = Read-Host "Is this cluster running on NC2? [y/n]" } Until (($confirmationNC2 -eq "y") -or ($confirmationNC2 -eq "n"))
 
-Do { $confirmationNC2 = Read-Host "Is this cluster running on NC2? [y/n]" } Until (($confirmationNC2 -eq "y") -or ($confirmationNC2 -eq "n"))
-
-if ($confirmationNC2 -eq 'y') { 
-    Write-Host "This script CANNOT be used on NC2 due to the limitations with CVM access"
-    Write-Host "Please configure the cluster manually"
-    exit 
-} else {
-    Clear-Host
+    if ($confirmationNC2 -eq 'y') { 
+        Write-Host "This script CANNOT be used on NC2 due to the limitations with CVM access"
+        Write-Host "Please configure the cluster manually"
+        exit 
+    } else {
+        Clear-Host
+    }
 }
 
 # Write out a "SNAZZY" header
@@ -104,7 +109,11 @@ if ($($github.username).ToLower() -eq 'admin') {
 }
 
 # Ask for confirmation to start the build - if no the quit
-Do { $confirmationStart = Read-Host "Ready to configure the cluster? [y/n]" } Until (($confirmationStart -eq "y") -or ($confirmationStart -eq "n"))
+if(!($Silent)){
+    Do { $confirmationStart = Read-Host "Ready to configure the cluster? [y/n]" } Until (($confirmationStart -eq "y") -or ($confirmationStart -eq "n"))
+} else {
+    $confirmationStart = 'y'
+}
 
 if ($confirmationStart -eq 'n') { 
     Write-Host (Get-Date) ":Confirmation denied, quitting"
@@ -352,9 +361,14 @@ if ($confirmationStart -eq 'n') {
         }
     } else {
         if($WithRegistration){
-            Set-CitrixHostingConnection -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VLAN "$($VLANName)" -DDC "$($JSON.Citrix.DDC)"
-            $SlackMessage = $SlackMessage + "Hosting Connection Created: $($ClusterName)`n"
-            $SendToSlack = "y"
+            if(!($ContainerDriven)){
+                Set-CitrixHostingConnection -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -VLAN "$($VLANName)" -DDC "$($JSON.Citrix.DDC)"
+                $SlackMessage = $SlackMessage + "Hosting Connection Created: $($ClusterName)`n"
+                $SendToSlack = "y"
+            } else {
+                $SlackMessage = $SlackMessage + "Hosting Connection Skipped: $($ClusterName) - Running From Container`n"
+                $SendToSlack = "y"
+            }
         } else {
             $SlackMessage = $SlackMessage + "Skipped Citrix Hosting Connection Creation`n"
             $SendToSlack = "y"
@@ -379,6 +393,8 @@ if ($confirmationStart -eq 'n') {
     } else {
         Write-Host (Get-Date)":Skipped - Updating Slack Channel"
     }    
+
+    Exit 0
 
 }
 

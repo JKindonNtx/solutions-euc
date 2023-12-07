@@ -1,0 +1,86 @@
+# Here we will image three kind of nodes with different methods. 
+# We will image one node using manual mode. Second node, which can be dos running node, will be imaged using discovery mode using cvm
+# Third node, which can be nutanix imaged(aos running) node, will be imaged using discovery mode using IPMI
+- name: Image nodes
+  hosts: localhost
+  gather_facts: false
+  collections:
+    - nutanix.ncp
+  tasks:
+  - name: Image nodes using manual and discovery modes. Create cluster
+    ntnx_foundation:
+      timeout: 4500
+      nutanix_host: "{{ foundation_ip }}"
+      cvm_gateway: "10.56.64.1"
+      cvm_netmask: "255.255.248.0"
+      hypervisor_gateway: "10.56.64.1"
+      hypervisor_netmask: "255.255.248.0"
+      ipmi_gateway: "10.56.60.1"
+      ipmi_netmask: "255.255.252.0"
+      default_ipmi_user: "nutanix"
+      nos_package: "{{ nos_package_name }}"
+      rdma_passthrough: false
+      blocks:
+        - block_id: null
+          nodes:
+            - manual_mode:
+                cvm_ip: "10.56.68.181"
+                cvm_gb_ram: 32
+                hypervisor_hostname: "DRMNX8KB-1"
+                ipmi_ip: "10.56.62.181"
+                ipmi_password: "nutanix/4u"
+                hypervisor: "kvm"
+                hypervisor_ip: "10.56.69.181"
+                node_position: "A"
+        - block_id: null
+          nodes:
+            - manual_mode:
+                cvm_ip: "10.56.68.182"
+                cvm_gb_ram: 32
+                hypervisor_hostname: "DRMNX8KB-2"
+                ipmi_ip: "10.56.62.182"
+                ipmi_password: "nutanix/4u"
+                hypervisor: "kvm"
+                hypervisor_ip: "10.56.69.182"
+                node_position: "A"
+        - block_id: null
+          nodes:
+            - manual_mode:
+                cvm_ip: "10.56.68.183"
+                cvm_gb_ram: 32
+                hypervisor_hostname: "DRMNX8KB-3"
+                ipmi_ip: "10.56.62.183"
+                ipmi_password: "nutanix/4u"
+                hypervisor: "kvm"
+                hypervisor_ip: "10.56.69.183"
+                node_position: "A"
+        - block_id: null
+          nodes:
+            - manual_mode:
+                cvm_ip: "10.56.68.184"
+                cvm_gb_ram: 32
+                hypervisor_hostname: "DRMNX8KB-4"
+                ipmi_ip: "10.56.62.184"
+                ipmi_password: "nutanix/4u"
+                hypervisor: "kvm"
+                hypervisor_ip: "10.56.69.184"
+                node_position: "A"
+      clusters:
+          - redundancy_factor: 2
+            cluster_members: 
+              - "10.56.68.181"
+              - "10.56.68.182"
+              - "10.56.68.183"
+              - "10.56.68.184"
+            name: "DRMNX8KB-A"
+            timezone: "America/Los_Angeles"
+            cvm_ntp_servers: "10.56.1.177"
+            cvm_dns_servers:
+              - "10.57.64.21"
+              - "10.57.64.20"
+            cvm_vip: "10.56.68.185"
+
+    register: output
+
+  - debug:
+      msg: '{{ output }}'

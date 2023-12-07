@@ -1,0 +1,13 @@
+- name: Get hypervisor and nos packages info from FVM
+  hosts: localhost
+  gather_facts: false
+  collections:
+    - nutanix.ncp
+  tasks:
+    - name: get aos images info from foundation
+      ntnx_foundation_aos_packages_info:
+        nutanix_host: "{{ foundation_ip }}"
+      register: nos
+    
+    - debug:
+        msg: "{{ nos.response }}"
