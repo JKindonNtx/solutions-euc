@@ -171,7 +171,7 @@ function Set-VSICTXDesktopPoolNTNX {
         #
         Write-Log "Creating catalog $DesktopPoolName"
         $Catalog = New-BrokerCatalog -AdminAddress $DDC -AllocationType $AllocationType `
-            -Description "Created by LoginVSI" `
+            -Description "Created by EUC Performance Engineering" `
             -MinimumFunctionalLevel $FunctionalLevel `
             -Name $DesktopPoolName `
             -PersistUserChanges "Discard" `

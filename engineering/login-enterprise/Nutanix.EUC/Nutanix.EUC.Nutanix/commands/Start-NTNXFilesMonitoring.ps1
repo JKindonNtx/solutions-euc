@@ -8,11 +8,9 @@ function Start-NTNXFilesMonitoring {
         [Parameter(Mandatory = $false)] [switch]$AsJob,
         [Parameter(Mandatory = $true)] [string]$Path,
         [Parameter(Mandatory = $true)] [string]$OutputFolder,
-        [Parameter(Mandatory = $true)] [string]$NTNXCounterConfigurationFile = ".\ReportConfiguration.jsonc",
         [Parameter(Mandatory = $false)] [string]$StopMonitoringCheckFile = "$env:temp\VSIMonitoring_Stop.chk"
     )
 
-    $NTNXCounterConfiguration = Get-Content $NTNXCounterConfigurationFile | ConvertFrom-Json
     $MonitoringScriptBlock = {
         param(
             $Path,
@@ -22,7 +20,6 @@ function Start-NTNXFilesMonitoring {
             $DurationInMinutes,
             $RampupInMinutes,
             $OutputFolder,
-            $NTNXCounterConfiguration,
             $StopMonitoringCheckFile
         )
         
@@ -72,7 +69,7 @@ function Start-NTNXFilesMonitoring {
     if ($AsJob.IsPresent) {
         Get-Job -Name NTNXFilesMonitoringJob -ErrorAction Ignore | Stop-Job
         Get-Job -Name NTNXFilesMonitoringJob -ErrorAction Ignore | Remove-Job
-        return (Start-Job -ScriptBlock $MonitoringScriptBlock -Name NTNXFilesMonitoringJob -ArgumentList @($Path, $VSI_Target_Files, $VSI_Target_Files_api, $VSI_Target_Files_Password, $DurationInMinutes, $RampupInMinutes, $OutputFolder, $NTNXCounterConfiguration, $StopMonitoringCheckFile))
+        return (Start-Job -ScriptBlock $MonitoringScriptBlock -Name NTNXFilesMonitoringJob -ArgumentList @($Path, $VSI_Target_Files, $VSI_Target_Files_api, $VSI_Target_Files_Password, $DurationInMinutes, $RampupInMinutes, $OutputFolder, $StopMonitoringCheckFile))
     }
 
 }

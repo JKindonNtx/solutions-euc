@@ -40,9 +40,6 @@ Param(
     [string]$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\ExampleConfig-LoginEnterpriseGlobal.jsonc",
 
     [Parameter(Mandatory = $true)]
-    [string]$ReportConfigFile = ".\ReportConfiguration.jsonc",
-
-    [Parameter(Mandatory = $true)]
     [ValidateSet("CitrixVAD", "CitrixDaaS", "Horizon", "RAS")]
     [string]$Type,
 
@@ -107,7 +104,6 @@ catch {
 #----------------------------------------------------------------------------------------------------------------------------
 Write-Log -Message "Configuration File is:        $($ConfigFile)" -Level Validation
 Write-Log -Message "LE Configuration File is:     $($LEConfigFile)" -Level Validation
-Write-Log -Message "Report Configuration File is: $($ReportConfigFile)" -Level Validation
 Write-Log -Message "Test Type is:                 $($Type)" -Level Validation
 #endregion Param Output
 
@@ -873,8 +869,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             RampupInMinutes              = $VSI_Target_RampupInMinutes 
             Hostuuid                     = $Hostuuid 
             IPMI_ip                      = $IPMI_ip 
-            Path                         = $Scriptroot 
-            NTNXCounterConfigurationFile = $ReportConfigFile 
+            Path                         = $Scriptroot
             AsJob                        = $true
         }
         $monitoringJob = Start-VSINTNXMonitoring @Params
@@ -1276,7 +1271,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             Hostuuid                     = $Hostuuid 
             IPMI_ip                      = $IPMI_ip 
             Path                         = $Scriptroot 
-            NTNXCounterConfigurationFile = $ReportConfigFile 
             AsJob                        = $true
         }
         $monitoringJob = Start-VSINTNXMonitoring @params
@@ -1291,7 +1285,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 Hostuuid                     = $Hostuuid_files_cluster 
                 IPMI_ip                      = $IPMI_ip_files_cluster 
                 Path                         = $Scriptroot 
-                NTNXCounterConfigurationFile = $ReportConfigFile
                 TargetCVM                    = $VSI_Target_Files_Cluster_CVM # override the default CVM Value
                 TargetCVMAdmin               = $VSI_Target_Files_Cluster_CVM_admin # override the default CVM Admin Account Value
                 TargetCVMPassword            = $VSI_Target_Files_Cluster_CVM_password # override the default CVM Password Value
@@ -1341,7 +1334,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 DurationInMinutes            = $VSI_Target_DurationInMinutes 
                 RampupInMinutes              = $VSI_Target_RampupInMinutes 
                 Path                         = $Scriptroot 
-                NTNXCounterConfigurationFile = $ReportConfigFile 
                 AsJob                        = $true
             }
             $monitoringFilesJob = Start-NTNXFilesMonitoring @Params
