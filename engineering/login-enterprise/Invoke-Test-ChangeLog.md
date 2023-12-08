@@ -2,7 +2,12 @@
 
 | Date | Author | Detail | 
 | --- | --- | --- |
-| 29.11.2023 | A-Team | Initial Script Publication After Hackathon 2023 |
+
+| 08.12.2023 | Sven | Added broker version autofill |
+#### Invoke=Test.ps1
+Added line 507 (will add broker version for Citrix to the final config.json): 
+$NTNXInfra.Target.DesktopBrokerVersion = (Get-BrokerController -AdminAddress $VSI_Target_DDC).ControllerVersion[0]
+
 | 07.12.2023 | Sven/James | Removed reportconfiguration.jsonc |
 #### Invoke-Test.ps1
 Remove Param Description - Line 6
@@ -27,3 +32,6 @@ Remove Param - Line 11
 Remove JSON conversion - Line 15
 Remove from Monitoring Script Blog - Line 25
 Remove from Job Creation - Line 75
+
+| 29.11.2023 | A-Team | Initial Script Publication After Hackathon 2023 |
+New entries go on top.

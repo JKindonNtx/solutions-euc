@@ -504,6 +504,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Update Test Dashboard
 
         Connect-VSICTX -DDC $VSI_Target_DDC
+        $NTNXInfra.Target.DesktopBrokerVersion = (Get-BrokerController -AdminAddress $VSI_Target_DDC).ControllerVersion[0]
     }
     #endregion Citrix validation
 
