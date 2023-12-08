@@ -7,7 +7,7 @@ The `Nutanix.EUC` Module is a collection of PowerShell functions written to allo
 -  Configuring and monitoring `Nutanix AOS` Metrics.
 -  Configuring and monitoring `Nutanix Files` deployments.
 -  Configuring and managing `Citrix Virtual Apps and Desktops` and `Citrix DaaS` deployments (for performance testing).
--  Configuring and managing `VMWare Horizon` deployments (for performance testing).
+-  Configuring and managing `VMware Horizon` deployments (for performance testing).
 -  Configuring and monitoring of Windows Infrastructure via `Telegraf`.
 -  Managing data manipulation for ingestion into `InfluxDB`.
 -  Download of images from `Grafana` dashboards created from `InfluxDB` data.
