@@ -49,10 +49,11 @@ Infrastructure Components in place for the testing. Detail any additional compon
 
 | Component | Info | Status | Detail | Owner | Tested | 
 | :-- | :-- | :-- | :-- | :-- | :-- |
-| Workload Cluster G8 | TBC | ❌ | 8-node cluster | svenhuisman | ❌ |
+| Workload Cluster G8 | 10.56.68.185 | ✅ | 8-node cluster | svenhuisman | ❌ |
 | Workload Cluster G9 | TBC | ❌ | 8-node cluster | svenhuisman | ❌ |
-| LE Appliance | WS-LE1 and WS-LE2 | ✅ | Good to go | ntnxDave / svenhuisman / ntnxJKindon | ✅ |
-| G8 Windows 10 Image | W10-XXXX-XXXX_Snap_Optimized | ❌ | Image Description | TBC | ❌ |
+| LE Appliance | WS-LE1 | ✅ | Good to go | ntnxDave / svenhuisman / ntnxJKindon | ✅ |
+| LE Launchers | LE1-202312-### | ✅ | Redeploy with new Launcher Agent and Citrix Workspace App | svenhuisman | ❌ |
+| G8 Windows 10 Image | W10-22H2-2649_Snap_Optimized.template | ✅ | 12/11/2023 14:19:15 svenhuisman | svenhuisman | ❌ |
 | G8 Windows 11 Image | W11-XXXX-XXXX_Snap_Optimized | ❌ | Image Description | TBC | ❌ |
 | G8 Windows Server 2022 Image | S22-XXXX-XXXX_Snap_Optimized | ❌ | Image Description | TBC | ❌ |
 | G9 Windows 10 Image | W10-XXXX-XXXX_Snap_Optimized | ❌ | Image Description | TBC | ❌ |
@@ -76,9 +77,12 @@ Detail any group policies that you will be using as part of the testing.
 Detail the tests you are planning to run as part of the document.
 | Document Reference | Test Name | Run Count | Completed | By | Info | Test ID |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
-| RA-2053-BL | G9 Windows 10 Baseline | 1 | ❌ | TBC | Baseline Windows 10 on G9 | TBC - Fill out once test started. |
-| RA-2053-BL | G9 Windows 11 Baseline | 1 | ❌ | TBC | Baseline Windows 11 on G9 | TBC - Fill out once test started. |
-| RA-2150-BL | G9 Windows Srv 2022 Baseline | 1 | ❌ | TBC | Baseline Windows Server 2022 on G9 | TBC - Fill out once test started. |
+| RA-2053-BL-G8 | G8 Windows 10 Baseline | 3 | ❌ | TBC | Baseline Windows 10 on G8 | TBC - Fill out once test started. |
+| RA-2053-BL | G9 Windows 10 Baseline | 3 | ❌ | TBC | Baseline Windows 10 on G9 | TBC - Fill out once test started. |
+| RA-2053-BL-G8 | G8 Windows 11 Baseline | 3 | ❌ | TBC | Baseline Windows 11 on G8 | TBC - Fill out once test started. |
+| RA-2053-BL | G9 Windows 11 Baseline | 3 | ❌ | TBC | Baseline Windows 11 on G9 | TBC - Fill out once test started. |
+| RA-2150-BL-8 | G8 Windows Srv 2022 Baseline | 3 | ❌ | TBC | Baseline Windows Server 2022 on G8 | TBC - Fill out once test started. |
+| RA-2150-BL | G9 Windows Srv 2022 Baseline | 3 | ❌ | TBC | Baseline Windows Server 2022 on G9 | TBC - Fill out once test started. |
 | RA-2053 | 1n_w10_uXXX_vXXX_mcs_ahv | 3 | ❌ | TBC | 1 Nodes - Windows 10 - MCS - AHV | TBC - Fill out once test started. |
 | RA-2053 | 2n_w10_uXXX_vXXX_mcs_ahv | 3 | ❌ | TBC | 2 Nodes - Windows 10 - MCS - AHV | TBC - Fill out once test started. |
 | RA-2053 | 4n_w10_uXXX_vXXX_mcs_ahv | 3 | ❌ | TBC | 4 Nodes - Windows 10 - MCS - AHV | TBC - Fill out once test started. |
