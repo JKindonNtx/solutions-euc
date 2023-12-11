@@ -49,18 +49,18 @@ Infrastructure Components in place for the testing. Detail any additional compon
 
 | Component | Info | Status | Detail | Owner | Tested | 
 | :-- | :-- | :-- | :-- | :-- | :-- |
-| Workload Cluster G8 | TBC | ✅ | 8-node cluster | svenhuisman | ✅ |
-| Workload Cluster G9 | TBC | ✅ | 8-node cluster | svenhuisman | ✅ |
+| Workload Cluster G8 | TBC | ❌ | 8-node cluster | svenhuisman | ❌ |
+| Workload Cluster G9 | TBC | ❌ | 8-node cluster | svenhuisman | ❌ |
 | LE Appliance | WS-LE1 and WS-LE2 | ✅ | Good to go | ntnxDave / svenhuisman / ntnxJKindon | ✅ |
-| G8 Windows 10 Image | W10-XXXX-XXXX_Snap_Optimized | ✅ | Image Description | TBC | ✅ |
-| G8 Windows 11 Image | W11-XXXX-XXXX_Snap_Optimized | ✅ | Image Description | TBC | ✅ |
-| G8 Windows Server 2022 Image | S22-XXXX-XXXX_Snap_Optimized | ✅ | Image Description | TBC | ✅ |
-| G9 Windows 10 Image | W10-XXXX-XXXX_Snap_Optimized | ✅ | Image Description | TBC | ✅ |
-| G9 Windows 11 Image | W11-XXXX-XXXX_Snap_Optimized | ✅ | Image Description | TBC | ✅ |
-| G9 Windows Server 2022 Image | S22-XXXX-XXXX_Snap_Optimized | ✅ | Image Description | TBC | ✅ |
-| W10 Catalog | Machine Count | ✅ | Catalog Detail | TBC | ✅ |
-| W11 Catalog | Machine Count | ✅ | Catalog Detail | TBC | ✅ |
-| S22 Catalog | Machine Count | ✅ | Catalog Detail | TBC | ✅ |
+| G8 Windows 10 Image | W10-XXXX-XXXX_Snap_Optimized | ❌ | Image Description | TBC | ❌ |
+| G8 Windows 11 Image | W11-XXXX-XXXX_Snap_Optimized | ❌ | Image Description | TBC | ❌ |
+| G8 Windows Server 2022 Image | S22-XXXX-XXXX_Snap_Optimized | ❌ | Image Description | TBC | ❌ |
+| G9 Windows 10 Image | W10-XXXX-XXXX_Snap_Optimized | ❌ | Image Description | TBC | ❌ |
+| G9 Windows 11 Image | W11-XXXX-XXXX_Snap_Optimized | ❌ | Image Description | TBC | ❌ |
+| G9 Windows Server 2022 Image | S22-XXXX-XXXX_Snap_Optimized | ❌ | Image Description | TBC | ❌ |
+| W10 Catalog | Machine Count | ❌ | Catalog Detail | TBC | ❌ |
+| W11 Catalog | Machine Count | ❌ | Catalog Detail | TBC | ❌ |
+| S22 Catalog | Machine Count | ❌ | Catalog Detail | TBC | ❌ |
 
 ## Group Policy Configurations
 
