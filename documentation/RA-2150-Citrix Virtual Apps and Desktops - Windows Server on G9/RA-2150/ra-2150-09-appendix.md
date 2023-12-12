@@ -4,11 +4,11 @@
 
 Storage and compute:
 
-- Nutanix NX-3155 G9
+- Nutanix NX-3155-G9
 - Per-node specs:
-  - CPU: XXXX × XXXX
-  - Memory: XXXX GB
-  - Disk: XXXX × XXXX TB SSD
+  - CPU: 2 x Xeon Gold 6442Y @ 2.6 Ghz
+  - Memory: 1.5 TB
+  - Disk: 4 x 1.92 TB NVMe
 
 Network:
 
@@ -26,9 +26,9 @@ Citrix Virtual Apps and Desktops
 
 - 7.2203 CU4
 
-Virtual Desktop
+## EUX Setting Customization
 
-- XXXX
+## Citrix Policy Customization
 
 ## References
 

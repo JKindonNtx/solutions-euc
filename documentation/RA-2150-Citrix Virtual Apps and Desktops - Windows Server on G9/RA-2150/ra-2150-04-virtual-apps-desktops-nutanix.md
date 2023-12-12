@@ -24,7 +24,11 @@ _Table: Services Pod Details_
 | Datastores | 1 |
 | Sessions | Up To XXXX |
 
-You can have a maximum of 16 Nutanix AHV host nodes per cluster. We validated Citrix Virtual Apps and Desktops LTSR 2203 CU4, using 2 vCPU and 4 GB of memory per VM and XXXX VMs per node. When you use 8 Nutanix AHV host nodes, you can run up to XXXX VDAs per Nutanix AHV cluster.
+We recommend having a maximum of 16 Nutanix AHV host nodes per cluster. We validated Citrix Virtual Apps and Desktops LTSR 2203 CU4, using 2 vCPU and 4 GB of memory per VM and XXXX VMs per node. When you use 8 Nutanix AHV host nodes, you can run up to XXXX VDAs per Nutanix AHV cluster.
+
+<note>
+Note: Limiting the cluster sizes to 16 nodes reduces the failure domain and the time to patch and update the clusters. This reference architecture uses 16-node building blocks to take advantage of single-rack design, smaller failure domain, and reduced time to patch and update.
+</note>
 
 <note>
 This calculation reserves one node as a spare (n + 1).

@@ -77,12 +77,12 @@ Detail any group policies that you will be using as part of the testing.
 Detail the tests you are planning to run as part of the document.
 | Document Reference | Test Name | Run Count | Completed | By | Info | Test ID |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
-| RA-2053-BL-G8 | G8 Windows 10 Baseline | 3 | ❌ | TBC | Baseline Windows 10 on G8 | TBC - Fill out once test started. |
-| RA-2053-BL | G9 Windows 10 Baseline | 3 | ❌ | TBC | Baseline Windows 10 on G9 | TBC - Fill out once test started. |
-| RA-2053-BL-G8 | G8 Windows 11 Baseline | 3 | ❌ | TBC | Baseline Windows 11 on G8 | TBC - Fill out once test started. |
-| RA-2053-BL | G9 Windows 11 Baseline | 3 | ❌ | TBC | Baseline Windows 11 on G9 | TBC - Fill out once test started. |
-| RA-2150-BL-8 | G8 Windows Srv 2022 Baseline | 3 | ❌ | TBC | Baseline Windows Server 2022 on G8 | TBC - Fill out once test started. |
-| RA-2150-BL | G9 Windows Srv 2022 Baseline | 3 | ❌ | TBC | Baseline Windows Server 2022 on G9 | TBC - Fill out once test started. |
+| RA-2053-BL-G8 | G8 Windows 10 Baseline | 5 | ❌ | TBC | Baseline Windows 10 on G8 | TBC - Fill out once test started. |
+| RA-2053-BL | G9 Windows 10 Baseline | 5 | ❌ | TBC | Baseline Windows 10 on G9 | TBC - Fill out once test started. |
+| RA-2053-BL-G8 | G8 Windows 11 Baseline | 5 | ❌ | TBC | Baseline Windows 11 on G8 | TBC - Fill out once test started. |
+| RA-2053-BL | G9 Windows 11 Baseline | 5 | ❌ | TBC | Baseline Windows 11 on G9 | TBC - Fill out once test started. |
+| RA-2150-BL-8 | G8 Windows Srv 2022 Baseline | 5 | ❌ | TBC | Baseline Windows Server 2022 on G8 | TBC - Fill out once test started. |
+| RA-2150-BL | G9 Windows Srv 2022 Baseline | 5 | ❌ | TBC | Baseline Windows Server 2022 on G9 | TBC - Fill out once test started. |
 | RA-2053 | 1n_w10_uXXX_vXXX_mcs_ahv | 3 | ❌ | TBC | 1 Nodes - Windows 10 - MCS - AHV | TBC - Fill out once test started. |
 | RA-2053 | 2n_w10_uXXX_vXXX_mcs_ahv | 3 | ❌ | TBC | 2 Nodes - Windows 10 - MCS - AHV | TBC - Fill out once test started. |
 | RA-2053 | 4n_w10_uXXX_vXXX_mcs_ahv | 3 | ❌ | TBC | 4 Nodes - Windows 10 - MCS - AHV | TBC - Fill out once test started. |

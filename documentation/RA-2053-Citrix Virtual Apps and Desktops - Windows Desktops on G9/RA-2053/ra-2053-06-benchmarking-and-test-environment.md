@@ -97,22 +97,22 @@ _Table: Citrix Configuration_
 
 To initiate the sessions to the virtual desktops, Login Enterprise uses launcher VMs. Depending on the display protocol used, one launcher VM can host up to 25 sessions. For this reference architecture, we used one Nutanix NX-3060-G7 cluster with four nodes to host 75 launcher VMs. Each launcher VM had 4 vCPU and 6 GB of memory.
 
-### Virtual Server Cluster
+### Workload Cluster
 
-Eight Nutanix NX-3155 G9 nodes formed the cluster to host all virtual desktops. The next tables contain the specifications of this cluster.
+Eight Nutanix NX-3155-G9 nodes formed the cluster to host all the test workloads. The next tables contain the specifications of this cluster.
 
 _Table: Virtual Desktop Cluster Specifications_
 
 | Parameter | Setting |
 | --- | --- |
-| Block type | Nutanix NX-3155 G9 |
+| Block type | Nutanix NX-3155-G9 |
 | Number of blocks | 8 |
 | Number of nodes | 8 |
-| CPU type | XXXX |
-| Number of CPUs per node | XXXX |
-| Number of cores per CPU | XXXX |
-| Memory per node | XXXX GB |
-| Disk config per node | 6 × XXXX TB SSD |
+| CPU type | Xeon Gold 6442Y @ 2.6 Ghz |
+| Number of CPUs per node | 2 |
+| Number of cores per CPU | 24 |
+| Memory per node | 1.5 TB |
+| Disk config per node | 4 x 1.92 TB NVMe |
 | Network | 2 × 25 GbE |
 
 _Table: Nutanix Software Specifications_
@@ -137,16 +137,16 @@ _Table: Windows OS Template Image Configuration_
 
 | Parameter | Setting |
 | --- | --- |
-| Operating system | Windows XXXX (x64) |
-| Windows updates | XXXX |
-| CPU | XXXX vCPU |
-| Memory | XXXX GB |
+| Operating system | Windows 10 22H2 & Windows 11 23H2 (x64)|
+| Windows updates | October 2023 |
+| CPU | 2 vCPU |
+| Memory | 4 GB |
 | NICs | 1 |
-| Virtual network adapter | XXXX Adapter |
+| Virtual network adapter | VirtIO Adapter |
 | Virtual SCSI controller 0 | LSI Logic |
-| Virtual disk VMDK1 | XXXX GB |
+| Virtual disk | 80 GB |
 | Virtual CD/DVD drive 1 | Client |
-| Applications | Adobe Acrobat DC, Microsoft Edge Browser, Microsoft Office 2019 (x64) |
+| Applications | Adobe Acrobat DC, Microsoft Edge Browser, Microsoft Office 2021 (x64) |
 | Citrix Virtual Desktop Agent | 7.2203 CU4 |
 | Citrix Provisioning Services Target Device | 7.2203 CU4 |
 | Optimizations | Citrix Optimizer; custom optimizations to the default user profile |
