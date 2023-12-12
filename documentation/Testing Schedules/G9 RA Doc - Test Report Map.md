@@ -54,7 +54,7 @@ Infrastructure Components in place for the testing. Detail any additional compon
 | LE Appliance | WS-LE1 | ✅ | Good to go | ntnxDave / svenhuisman / ntnxJKindon | ✅ |
 | LE Launchers | LE1-202312-### | ✅ | Redeploy with new Launcher Agent and Citrix Workspace App | svenhuisman | ❌ |
 | G8 Windows 10 Image | W10-22H2-2649_Snap_Optimized.template | ✅ | 12/11/2023 14:19:15 svenhuisman | svenhuisman | ❌ |
-| G8 Windows 11 Image | W11-XXXX-XXXX_Snap_Optimized | ❌ | Image Description | TBC | ❌ |
+| G8 Windows 11 Image | W11-23H2-2509_Snap_Optimized.template | ✅ | 12/12/2023 : 11:12:15 | ntnxDave | ❌ |
 | G8 Windows Server 2022 Image | S22-XXXX-XXXX_Snap_Optimized | ❌ | Image Description | TBC | ❌ |
 | G9 Windows 10 Image | W10-XXXX-XXXX_Snap_Optimized | ❌ | Image Description | TBC | ❌ |
 | G9 Windows 11 Image | W11-XXXX-XXXX_Snap_Optimized | ❌ | Image Description | TBC | ❌ |
