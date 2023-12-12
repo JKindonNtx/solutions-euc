@@ -209,3 +209,75 @@ _Table: G8 vs. G9: Key Differences_
 | Login Times | [#] | [#] |
 | Number of users per node | [#] | [#] | 
 | etc | [#] | [#] | 
+
+## Windows 10 vs. Windows 11
+
+In this section, we compare the results of a Login Enterprise test on 8 nodes, using Windows 10 vs Windows 11.
+
+### Logon Phase
+
+The following charts detail the user experience during the logon phase.
+
+### Logon Time Scores
+
+The following graph shows the linear scalability of logon time performance over the test runs.
+
+<!-- Currently, we put images here without explanatory text. Would love to do something else. -->
+
+#### Application Performance
+
+The following table shows the linear scalability detail for application performance.
+
+_Table: MCS vs. Citrix Provisioning: Application Logon Time (in Seconds)_
+
+| Application | MCS | Citrix Provisioning | 
+| --- | --- | --- | 
+| Microsoft Outlook | [#] | [#] | 
+| Microsoft Word | [#] | [#] | 
+| Microsoft Excel | [#] | [#] |
+| Microsoft PowerPoint | [#] | [#] | 
+
+_Table: MCS vs. Citrix Provisioning: Specific Action (in Seconds)_
+
+| Application (Action) | MCS | Citrix Provisioning | 
+| --- | --- | --- | 
+| Microsoft Edge (Page Load) | [#] | [#] |
+| Microsoft Word (Open Doc) | [#] | [#] | 
+| Microsoft Excel (Save File) | [#] | [#] | 
+
+#### System Performance
+
+The following charts show the system performance during the tests.
+
+<!-- Currently, we put images here without explanatory text. Would love to do something else. -->
+
+### Steady State Phase
+
+The following charts detail the user experience during the steady state.
+
+#### Application Performance
+
+The following table shows the linear scalability detail for application performance.
+
+_Table: MCS vs. Citrix Provisioning: Application Logon Time (in Seconds)_
+
+| Application | MCS | Citrix Provisioning | 
+| --- | --- | --- | 
+| Microsoft Outlook | [#] | [#] | 
+| Microsoft Word | [#] | [#] | 
+| Microsoft Excel | [#] | [#] |
+| Microsoft PowerPoint | [#] | [#] | 
+
+_Table: MCS vs. Citrix Provisioning: Specific Action (in Seconds)_
+
+| Application (Action) | MCS | Citrix Provisioning | 
+| --- | --- | --- | 
+| Microsoft Edge (Page Load) | [#] | [#] |
+| Microsoft Word (Open Doc) | [#] | [#] | 
+| Microsoft Excel (Save File) | [#] | [#] | 
+
+#### System Performance
+
+The following charts show the system performance during the tests.
+
+<!-- Currently, we put images here without explanatory text. Would love to do something else. -->
