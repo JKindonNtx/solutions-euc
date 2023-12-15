@@ -47,7 +47,6 @@ To execute a test, there are four key pieces of information required by the scri
 
 -  `ConfigFile.jsonc` contains general information about the test, including what sort of test is being run. This file is unique to each test. This file contains what you are testing (Citrix, Horizon, Parallels etc) along with where the tests are being run, and what specific components are needed. This file contains sensitive information, so will exists on your local machine only. An example exists in the root repository as `ExampleConfig-Test-Template.jsonc`. The example contains all configuration options for all tests with placeholder values. You should copy this file and input relevant information for your test requirements.
 -  `LEConfigFile.jsonc` contains information about the Login Enterprise Appliances and configuration. It is a global json file required for all tests. the `Invoke-Test.ps1` script will import this configuration file, and based on the specified Appliance in either `ConfigFile.jsonc` or the Script parameter `LEAppliance`, will consume and set the appropriate Login Enterprise details. This file contains sensitive information, so will exists on your local machine only. An example exists in the root repository as `ExampleConfig-LoginEnterpriseGlobal.jsonc`
--  `ReportConfiguration.jsonc`
 -  `Type` defines the sort of test we are running. This could be `CitrixVAD`, `CitrixDaaS`, `Horizon`, `Parallels`. The script logic executes based on the provided value.
 
 ### Invoke-Test.Ps1 Mandatory Parameters
@@ -87,7 +86,6 @@ To get started with the script structure, you need to action the following:
 
 1. Copy the `ExampleConfig-Test-Template.jsonc` and rename it to something appropriate. For example: `LoginEnterpriseGlobalConfig.jsonc`. Alter the file with the appropriate values, including URLS, Tokens etc. This file is now unique to you, and can be used across all tests using Login Enterprise. This will be used by the `LEConfigFile.jsonc` parameter.
 2. Copy the `ExampleConfig-Test-Template.jsonc` and rename it something appropriate. For example: `LE-Citrix-FSLogix.jsonc`. Alter the file with the appropriate values and remove what is not required. For example, remove the Horizon components from a Citrix VAD test You will need to add usernames, passwords, cluster details, slack information etc. This file is now unique to your test. You can have as many as required. This will be used by the `ConfigFile.jsonc` parameter.
-3. The default `ReportConfiguration.jsonc` file will rarely need to be changed. The default file `ReportConfiguration.jsonc` can be used
 
 ### Infrastructure Monitoring with Telegraf
 
