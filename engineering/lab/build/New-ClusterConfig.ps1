@@ -10,6 +10,12 @@
     There are 2 regions in this script - the details of the regions are:
         - Functions and Variables - this region gathers environment info for the build
         - Configuration - this region configures the cluster ready for use
+.NOTES
+    CHANGELOG
+    | Date | Author | Detail |
+    | 18.12.2023 | James Kindon | Added JSONFile param, allowing to specify a custom JSON file. Optional. |
+    | 18.12.2023 | James Kindon | Fixed output reporting values for Container with ESXi. |
+    | 18.12.2023 | James Kindon | Fixed PowerCli Module detection and install procedure. |
 #>
 
 # Region Functions and Variables
@@ -22,13 +28,20 @@ Param(
     [Parameter(Mandatory = $false)]
     [switch]$Silent,
     [Parameter(Mandatory = $false)]
-    [switch]$ContainerDriven
+    [switch]$ContainerDriven,
+    [Parameter(Mandatory = $false)]
+    [string]$JSONFile
 )
 
 # Define the Variables for the script
 If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $ScriptRoot = $PSScriptRoot }
 $functions = get-childitem -Path "$($ScriptRoot)\functions\*.psm1"
-$JSONFile = "$($ScriptRoot)\LabConfig.json"
+
+if ([string]::IsNullOrEmpty($JSONFile)){
+    $JSONFile = "$($ScriptRoot)\LabConfig.json"
+} else {
+    $JSONFile = $JSONFile
+}
 
 # Import all the functions required
 foreach($function in $functions){ Write-Host (Get-Date)":Importing - $function." ; import-module $function }
@@ -84,7 +97,13 @@ Write-Host "Cluster IP:             $($JSON.Cluster.IP)"
 Write-Host "Cluster user:           $($github.username)"
 Write-Host "VLAN:                   $($JSON.VM.VLAN)"
 Write-Host "VLAN Name:              $VLANName"
-Write-Host "Container Name:         EUC-<CLUSTER_NAME>"
+#Write-Host "Container Name:         EUC-<CLUSTER_NAME>"
+if ($JSON.VM.Hypervisor -eq "ESXi") {
+    Write-Host "Container Name:         EUC-$($JSON.VMwareCluster.ClusterName)"
+}
+if ($JSON.VM.Hypervisor -eq "AHV") {
+    Write-Host "Container Name:         $($JSON.VM.Container)"
+}
 Write-Host "ISO Image:              $($JSON.VM.ISO)"
 Write-Host "ISO Url:                $($JSON.VM.ISOUrl)"
 Write-Host "Register to PC:         $($JSON.Cluster.PCIP)"
@@ -149,7 +168,17 @@ if ($confirmationStart -eq 'n') {
 
     # Install PowerCLI and get Clusters if configuring a VMware Cluster
     if($JSON.VM.Hypervisor -eq "ESXi"){
-        Write-Host (Get-Date) ":Installing VMware PowerCli" 
+        
+        if (-not (Get-Module -Name "VMware.PowerCLI" -ListAvailable)) {
+            Write-Host (Get-Date) ":Installing VMware PowerCli"
+            try {
+                Install-Module VMware.PowerCLI -AllowClobber -Force -ErrorAction Stop
+            }
+            catch {
+                Write-Host (Get-Date) ":Failed to Install PowerCLI module. Exit script"
+                Break
+            }
+        }
         #$null = Install-Module VMware.PowerCLI -AllowClobber -Force
         Write-Host (Get-Date) ":Connecting to VMware vSphere" 
         $Connection = Connect-VIServer -Server $JSON.VMwareCluster.ip -Protocol https -User $JSON.VMwareCluster.user -Password $JSON.VMwareCluster.password -Force
