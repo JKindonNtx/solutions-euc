@@ -176,17 +176,33 @@ The following tables and graphs show the difference between **Direct Attach** (M
 
 _Table: FSLogix Profiles Cloud Cache Mode 0 vs Mode 3 comparison: Nutanix Files Metrics_
 
+<!--JK: The below metrics were incorrect. Fixed by JK 22.12.23
+
 |  | **Windows 10 CC FSLogix** | **Windows 10 CC FSLogix - Mode3** |
 | --- | --- | --- |
 | Nutanix Files Iops | 4,335 | 4,706 |
 | Nutanix Files Latency | 1.28 ms | < 1ms |
 | Nutanix Files Throughput | 134 MB/s | 141 MB/s |
+-->
 
+|  | **Windows 10 CC FSLogix** | **Windows 10 CC FSLogix - Mode3** |
+| --- | --- | --- |
+| Nutanix Files Iops | 4,026 | 4,369 |
+| Nutanix Files Latency | 1.19 ms | < 1ms |
+| Nutanix Files Throughput | 124 MB/s | 131 MB/s |
+
+<!--JK: This image set was incorrect. Fixed by JK 22.12.23
 ![Nutanix Files Individual Runs Files Iops Total Cc M0 Vs M3](../images/nutanix_files_individual_runs_files_iops_total_cc_m0_vs_m3.png "Nutanix Files Individual Runs Files Iops Total Cc M0 Vs M3")
 
 ![Nutanix Files Individual Runs Files Latency Total Cc M0 Vs M3](../images/nutanix_files_individual_runs_files_latency_total_cc_m0_vs_m3.png "Nutanix Files Individual Runs Files Latency Total Cc M0 Vs M3")
 
 ![Nutanix Files Individual Runs Files Throughput Total Cc M0 Vs M3](../images/nutanix_files_individual_runs_files_throughput_total_cc_m0_vs_m3.png "Nutanix Files Individual Runs Files Throughput Total Cc M0 Vs M3")
+-->
+![Nutanix Files Iops Total Cc M0 Vs M3](../images/nutanix_files_iops_total_cc_m0_vs_m3.png "Nutanix Files Iops Total Cc M0 Vs M3")
+
+![Nutanix Files Latency Total Cc M0 Vs M3](../images/nutanix_files_latency_total_cc_m0_vs_m3.png "Nutanix Files Latency Total Cc M0 Vs M3")
+
+![Nutanix Files Throughput Total Cc M0 Vs M3](../images/nutanix_files_throughput_total_cc_m0_vs_m3.png "Nutanix Files Throughput Total Cc M0 Vs M3")
 
 ### Key Takeaways
 
