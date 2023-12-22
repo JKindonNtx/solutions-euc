@@ -14,7 +14,16 @@
         - VM Create - this region creates and builds the VM Operating System
         - Ansible - this region runs any post OS build Playbooks
         - Finalize - this region shuts down and shapshots the VM
+.NOTES
+    CHANGELOG
+    | Date | Author | Detail |
+    | 18.12.2023 | James Kindon | Added JSONFile param, allowing to specify a custom JSON file. Optional. |
 #>
+
+Param(
+    [Parameter(Mandatory = $false)]
+    [string]$JSONFile
+)
 
 # Region Functions and Variables
 # ====================================================================================================================================================
@@ -26,7 +35,13 @@
 
 # Define the Variables for the script
 $functions = get-childitem -Path "/workspaces/solutions-euc/engineering/lab/build/functions/*.psm1"
-$JSONFile = "/workspaces/solutions-euc/engineering/lab/build/LabConfig.json"
+
+if ([string]::IsNullOrEmpty($JSONFile)){
+    $JSONFile = "/workspaces/solutions-euc/engineering/lab/build/LabConfig.json"
+} else {
+    $JSONFile = $JSONFile
+}
+
 
 # Import all the functions required
 foreach($function in $functions){ Write-Host (Get-Date)":Importing - $function." ; import-module $function }
@@ -83,8 +98,18 @@ if ($JSON.VM.Hypervisor -eq "AHV"){
     if (!($Containerinfo.entities | Where-Object {$_.name -eq "$($StorageName)"})){ Write-Host (Get-Date)":Storage Container Not Found"; Write-Host (Get-Date)":Please run New-ClusterConfigAHV.ps1"; exit }  else { Write-Host (Get-Date)":Storage Container found" }
 } else {
     if ($JSON.vm.Hypervisor -eq "ESXi"){
-        Write-Host (Get-Date) ":Installing VMware PowerCli" 
-        $null = Install-Module VMware.PowerCLI -Force
+        #Write-Host (Get-Date) ":Installing VMware PowerCli" 
+        #$null = Install-Module VMware.PowerCLI -Force
+        if (-not (Get-Module -Name "VMware.PowerCLI" -ListAvailable)) {
+            Write-Host (Get-Date) ":Installing VMware PowerCli"
+            try {
+                Install-Module VMware.PowerCLI -AllowClobber -Force -ErrorAction Stop
+            }
+            catch {
+                Write-Host (Get-Date) ":Failed to Install PowerCLI module. Exit script"
+                Break
+            }
+        }
         Write-Host (Get-Date) ":Connecting to VMware vSphere" 
         $Connection = Connect-VIServer -Server $JSON.VMwareCluster.ip -Protocol https -User $JSON.VMwareCluster.user -Password $JSON.VMwareCluster.password -Force
         if($connection){
