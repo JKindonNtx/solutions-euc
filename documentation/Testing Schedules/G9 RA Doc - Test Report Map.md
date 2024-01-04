@@ -88,7 +88,7 @@ Detail the testing baseline numbers.
 Detail the tests you are planning to run as part of the document.
 | Document Reference | Test Name | Run Count | Completed | By | Info | Test ID | Link |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
-| RADOC-2053-G8 | G8 Windows 10 Baseline | 2 | ✅ | Sven | Baseline Windows 10 on G8 | c508f7_1n_A6.5.4.5_AHV_120V_120U_KW | |
+| RADOC-2053-G8 | G8 Windows 10 Baseline | 2 | ✅ | Sven | Baseline Windows 10 on G8 | c508f7_1n_A6.5.4.5_AHV_120V_120U_KW | [Report](http://10.57.64.101:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=2024&var-Month=01&var-DocumentName=RADOC-2053-G8&var-Comment=G8_Windows_10&var-Testname=c508f7_1n_A6.5.4.5_AHV_120V_120U_KW&var-Run=c508f7_1n_A6.5.4.5_AHV_120V_120U_KW_Run1&var-Run=c508f7_1n_A6.5.4.5_AHV_120V_120U_KW_Run2&var-Naming=Comment)|
 | RA-2053-BL | G9 Windows 10 Baseline | 5 | ✅ | Sven | Baseline Windows 10 on G9 | 4af950_1n_A6.5.4.5_AHV_135V_135U_KW | |
 | RA-2053-BL | G9 Windows 11 Baseline | 5 | ❌ | TBC | Baseline Windows 11 on G9 | TBC - Fill out once test started. | |
 | RA-2150-BL-8 | G8 Windows Srv 2022 Baseline | 5 | ✅ | Sven | Baseline Windows Server 2022 on G8 | 3afd79_1n_A6.5.4.5_AHV_16V_135U_KW | |
