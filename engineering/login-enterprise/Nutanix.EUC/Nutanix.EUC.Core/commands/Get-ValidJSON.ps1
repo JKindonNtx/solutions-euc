@@ -28,7 +28,7 @@ The configuration file to parse and validate
         $Validated_Workload_Profiles = @("Task Worker", "Knowledge Worker")
         $Validated_Session_Support = @("multisession", "singlesession")
         #Target Section Citrix Valid Settings
-        $Validated_Functional_Levels = @("L7_9", "L5", "L7", "L7_6", "L7_7", "L7_8", "L7_9", "L7_20", "L7_25")
+        $Validated_Functional_Levels = @("L5", "L7", "L7_6", "L7_7", "L7_8", "L7_9", "L7_20", "L7_25", "L7_30")
         #Target Section VMWare Horizon Valid Settings
         $Validated_RefreshOsDiskAfterLogoff = @("ALWAYS","NEVER")
         $Validated_User_Assignments = @("DEDICATED","FLOATING")
