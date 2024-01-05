@@ -15,7 +15,7 @@ None
 # ============================================================================
 Param(
     [Parameter(Mandatory = $true)]
-    [string]$TestName,
+    [string]$TestName
 )
 #endregion Params
 
