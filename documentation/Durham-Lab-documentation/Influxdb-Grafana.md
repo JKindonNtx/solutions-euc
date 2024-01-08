@@ -21,6 +21,8 @@ VM running on the infrastructure cluster (10.57.64.25). Details:
 - Install Ubuntu from iso (\\ws-files.wsperf.nutanix.com\automation\OS\Server\ubuntu-22.04.3-live-server-amd64.iso)
   - user: nutanix
 - Make sure lvm mapping is using all of the disk
+  - run cfdisk and you should see the free space listed -> resize disk
+  - Now that the LVM partition backing the  /dev/sda3 Physical Volume (PV) has been extended, we need to extend the PV itself. Run pvresize /dev/sda3 to do this and then use pvdisplay to check the new size.
   - sudo lvresize -tvl +100%FREE /dev/mapper/ubuntu--vg-ubuntu--lv
   - sudo lvresize -vl +100%FREE /dev/mapper/ubuntu--vg-ubuntu--lv
   - sudo resize2fs /dev/mapper/ubuntu--vg-ubuntu--lv
