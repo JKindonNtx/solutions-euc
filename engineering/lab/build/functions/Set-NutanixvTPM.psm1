@@ -74,7 +74,8 @@ function Set-NutanixvTPM {
         Write-Host (Get-Date)":VMname: $VMname" 
 
         # Install the Posh-SSH Module to enable vTPM Connection
-        Install-Module -Name Posh-SSH -Force
+        Install-Module -Name Posh-SSH -RequiredVersion 3.1.1 -Force
+        Import-Module Posh-SSH -RequiredVersion 3.1.1
 
         # Build the command and add the vTPM using SSH
         $command = "~/bin/acli vm.update $($VMname) virtual_tpm=true"
