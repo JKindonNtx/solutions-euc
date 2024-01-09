@@ -6,13 +6,14 @@ Set-ExecutionPolicy Bypass -Force
 New-Item -Path HKLM:\Software -Name BuildTatoo -Force
 
 # Get Operating System Details
+$OSDetailName = (Get-WmiObject -class Win32_OperatingSystem).Caption
+
+if($OSDetailName -like "*Windows Server 2022*") { $OSName = "Windows Server 2022" }
+if($OSDetailName -like "*Windows Server 2019*") { $OSName = "Windows Server 2019" }
+if($OSDetailName -like "*Windows 10*") { $OSName = "Windows 10" }
+if($OSDetailName -like "*Windows 11*") { $OSName = "Windows 11" }
+
 $OSDetails = Get-ItemProperty -Path "HKLM:\Software\Microsoft\Windows NT\CurrentVersion"
-
-if($OsDetails.ProductName -like "Windows Server 2022*") { $OSName = "Windows Server 2022" }
-if($OsDetails.ProductName -like "Windows Server 2019*") { $OSName = "Windows Server 2019" }
-if($OsDetails.ProductName -like "Windows 10*") { $OSName = "Windows 10" }
-if($OsDetails.ProductName -like "Windows 11*") { $OSName = "Windows 11" }
-
 $OSVersion = $($OSDetails.DisplayVersion) + "-" + $($OSDetails.CurrentBuildNumber) + "." + $($OSDetails.UBR)
 
 New-ItemProperty -Path "HKLM:\Software\BuildTatoo" -Name "OSName" -Value $OSName -Force
