@@ -144,6 +144,7 @@ if ($confirmationStart -eq 'n') {
     
     #Remove existing SSH keys.
     if (((Get-Module -ListAvailable *) | Where-Object {$_.Name -eq "Posh-SSH"})) {
+        Import-Module Posh-SSH -RequiredVersion 3.1.1 -force
         Get-SSHTrustedHost | Remove-SSHTrustedHost
     }
     
