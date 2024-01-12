@@ -114,19 +114,36 @@ Login times:
 Application performance:
 - Application start times
 - Application open file times
-- Apllication save file times
+- Application save file times
 
+A good user experience is not only defined by how fast a logon is or how fast an application starts, a consistent user experience is even more important. For example, when a user is used to a logon time of 30 seconds every day, but all of a sudden the logon time is 60 seconds, this user will start complaining about a slow system. While other users might have a logon time of 60 seconds every day, and be fine with it because it's always like this. If the logon time is inconsistent all the time, one day 25 seconds, the other day 50 seconds, and the next day 10 seconds, the user will get used to an inconsistent logon time, but is probably not happy about it. In an EUC Benchmark test, you want to see consistent logon times and consistent application times. If the average logon time for the first 10 users is 20 seconds, then you want to see a similar logon time for the last 10 users.
+In the user experience metrics, there are two ways to look at the results. If you want to know at what point it's not realistic to add more users to the system, you look at the difference in the numbers between the first users and the last users. If the logon time for the first 10 users is on average 20 seconds, you will see that these logon times start to increase gradually during the time more users are logged on to the system. At a certain point, the load on the system could come at a point where the logon time increases progressively. Just before that point is the point where you should not logon more users. 
+Once you know how many sessions you should logon to the system without going over that tipping point, you could compare the average numbers as well. Let's say you run a benchmark test on a system and the average logon time is 20 seconds. You then install a security patch on the system and run the test again. Now the average logon time is 25 seconds. You now know the impact of that security patch on the logon times. When you plan to add nodes with a different CPU type to an EUC environment, logons and application starts could be different and users may notice when logging on to the old system one day, and logging on to the new system the other day. This can also be the case when using cloud infrastructure, where users could be on different CPU models at various moments in time. A consistent user experience is not guaranteed in such environments.
 
 # Setup the infrastructure for EUC benchmark testing
-  - Reboot before testing
-  - Launchers
-    - Display protocol
-    - Screen resolution
-    - Offloading to client
-  - Logon window
+In this chapter we discuss the considerations for setting up the infrastructure to perform a benchmark test.
+
+## Reboot before testing
+Before you start a benchmark test, you should consider if you need to reboot components or not. For some components, it's important to start clean, with fresh memory and empty caches. This is especially important for the target machines, as it could cause big variations in test results. You could argue that a reboot is important for the hypervisor as well, but in our experience, the impact is negligible, especially when you don't use memory sharing technologies on hypervisor level (like ballooning).
+You can also reboot the client VMs (launchers) before each test. However, in some cases this can result in slower login times for the first user starting a session from that client. This can affect the average login scores.
+
+## Clients (Launchers)
+You can start a workload simulation direct on the (console of) a target VM. If you want to simulate the use of a display protocol as well, which has an impact on the resource usage as well, you should use clients that connect using a display protocol from the broker being used. These clients can be physical or virtual and start one or more sessions (depending on the benchmark tool). It's important to configure these clients always with the same specifications. Think about screen resolution, display protocol settings and offloading settings like video and audio.
+
+## Logon window
+The Logon Window is the time to login all the sessions. Another definition that is used is Logon rate, which defines the number of logons per second or minute. The logon phase during a benchmark test is often the most resource intensive phase. If the logon window is too short, you will most likely run into CPU contention on the system. In our tests, we always use a logon window of 48 minutes, no matter how many sessions we configure. The thought behind this is, if we configure more sessions to logon, the node or cluster should be able to handle more sessions as well. If a node is capable of logging on 100 sessions on 1 node in 48 minutes, a 4 node cluster of the same type should be able to logon 400 sessions in 48 minutes.
+
   - Persistent vs non-persistent
   - Local vs roaming vs containerized profiles
-  - BIOS settings / C-states
+
+
+ ## BIOS settings
+Modern CPUs utilized a technology called "C-States" to manage the amount of power that individual processor cores are utilizing.  When a core is idle, the server's BIOS will reduce its clock rate, power draw, or both in an effort to make the system more energy efficient.  In most cases, this is the desired condition as it can significantly reduce power consumption. The unused power may be used by other CPU cores to increase their frequency (GHz), allowing instructions executing on active CPU cores to complete faster.
+For EUC workloads, this is not a desired behavior. As described earlier, a consistent user experience is very important. When these kind of "power throttling" technologies are enabled, user can experience inconsistent performance. Therefor, it's best to disable c-states to make sure the processors are always running at the same speed. In most servers, setting the BIOS to "High Performance" will also disable processor c-states.
+<note>
+Do not change Power Management Configuration settings in the BIOS. Nutanix does not support custom power management configurations, and changing the power management settings in the BIOS can cause unpredictable behavior. The Nutanix BIOS contains optimized power management settings by default.
+</note>
+
   - Optimizations
 
 # Benchmark examples
@@ -141,3 +158,8 @@ Application performance:
 
 # Performance Testing With Login VSI
 
+
+
+# References
+
+https://portal.nutanix.com/page/documents/details?targetId=Release-Notes-BMC-BIOS:Nutanix%20BMC%20and%20BIOS%20Overview
