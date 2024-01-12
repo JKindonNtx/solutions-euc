@@ -16,11 +16,11 @@ This technote is part of the Nutanix Solutions Library and provides an overview 
 
 This document covers the following subject areas:
 
-- Why run performance benchmark tests for EUC? - DB
-- Benchmark tools - DB
-- Benchmark metrics - DB
+- Why run performance benchmark tests for EUC? - DB - base done
+- Benchmark tools - DB - base done
+- Benchmark metrics - DB - base done
 - Setup your environment for consistent benchmark testing
-  - Master images - DB
+  - Master images - DB - base done
   - Reboot before testing - SH
   - Launchers - SH
     - Display protocol - SH
@@ -72,49 +72,104 @@ Benchmarking tools can be broken into various categories and it is important to 
 Below are some examples of those categories and some examples of software vendors that provide solutions in those areas:
 
 | **Category** | **Description** | **Examples** |
-| :---: | --- | --- |
+| :--- | :--- | :--- |
 | Workload Generation | Simulate user workloads on the endpoints being tested | Login Enterprise / Automai / LoadGen |
 | Image Deployment | Operating System and Application Deployment | MDT / Ansible / PowerShell |
-| Test Automation | Automation of the Test Execution | PowerShell / Api |
+| Automation | Automation of the Test Execution | PowerShell / Api |
 | Data Collection | Ability to collect additional test data | PowerShell / Api |
-| Test Storage | Central repository to store test data | InfluxDB / SQL |
-| Test Reporting | Central reporting console for the test data | Grafana / Custom Web page |
+| Storage | Central repository to store test data | InfluxDB / SQL |
+| Reporting | Central reporting console for the test data | Grafana / Custom Web page |
 
 The key point here when defining and designing your environment for testing is that you have a repeatable and automated process. Having the test bed defined **exactly the same** for every test run is critical to ensure accurate results.
 
 # EUC Benchmark Metrics
 
-When benchmarking an EUC workload, you want to know how many sessions you can host on the infrastructure and how the platform performs with those sessions active and working. This is hard to achieve with a benchmark tool, as it is very difficult to simulate the real user workload of a production environment. 
+When benchmarking an EUC workload the key outcome desired is to know the baseline of your platform along with the performance difference after deploying changes to the environment. This is not easy to achieve with a benchmark tool, as it is very difficult to simulate the real user workload of a production environment, however, what is relevant here is having the knowledge to accurately report on software and hardware changes and how this will impact your user experience. 
 
-The best way to determine the user density of a platform is to let users actually work on the system and then gradually add more users. Then you will need to keep an eye on certain resource usage metrics and user experience metrics to determine if the platform has reached it's maximum capacity.
+The best way to determine the user density of a platform is to let users actually work on the system and then gradually add more users. This however is a risky approach as you may overload the environment and cause a negative user experience without knowing where the issue lies.
 
-With the Nutanix Cloud Platform, you can start small and scale linearly by adding nodes to the cluster. But before you start testing its important to understand the types of metrics you will be monitoring to measure experience.
+With the Nutanix Cloud Platform, you can start small and scale linearly by adding nodes to the cluster. But before you start baselining the platform it's important to understand the types of metrics you will be monitoring to measure system and user experience.
 
-## Resource usage metrics
-Host:
-- CPU usage
-- Memory usage
-- Storage controller IO
-- Storage controller latency
+## Resource Usage Metrics
 
-VM:
-- CPU usage
-- CPU ready time
-- Memory usage
-- Display protocol CPU usage
-- Display protocol Frames per Second
+The following metrics relate to the system performance directly and need to be kept under certain thresholds in order for the platform to function as expected.
+
+### Host Metrics
+
+The below are typical metrics required from the Nutanix host to ensure it is performing correctly.
+
+| **Metric** | **Description** | 
+| :--- | :--- |
+| CPU usage | The CPU usage during the test run | 
+| Memory usage | The memory usage during the test run | 
+| Storage controller IO | The Read, Write IO During the test run | 
+| Storage controller latency | The Storage Controller Latency during the test run | 
+
+### Virtual Machine Metrics
+
+The below are typical metrics required from the Virtual Machine to ensure it is performing correctly.
+
+| **Metric** | **Description** | 
+| :--- | :--- |
+| CPU usage | The CPU usage during the test run | 
+| CPU ready time | The CPU ready time during the test run | 
+| Memory usage | The memory usage during the test run | 
+| Display protocol CPU usage | The Display Protocol CPU usage During the test run | 
+| Display protocol Frames per Second | The FPS during the test run | 
 
 ## User Experience metrics
-Login times:
-- Total login time
-- Profile load time
-- Connection time
-- GPO load time
 
 Application performance:
 - Application start times
 - Application open file times
 - Application save file times
+The below are typical metrics required to measure the user experience during the benchmark.
+
+### Login Time Metrics
+
+The below are typical metrics required to measure the login times.
+
+| **Metric** | **Description** | 
+| :--- | :--- |
+| Total login time | The total login time during the test run | 
+| Profile load time | The time taken to load the user profile during the test run | 
+| Connection time | The time to connect to the resource during the test run | 
+| GPO load time | The time to process the Group Policies assigned During the test run | 
+
+
+### Application Performance Metrics
+
+The below are typical metrics required to measure application performance during a test
+
+| **Metric** | **Description** | 
+| :--- | :--- |
+| Application start times | The time taken to open up various applications during the test run | 
+| Application open file times | The time taken to open a file during the test run | 
+| Apllication save file times | The time to save a file during the test run | 
+
+# Setup your environment for consistent EUC benchmark testing
+
+## Master Image
+
+The master image is one of the most important first steps you will undertake when setting up your environment to run EUC benchmark tests, after all, it is this image that will be the basis for all of your tests. Having a repeatable, consistent process here is paramount.
+
+Consider the steps that are normally undertaken to build an EUC Master Image:
+
+- Define the Virtual Machine SPecs
+- Install the Operating System
+- Install Additional Software
+- Optimize the Image
+- Snapshot the image
+
+If this was only being done once, then a manual approach may be sufficient, however as you will be testing various hardware, software and configuration changes even if it was a single person manually building the image every time there is too much to remember and something will be done differently. Whilst that not seem a huge problem, a single config difference can have a massive impact on the test and therefore the numbers you are seeing as a result of the test run.
+
+Key things to consider when building a master image are:
+
+- Automate, automate, automate. Ensure everything is a repeatable task
+- Run the same optimizations across all tests
+- Dont forget application optimizations, these can make a big difference in performance
+- Ensure all your testing team are using the same deployment method for building master images
+- Consider the use of containers to standardize on image deployment methods
 
 A good user experience is not only defined by how fast a logon is or how fast an application starts, a consistent user experience is even more important. For example, when a user is used to a logon time of 30 seconds every day, but all of a sudden the logon time is 60 seconds, this user will start complaining about a slow system. While other users might have a logon time of 60 seconds every day, and be fine with it because it's always like this. If the logon time is inconsistent all the time, one day 25 seconds, the other day 50 seconds, and the next day 10 seconds, the user will get used to an inconsistent logon time, but is probably not happy about it. In an EUC Benchmark test, you want to see consistent logon times and consistent application times. If the average logon time for the first 10 users is 20 seconds, then you want to see a similar logon time for the last 10 users.
 In the user experience metrics, there are two ways to look at the results. If you want to know at what point it's not realistic to add more users to the system, you look at the difference in the numbers between the first users and the last users. If the logon time for the first 10 users is on average 20 seconds, you will see that these logon times start to increase gradually during the time more users are logged on to the system. At a certain point, the load on the system could come at a point where the logon time increases progressively. Just before that point is the point where you should not logon more users. 
@@ -144,6 +199,49 @@ For EUC workloads, this is not a desired behavior. As described earlier, a consi
 Do not change Power Management Configuration settings in the BIOS. Nutanix does not support custom power management configurations, and changing the power management settings in the BIOS can cause unpredictable behavior. The Nutanix BIOS contains optimized power management settings by default.
 </note>
 
+  - Reboot before testing
+  - Launchers
+    - Display protocol
+    - Screen resolution
+    - Offloading to client
+  - Logon window
+
+## Persistent vs Non-Persistent - Run 1 vs Run 2 data - DB
+
+Unless testing a profile solution where the profiles are saved to a file share of some type then the difference between testing persistent and non-persistent workloads needs to be catered for in the reporting of the benchmark test.
+
+First a brief explanation of what both technologies are.
+
+### Persistent 
+
+A persistent workload is one that retains all the user settings at logoff. Therefore any changes the user makes to an application configuration or environment setting is retained and the next time they log in those changes "persist"
+
+### Non-Persistent
+
+A non-persistent workload is one that will not retain any settings at logoff unless specifically catered for by an external profile solution. I this case any changes that the user makes during their session will be disguarded at logoff and the next time they log in they will be treated as a new user on the platform.
+
+Looking at the above definitions its important to note that if you are testing with persistent workloads and doing multiple runs of the same test you will see differences in the login and user experience metrics from the second run onwards. This is because when the user logs in for the first time their profile is created and set up, this takes a little more time that just loading the profile. From run 2 onwards the profile already exists as the workload is persistent and will therefore reflect this in the metrics being pulled back from the platform resulting in faster logins.
+
+Compare this to a non-persistent workload where the user profile is created as a "new user" every login and will therefore have a more stable user experience metric base but may not show the fastest login times available.
+
+With regard to performance benchmarking as we are looking at getting the most consistent experience possible to show the differences between configuration changes it is recommended to use non-persistent workloads when validating.
+
+## Local vs Roaming vs Containerized Profiles
+
+The profile type will have an impact on the test data and additional considerations need to be put in place when testing for this. Details of this can be seen below.
+
+### Local Profiles
+
+ - No profile retention unless testing a persistent workload
+ - All IO runs from the Workload Cluster
+ - CPU Load will be run from the Workload Cluster
+ - No reason to worry about profile size
+
+### Roaming Profiles
+
+### Containerized Profiles
+
+  - BIOS settings / C-states
   - Optimizations
 
 # Benchmark examples
