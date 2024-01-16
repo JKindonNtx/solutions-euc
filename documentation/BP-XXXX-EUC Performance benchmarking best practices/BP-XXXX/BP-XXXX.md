@@ -35,7 +35,7 @@ This document covers the following subject areas:
   - Logon Window
   - BIOS Settings / C-States
   - Persistent vs Non-Persistent
-  - Local vs Roaming vs Containerized Profiles
+  - Local vs File vs Container Profiles
   - Optimizations
 - Benchmark Examples
   - Non Optimized
@@ -203,7 +203,7 @@ Key things to consider when building a master image are:
 
 ## Reboot Before Testing
 
-Before you start a benchmark test, you should consider if you need to reboot components or not. For some components, it's important to start clean, with fresh memory and empty caches. This is especially important for the target machines, as it could cause big variations in test results. 
+Before you start a benchmark test, you should consider if you need to reboot components or not. For some components, it's important to start clean, with fresh memory and empty caches. This is especially important for the target machines, as it could cause big variations in test results. Another consideration here is to tune the hypervisor connection from your chosen broker to allow for mass actions to take place (such as reboot) within a given time frame. Please refer to your broker documentation to read the current best practice guidelines.
 
 You could argue that a reboot is important for the hypervisor as well, but in our experience, the impact is negligible, especially when you don't use memory sharing technologies on hypervisor level (like ballooning).
 
@@ -236,7 +236,7 @@ For EUC workloads, this is not a desired behavior. As described earlier, a consi
 In most servers, setting the BIOS to "High Performance" will also disable processor c-states.
 
 <note>
-Do not change Power Management Configuration settings in the BIOS. Nutanix does not support custom power management configurations, and changing the power management settings in the BIOS can cause unpredictable behavior. The Nutanix BIOS contains optimized power management settings by default.
+Do not change Power Management Configuration settings in the BIOS for Nutanix NX hardware. Nutanix does not support custom power management configurations, and changing the power management settings in the BIOS can cause unpredictable behavior. The Nutanix BIOS contains optimized power management settings by default.
 </note>
 
 ## Persistent vs Non-Persistent
@@ -266,14 +266,26 @@ The profile type will have an impact on the test data and additional considerati
 ### Local Profiles
 
  - No profile retention unless testing a persistent workload.
- - All IO runs from the Workload Cluster.
- - CPU Load will be run from the Workload Cluster.
+ - All IO on the Workload Cluster.
+ - CPU Load on the Workload Cluster.
  - No reason to worry about profile size.
 
-### Roaming Profiles
+### File Based Profiles
 
-### Containerized Profiles
+ - Profile retention using external file share.
+ - IO on Workload Cluster higher during logon.
+ - CPU Load on the Workload Cluster.
+ - Profile size needs to be managed via exclusions.
+ - File server performance considerations.
+  
+### Container Based Profiles
 
+ - Profile retention using external file share.
+ - IO split between Workload and File Server Cluster dependent on configuration.
+ - CPU Load split between Workload and File Server Cluster dependent on configuration.
+ - Profile size less relevant.
+ - File server performance considerations.
+  
 ## Optimization
 
 Operating System optimizations have a huge impact on system performance when dealing with EUC workloads. 
@@ -307,7 +319,12 @@ Optimizing an image is a balancing act. We should be looking to disable everythi
 ## With or Without Security Agents or Virus Protection?
 
 # Conclusion
-
+consistenct
+optimize
+workload need to represent prod
+able to compare results directly
+data retention
+compare boot storm - logon phase and steady state
 
 # References
 
