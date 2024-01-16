@@ -110,7 +110,7 @@ When you plan to add nodes with a different CPU type to an EUC environment, logo
 
 This can also be the case when using cloud infrastructure, where users could be on different CPU models at various moments in time. A consistent user experience is not guaranteed in such environments.
 
-The key point here being that **consistency is key**, and your users will get used to and appreciate a stable, consistent user experience.
+The key point here being that **consistency**, and your users will get used to and appreciate a stable, consistent user experience.
 
 # Benchmarking Metrics
 
@@ -303,13 +303,12 @@ Optimizing an image is a balancing act. We should be looking to disable everythi
 ## Not Optimized
 
 ## Wait Time
+
 ## With or Without Security Agents or Virus Protection?
 
 # Conclusion
 
 
 # References
-Add Login Ent reference
-add optimization reference
 
 https://portal.nutanix.com/page/documents/details?targetId=Release-Notes-BMC-BIOS:Nutanix%20BMC%20and%20BIOS%20Overview
