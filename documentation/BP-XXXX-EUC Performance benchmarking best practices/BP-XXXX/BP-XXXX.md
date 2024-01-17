@@ -20,26 +20,7 @@ This technote is part of the Nutanix Solutions Library and provides an overview 
 
 ## Purpose
 
-This document covers the following subject areas:
-
-- Why Run Performance Benchmark Tests for EUC?
-- Benchmarking Tools
-- Consistency
-- Benchmarking Metrics
-- Setting Up Your Environment for Consistent Benchmark Testing
-  - Master Images
-  - Reboot Before Testing
-  - Clients (Launchers)
-  - Logon Window
-  - BIOS Settings / C-States
-  - Persistent vs Non-Persistent
-  - Local vs File vs Container Profiles
-  - Optimizations
-- Benchmark Examples
-  - Non Optimized
-  - Wait Time
-  - With vs Without Security Agents or Virus Protection
-- Conclusion
+This document covers End User Computing benchmarking guidelines and best practices.
 
 ## Document Version History
 
@@ -55,7 +36,7 @@ Nutanix designed its software to give customers running workloads in a hybrid cl
 
 Nutanix AOS can withstand hardware failures and software glitches and ensures that application availability and performance are never compromised. Combining features like native rack awareness with public cloud partition placement groups, Nutanix operates freely in a dynamic hybrid multicloud environment.
 
-Nutanix's software will scale linearly allowing us to baseline a platform on a single node then scale that out to 2, 4, 6, 8, and 16 nodes to demonstrate no degradation in performance whilst adding more compute. 
+Nutanix's software will scale linearly allowing us to baseline a platform then scale that out by adding nodes to demonstrate no degradation in performance whilst adding more compute. 
 
 # Why Run Performance Benchmark Tests for EUC?
 
@@ -87,7 +68,8 @@ Below are some examples of the high level benchmarking software categories.
 
 | **Category** | **Description** | 
 | :--- | :--- | 
-| Workload Generation | Simulate user workloads on the endpoints being tested | 
+| Workload Simulator | Software to simulate user workloads on the endpoints being tested | 
+| Broker (optional) | The desktop broker platform used for delivery | 
 | Image Deployment | Operating System and application deployment |
 | Automation | Automation of the test execution |
 | Data Collection | Ability to collect existing and additional test data | 
@@ -107,6 +89,8 @@ If the logon time is inconsistent each time the user logs on they will eventuall
 In an EUC Benchmark test, you should see consistent logon times along with consistent application start and operation times. If the average logon time for the first 10 users is 20 seconds, then you should see a similar logon time for the last 10 users of the benchmark test.
 
 <!---
+James - if you can think how to re-word this that would be ace :)
+
 There are two ways to look at the results of the user experience metrics. 
 
 If you want to know at what point it's not realistic to add more users to the system (what is the maximum number of sessions for this system with this workload), you look at the difference in the numbers between the first and last users. If the logon time for the first 10 users is on average 20 seconds, you will see that these logon times start to increase gradually while more users are logged on to the system. At a certain point, the load on the system will reach a point where the logon time increases progressively. Just before that point is the point where you should not load more users. 
@@ -146,21 +130,21 @@ The below are typical metrics required from a Nutanix host to ensure it is perfo
 | **Metric** | **Description** | **Good Result** |
 | :--- | :--- | :--- |
 | CPU usage | The current and average CPU usage | < 85% during steady state |
+| Average CPU ready time | The CPU ready time | Less than 2% |
 | Memory usage | The host memory usage |  Irrelevant, as we do not recommend to over commit memory |
 | Storage controller IO | The host read, write IO  |  A typical read/write ratio for EUC workloads during steady state should be 20-30% reads / 70-80% writes |
 | Storage controller latency | The Storage Controller Latency |  < 5ms |
 
 ### Virtual Machine Metrics
 
-The below are typical metrics required from the Virtual Machine to ensure it is performing correctly.
+The below are typical metrics required from the Virtual Machine to ensure it is performing correctly. Good results with these metrics will largely depend on the type of workload you are testing, and acceptable levels should be agreed prior to running the benchmark.
 
-| **Metric** | **Description** | **Good Result** |
-| :--- | :--- | :--- |
-| CPU usage | The current and average CPU usage  | X |
-| CPU ready time | The CPU ready time | X |
-| Memory usage | The memory usage  | X |
-| Display protocol CPU usage | The display protocol current and average CPU usage  | X |
-| Display protocol Frames per Second | The display protocol frames per second | X |
+| **Metric** | **Description** | 
+| :--- | :--- | 
+| CPU usage | The current and average CPU usage | 
+| Memory usage | The memory usage  | 
+| Display protocol CPU usage | The display protocol current and average CPU usage  | 
+| Display protocol Frames per Second | The display protocol frames per second | 
 
 ## User Experience metrics
 
@@ -179,13 +163,13 @@ The below are typical metrics required to measure the login times.
 
 ### Application Performance Metrics
 
-The below are typical metrics required to measure application performance during a test
+The below are typical metrics required to measure application performance during a test. Good results with these metrics will largely depend on the type of workload you are testing, and acceptable levels should be agreed prior to running the benchmark.
 
-| **Metric** | **Description** | **Good Result** |
-| :--- | :--- | :--- |
-| Application start times | The time taken to open up various applications  | X |
-| Application open file times | The time taken to open a file | X |
-| Application save file times | The time to save a file | X |
+| **Metric** | **Description** | 
+| :--- | :--- | 
+| Application start times | The time taken to open up various applications | 
+| Application open file times | The time taken to open a file | 
+| Application save file times | The time to save a file |
 
 # Setting Up Your Environment for Consistent Benchmark Testing
 
@@ -197,15 +181,15 @@ The master image is a critical step you will undertake when setting up your envi
 
 Consider the steps that are normally undertaken to build an EUC Master Image:
 
-- Define the Virtual Machine Specifications.
-- Install the Operating System.
-- Install Additional Software.
-- Optimize the Image.
+- Define the virtual machine specifications.
+- Install the operating system.
+- Install additional software.
+- Optimize the image.
 - Snapshot the image.
 
 ![This image shows the the process required to create a master image and the steps required to do so.](../images/BP-XXXX_image03.png "Master Image Creation")
 
-If this was only being done once, then a manual approach may be sufficient, however as you will be testing various hardware, software and configuration changes there is a considerable chance that something will be done differently during image creation. Whilst that not seem a huge problem, a single configuration difference can have a huge impact on the test and therefore the numbers you are seeing as a result of the test run.
+If this was only being done once, then a manual approach may be sufficient, however as you will be testing various hardware, software, and configuration changes there is a considerable chance that something will be done differently during image creation. Whilst that may not seem a huge problem, a single configuration difference can have a huge impact on the test and therefore the numbers you will see as a result of the test run.
 
 Key things to consider when building a master image are:
 
@@ -230,7 +214,7 @@ There are two methods of initiating a user session on the target VMs.
 - Direct to the console.
 - Via a remoting protocol.
 
-Connecting via a remoting protocol has the advantage of simulating the use of a display protocol which has an impact on the resource usage on the target VM. If this approach is taken you need clients (physical or virtual) that connect using a display protocol and optionally a broker to distribute the session requests from the clients. 
+Connecting via a remoting protocol has the advantage of simulating the use of a display protocol which has an impact on the resource usage of the target VM. If this approach is taken you need clients (physical or virtual) that connect using a display protocol and optionally a broker to distribute the session requests from the clients. 
 
 When you use clients to initiate the sessions, it's important to configure these clients with the same specifications. Examples of these configuration options are.
 
@@ -244,7 +228,7 @@ The Logon Window is the time to login all the sessions defined withing the test 
 
 The logon phase during a benchmark test is often the most resource intensive phase. If the logon window is too short, you will most likely run into CPU contention on the system. 
 
-![This image shows the Logon Windows time definition.](../images/BP-XXXX_image04.png "Logon Window")
+![This image shows the Logon Window time definition and the steady state for Host CPU Usage.](../images/BP-XXXX_image04.png "Logon Window")
 
 In our tests, we always use a logon window of 48 minutes, no matter how many sessions we configure. The thought behind this is, if we configure more sessions to logon, the node or cluster should be able to handle more sessions as well. If a node is capable of logging on 100 sessions on 1 node in 48 minutes, a 4 node cluster of the same type should be able to log on 400 sessions in 48 minutes.
 
@@ -307,7 +291,7 @@ The profile type will have an impact on the test data and additional considerati
 
 Optimizing your profile solutions can have a huge impact on the performance baselines so be sure to pay special attention to the configuration of the profile infrastructure prior to running benchmark tests.
 
-## Optimization
+## Optimizations
 
 Operating System optimizations have a huge impact on system performance when dealing with EUC workloads. 
 
@@ -323,30 +307,18 @@ Some of these are:
 
 These are just a few examples of the many settings that can be safely disabled on a Windows Server or Windows Desktop operating system before benchmarking the platform. All these services, processes or applications use up precious CPU cycles or memory, therefore decreasing the performance and number of users we can fit onto the platform.
 
-Optimizing an image is a balancing act. We should be looking to disable everything that will not be required to get the best performance, but not be so aggressive that they render the virtual desktop useless. Some options available are:
-
-| **Vendor** | **Tool** | 
-| :--- | :--- | 
-| Citrix | Citrix Optimizer Tool | 
-| VMware | Windows OS Optimization Tool  |
-| Microsoft | (Windows) Virtual Desktop Optimization Tool | 
-
-# Benchmark examples
-
-## Not Optimized
-
-## Wait Time
-
-## With or Without Security Agents or Virus Protection?
+Optimizing an image is a balancing act. You should be looking to disable everything that will not be required to get the best performance, but not be so aggressive that they render the virtual desktop useless. There are various tools available to optimize your master images, ensure you use the tool that's most relevant for your environment.
 
 # Conclusion
-consistenct
-optimize
-workload need to represent prod
-able to compare results directly
-data retention
-compare boot storm - logon phase and steady state
+
+- Consistency is paramount when running benchmark tests for EUC. Ensuring that the test conditions are exactly the same for each configuration change is critical for obtaining accurate and reliable results.
+- Optimizing your master images can have a big impact on the test outcome and user density with non optimized images using unnecessary resource.
+- When designing your workload to test with be sure to mirror production as closely as possible to ensure the results reflect what your users will be experiencing.
+- Being able to directly compare (overlay) results is paramount. Having the ability to easily see the performance changes will ensure you know what impact the configuration changes are having in your environment.
+- Data retention needs validating. Running EUC benchmark tests can produce a lot of data, keeping this for historical reasons is a valid approach, but the dataset sizes will need to be considered.
+- When running benchmark tests be sure to compare all 3 phases of the test (boot storm, logon window and steady state) to get the best possible results.
 
 # References
+[End User Computing Performance Analysis](https://portal.nutanix.com/page/documents/solutions/details?targetId=TN-2113-Windows-10-Performance-Impact:TN-2113-Windows-10-Performance-Impact)
 
-https://portal.nutanix.com/page/documents/details?targetId=Release-Notes-BMC-BIOS:Nutanix%20BMC%20and%20BIOS%20Overview
+[Nutanix BMC and BIOS Overview](https://portal.nutanix.com/page/documents/details?targetId=Release-Notes-BMC-BIOS:Nutanix%20BMC%20and%20BIOS%20Overview)
