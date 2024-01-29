@@ -1,0 +1,56 @@
+---
+- name: Install Base Components
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Copy Workload script
+      win_copy:
+        src: "scripts/"
+        dest: 'C:\scripts\'
+    - name: Install Pre Req Software
+      win_shell: |
+        New-Item -Path "C:\Software" -ItemType Directory -Force
+        $windowsExporterUri = "https://github.com/prometheus-community/windows_exporter/releases/download/v0.25.1/windows_exporter-0.25.1-amd64.msi"
+        $windowsExporterOutFile = "C:\Software\windows_exporter-0.25.1-amd64.msi"
+        Invoke-WebRequest -Uri $windowsExporterUri -OutFile $windowsExporterOutFile
+        $Arguments = "/i $($windowsExporterOutFile) ENABLED_COLLECTORS=""cpu,net,logical_disk,logon,memory,textfile,process"" EXTRA_FLAGS=""--collector.process.include=(firefox|FIREFOX|chrome|WINWORD|EXCEL|POWERPNT|msedge).*"" /q"
+        Start-Process -Filepath "msiexec.exe" -ArgumentList $Arguments -Wait
+        $fioUri = "https://github.com/axboe/fio/releases/download/fio-3.35/fio-3.35-x64.msi"
+        $fioOutFile = "C:\Software\fio-3.35-x64.msi"
+        Invoke-WebRequest -Uri $fioUri -OutFile $fioOutFile
+        $Arguments = "/i $($fioOutFile) /qn /norestart"
+        Start-Process -Filepath "msiexec.exe" -ArgumentList $Arguments -Wait
+        $7zipUri = "https://github.com/ip7z/7zip/releases/download/23.01/7z2301-x64.msi"
+        $7zipOutFile = "C:\Software\7z2301-x64.msi"
+        Invoke-WebRequest -Uri $7zipUri -OutFile $7zipOutFile
+        $Arguments = "/i $($7zipOutFile) /qn /norestart"
+        Start-Process -Filepath "msiexec.exe" -ArgumentList $Arguments -Wait
+        $pythonUri = "https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe"
+        $pythonFile = "C:\Software\python-3.11.0-amd64.exe"
+        Invoke-WebRequest -Uri $pythonUri -OutFile $pythonFile
+        $Arguments = "/quiet TargetDir=C:\Python311"
+        Start-Process -Filepath "$($pythonFile)" -ArgumentList $Arguments -Wait
+        $TaskTUri = "https://github.com/saucepleez/taskt/releases/download/v3.5.0.0/taskt.v3.5.0.0.zip"
+        $TaskTOutFile = "C:\Software\taskt.v3.5.0.0.zip"
+        Invoke-WebRequest -Uri $TaskTUri -OutFile $TaskTOutFile
+        Expand-Archive -LiteralPath $TaskTOutFile -DestinationPath "C:\TaskT"
+        new-item -Path "C:\Scripts\TaskT" -type Directory -Force
+        new-item -Path "C:\Scripts\TaskT\Scripts" -type Directory -Force
+        Copy-Item -Path "C:\Scripts\AppSettings.xml" -Destination "C:\Users\nutanix\AppData\Roaming\taskt\AppSettings.xml" -Force
+        Remove-Item -Path "C:\Software" -Force -Recurse
+    - name: Install Jetstream
+      win_copy:
+        src: "jetstream_app/"
+        dest: 'C:\jetstream_app\'
+    - name: Install Environment Requirements
+      win_command: | 
+        "C:\Python311\python.exe" -m pip install -r requirements.txt --user
+      args:
+        chdir: 'C:\jetstream_app\'
+    - name: Start JetStream AgentExporter
+      win_command: | 
+        C:\Python311\python.exe app.py
+      args:
+        chdir: 'C:\jetstream_app'
+      async: 3600 
+      poll: 0
