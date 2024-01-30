@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<ApplicationSettings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <ServerSettings>
+    <ServerConnectionEnabled>false</ServerConnectionEnabled>
+    <ConnectToServerOnStartup>false</ConnectToServerOnStartup>
+    <RetryServerConnectionOnFail>false</RetryServerConnectionOnFail>
+    <BypassCertificateValidation>false</BypassCertificateValidation>
+    <HTTPServerURL>https://localhost:44377/</HTTPServerURL>
+    <HTTPGuid>00000000-0000-0000-0000-000000000000</HTTPGuid>
+  </ServerSettings>
+  <EngineSettings>
+    <ShowDebugWindow>true</ShowDebugWindow>
+    <AutoCloseDebugWindow>true</AutoCloseDebugWindow>
+    <EnableDiagnosticLogging>true</EnableDiagnosticLogging>
+    <ShowAdvancedDebugOutput>false</ShowAdvancedDebugOutput>
+    <CreateMissingVariablesDuringExecution>true</CreateMissingVariablesDuringExecution>
+    <TrackExecutionMetrics>true</TrackExecutionMetrics>
+    <VariableStartMarker>{</VariableStartMarker>
+    <VariableEndMarker>}</VariableEndMarker>
+    <CancellationKey>None</CancellationKey>
+    <DelayBetweenCommands>250</DelayBetweenCommands>
+    <OverrideExistingAppInstances>false</OverrideExistingAppInstances>
+    <AutoCloseMessagesOnServerExecution>true</AutoCloseMessagesOnServerExecution>
+    <AutoCloseDebugWindowOnServerExecution>true</AutoCloseDebugWindowOnServerExecution>
+    <AutoCalcVariables>true</AutoCalcVariables>
+  </EngineSettings>
+  <ClientSettings>
+    <AntiIdleWhileOpen>false</AntiIdleWhileOpen>
+    <RootFolder>C:\Scripts\TaskT\taskt</RootFolder>
+    <InsertCommandsInline>false</InsertCommandsInline>
+    <EnableSequenceDragDrop>true</EnableSequenceDragDrop>
+    <MinimizeToTray>false</MinimizeToTray>
+    <AttendedTasksFolder>C:\Scripts\TaskT\Scripts</AttendedTasksFolder>
+    <StartupMode>Attended Task Mode</StartupMode>
+    <PreloadBuilderCommands>false</PreloadBuilderCommands>
+    <UseSlimActionBar>true</UseSlimActionBar>
+  </ClientSettings>
+  <ListenerSettings>
+    <StartListenerOnStartup>false</StartListenerOnStartup>
+    <LocalListeningEnabled>false</LocalListeningEnabled>
+    <RequireListenerAuthenticationKey>false</RequireListenerAuthenticationKey>
+    <ListeningPort>19312</ListeningPort>
+    <AuthKey>e2b1c7f0-3c92-4d88-a199-856d974250f7</AuthKey>
+    <EnableWhitelist>false</EnableWhitelist>
+    <IPWhiteList />
+  </ListenerSettings>
+</ApplicationSettings>
