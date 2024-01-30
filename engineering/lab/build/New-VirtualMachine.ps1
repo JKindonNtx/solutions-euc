@@ -85,6 +85,7 @@ $ClusterName = $Clusterinfo.name
 if ($JSON.VM.Hypervisor -eq "AHV"){
     Write-Host (Get-Date) ":AHV build selected, getting cluster specific information"
     $VMTimezone = $Clusterinfo.timezone
+    #$VMTimezone = "UTC"
     $Containerinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "storage_containers"
     $StorageUUID = ($Containerinfo.entities | Where-Object {$_.name -eq $($StorageName)}).storage_container_uuid
     $Networkinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "networks"
