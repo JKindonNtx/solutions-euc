@@ -1,0 +1,8 @@
+- name: Sleep for 20 seconds
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Sleep 20 seconds
+      win_command: "powershell.exe Start-Sleep -Seconds 20"
+      args:
+        chdir: 'C:\scripts'

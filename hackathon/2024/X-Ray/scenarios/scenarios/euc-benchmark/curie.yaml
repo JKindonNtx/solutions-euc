@@ -1,0 +1,336 @@
+version: "2"
+
+name: EUC Benchmark Test - Hackathon
+
+summary: |
+  Performs an EUC benchmark test on a specified Nutanix Cloud Infrastructure (NCI) Cluster.
+
+estimated_runtime: {{ _estimatedRunTime }}
+
+variables:
+- name: _estimatedRunTime
+  string:
+    default_value: "3h"
+- name: _powerWait
+  integer:
+    default_value: 30
+- name: _workloadPhase
+  integer:
+    default_value: 1800
+- name: C_listOfNodes
+  display_name: "Nodes to use for test.  0:1 is one node. all is all nodes"
+  description: |
+    The Nutanix Nodes to run the benchmark test against. 0:1 will use one node.
+  string:
+    default_value: "all"
+    choices:
+      - "0:1"
+      - "all"
+- name: D_templateName
+  display_name: "Master Image Template."
+  description: |
+    The file name for the .VMDK file uploaded to XRay to use as a basis for the master image creation process excluding the VMDK extension.
+  string:
+    default_value: "win10-euc-xray2"
+- name: E_numberOfVMs
+  display_name: "Number of Virtual Machines per Node"
+  description: |
+    The number of virtual machines per node to deploy for the benchmark. 
+    Please note that these will be deployed in groups to eliminate 
+    overloading the cluster and ramp up the workload.
+  integer:
+    default_value: 30
+    minimum_value: 1
+- name: F_virtualCPUs
+  display_name: "Number of Virtual CPUs"
+  description: |
+    The number of virtual CPUs to assign to the workload machines created from the master image.
+  integer:
+    default_value: 2
+    choices:
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+- name: G_virtualMemory
+  display_name: "Amount of Memory (GB)"
+  description: |
+    The amount of memory (in GB) to assign to the workload machines created from the master image.
+  string:
+    default_value: "4g"
+    choices:
+    - "2g"
+    - "4g"
+    - "6g"
+    - "8g"
+    - "10g"
+    - "12g"
+    - "14g"
+    - "16g"
+- name: H_workloadsPerStep
+  display_name: "Number of simultaneous workloads per VM Group"
+  description: |
+    The number of workload VMs to deploy per VM group to ramp the test up to full capacity We advise 5 workloads per node.
+  integer:
+    default_value: 5
+    minimum_value: 1
+- name: I_testDuration
+  display_name: "Steady State in Minutes"
+  description: "The runtime of the End User Computing workload in minutes."
+  integer:
+    default_value: 20
+    minimum_value: 1
+- name: J_settleTime
+  display_name: "Wait Time in Minutes Before Starting the Test Run"
+  description: |
+    The number of minutes to wait after VM deployment to start the test.
+  integer:
+    default_value: 5
+    minimum_value: 1
+- name: K_nutanixCvmUser
+  display_name: "CVM User Name."
+  description: |
+    The Nutanix CVM User Name.
+  string:
+    default_value: "nutanix"
+- name: L_nutanixCvmPassword
+  display_name: "CVM Password."
+  description: |
+    The Nutanix CVM Password.
+  string:
+    default_value: "nutanix/4u"
+  secret: true
+- name: M_windowsUser
+  display_name: "Windows User Name."
+  description: |
+    The Windows User Name.
+  string:
+    default_value: "nutanix"
+- name: N_windowsPassword
+  display_name: "Windows Password."
+  description: |
+    The Windows Password.
+  string:
+    default_value: "nutanix/4u"
+  secret: true
+- name: O_runMicrosoftOffice
+  display_name: "Run Microsoft Office Apps"
+  description: |
+    Run the Microsoft Office application tests as part of the benchmark test. 
+    Ensure that you have sufficient licensing to be able to run these applications prior to selecting this option.
+  boolean:
+    default_value: True
+- name: P_runTeams
+  display_name: "Run Microsoft Teams"
+  description: |
+    Run the Microsoft Teams application tests as part of the benchmark test. 
+  boolean:
+    default_value: False
+
+{%- set settleTime = (J_settleTime * 60) %}
+{%- set rampGroups = (E_numberOfVMs / H_workloadsPerStep) | int %}
+{%- set waitTime = (_workloadPhase / rampGroups) | int %}
+{%- set testDuration = (I_testDuration * 60) %}
+{%- set countPerNode = (E_numberOfVMs / rampGroups) | int %}
+
+
+vm_groups:
+{%- for step_num in range(rampGroups) %}
+- name: Workload Group {{ step_num }}
+  template: {{ D_templateName }}
+  vcpu_count: {{ F_virtualCPUs }}
+  ram: {{ G_virtualMemory }}
+  nodes: {{ C_listOfNodes }}
+  count_per_node: {{ countPerNode }}
+  exporter_ports:
+    - 9182
+    - 5555
+{%- endfor %}
+
+results:
+- name: Session Count
+  prometheus:
+    aggregation: sum
+    unit: count
+    phases:
+      - Run
+    query: |
+        SessionCounter{
+          __curie_filter_scenario__
+        }
+- name: 7Zip Benchmark average MIPS
+  prometheus:
+    aggregation: mean
+    unit: count
+    phases:
+      - Run
+    query: |
+        zip_benchmark{
+          __curie_filter_scenario__,
+          score="rating_mips"
+        }
+- name: Average Word Start (Seconds)
+  prometheus:
+    aggregation: mean
+    unit: count
+    phases:
+      - Run
+    query: |
+        WordStart{
+          __curie_filter_scenario__
+        } 
+- name: Average Excel Start (Seconds)
+  prometheus:
+    aggregation: mean
+    unit: count
+    phases:
+      - Run
+    query: |
+        ExcelStart{
+          __curie_filter_scenario__
+        } 
+- name: Average PowerPoint Start (Seconds)
+  prometheus:
+    aggregation: mean
+    unit: count
+    phases:
+      - Run
+    query: |
+        PowerPointStart{
+          __curie_filter_scenario__
+        }
+- name: Average Edge Start (Seconds)
+  prometheus:
+    aggregation: mean
+    unit: count
+    phases:
+      - Run
+    query: |
+        EdgeStart{
+          __curie_filter_scenario__
+        } 
+- name: Average Adobe Reader Start (Seconds)
+  prometheus:
+    aggregation: mean
+    unit: count
+    phases:
+      - Run
+    query: |
+        AdobeStart{
+          __curie_filter_scenario__
+        } 
+- name: Cluster CPU Usage
+  hypervisor:
+    metric: CpuUsage.Avg.Megahertz
+    aggregation: mean
+    phases:
+    - Run
+- name: Cluster CPU Usage Percent
+  hypervisor:
+    metric: CpuUsage.Avg.Percent
+    aggregation: mean
+    phases:
+    - Run
+- name: Memory Usage
+  hypervisor:
+    metric: MemUsage.Avg.Percent
+    aggregation: mean
+    phases:
+    - Run
+- name: Power Consumed
+  hypervisor:
+    metric: PowerConsumed.Avg.Watts
+    aggregation: sum
+    phases:
+    - Run
+
+phases:
+- name: Setup
+  steps:
+  - name: cluster.CleanUp
+  - name: playbook.Run
+    args:
+      filename: disable-cluster-ads.yml
+      inventory:
+        - cvms
+      remote_user: {{ K_nutanixCvmUser }}
+      remote_pass: {{ L_nutanixCvmPassword }}
+{%- for step_num in range(rampGroups) %}
+  - name: vm_group.CloneFromTemplate
+    args:
+      vm_group_name: Workload Group {{ step_num }}
+  - name: vm_group.PowerOnVMs
+    args:
+      vm_group_name: Workload Group {{ step_num }}
+  - name: vm_group.WaitForPowerOnVMs
+    args:
+      vm_group_name: Workload Group {{ step_num }}
+{%- endfor %}
+  - name: test.Wait
+    args:
+      duration_secs: {{ _powerWait }}
+{%- for step_num in range(rampGroups) %}
+  - name: vm_group.WaitForVMIPAssignment
+    args:
+      vm_group_name: Workload Group {{ step_num }}
+{%- endfor %}
+  - name: test.Wait
+    args:
+      duration_secs: {{ _powerWait }}
+{%- for step_num in range(rampGroups) %}
+  - name: playbook.Run
+    args:
+      filename: configure-base.yml
+      inventory:
+        - Workload Group {{ step_num }}
+      variables:
+        ansible_connection: winrm
+        ansible_winrm_transport: basic
+        ansible_winrm_server_cert_validation: ignore
+      remote_user: {{ M_windowsUser }}
+      remote_pass: {{ N_windowsPassword }}
+{%- endfor %}
+  - name: test.Wait
+    args:
+      duration_secs: {{ settleTime }}
+      annotate: True
+- name: Run
+  steps:
+{%- for step_num in range(rampGroups) %}
+  - name: playbook.Run
+    args:
+      filename: vm-workload.yml
+      inventory:
+        - Workload Group {{ step_num }}
+      variables:
+        ansible_connection: winrm
+        ansible_winrm_transport: basic
+        ansible_winrm_server_cert_validation: ignore
+      remote_user: {{ M_windowsUser }}
+      remote_pass: {{ N_windowsPassword }}
+  - name: test.Wait
+    args:
+      duration_secs: {{ waitTime }}
+{%- endfor %}
+  - name: test.Wait
+    args:
+      duration_secs: {{ testDuration }}
+      annotate: True
+
+- name: Teardown
+  steps:
+{%- for step_num in range(rampGroups) %}
+  - name: vm_group.PowerOff
+    args:
+      vm_group_name: Workload Group {{ step_num }}
+{%- endfor %}
+  - name: playbook.Run
+    args:
+      filename: enable-cluster-ads.yml
+      inventory:
+        - cvms
+      remote_user: {{ K_nutanixCvmUser }}
+      remote_pass: {{ L_nutanixCvmPassword }}
+  - name: cluster.CleanUp
