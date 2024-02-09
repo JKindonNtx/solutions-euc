@@ -67,7 +67,8 @@ function Set-VSICTXDesktopPoolNTNX {
         if ($null -ne (Get-ProvScheme -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -ea SilentlyContinue)) {
             Write-Log "Removing existing VMS for $DesktopPoolName"
             Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -MaxRecordCount 2500 | Unlock-ProvVM
-            $Tasks = Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -MaxRecordCount 2500 | Remove-ProvVM
+            #$Tasks = Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -MaxRecordCount 2500 | Remove-ProvVM
+            $Tasks = ,(Get-ProvVM -ProvisioningSchemeName $DesktopPoolName -MaxRecordCount 2500) | Remove-ProvVM $DesktopPoolName
             foreach ($Task in $Tasks) {
                 if ($Task.TaskState -ne "Finished") {
                     Write-Log "Failed to remove VM, attempting to remove with forget"
