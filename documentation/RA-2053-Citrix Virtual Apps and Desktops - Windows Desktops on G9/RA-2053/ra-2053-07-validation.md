@@ -215,27 +215,6 @@ _Table: Application Performance MCS vs. PVS Steady State Phase: Specific Action 
 | Microsoft Word (Open Doc) | 0.96 seconds | 1.00 seconds | 
 | Microsoft Excel (Save File) | 0.33 seconds | 0.34 seconds | 
 
-## Nutanix G7, G8 vs G9 Nodes
-
-The following section shows the difference between the Nutanix G7, G8, and G9 hardware.
-
-### System Performance
-
-The following charts show the system performance during the tests.
-
-![This image shows an a chart with the CPU Usage for G7, G8 and G9 hardware during a 1 node test.](../images/RA-2053_image17.png "G7, G8 and G9 CPU Usage Chart")
-
-_Table: G8 vs. G8 vs. G9: Key Differences_
-
-| Item | G7 | G8 | G9 | 
-| --- | --- | --- | -- |
-| Number of users per node | 70 | 120 | 130 |
-| Login Time | 8.7 seconds | 7.1 seconds | 6.5 seconds |
-| Word Start | 1.17 seconds | 0.90 seconds | 0.86 seconds |
-| Excel Start | 1.28 seconds | 1.04 seconds | 0.98 seconds |
-| PowerPoint Start | 1.16 seconds | 0.96 seconds | 0.87 seconds |
-| Edge Page Load | 1.93 seconds | 1.54 seconds | 1.35 seconds |
-
 ## Windows 10 vs. Windows 11
 
 In this section, we compare the results of a Login Enterprise test on 8 nodes, using Windows 10 vs Windows 11.
@@ -328,3 +307,57 @@ _Table: Application Performance Windows 10 vs. Windows 11 Steady State Phase: Sp
 | Microsoft Edge (Page Load) | 1.49 seconds | 1.78 seconds |
 | Microsoft Word (Open Doc) | 0.96 seconds | 1.12 seconds | 
 | Microsoft Excel (Save File) | 0.33 seconds | 0.35 seconds | 
+
+## Nutanix G7, G8 vs G9 Nodes
+
+To show the improved performance and density when you use a newer CPU generation, we tested with the Login Enterprise workload on three generations of Nutanix hardware: a G7, G8 and G9. The following table shows the specifications of these nodes:
+
+_Table: G8 vs. G8 vs. G9: Specifications_
+
+| Node | G7 | G8 | G9 |
+| --- | --- | --- | --- |
+| CPU | Xeon Gold 5220 | Xeon Gold 6342 | Xeon Gold 6442Y |
+| Generation | Cascade Lake | Ice Lake | Sapphire Rapids |
+| Cores per CPU | 18 | 24 | 24 |
+| Cores per node | 36 | 48 | 48 |
+| MHz per core | 2200 | 2800 | 2600 |
+| Storage config | Hybrid | All Flash SSD | All Flash NVMe |
+
+ The following section shows the difference between the Nutanix G7, G8, and G9 hardware.
+
+### System Performance
+
+For these tests, we used the results of single-node tests. The goal of these tests was to get a CPU utilization of around 80% during steady state. The following charts show the system performance during the tests.
+
+![This image shows an a chart with the CPU Usage for G7, G8 and G9 hardware during a 1 node test.](../images/RA-2053_image17.png "G7, G8 and G9 CPU Usage Chart")
+
+The following table shows the number of users per node and the resulting CPU calculations:
+
+_Table: G8 vs. G8 vs. G9: CPU results_
+
+| Item | G7 | G8 | G9 | 
+| --- | --- | --- | -- |
+| Number of users per node | 70 | 120 | 130 |
+| Number of users per node (%) | **100%** | **171%** | **186%** |
+| MHz per session during steady state | 905 | 896 | 768 |
+| MHz per session during steady state (%) | **100%** | **99%** | **85%** |
+| Sessions per core | 1.94 | 2.50 | 2.71 |
+| Sessions per core (%) | **100%** | **129%** | **139%** |
+| vCPUs per core (including CVM) | 4.22 | 5.25 | 5.67 |
+| vCPUs per core (including CVM) (%) | **100%** | **124%** | **134%** |
+
+### Application Performance
+
+The following shows the detail for application performance. A lower result represents better performance.
+
+_Table: G8 vs. G8 vs. G9: Key Differences_
+
+| Item | G7 | G8 | G9 | 
+| --- | --- | --- | -- |
+| Login Time | 8.7 seconds | 7.1 seconds | 6.5 seconds |
+| Word Start | 1.17 seconds | 0.90 seconds | 0.86 seconds |
+| Excel Start | 1.28 seconds | 1.04 seconds | 0.98 seconds |
+| PowerPoint Start | 1.16 seconds | 0.96 seconds | 0.87 seconds |
+| Edge Page Load | 1.93 seconds | 1.54 seconds | 1.35 seconds |
+
+The results of these tests show an improvement in performance and density when upgrading to a new generation of CPU.

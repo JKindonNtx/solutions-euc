@@ -6,4 +6,4 @@ On Nutanix, available host CPU resources drive Virtual Apps and Desktops user de
 
 Our results show that if you use MCS-published or PVS-streamed servers to linearly scale the Citrix on Nutanix solution, the system maintains the same average response times regardless of how many nodes you have. 
 
-XXXX - Add verbiage about upgrading from an older Gen CPU to a New Gen CPU
+The results from the tests performed on three generations of hardware (G7, G8, G9) show that upgrading to a newer generation will result in a better user experience and a higher density per node.
