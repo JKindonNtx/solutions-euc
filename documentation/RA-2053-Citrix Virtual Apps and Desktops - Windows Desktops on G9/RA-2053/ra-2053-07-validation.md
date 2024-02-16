@@ -12,8 +12,8 @@ We had the following specific objectives:
 - Show the linear scalability of the Nutanix platform.
 - Show the Power Usage in Watts of the Nutanix platform.
 - Show the differences between Machine Creation Services and Citrix Provisioning on the Nutanix platform.
-- Show the differences between G7, G8, and G9 Nutanix node types.
 - Show the differences between Windows 10 and Windows 11 on the Nutanix platform.
+- Show the differences between G7, G8, and G9 Nutanix node types.
 
 
 ## Considerations for Test Results
@@ -64,7 +64,6 @@ _Table: Logon Performance Linear Scale Logon Phase: Logon Time (in Seconds)_
 | User Profile Load | 0.40 seconds | 0.42 seconds | 0.42 seconds | 0.38 seconds | 0.38 seconds |
 | Group Policies | 2.21 seconds | 2.28 seconds | 2.27 seconds | 2.24 seconds | 2.25 seconds |
 | Connection | 2.65 seconds | 2.70 seconds | 2.81 seconds | 2.69 seconds | 2.70 seconds |
-| Total Logon Time | 6.52 seconds | 6.73 seconds | 6.76 seconds | 6.60 seconds | 6.63 seconds |
 
 #### Application Performance
 
@@ -169,7 +168,6 @@ _Table: Logon Performance MCS vs. PVS Logon Phase: Logon Time (in Seconds)_
 | User Profile Load | 0.40 seconds | 0.50 seconds | 
 | Group Policies | 2.2 seconds | 2.3 seconds | 
 | Connection | 2.7 seconds | 3 seconds | 
-| Total Logon Time | 6.6 seconds | 7.7 seconds | 
 
 #### Application Performance
 
@@ -261,7 +259,6 @@ _Table: Logon Performance Windows 10 vs. Windows 11 Logon Phase: Logon Time (in 
 | User Profile Load | 0.40 seconds | 0.6 seconds | 
 | Group Policies | 2.21 seconds | 1.49 seconds | 
 | Connection | 2.65 seconds | 2.9 seconds | 
-| Total Logon Time | 6.52 seconds | 6.26 seconds | 
 
 #### Application Performance
 
@@ -327,15 +324,13 @@ _Table: G8 vs. G8 vs. G9: Specifications_
 
 ### System Performance
 
-For these tests, we used the results of single-node tests. The goal of these tests was to get a CPU utilization of around 80% during steady state. The following charts show the system performance during the tests.
-
-![This image shows an a chart with the CPU Usage for G7, G8 and G9 hardware during a 1 node test.](../images/RA-2053_image17.png "G7, G8 and G9 CPU Usage Chart")
+For these tests, we used the results of single-node tests. The goal of these tests was to get a CPU utilization of around 80% during steady state. 
 
 The following table shows the number of users per node and the resulting CPU calculations:
 
 _Table: G8 vs. G8 vs. G9: CPU results_
 
-| Item | G7 | G8 | G9 | 
+| Measurement | G7 | G8 | G9 | 
 | --- | --- | --- | -- |
 | Number of users per node | 70 | 120 | 130 |
 | Number of users per node (%) | **100%** | **171%** | **186%** |
@@ -346,18 +341,74 @@ _Table: G8 vs. G8 vs. G9: CPU results_
 | vCPUs per core (including CVM) | 4.22 | 5.25 | 5.67 |
 | vCPUs per core (including CVM) (%) | **100%** | **124%** | **134%** |
 
-### Application Performance
+The following charts show the system performance during the tests.
+
+![This image shows an a chart with the CPU Usage for G7, G8 and G9 hardware during a 1 node test.](../images/RA-2053_image17.png "G7, G8 and G9 CPU Usage Chart")
+
+### Logon Phase
+
+The following charts detail the user experience during the logon phase.
+
+#### Logon Time Scores
+
+The following shows the logon times over the test runs. A lower result represents better performance.
+
+_Table: Application Performance G7 vs. G8 vs. G9 Logon Phase: Logon Time (in Seconds)_
+
+| Measurement | G7 | G8 | G9 |
+| --- | --- | --- | --- |
+| Average Logon Time | 8.7 seconds | 7.1 seconds | 6.5 seconds | 
+| User Profile Load | 0.5 seconds | 0.5 seconds | 0.4 seconds |
+| Group Policies | 2.8 seconds | 2.4 seconds | 2.2 seconds |
+| Connection | 3.4 seconds | 2.8 seconds | 2.6 seconds |
+
+#### Application Performance
 
 The following shows the detail for application performance. A lower result represents better performance.
 
-_Table: G8 vs. G8 vs. G9: Key Differences_
+_Table: Application Performance G7 vs. G8 vs. G9 Logon Phase: App Start (in Seconds)_
 
-| Item | G7 | G8 | G9 | 
-| --- | --- | --- | -- |
-| Login Time | 8.7 seconds | 7.1 seconds | 6.5 seconds |
-| Word Start | 1.17 seconds | 0.90 seconds | 0.86 seconds |
-| Excel Start | 1.28 seconds | 1.04 seconds | 0.98 seconds |
-| PowerPoint Start | 1.16 seconds | 0.96 seconds | 0.87 seconds |
-| Edge Page Load | 1.93 seconds | 1.54 seconds | 1.35 seconds |
+| Application | G7 | G8 | G9 |
+| --- | --- | --- | --- |
+| Microsoft Outlook | 3.86 seconds | 3.37 seconds | 2.96 seconds |
+| Microsoft Word | 1.16 seconds | 0.90 seconds | 0.86 seconds |
+| Microsoft Excel | 1.32 seconds | 1.08 seconds | 0.98 seconds |
+| Microsoft PowerPoint | 1.21 seconds | 1.00 seconds | 0.91 seconds | 
+
+_Table: Application Performance G7 vs. G8 vs. G9 Logon Phase: Specific Action (in Seconds)_
+
+| Application (Action) | G7 | G8 | G9 |
+| --- | --- | --- | --- |
+| Microsoft Edge (Page Load) | 1.95 seconds | 1.55 seconds | 1.37 seconds |
+| Microsoft Word (Open Doc) | 1.18 seconds | 0.99 seconds | 0.92 seconds | 
+| Microsoft Excel (Save File) | 0.38 seconds | 0.34 seconds | 0.33 seconds |
+
+The following graph is an example of the performance improvement of Outlook App Start on the different hardware platforms.
+
+![This image shows a chart with the outlook start times for the G7, G8 and G9 Nutanix Hardware node types.](../images/RA-2053_image18.png "G7, G8 and G9 Outlook Start Chart")
+
+### Steady State Phase
+
+The following charts detail the user experience during the steady state.
+
+#### Application Performance
+
+The following shows the detail for application performance. A lower result represents better performance.
+
+_Table: Application Performance G7 vs. G8 vs. G9 Steady State Phase: App Start (in Seconds)_
+
+| Application | G7 | G8 | G9 |
+| --- | --- | --- | --- |
+| Microsoft Word | 1.17 seconds | 0.94 seconds | 0.89 seconds |
+| Microsoft Excel | 1.20 seconds | 0.95 seconds | 0.87 seconds |
+| Microsoft PowerPoint | 1.08 seconds | 0.88 seconds | 0.81 seconds |
+
+_Table: Application Performance G7 vs. G8 vs. G9 Steady State Phase: Specific Action (in Seconds)_
+
+| Application (Action) | G7 | G8 | G9 |
+| --- | --- | --- | --- |
+| Microsoft Edge (Page Load) | 1.91 seconds | 1.58 seconds | 1.38 seconds |
+| Microsoft Word (Open Doc) | 1.23 seconds | 1.02 seconds | 0.94 seconds |
+| Microsoft Excel (Save File) | 0.39 seconds | 0.34 seconds | 0.33 seconds |
 
 The results of these tests show an improvement in performance and density when upgrading to a new generation of CPU.

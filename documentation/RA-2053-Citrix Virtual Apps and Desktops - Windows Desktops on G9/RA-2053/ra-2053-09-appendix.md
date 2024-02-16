@@ -50,6 +50,7 @@ The Citrix Policies we applied:
 | Windows Media fallback prevention | Play all content |
 
 ## EUX Setting Customization
+
 The Login Enterprise EUX settings we used:
 
 Actions:
