@@ -316,7 +316,7 @@ _Table: G8 vs. G8 vs. G9: Specifications_
 
 | Node | G7 | G8 | G9 |
 | --- | --- | --- | --- |
-| CPU | Xeon Gold 5220 | Xeon Gold 6342 | Xeon Gold 6442Y |
+| CPU | Intel Xeon Gold 5220 | Intel Xeon Gold 6342 | Intel Xeon Gold 6442Y |
 | Generation | Cascade Lake | Ice Lake | Sapphire Rapids |
 | Cores per CPU | 18 | 24 | 24 |
 | Cores per node | 36 | 48 | 48 |
