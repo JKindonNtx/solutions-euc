@@ -71,12 +71,6 @@ Baseline EUX Score
 Steady State EUX Score
 : The Steady State period represents the time after all users have logged (login storm) and the system has begun to normalize. The Steady State EUX Score is the average of the EUX Scores captured 5 minutes after all sessions are logged in, until the end of the test.
 
-### Login Enterprise Graph
-
-The Login Enterprise graph shows the values obtained during the launch for each desktop session. The following figure is an example graph of the test data. The y-axis on the left side measures the EUX score, the y-axis on the right side measures the number of active sessions, and the x-axis represents the test duration in minutes. We configured our benchmark test to sign in all sessions in 48 minutes, followed by a steady state of 10 minutes.
-
-![The following figure is an example graph of the test data. The y-axis on the left side measures the EUX score, the y-axis on the right side measures the number of active sessions, and the x-axis represents the test duration in minutes. We configured our benchmark test to sign in all sessions in 48 minutes, followed by a steady state of 10 minutes.](../images/RA-2053_image04.png "Sample Login Enterprise Graph")
-
 ## Test Environment
 
 In this section you can read about the hardware we used for this reference architecture.
@@ -90,7 +84,7 @@ _Table: Citrix Configuration_
 | VM | Quantity | vCPU | Memory | Disks |
 | --- | :---: | :---: | :---: | :---: |
 | Delivery Controllers | 2 | 4 | 8 GB | 1 × 60 GB (OS) |
-| StoreFront | 1 | 2 | 4 GB | 1 × 60 GB (OS) |
+| StoreFront | 2 | 2 | 4 GB | 1 × 60 GB (OS) |
 | SQL | 1 | 4 | 8 GB | 3 × 60 GB (OS, DATA, logs) |
 
 ### Login Enterprise Launcher Cluster
@@ -130,8 +124,8 @@ _Table: Citrix Software Specifications_
 
 | Parameter | Setting |
 | --- | --- |
-| Citrix Virtual Apps and Desktops version | 7.2203 CU4 |
-| Provisioning Services version | 7.2203 CU4 |
+| Citrix Virtual Apps and Desktops version | 7.2203 |
+| Provisioning Services version | 7.2203 |
 
 _Table: Windows OS Template Image Configuration_ 
 
@@ -147,6 +141,6 @@ _Table: Windows OS Template Image Configuration_
 | Virtual disk | 80 GB |
 | Virtual CD/DVD drive 1 | Client |
 | Applications | Adobe Acrobat DC, Microsoft Edge Browser, Microsoft Office 2021 (x64) |
-| Citrix Virtual Desktop Agent | 7.2203 CU4 |
-| Citrix Provisioning Services Target Device | 7.2203 CU4 |
+| Citrix Virtual Desktop Agent | 7.2203 |
+| Citrix Provisioning Services Target Device | 7.2203 |
 | Optimizations | Citrix Optimizer; custom optimizations to the default user profile |
