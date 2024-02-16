@@ -21,55 +21,36 @@ _Table: Login Enterprise Workloads_
 | 2-3 apps | 4-6 apps |
 | No video | 720p video |
 
+### Login Enterprise test phases
+
+A Login Enterprise benchmark test has three phases, the boot phase, the logon phase, and the steady state phase. During the boot phase, we measure the time it takes to boot all the virtual machines. Then we have a wait time of 30 minutes to make sure that all virtual machines are idle when the logon phase starts. We set the logon phase to 48 minutes. Which means that during that 48 minutes, all the sessions we configured to logon, will logon evenly spread over 48 minutes. After a session logs on, the workload will start with launching applications and perform application specific actions, like open files, edit files and save files. After the last session has started, the steady state phase begins. The steady state represents the time after all users have logged and the system has begun to normalize. In our tests, we have set the steady state to 20 minutes. These 20 minutes simulate the EUC workload during a normal working day and is representative for the user experience.
+
 ### Login Enterprise EUX Score
 
-According to [Login Enterprise documentation](https://support.loginvsi.com/hc/en-us/articles/4408717958162-Login-Enterprise-EUX-Score-), the EUX (End User Experience) score represents the performance of any Windows machine (virtual, physical, cloud, or on-premises). The score ranges from 0 to 10 and is based on the experience of one (minimum) or many users.
+Login Enterprise performs mini-benchmark tests (EUX measurements) during the workload. These measurements are used to calculate an EUX score. According to [Login Enterprise documentation](https://support.loginvsi.com/hc/en-us/articles/4408717958162-Login-Enterprise-EUX-Score-), the EUX (End User Experience) score represents the performance of any Windows machine (virtual, physical, cloud, or on-premises). The score ranges from 0 to 10 and is based on the experience of one (minimum) or many users.
 
 <note>
 As you add more users to your VDI platform, expect your EUX score to drop. As more users demand a greater share of a VDI system’s shared resources, performance and user experience decrease.
 </note>
 
-We grade EUX scores internally as shown by the below table.
-
-| **EUX Score** | **Grade** |
-| --- | --- | 
-| 1-5 | Bad | 
-| 5-6 | Poor |
-| 6-7 | Average |
-| 7-8 | Good |
-| 8-10 | Excellent |
-
-### Login Enterprise VSImax
-
-For our test results, we used the 2023 EUX Score's version of VSImax. In this version, the VSImax (or the maximum number of users) is determined by a number of triggers. These triggers are CPU and disk-related operations and can determine if the user experience is acceptable or not. 
-
-We found that we could use this version of the VSImax to do an A/B comparison, but the VSImax on its own doesn't represent the maximum user density accurately. For a more realistic maximum number of users, we suggest using the number of active users at the moment when the EUX score is 85 to 90 percent of the initial EUX score.
+The default EUX measurements have big impact on the performance. especially on CPU and storage. With these default measurements, the workload profile becomes no longer representative for an EUC workload. For this reason, we modified the EUX measurements to make sure that the workload has an impact on CPU and storage that correlates to an EUC workload. These modifications can be found in the appendix. Instead at comparing EUX scores, we look at the user experience metrics, like logon times and application response times. We also compare the CPU load on the cluster.
 
 ### Login Enterprise Metrics
 
+A good user experience is defined by short logon times, short application start times, and consistency. The longer the experience is consistent, the better the result. The tests show you when the user experience is no longer consistent by increasing logon times and increasing application action times.
 We quantified the evaluation using the following metrics:
 
 | **Metric** | **Description** |
 | --- | --- | 
-| EUXbase | The average EUX score of the first five minutes. | 
-| EUX score | The average EUX score for the entire test. |
-| Steady State Score | The average EUX score 5 minutes after the final login. |
 | Average logon time | The average user logon time. |
-| VSImax | If reached, the maximum value of sessions launched before the VSI Index Average reaches one of the thresholds. |
+| Logon phase application metrics | The average response times of application actions. |
+| Steady State Application response times | The average response times of application actions during steady state. |
 | Maximum CPU usage | The maximum observed CPU usage during the test. |
-| CPU usage during steady state | The average CPU usage during the steady state, or the state when all the sessions are active and using applications. This state simulates user activity during the entire day, rather than just during the logon period. |
+| CPU usage during steady state | The average CPU usage during the steady state. |
 
 <note>
 Ideal CPU usage during steady state  < 85%
 </note>
-
-The Baseline and Steady State EUX Scores provide additional dimensions to the experience your virtual users are having. The Standard EUX Score provides a single score for the duration of the entire test, including the login period and the application interaction period during the test run. As more users are steadily added to the system being tested, naturally the system will work harder and start to impact the user experience. The Steady State and Baseline EUX Scores show us what the user experience is like during specific periods of the test run.
-
-Baseline EUX Score
-: The Baseline EUX Score represents the best possible performance of the system and is the average EUX score of the best 5 minutes of the test. This score gives an indication of how system performs when it is not under stress. Typically, the Baseline Score is captured in the beginning of the test before the system is fully loaded.
-
-Steady State EUX Score
-: The Steady State period represents the time after all users have logged (login storm) and the system has begun to normalize. The Steady State EUX Score is the average of the EUX Scores captured 5 minutes after all sessions are logged in, until the end of the test.
 
 ## Test Environment
 

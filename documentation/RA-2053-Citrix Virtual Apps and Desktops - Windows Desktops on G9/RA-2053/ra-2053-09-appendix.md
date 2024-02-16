@@ -89,8 +89,9 @@ Tuning:
 
 ## References
 
-1.  [Login Enterprise](https://www.loginvsi.com/)
-2.  [Login Enterprise EUX Score](https://support.loginvsi.com/hc/en-us/articles/4408717958162-Login-Enterprise-EUX-Score-#h_01GS8W30049HVB851TX60TDKS3)
-3.  [Login Enterprise Workload Templates](https://support.loginvsi.com/hc/en-us/sections/360001765419-Workload-Templates)
-4.  [Citrix Virtual Apps and Desktops 2203 Long Term Service Release (LTSR) Documentation](https://docs.citrix.com/en-us/citrix-virtual-apps-desktops/2203-ltsr/)
+1.  [End-User Computing Performance Benchmarking](https://portal.nutanix.com/page/documents/solutions/details?targetId=BP-2161-EUC-Performance-Benchmarking:BP-2161-EUC-Performance-Benchmarking)
+2.  [Login Enterprise](https://www.loginvsi.com/)
+3.  [Login Enterprise EUX Score](https://support.loginvsi.com/hc/en-us/articles/4408717958162-Login-Enterprise-EUX-Score-#h_01GS8W30049HVB851TX60TDKS3)
+4.  [Login Enterprise Workload Templates](https://support.loginvsi.com/hc/en-us/sections/360001765419-Workload-Templates)
+5.  [Citrix Virtual Apps and Desktops 2203 Long Term Service Release (LTSR) Documentation](https://docs.citrix.com/en-us/citrix-virtual-apps-desktops/2203-ltsr/)
 
