@@ -38,10 +38,10 @@ _Table: Boot Storm Simulation: 8 Node MCS Test_
 
 | Measurement | Detail |
 | --- | --- |
-| Maximum CPU Usage | 25.9 % |
-| Average CPU Usage | 18.1 % |
-| Average Controller IOPS | 29,426 |
-| Boot Time | 27.7 minutes |
+| Maximum CPU Usage | 25.0 % |
+| Average CPU Usage | 17.4 % |
+| Average Controller IOPS | 26,087 |
+| Boot Time | 3.4 minutes |
 
 ## Linear Scalability
 
@@ -59,10 +59,10 @@ _Table: Logon Performance Linear Scale Logon Phase: Logon Time (in Seconds)_
 
 | Measurement | 1 Node | 2 Nodes | 4 Nodes | 6 Nodes | 8 Nodes | 
 | --- | --- | --- | --- | --- | --- |
-| Average Logon Time | 6.5 seconds | 6.7 seconds | 6.8 seconds | 6.6 seconds | 6.6 seconds |
-| User Profile Load | 0.40 seconds | 0.42 seconds | 0.42 seconds | 0.38 seconds | 0.38 seconds |
-| Group Policies | 2.21 seconds | 2.28 seconds | 2.27 seconds | 2.24 seconds | 2.25 seconds |
-| Connection | 2.65 seconds | 2.70 seconds | 2.81 seconds | 2.69 seconds | 2.70 seconds |
+| Average Logon Time | 7.8 seconds | 7.9 seconds | 8.0 seconds | 8.0 seconds | 8.0 seconds |
+| User Profile Load | 0.90 seconds | 0.90 seconds | 0.90 seconds | 0.90 seconds | 0.90 seconds |
+| Group Policies | 1.40 seconds | 1.40 seconds | 1.40 seconds | 1.40 seconds | 1.40 seconds |
+| Connection | 3.20 seconds | 3.30 seconds | 3.30 seconds | 3.30 seconds | 3.30 seconds |
 
 #### Application Performance
 
@@ -72,18 +72,18 @@ _Table: Application Performance Linear Scale Logon Phase: App Start (in Seconds)
 
 | Application Name | 1 Node | 2 Nodes | 4 Nodes | 6 Nodes | 8 Nodes | 
 | --- | --- | --- | --- | --- | --- |
-| Microsoft Outlook | 2.95 seconds | 3.34 seconds | 3.24 seconds | 3.15 seconds | 3.17 seconds |
-| Microsoft Word | 0.86 seconds | 0.87 seconds | 0.90 seconds | 0.88 seconds | 0.89 seconds |
-| Microsoft Excel | 1.02 seconds | 1.06 seconds | 1.05 seconds | 1.01 seconds | 1.03 seconds |
-| Microsoft PowerPoint | 0.95 seconds | 0.97 seconds | 0.98 seconds | 0.93 seconds | 0.94 seconds |
+| Microsoft Outlook | 1.84 seconds | 1.92 seconds | 2.15 seconds | 1.98 seconds | 1.93 seconds |
+| Microsoft Word | 0.83 seconds | 0.84 seconds | 0.90 seconds | 0.84 seconds | 0.85 seconds |
+| Microsoft Excel | 0.72 seconds | 0.72 seconds | 0.78 seconds | 0.75 seconds | 0.75 seconds |
+| Microsoft PowerPoint | 0.74 seconds | 0.75 seconds | 0.80 seconds | 0.76 seconds | 0.76 seconds |
 
 _Table: Application Performance Linear Scale Logon Phase: Specific Action (in Seconds)_
 
 | Application Name (Action) | 1 Node | 2 Nodes | 4 Nodes | 6 Nodes | 8 Nodes |
 | --- | --- | --- | --- | --- | --- |
-| Microsoft Edge (Page Load) | 1.36 seconds | 1.44 seconds | 1.40 seconds | 1.39 seconds | 1.44 seconds |
-| Microsoft Word (Open Doc) | 1.02 seconds | 0.94 seconds | 0.96 seconds | 0.91 seconds | 0.92 seconds |
-| Microsoft Excel (Save File) | 0.35 seconds | 0.33 seconds | 0.35 seconds | 0.33 seconds | 0.33 seconds |
+| Microsoft Edge (Page Load) | 1.20 seconds | 1.21 seconds | 1.28 seconds | 1.24 seconds | 1.25 seconds |
+| Microsoft Word (Open Doc) | 0.70 seconds | 0.73 seconds | 0.76 seconds | 0.72 seconds | 0.73 seconds |
+| Microsoft Excel (Save File) | 0.36 seconds | 0.33 seconds | 0.35 seconds | 0.33 seconds | 0.33 seconds |
 
 ### Steady State Phase
 
@@ -97,29 +97,29 @@ _Table: Application Performance Linear Scale Steady State Phase: App Start (in S
 
 | Application Name | 1 Node | 2 Nodes | 4 Nodes | 6 Nodes | 8 Nodes | 
 | --- | --- | --- | --- | --- | --- |
-| Microsoft Word | 0.88 seconds | 0.89 seconds | 0.93 seconds | 0.91 seconds | 0.92 seconds |
-| Microsoft Excel | 0.88 seconds | 0.90 seconds | 0.94 seconds | 0.90 seconds | 0.91 seconds |
-| Microsoft PowerPoint | 0.81 seconds | 0.82 seconds | 0.84 seconds | 0.82 seconds | 0.83 seconds |
+| Microsoft Word | 0.98 seconds | 0.94 seconds | 1.07 seconds | 0.95 seconds | 0.97 seconds |
+| Microsoft Excel | 0.80 seconds | 0.78 seconds | 0.92 seconds | 0.82 seconds | 0.83 seconds |
+| Microsoft PowerPoint | 0.78 seconds | 0.77 seconds | 0.92 seconds | 0.80 seconds | 0.82 seconds |
 
 _Table: Application Performance Linear Scale Steady State Phase: Specific Action (in Seconds)_
 
 | Application Name (Action) | 1 Node | 2 Nodes | 4 Nodes | 6 Nodes | 8 Nodes |
 | --- | --- | --- | --- | --- | --- |
-| Microsoft Edge (Page Load) | 1.40 seconds | 1.47 seconds | 1.45 seconds | 1.45 seconds | 1.49 seconds |
-| Microsoft Word (Open Doc) | 0.94 seconds | 0.97 seconds | 0.99 seconds | 0.94 seconds | 0.96 seconds |
-| Microsoft Excel (Save File) | 0.33 seconds | 0.33 seconds | 0.34 seconds | 0.33 seconds | 0.33 seconds |
+| Microsoft Edge (Page Load) | 1.48 seconds | 1.40 seconds | 1.62 seconds | 1.45 seconds | 1.47 seconds |
+| Microsoft Word (Open Doc) | 0.78 seconds | 0.79 seconds | 0.90 seconds | 0.79 seconds | 0.81 seconds |
+| Microsoft Excel (Save File) | 0.34 seconds | 0.33 seconds | 0.36 seconds | 0.34 seconds | 0.34 seconds |
 
 ## Power Consumption
 
 During the test, we monitored one node's power consumption to determine the power usage. The following chart shows the host's power usage over the test duration.
 
-![This image shows an a chart with the power consumption used in watts during the full test for a single Nutanix G9 node.](../images/RA-2053_image05.png "Power Usage in Watts during the full test run")
+![This image shows an a chart with the power consumption used in watts during the full test for a single Nutanix G9 node.](../images/RA-2150_image05.png "Power Usage in Watts during the full test run")
 
 The next chart shows the power usage during the steady state phase of the test.
 
-![This image shows an a chart with the power consumption used in watts during the steady state part of the test for a single Nutanix G9 node.](../images/RA-2053_image06.png "Power Usage in Watts during the steady state phase of the test")
+![This image shows an a chart with the power consumption used in watts during the steady state part of the test for a single Nutanix G9 node.](../images/RA-2150_image06.png "Power Usage in Watts during the steady state phase of the test")
 
-On average, the a single Nutanix host used 685 Watts (W) during the steady state.
+On average, the a single Nutanix host used 628 Watts (W) during the steady state.
 
 ## MCS vs. PVS
 
@@ -129,15 +129,15 @@ In this section, we compare the results of a Login Enterprise test on 8 nodes, u
 
 The following charts show the overall system performance during the entire test run.
 
-![This image shows an a chart with the CPU usage in percent for the entire 8 node test.](../images/RA-2053_image07.png "CPU Usage 8 Node Chart")
+![This image shows an a chart with the CPU usage in percent for the entire 8 node test.](../images/RA-2150_image07.png "CPU Usage 8 Node Chart")
 
-![This image shows an a chart with the CPU ready time in percent for the entire 8 node test.](../images/RA-2053_image08.png "CPU Ready Time 8 Node Chart")
+![This image shows an a chart with the CPU ready time in percent for the entire 8 node test.](../images/RA-2150_image08.png "CPU Ready Time 8 Node Chart")
 
-![This image shows an a chart with the Controller Read IOPS for the entire 8 node test.](../images/RA-2053_image09.png "Controller Read IOPS 8 Node Chart")
+![This image shows an a chart with the Controller Read IOPS for the entire 8 node test.](../images/RA-2150_image09.png "Controller Read IOPS 8 Node Chart")
 
-![This image shows an a chart with the Controller Write IOPS for the entire 8 node test.](../images/RA-2053_image10.png "Controller Write IOPS 8 Node Chart")
+![This image shows an a chart with the Controller Write IOPS for the entire 8 node test.](../images/RA-2150_image10.png "Controller Write IOPS 8 Node Chart")
 
-![This image shows an a chart with the Controller Latency in ms for the entire 8 node test.](../images/RA-2053_image11.png "Controller Latency 8 Node Chart")
+![This image shows an a chart with the Controller Latency in ms for the entire 8 node test.](../images/RA-2150_image11.png "Controller Latency 8 Node Chart")
 
 The average graph data above is summarized in the following table.
 
@@ -145,11 +145,11 @@ _Table: System Performance MCS vs. PVS: System Performance Summary_
 
 | Measurement | MCS | PVS |
 | --- | --- | --- | 
-| CPU Usage | 60.2 % | 61.2 % |
-| CPU Ready Time | 0.10 % | 0.14 % | 
-| Controller Read IOPS | 21,745 | 7,199 | 
-| Controller Write IOPS | 21,148 | 33,763 | 
-| Controller Latency | 0.45 ms | 0.45 ms | 
+| CPU Usage | 57.2 % | 57.1 % |
+| CPU Ready Time | 0.10 % | 0.21 % | 
+| Controller Read IOPS | 12,047 | 7,455 | 
+| Controller Write IOPS | 17,762 | 28,341 | 
+| Controller Latency | 1.48 ms | 0.50 ms | 
 
 ### Logon Phase
 
@@ -163,10 +163,10 @@ _Table: Logon Performance MCS vs. PVS Logon Phase: Logon Time (in Seconds)_
 
 | Measurement | MCS | PVS |
 | --- | --- | --- | 
-| Average Logon Time | 6.6 seconds | 7.7 seconds |
-| User Profile Load | 0.40 seconds | 0.50 seconds | 
-| Group Policies | 2.2 seconds | 2.3 seconds | 
-| Connection | 2.7 seconds | 3 seconds | 
+| Average Logon Time | 8.0 seconds | 8.2 seconds |
+| User Profile Load | 0.90 seconds | 0.90 seconds | 
+| Group Policies | 1.4 seconds | 1.4 seconds | 
+| Connection | 3.3 seconds | 3.4 seconds | 
 
 #### Application Performance
 
@@ -176,17 +176,17 @@ _Table: Application Performance MCS vs. PVS Logon Phase: App Start (in Seconds)_
 
 | Application | MCS | PVS | 
 | --- | --- | --- | 
-| Microsoft Outlook | 3.17 seconds | 3.95 seconds | 
-| Microsoft Word | 0.89 seconds | 0.92 seconds | 
-| Microsoft Excel | 1.03 seconds | 1.25 seconds |
-| Microsoft PowerPoint | 0.94 seconds | 1.15 seconds | 
+| Microsoft Outlook | 1.92 seconds | 2.00 seconds | 
+| Microsoft Word | 0.85 seconds | 0.87 seconds | 
+| Microsoft Excel | 0.75 seconds | 0.76 seconds |
+| Microsoft PowerPoint | 0.76 seconds | 0.78 seconds | 
 
 _Table: Application Performance MCS vs. PVS Logon Phase: Specific Action (in Seconds)_
 
 | Application (Action) | MCS | PVS | 
 | --- | --- | --- | 
-| Microsoft Word (Open Doc) | 0.92 seconds | 1.09 seconds | 
-| Microsoft Excel (Save File) | 0.33 seconds | 0.35 seconds | 
+| Microsoft Word (Open Doc) | 0.73 seconds | 0.74 seconds | 
+| Microsoft Excel (Save File) | 0.33 seconds | 0.33 seconds | 
 
 ### Steady State Phase
 
@@ -200,17 +200,17 @@ _Table: Application Performance MCS vs. PVS Steady State Phase: App Start (in Se
 
 | Application | MCS | PVS | 
 | --- | --- | --- | 
-| Microsoft Word | 0.92 seconds | 0.93 seconds | 
-| Microsoft Excel | 0.91 seconds | 0.97 seconds |
-| Microsoft PowerPoint | 0.83 seconds | 0.86 seconds | 
+| Microsoft Word | 0.97 seconds | 1.01 seconds | 
+| Microsoft Excel | 0.83 seconds | 0.86 seconds |
+| Microsoft PowerPoint | 0.82 seconds | 0.84 seconds | 
 
 _Table: Application Performance MCS vs. PVS Steady State Phase: Specific Action (in Seconds)_
 
 | Application (Action) | MCS | PVS | 
 | --- | --- | --- | 
-| Microsoft Edge (Page Load) | 1.49 seconds | 1.55 seconds |
-| Microsoft Word (Open Doc) | 0.96 seconds | 1.00 seconds | 
-| Microsoft Excel (Save File) | 0.33 seconds | 0.34 seconds | 
+| Microsoft Edge (Page Load) | 1.47 seconds | 1.53 seconds |
+| Microsoft Word (Open Doc) | 0.81 seconds | 0.83 seconds | 
+| Microsoft Excel (Save File) | 0.34 seconds | 0.34 seconds | 
 
 ## Nutanix G7, G8 vs G9 Nodes
 
@@ -239,18 +239,18 @@ _Table: G8 vs. G8 vs. G9: CPU results_
 
 | Measurement | G7 | G8 | G9 | 
 | --- | --- | --- | -- |
-| Number of users per node | 70 | 120 | 130 |
-| Number of users per node (%) | **100%** | **171%** | **186%** |
-| MHz per session during steady state | 905 | 896 | 768 |
-| MHz per session during steady state (%) | **100%** | **99%** | **85%** |
-| Sessions per core | 1.94 | 2.50 | 2.71 |
-| Sessions per core (%) | **100%** | **129%** | **139%** |
-| vCPUs per core (including CVM) | 4.22 | 5.25 | 5.67 |
-| vCPUs per core (including CVM) (%) | **100%** | **124%** | **134%** |
+| Number of users per node | 85 | 135 | 155 |
+| Number of users per node (%) | **100%** | **159%** | **182%** |
+| MHz per session during steady state | 745 | 796 | 644 |
+| MHz per session during steady state (%) | **100%** | **106%** | **86%** |
+| Sessions per core | 2.36 | 2.81 | 3.23 |
+| Sessions per core (%) | **100%** | **119%** | **136%** |
+| vCPUs per core (including CVM) | 2.33 | 2.25 | 2.25 |
+| vCPUs per core (including CVM) (%) | **100%** | **96%** | **96%** |
 
 The following charts show the system performance during the tests.
 
-![This image shows an a chart with the CPU Usage for G7, G8 and G9 hardware during a 1 node test.](../images/RA-2053_image17.png "G7, G8 and G9 CPU Usage Chart")
+![This image shows an a chart with the CPU Usage for G7, G8 and G9 hardware during a 1 node test.](../images/RA-2150_image17.png "G7, G8 and G9 CPU Usage Chart")
 
 ### Logon Phase
 
@@ -264,10 +264,10 @@ _Table: Application Performance G7 vs. G8 vs. G9 Logon Phase: Logon Time (in Sec
 
 | Measurement | G7 | G8 | G9 |
 | --- | --- | --- | --- |
-| Average Logon Time | 8.7 seconds | 7.1 seconds | 6.5 seconds | 
-| User Profile Load | 0.5 seconds | 0.5 seconds | 0.4 seconds |
-| Group Policies | 2.8 seconds | 2.4 seconds | 2.2 seconds |
-| Connection | 3.4 seconds | 2.8 seconds | 2.6 seconds |
+| Average Logon Time | 9.7 seconds | 8.5 seconds | 7.7 seconds | 
+| User Profile Load | 1.2 seconds | 0.9 seconds | 0.9 seconds |
+| Group Policies | 2.1 seconds | 1.6 seconds | 1.4 seconds |
+| Connection | 3.8 seconds | 3.4 seconds | 3.2 seconds |
 
 #### Application Performance
 
@@ -277,22 +277,22 @@ _Table: Application Performance G7 vs. G8 vs. G9 Logon Phase: App Start (in Seco
 
 | Application | G7 | G8 | G9 |
 | --- | --- | --- | --- |
-| Microsoft Outlook | 3.86 seconds | 3.37 seconds | 2.96 seconds |
-| Microsoft Word | 1.16 seconds | 0.90 seconds | 0.86 seconds |
-| Microsoft Excel | 1.32 seconds | 1.08 seconds | 0.98 seconds |
-| Microsoft PowerPoint | 1.21 seconds | 1.00 seconds | 0.91 seconds | 
+| Microsoft Outlook | 2.41 seconds | 2.10 seconds | 1.82 seconds |
+| Microsoft Word | 1.11 seconds | 0.92 seconds | 0.83 seconds |
+| Microsoft Excel | 0.98 seconds | 0.82 seconds | 0.73 seconds |
+| Microsoft PowerPoint | 0.97 seconds | 0.84 seconds | 0.74 seconds | 
 
 _Table: Application Performance G7 vs. G8 vs. G9 Logon Phase: Specific Action (in Seconds)_
 
 | Application (Action) | G7 | G8 | G9 |
 | --- | --- | --- | --- |
-| Microsoft Edge (Page Load) | 1.95 seconds | 1.55 seconds | 1.37 seconds |
-| Microsoft Word (Open Doc) | 1.18 seconds | 0.99 seconds | 0.92 seconds | 
-| Microsoft Excel (Save File) | 0.38 seconds | 0.34 seconds | 0.33 seconds |
+| Microsoft Edge (Page Load) | 1.78 seconds | 1.42 seconds | 1.22 seconds |
+| Microsoft Word (Open Doc) | 0.94 seconds | 0.81 seconds | 0.70 seconds | 
+| Microsoft Excel (Save File) | 0.35 seconds | 0.34 seconds | 0.33 seconds |
 
 The following graph is an example of the performance improvement of Outlook App Start on the different hardware platforms.
 
-![This image shows a chart with the outlook start times for the G7, G8 and G9 Nutanix Hardware node types.](../images/RA-2053_image18.png "G7, G8 and G9 Outlook Start Chart")
+![This image shows a chart with the outlook start times for the G7, G8 and G9 Nutanix Hardware node types.](../images/RA-2150_image18.png "G7, G8 and G9 Outlook Start Chart")
 
 ### Steady State Phase
 
@@ -306,16 +306,16 @@ _Table: Application Performance G7 vs. G8 vs. G9 Steady State Phase: App Start (
 
 | Application | G7 | G8 | G9 |
 | --- | --- | --- | --- |
-| Microsoft Word | 1.17 seconds | 0.94 seconds | 0.89 seconds |
-| Microsoft Excel | 1.20 seconds | 0.95 seconds | 0.87 seconds |
-| Microsoft PowerPoint | 1.08 seconds | 0.88 seconds | 0.81 seconds |
+| Microsoft Word | 1.21 seconds | 1.11 seconds | 0.94 seconds |
+| Microsoft Excel | 1.08 seconds | 0.92 seconds | 0.79 seconds |
+| Microsoft PowerPoint | 1.00 seconds | 0.93 seconds | 0.78 seconds |
 
 _Table: Application Performance G7 vs. G8 vs. G9 Steady State Phase: Specific Action (in Seconds)_
 
 | Application (Action) | G7 | G8 | G9 |
 | --- | --- | --- | --- |
-| Microsoft Edge (Page Load) | 1.91 seconds | 1.58 seconds | 1.38 seconds |
-| Microsoft Word (Open Doc) | 1.23 seconds | 1.02 seconds | 0.94 seconds |
-| Microsoft Excel (Save File) | 0.39 seconds | 0.34 seconds | 0.33 seconds |
+| Microsoft Edge (Page Load) | 2.10 seconds | 1.67 seconds | 1.43 seconds |
+| Microsoft Word (Open Doc) | 1.01 seconds | 0.93 seconds | 0.79 seconds |
+| Microsoft Excel (Save File) | 0.38 seconds | 0.35 seconds | 0.33 seconds |
 
 The results of these tests show an improvement in performance and density when upgrading to a new generation of CPU.
