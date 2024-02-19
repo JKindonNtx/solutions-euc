@@ -27,7 +27,7 @@ High-density architecture
 
 The following figure shows the main architectural components of the Citrix Virtual Apps and Desktops on Nutanix solution and the communication path between services. 
  
-![Image showing the main architectural components of the Citrix Virtual Apps and Desktops on Nutanix solution and the communication path between the different services](../images/RA-2053_image02.png "Overview of Citrix Virtual Apps and Desktops on Nutanix")
+![Image showing the main architectural components of the Citrix Virtual Apps and Desktops on Nutanix solution and the communication path between the different services](../images/RA-2118_image02.png "Overview of Citrix Virtual Apps and Desktops on Nutanix")
 
 ## Pod Design
 
@@ -47,9 +47,8 @@ _Table: Services Pod Details_
 | Nutanix hosts | 16 |
 | Nutanix clusters | 1 |
 | Datastores | 1 |
-| Sessions | Up To XXXX |
 
-We recommend having a maximum of 16 Nutanix AHV host nodes per cluster. We validated Citrix DaaS, using 2 vCPU and 4 GB of memory per VM and XXXX VMs per node. When you use 8 Nutanix AHV host nodes, you can run up to XXXX VDAs per Nutanix AHV cluster.
+We recommend having a maximum of 16 Nutanix AHV host nodes per cluster. We validated Citrix DaaS, using 2 vCPU and 4 GB of memory per VM and 130 VMs per node. When you use 8 Nutanix AHV host nodes.
 
 <note>
 Note: Limiting the cluster sizes to 16 nodes reduces the failure domain and the time to patch and update the clusters. This reference architecture uses 16-node building blocks to take advantage of single-rack design, smaller failure domain, and reduced time to patch and update.
@@ -65,7 +64,7 @@ We based the sizing of this pod design on the Login Enterprise Knowledge Worker 
 
 Nutanix provides an ideal combination of high-performance compute and localized storage to meet any demand. True to this capability, this reference architecture contains no reconfiguration or customization of the Nutanix product to optimize for this use case. The following figure shows a high-level example of the relationship between the Nutanix storage pool and containers.
  
-![Image showing the Nutanix Storage Pool and Container layout. It demonstrated the ability to seamlessly add containers to a storage pool and have it grow dynamically](../images/RA-2053_image03.png "Nutanix Storage Overview")
+![Image showing the Nutanix Storage Pool and Container layout. It demonstrated the ability to seamlessly add containers to a storage pool and have it grow dynamically](../images/RA-2118_image03.png "Nutanix Storage Overview")
 
 The following table details the Nutanix storage pool and container configuration.
 
