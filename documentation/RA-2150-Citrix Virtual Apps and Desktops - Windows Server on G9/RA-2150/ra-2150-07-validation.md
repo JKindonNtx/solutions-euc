@@ -264,7 +264,7 @@ _Table: Application Performance G7 vs. G8 vs. G9 Logon Phase: Logon Time (in Sec
 
 | Measurement | G7 | G8 | G9 |
 | --- | --- | --- | --- |
-| Average Logon Time | 9.7 seconds | 8.5 seconds | 7.7 seconds | 
+| Average Logon Time | 9.7 seconds | 8.3 seconds | 7.7 seconds | 
 | User Profile Load | 1.2 seconds | 0.9 seconds | 0.9 seconds |
 | Group Policies | 2.1 seconds | 1.6 seconds | 1.4 seconds |
 | Connection | 3.8 seconds | 3.4 seconds | 3.2 seconds |
@@ -277,18 +277,18 @@ _Table: Application Performance G7 vs. G8 vs. G9 Logon Phase: App Start (in Seco
 
 | Application | G7 | G8 | G9 |
 | --- | --- | --- | --- |
-| Microsoft Outlook | 2.41 seconds | 2.10 seconds | 1.82 seconds |
+| Microsoft Outlook | 2.41 seconds | 2.12 seconds | 1.82 seconds |
 | Microsoft Word | 1.11 seconds | 0.92 seconds | 0.83 seconds |
-| Microsoft Excel | 0.98 seconds | 0.82 seconds | 0.73 seconds |
-| Microsoft PowerPoint | 0.97 seconds | 0.84 seconds | 0.74 seconds | 
+| Microsoft Excel | 0.98 seconds | 0.81 seconds | 0.73 seconds |
+| Microsoft PowerPoint | 0.97 seconds | 0.81 seconds | 0.74 seconds | 
 
 _Table: Application Performance G7 vs. G8 vs. G9 Logon Phase: Specific Action (in Seconds)_
 
 | Application (Action) | G7 | G8 | G9 |
 | --- | --- | --- | --- |
-| Microsoft Edge (Page Load) | 1.78 seconds | 1.42 seconds | 1.22 seconds |
-| Microsoft Word (Open Doc) | 0.94 seconds | 0.81 seconds | 0.70 seconds | 
-| Microsoft Excel (Save File) | 0.35 seconds | 0.34 seconds | 0.33 seconds |
+| Microsoft Edge (Page Load) | 1.78 seconds | 1.38 seconds | 1.22 seconds |
+| Microsoft Word (Open Doc) | 0.94 seconds | 0.79 seconds | 0.70 seconds | 
+| Microsoft Excel (Save File) | 0.35 seconds | 0.34 seconds | 0.34 seconds |
 
 The following graph is an example of the performance improvement of Outlook App Start on the different hardware platforms.
 
@@ -306,16 +306,16 @@ _Table: Application Performance G7 vs. G8 vs. G9 Steady State Phase: App Start (
 
 | Application | G7 | G8 | G9 |
 | --- | --- | --- | --- |
-| Microsoft Word | 1.21 seconds | 1.11 seconds | 0.94 seconds |
-| Microsoft Excel | 1.08 seconds | 0.92 seconds | 0.79 seconds |
-| Microsoft PowerPoint | 1.00 seconds | 0.93 seconds | 0.78 seconds |
+| Microsoft Word | 1.21 seconds | 1.08 seconds | 0.94 seconds |
+| Microsoft Excel | 1.08 seconds | 0.91 seconds | 0.79 seconds |
+| Microsoft PowerPoint | 1.00 seconds | 0.90 seconds | 0.78 seconds |
 
 _Table: Application Performance G7 vs. G8 vs. G9 Steady State Phase: Specific Action (in Seconds)_
 
 | Application (Action) | G7 | G8 | G9 |
 | --- | --- | --- | --- |
-| Microsoft Edge (Page Load) | 2.10 seconds | 1.67 seconds | 1.43 seconds |
-| Microsoft Word (Open Doc) | 1.01 seconds | 0.93 seconds | 0.79 seconds |
+| Microsoft Edge (Page Load) | 2.10 seconds | 1.65 seconds | 1.43 seconds |
+| Microsoft Word (Open Doc) | 1.01 seconds | 0.90 seconds | 0.79 seconds |
 | Microsoft Excel (Save File) | 0.38 seconds | 0.35 seconds | 0.33 seconds |
 
 The results of these tests show an improvement in performance and density when upgrading to a new generation of CPU.
