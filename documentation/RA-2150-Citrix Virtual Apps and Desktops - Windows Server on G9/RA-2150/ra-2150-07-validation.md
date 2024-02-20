@@ -239,12 +239,12 @@ _Table: G8 vs. G8 vs. G9: CPU results_
 
 | Measurement | G7 | G8 | G9 | 
 | --- | --- | --- | -- |
-| Number of users per node | 85 | 135 | 155 |
-| Number of users per node (%) | **100%** | **159%** | **182%** |
-| MHz per session during steady state | 745 | 796 | 644 |
-| MHz per session during steady state (%) | **100%** | **106%** | **86%** |
-| Sessions per core | 2.36 | 2.81 | 3.23 |
-| Sessions per core (%) | **100%** | **119%** | **136%** |
+| Number of users per node | 85 | 140 | 155 |
+| Number of users per node (%) | **100%** | **165%** | **182%** |
+| MHz per session during steady state | 745 | 768 | 644 |
+| MHz per session during steady state (%) | **100%** | **103%** | **86%** |
+| Sessions per core | 2.36 | 2.92 | 3.23 |
+| Sessions per core (%) | **100%** | **124%** | **136%** |
 | vCPUs per core (including CVM) | 2.33 | 2.25 | 2.25 |
 | vCPUs per core (including CVM) (%) | **100%** | **96%** | **96%** |
 
