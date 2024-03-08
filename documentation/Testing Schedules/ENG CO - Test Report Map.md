@@ -54,10 +54,11 @@ Detail the testing baseline numbers.
 Detail the tests you are planning to run as part of the document.
 | Test Name | Run Count | HCI nodes | CO nodes | VMs | Completed | By | Info | Test ID | Link |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
-| W10 Baseline KW on G9 | 2 | 8 NX | 0 | 1000 | ❌ | Sven | 8 Nodes - W10 - HCI - NX-G9 - KW baseline | 55a081_8n_A6.7.1.6_AHV_1000V_1000U_KW | [Report](http://10.57.64.101:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=2024&var-DocumentName=ENG-CO-Tests&var-Comment=8n_g9_ahv_w10_u1000_v1000_kw&var-Testname=55a081_8n_A6.7.1.6_AHV_1000V_1000U_KW&var-Run=55a081_8n_A6.7.1.6_AHV_1000V_1000U_KW_Run1&var-Naming=Comment&var-Month=03) |
+| W10 Baseline KW on G9 | 2 | 8 NX | 0 | 1000 | ✅ | Sven | 8 Nodes - W10 - HCI - NX-G9 - KW baseline | 55a081_8n_A6.7.1.6_AHV_1000V_1000U_KW | [Report](http://10.57.64.101:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=2024&var-DocumentName=ENG-CO-Tests&var-Comment=8n_g9_ahv_w10_u1000_v1000_kw&var-Testname=55a081_8n_A6.7.1.6_AHV_1000V_1000U_KW&var-Run=55a081_8n_A6.7.1.6_AHV_1000V_1000U_KW_Run1&var-Naming=Comment&var-Month=03) |
 | W10 Baseline TW on G9 | 2 | 8 NX | 0 | 1500 | ❌ | Sven | 8 Nodes - W10 - HCI - NX-G9 - TW baseline | TBD | |
-| W10 Baseline KW on HPE | 2 | 4 HPE | 0 | 400 | ❌ | Sven | 8 Nodes - W10 - HCI - HPE - KW baseline | TBD | |
-| W10 Baseline TW on HPE | 2 | 4 HPE | 0 | 600 | ❌ | Sven | 8 Nodes - W10 - HCI - HPE - KW baseline | TBD | |
+| W10 Baseline KW on HPE | 2 | 4 HPE | 0 | 400 | ✅ | Sven | 8 Nodes - W10 - HCI - HPE - KW baseline | cc1f88_4n_A6.7.1.6_AHV_400V_400U_KW | [Report](http://10.57.64.101:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=2024&var-DocumentName=ENG-CO-Tests&var-Comment=4n_hpg11_w10_400u_kw&var-Testname=cc1f88_4n_A6.7.1.6_AHV_400V_400U_KW&var-Run=cc1f88_4n_A6.7.1.6_AHV_400V_400U_KW_Run1&var-Naming=Comment&var-Month=03)|
+| W10 Baseline KW on HPE | 2 | 4 HPE | 0 | 380 | ❌ | Sven | 8 Nodes - W10 - HCI - HPE - KW baseline | TBD | |
+| W10 Baseline TW on HPE | 2 | 4 HPE | 0 | 550 | ❌ | Sven | 8 Nodes - W10 - HCI - HPE - KW baseline | TBD | |
 | W10 Baseline KW on G9 - CO | 2 | 4 NX | 4 NX | 1000 | ❌ | Sven | 8 Nodes - W10 - HCI-CO - NX-G9 - KW | TBD | |
 | W10 Baseline TW on G9 - CO | 2 | 4 NX | 4 NX | 1500 | ❌ | Sven | 8 Nodes - W10 - HCI-CO - NX-G9 - TW | TBD | |
 | W10 Baseline KW on HPE+G9 - CO | 2 | 4 HPE | 4 NX | 880 | ❌ | Sven | 8 Nodes - W10 - HCI-CO - HPE+NX-G9 - KW | TBD | |
@@ -73,7 +74,5 @@ Any specific test comparisons made and a report link to the Grafana dashboard wi
 
 | Operating System | Detail | Report URL | Test Comparison | Completed |
 | :-- | :-- | :-- | :-- | :-- |
-| Windows 10 | Baseline Comparison | [Report](http://10.57.64.101:3000) | Test Comparison Description  | ✅ |
 | | | | |
-| Windows 10 | Next Comparison | [Report](http://10.57.64.101:3000) | Test Comparison Description  | ✅ |
 | | | | |
