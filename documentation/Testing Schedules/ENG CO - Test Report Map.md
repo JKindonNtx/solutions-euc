@@ -44,9 +44,9 @@ Detail the testing baseline numbers.
 | OS | CPU | Cores | Memory | VMs | Workload | Cluster | Status |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
 | Windows 10 (G9) | 1 | 2 | 4 | 1000  | Knowledgeworker | 10.56.70.55 | ✅ |
-| Windows 10 (G9) | 1 | 2 | 4 | 1000  | Taskworker | 10.56.70.55 | ❌ |
-| Windows 10 (HPE) | 1 | 2 | 4 | 400  | Knowledgeworker | 10.56.68.190 | ❌ |
-| Windows 10 (HPE) | 1 | 2 | 4 | 600  | Taskworker | 10.56.68.190 | ❌ |
+| Windows 10 (G9) | 1 | 2 | 4 | 1500  | Taskworker | 10.56.70.55 | ❌ |
+| Windows 10 (HPE) | 1 | 2 | 4 | 380  | Knowledgeworker | 10.56.68.190 | ✅ |
+| Windows 10 (HPE) | 1 | 2 | 4 | 550  | Taskworker | 10.56.68.190 | ❌ |
 
 
 ## Test Names
@@ -55,9 +55,9 @@ Detail the tests you are planning to run as part of the document.
 | Test Name | Run Count | HCI nodes | CO nodes | VMs | Completed | By | Info | Test ID | Link |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
 | W10 Baseline KW on G9 | 2 | 8 NX | 0 | 1000 | ✅ | Sven | 8 Nodes - W10 - HCI - NX-G9 - KW baseline | 55a081_8n_A6.7.1.6_AHV_1000V_1000U_KW | [Report](http://10.57.64.101:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=2024&var-DocumentName=ENG-CO-Tests&var-Comment=8n_g9_ahv_w10_u1000_v1000_kw&var-Testname=55a081_8n_A6.7.1.6_AHV_1000V_1000U_KW&var-Run=55a081_8n_A6.7.1.6_AHV_1000V_1000U_KW_Run1&var-Naming=Comment&var-Month=03) |
-| W10 Baseline TW on G9 | 2 | 8 NX | 0 | 1500 | ❌ | Sven | 8 Nodes - W10 - HCI - NX-G9 - TW baseline | TBD | |
+| W10 Baseline TW on G9 | 2 | 8 NX | 0 | 1500 | ❌ | Sven | 8 Nodes - W10 - HCI - NX-G9 - TW baseline | ee4b49_8n_A6.7.1.6_AHV_1500V_1500U_TW | [Report](http://10.57.64.101:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=2024&var-DocumentName=ENG-CO-Tests&var-Comment=8n_g9_ahv_w10_u1500_v1500_tw&var-Testname=ee4b49_8n_A6.7.1.6_AHV_1500V_1500U_TW&var-Run=ee4b49_8n_A6.7.1.6_AHV_1500V_1500U_TW_Run1&var-Naming=Comment&var-Month=03) |
 | W10 Baseline KW on HPE | 2 | 4 HPE | 0 | 400 | ✅ | Sven | 8 Nodes - W10 - HCI - HPE - KW baseline | cc1f88_4n_A6.7.1.6_AHV_400V_400U_KW | [Report](http://10.57.64.101:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=2024&var-DocumentName=ENG-CO-Tests&var-Comment=4n_hpg11_w10_400u_kw&var-Testname=cc1f88_4n_A6.7.1.6_AHV_400V_400U_KW&var-Run=cc1f88_4n_A6.7.1.6_AHV_400V_400U_KW_Run1&var-Naming=Comment&var-Month=03)|
-| W10 Baseline KW on HPE | 2 | 4 HPE | 0 | 380 | ❌ | Sven | 8 Nodes - W10 - HCI - HPE - KW baseline | TBD | |
+| W10 Baseline KW on HPE | 2 | 4 HPE | 0 | 380 | ✅ | Sven | 8 Nodes - W10 - HCI - HPE - KW baseline | d5ae94_4n_A6.7.1.6_AHV_380V_380U_KW | [Report](http://10.57.64.101:3000/d/N5tnL9EVk/login-documents-v3?orgId=1&var-Bucketname=LoginDocuments&var-Bootbucket=BootBucket&var-Year=2024&var-DocumentName=ENG-CO-Tests&var-Comment=4n_hpg11_w10_380u_kw&var-Testname=d5ae94_4n_A6.7.1.6_AHV_380V_380U_KW&var-Run=d5ae94_4n_A6.7.1.6_AHV_380V_380U_KW_Run1&var-Naming=Comment&var-Month=03) | 
 | W10 Baseline TW on HPE | 2 | 4 HPE | 0 | 550 | ❌ | Sven | 8 Nodes - W10 - HCI - HPE - KW baseline | TBD | |
 | W10 Baseline KW on G9 - CO | 2 | 4 NX | 4 NX | 1000 | ❌ | Sven | 8 Nodes - W10 - HCI-CO - NX-G9 - KW | TBD | |
 | W10 Baseline TW on G9 - CO | 2 | 4 NX | 4 NX | 1500 | ❌ | Sven | 8 Nodes - W10 - HCI-CO - NX-G9 - TW | TBD | |
