@@ -12,8 +12,8 @@
 - name: Image Build
   hosts: "{{ target_host }}"
   vars:
-    ansible_user: "{{}}"
-    ansible_password: "{{}}"
+    ansible_user: "{{ admin_username }}"
+    ansible_password: "{{ admin_password }}"
     ansible_connection: winrm
     ansible_winrm_transport: ntlm
     ansible_winrm_server_cert_validation: ignore
