@@ -7,3 +7,15 @@
   #gather_facts: yes
   roles:
     - azure_deploy_vm
+
+# Need to set WinRM Details here - trialling getting host from last Role
+- name: Image Build
+  hosts: "{{ target_host }}"
+  vars:
+    ansible_user: "{{}}"
+    ansible_password: "{{}}"
+    ansible_connection: winrm
+    ansible_winrm_transport: ntlm
+    ansible_winrm_server_cert_validation: ignore
+  roles:
+    - run_ms_deployment_scripts

@@ -73,3 +73,7 @@
     port: "{{ winrm_port }}"
     host: '{{ nic_facts.networkinterfaces[0].ip_configurations[0].private_ip_address }}'
     timeout: "{{ winrm_timeout }}"
+
+- name: Set target host variable for image build phase
+  set_fact:
+    target_host: "{{ nic_facts.networkinterfaces[0].ip_configurations[0].private_ip_address }}"
