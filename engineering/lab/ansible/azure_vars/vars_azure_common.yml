@@ -1,0 +1,5 @@
+---
+resource_group: "rg-cs-ansible"
+location: "australiaeast"
+virtual_network: "/subscriptions/cbff435f-3f81-4f91-bd7b-2346efbd8850/resourceGroups/rg-ae-general/providers/Microsoft.Network/virtualNetworks/vnet-ae-general"
+subnet: "citrix_provisioning"

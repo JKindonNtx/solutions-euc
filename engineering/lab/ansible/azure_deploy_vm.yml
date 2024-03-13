@@ -1,0 +1,9 @@
+---
+- name: Deploy Azure Virtual Machines
+  hosts: localhost
+  vars_files:
+    - ./azure_vars/vars_azure_common.yml
+  connection: local
+  #gather_facts: yes
+  roles:
+    - azure_deploy_vm
