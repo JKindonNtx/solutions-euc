@@ -1,0 +1,99 @@
+# Disable firewall
+- name: Disable Windows Firewall
+  win_command: netsh advfirewall set allprofiles state off
+
+# Join workgroup    
+- name: join host to workgroup with reboot
+  microsoft.ad.membership:
+    workgroup_name: xray
+    domain_admin_user: '{{ ansible_domain_user }}'
+    domain_admin_password: '{{ ansible_password }}'
+    state: workgroup
+    reboot: true
+
+# Sets Timezone to UTC 
+- name: Set timezone to 'Coordinated Universal Time' (UTC)
+  win_timezone:
+    timezone: UTC
+
+# Set SAN policy
+- name: Set SAN Policy to OnlineAll
+  win_shell: |
+    Set-StorageSetting -NewDiskPolicy OnlineAll
+
+# Disable password complexity
+- name: Disable password complexity requirements
+  win_shell: |        
+    secedit /export /cfg c:\secedit.cfg
+    (gc c:\secedit.cfg) -Replace('PasswordComplexity = 1', 'PasswordComplexity = 0') | Out-File -Encoding ascii c:\secedit.cfg
+    secedit /configure /db $env:windir\security\secedit.sdb /cfg c:\secedit.cfg /areas SECURITYPOLICY
+    del c:\secedit.cfg
+
+# Set Password policy to allow no experation
+- name: Set password policy to allow no expiration globally and for administrator account
+  win_shell: |
+    wmic useraccount WHERE Name='administrator' set PasswordExpires=false
+    net accounts /MaxPWAge:unlimited
+
+# Create Nutanix Account
+- name: Create nutanix user and add to Administrators local group
+  win_shell: |
+    $Password = ConvertTo-SecureString "nutanix/4u" -AsPlainText -Force
+    New-LocalUser -AccountNeverExpires -Password $Password -PasswordNeverExpires -Name "nutanix"
+    Add-LocalGroupMember -Group Administrators -Member nutanix
+
+# Reboot VM
+- name: Reboot the machine with all defaults
+  win_reboot:
+
+# Set Autologon
+- name: Add registry path DefaultUserName
+  win_regedit:
+    path: HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon
+    name: DefaultUserName
+    data: nutanix
+
+- name: Add registry path DefaultPassword
+  win_regedit:
+    path: HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon
+    name: DefaultPassword
+    data: "nutanix/4u"
+
+- name: Add registry path Winlogon
+  win_regedit:
+    path: HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon
+    name: AutoAdminLogon
+    data: 1
+
+- name: Add registry path Autologon
+  win_regedit:
+    path: HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon
+    name: ForceAutoLogon
+    data: 1
+
+- name: Add registry path AutologonSID
+  win_regedit:
+    path: HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon
+    name: AutoLogonSID
+    state: absent
+    delete_key: false
+
+# Reboot VM
+- name: Reboot the machine with all defaults
+  win_reboot:
+
+- name: Add registry path DefaultPassword
+  win_regedit:
+    path: HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon
+    name: DefaultPassword
+    data: "nutanix/4u"
+
+- name: Add registry path Winlogon
+  win_regedit:
+    path: HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon
+    name: AutoAdminLogon
+    data: 1
+
+# Reboot VM
+- name: Reboot the machine with all defaults
+  win_reboot:

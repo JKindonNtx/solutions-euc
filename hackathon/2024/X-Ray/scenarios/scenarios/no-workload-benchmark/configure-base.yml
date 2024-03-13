@@ -1,0 +1,17 @@
+---
+- name: Install Base Components
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Copy Workload script
+      win_copy:
+        src: "scripts/"
+        dest: 'C:\scripts\'
+    - name: Install Pre Req Software
+      win_shell: |
+        New-Item -Path "C:\Software" -ItemType Directory -Force
+        $windowsExporterUri = "https://github.com/prometheus-community/windows_exporter/releases/download/v0.25.1/windows_exporter-0.25.1-amd64.msi"
+        $windowsExporterOutFile = "C:\Software\windows_exporter-0.25.1-amd64.msi"
+        Invoke-WebRequest -Uri $windowsExporterUri -OutFile $windowsExporterOutFile
+        $Arguments = "/i $($windowsExporterOutFile) ENABLED_COLLECTORS=""cpu,net,logical_disk,logon,memory,textfile,process"" EXTRA_FLAGS=""--collector.process.include=(firefox|FIREFOX|chrome|WINWORD|EXCEL|POWERPNT|msedge).*"" /q"
+        Start-Process -Filepath "msiexec.exe" -ArgumentList $Arguments -Wait

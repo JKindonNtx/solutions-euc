@@ -15,7 +15,7 @@ Studio
 Machine Creation Services (MCS)
 : Machine Creation Services is the building mechanism of the Citrix Delivery Controller that automates and orchestrates desktop deployment using a single image. MCS communicates with the orchestration layer of your hypervisor, providing a robust and flexible image management method.
 
-Provisioning
+Citrix Provisioning (PVS)
 : Citrix Provisioning creates and provisions virtual desktops from a single desktop image on demand, optimizing storage utilization and providing a pristine virtual desktop to each user every time they log on. Desktop provisioning also simplifies desktop images, provides optimal flexibility, and offers fewer points of desktop management for both applications and desktops.
 
 Virtual Delivery Agent (VDA)

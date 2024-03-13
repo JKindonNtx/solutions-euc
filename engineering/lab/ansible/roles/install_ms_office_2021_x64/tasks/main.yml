@@ -15,7 +15,7 @@
   become: yes
   become_method: runas
   become_flags: logon_type=new_credentials logon_flags=net_credentials_only
-  register: office2019_install
+  register: office2021_install
 
 - name: Change Click to Run registry key
   ansible.windows.win_regedit:

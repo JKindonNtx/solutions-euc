@@ -91,3 +91,8 @@
     name: AdobeARMservice
     start_mode: disabled
     state: stopped
+
+- name: Remove Adobe Desktop Shortcut
+  ansible.windows.win_file:
+    path: C:\users\public\desktop\Acrobat Reader DC.lnk
+    state: absent

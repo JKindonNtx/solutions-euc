@@ -6,7 +6,7 @@ _Table: Platform Design Decisions: General_
 
 | Item | Detail | Rationale |
 | --- | --- | --- |
-| Software versions | Citrix Virtual Apps and Desktops 2203 CU4; AOS 6.5.4.5 | Latest LTS version available |
+| Software versions | Citrix Virtual Apps and Desktops 2203; AOS 6.5.4.5 | Latest LTS version available |
 | Minimum size | 3 Nutanix nodes (3 Nutanix AHV hosts) | Minimum size requirement |
 | Scale approach | Incremental modular scale | Allows growth from proof of concept (hundreds of desktops) to massive scale (thousands of desktops) |
 | Scale unit | Nodes, blocks, or pods | Granular scale to precisely meet capacity demands; scale in n × node increments |

@@ -19,4 +19,4 @@ This document covers the following topics:
 | Version Number | Published | Notes |
 | :---: | --- | --- |
 | 1.0 | April 2022 | Original publication. |
-| 1.1 | January 2024 | Updated to include G9 NX Nodes. |
+| 1.1 | February 2024 | Updated to include G9 NX Nodes. |

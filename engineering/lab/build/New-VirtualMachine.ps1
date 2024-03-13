@@ -79,12 +79,13 @@ if ($AOSCluster.hypervisor_types -eq 'kKvm') {
 $AOSHosts = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "hosts"
 $StorageName = "EUC-$($AOSClusterName)"
 
+$Clusterinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "cluster"
+$ClusterName = $Clusterinfo.name
 # Check on build type and if AHV then gather cluster specific information
 if ($JSON.VM.Hypervisor -eq "AHV"){
     Write-Host (Get-Date) ":AHV build selected, getting cluster specific information"
-    $Clusterinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "cluster"
     $VMTimezone = $Clusterinfo.timezone
-    $ClusterName = $Clusterinfo.name
+    #$VMTimezone = "UTC"
     $Containerinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIPath "storage_containers"
     $StorageUUID = ($Containerinfo.entities | Where-Object {$_.name -eq $($StorageName)}).storage_container_uuid
     $Networkinfo = Get-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "networks"
@@ -113,7 +114,7 @@ if ($JSON.VM.Hypervisor -eq "AHV"){
         Write-Host (Get-Date) ":Connecting to VMware vSphere" 
         $Connection = Connect-VIServer -Server $JSON.VMwareCluster.ip -Protocol https -User $JSON.VMwareCluster.user -Password $JSON.VMwareCluster.password -Force
         if($connection){
-            $Cluster = Get-Cluster -Name $JSON.VMwareCluster.ClusterName
+            $Cluster = Get-Cluster -Name $ClusterName
         } else {
             Write-Host (Get-Date) ":Connection to vSphere Failed - quitting"
             break 
@@ -188,7 +189,7 @@ if($JSON.vm.Hypervisor -eq "AHV"){
     Write-Host "Cluster IP:             $($JSON.Cluster.IP)"
 } else {
     Write-Host "vCenter IP:             $($JSON.VMwareCluster.IP)"
-    Write-Host "Cluster Name:           $($JSON.VMwareCluster.ClusterName)"
+    Write-Host "Cluster Name:           $($ClusterName)"
 }
 Write-Host "Hypervisor:             $($JSON.vm.Hypervisor)"
 Write-Host "Container name:         $($StorageName)"
@@ -415,7 +416,7 @@ if ($confirmationStart -eq 'n') {
                     $MDTmessage = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been created on AHV Cluster $($ClusterName) using MDT" 
                 } else {
                     if ($JSON.vm.Hypervisor -eq "ESXi"){
-                        $MDTmessage = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been created on VMware Cluster $($JSON.VMwareCluster.ClusterName) using MDT" 
+                        $MDTmessage = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been created on VMware Cluster $($ClusterName) using MDT" 
                     }
                 }
                 Update-Slack -Message $MDTMessage -Slack $($JSON.SlackConfig.Slack)
@@ -566,9 +567,9 @@ if ($JSON.vm.Hypervisor -eq "AHV"){
 
         # Update Slack Channel
         if ($Ansible -eq "y") {
-            $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has finished running the Ansible Playbook $PlaybookToRun and has been shutdown and snapshotted on the VMware Cluster $($JSON.VMwareCluster.ClusterName). The following actions/installs have been executed: $($yaml.roles)"
+            $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has finished running the Ansible Playbook $PlaybookToRun and has been shutdown and snapshotted on the VMware Cluster $($ClusterName). The following actions/installs have been executed: $($yaml.roles)"
         } else {
-            $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been shutdown and snapshotted on the VMware Cluster $($JSON.VMwareCluster.ClusterName) - No post OS Ansible Playbooks have been run"
+            $Message = "$($OSDetails.Name) initiated by $($GitHub.UserName) has been shutdown and snapshotted on the VMware Cluster $($ClusterName) - No post OS Ansible Playbooks have been run"
         }    
         Write-Host (Get-Date)":Updating Slack Channel" 
         Update-Slack -Message $Message -Slack $($JSON.SlackConfig.Slack)
