@@ -1,0 +1,14 @@
+---
+vm_name: "e8s-v5-w10ms"
+vm_sku: "Standard_E8s_v5"
+license_type: "Windows_Client"
+disk_sku: "PremiumSSD_LRS"
+disk_size: 127
+admin_username: "NtnxAzureAdmin"
+admin_password: "this_is@VeryNaughtyPW1234$$"
+offer: "Windows-10"
+publisher: "MicrosoftWindowsDesktop"
+sku: "win10-22h2-avd-g2"
+accelerated_networking: true
+winrm_timeout: 30 #600
+winrm_port: 5986
