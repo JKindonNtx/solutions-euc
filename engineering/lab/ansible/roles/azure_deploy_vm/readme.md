@@ -29,6 +29,13 @@ secret=<security-principal-password>
 tenant=<security-principal-tenant>
 ```
 
+You can create this file via the following:
+
+```
+mkdir ~/.azure
+vi ~/.azure/credentials
+```
+
 2. You can export (this is more secure) the detail as environment variables using the following code:
 
 ```
@@ -45,6 +52,8 @@ A playbook has been configured for Azure VM deployments: `azure_deploy_vms.yaml`
 The following outcomes are achieved:
 
 1. The instance is deployed in Azure.
+   -  The Network Interface is created first.
+   -  The NIC is attached to the VM.
 2. Ansible remoting is configured within the VM by an Azure Extension.
 3. [PENDING] The VM is joined to the `WSPerf` Domain. This uses the Ansible galaxy `microsoft.ad` collection.
 4. [PENDING] The VM is targeted with an Ansible Playbook for image build tasks.
@@ -70,6 +79,8 @@ The current setup for Azure VM builds uses the following logic and files:
    -  `accelerated_networking`: Accelerated Networking in use or not. Boolean value.
    -  `winrm_timeout`: The timeout to wait for winrm connectivity for Ansible post the deployment of Ansible provisioning scripts.
    -  `winrm_port`: The port used for Ansible. Default is `5986`.
+
+**Note** that given the network configurations in the Azure Subscription we are using, DNS settings are being applied at the NIC level to override anything at the VNET. These can be removed if the vNET is updated in the future.
 
 The following variable configuration files have been created for the performance testing initiative:
 
