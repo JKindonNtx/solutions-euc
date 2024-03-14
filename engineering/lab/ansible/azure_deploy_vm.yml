@@ -4,18 +4,49 @@
   vars_files:
     - ./azure_vars/vars_azure_common.yml
   connection: local
-  #gather_facts: yes
   roles:
     - azure_deploy_vm
+  tasks:
+    - name: Add the target_host to a dynamic group
+      add_host:
+        name: "{{ target_host }}"
+        groups: target_host
 
-# Need to set WinRM Details here - trialling getting host from last Role
-- name: Image Build
-  hosts: "{{ target_host }}"
-  vars:
-    ansible_user: "{{ admin_username }}"
-    ansible_password: "{{ admin_password }}"
-    ansible_connection: winrm
-    ansible_winrm_transport: ntlm
-    ansible_winrm_server_cert_validation: ignore
-  roles:
-    - run_ms_deployment_scripts
+# Need to set WinRM Details here
+#- name: "Image Build for {{ target_host }}"
+#  hosts: target_host
+#  gather_facts: yes
+#  vars:
+#    ansible_user: "{{ ansible_domain_user }}"
+#    ansible_password: "{{ ansible_password }}"
+#    ansible_connection: winrm
+#    ansible_winrm_transport: ntlm
+#    ansible_winrm_server_cert_validation: ignore
+#  roles:
+#    - run_ms_deployment_scripts
+#  become: true
+#  become_method: runas
+
+# Post Build Tasks
+- name: Post Build Tasks
+  hosts: localhost
+  vars_files:
+    - ./azure_vars/vars_azure_common.yml
+  connection: local
+  tasks:
+    - name: Deallocate the VM
+      azure_rm_virtualmachine:
+        resource_group: "{{ resource_group }}"
+        name: "{{ vm_name }}"
+        allocated: false
+        
+    - name: Take Snapshot of built VM
+      azure_rm_snapshot:
+        resource_group: "{{ resource_group }}"
+        name: "{{ vm_name }}_snapshot"
+        location: "{{ location }}"
+        creation_data:
+          create_option: Copy
+          source_id: "{{ os_disk_id }}"
+        sku:
+          name: "Standard_LRS"

@@ -1,0 +1,4 @@
+---
+- name: Here is the host passed from the last role
+  debug:
+    msg: "{{ target_host }}"
