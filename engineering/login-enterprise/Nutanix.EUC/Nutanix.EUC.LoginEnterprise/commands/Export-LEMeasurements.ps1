@@ -23,27 +23,26 @@ function Export-LEMeasurements {
         #------------------------------------------------------------------
         #### KINDON LE Session Metric Measurements - START
         # This uses the v7-preview API to pull LE Session Metrics Measurements (WMI counters)
-        $SessionMetricMeasurements = Get-LESessionMetricMeasurements -testRunId $testRun.Id -orderBy timestamp # SVEN can you confirm the orderby requirement?
+        $SessionMetricMeasurements = Get-LESessionMetricMeasurements -testRunId $testRun.Id -orderBy timestamp
         # returns timestamp,testrunId,userSessionKey,measurement,displayName,unit,instance,tag,fieldName
 
-        ## Question: SVEN Should we make this an optional call, or detect based on return values (if there is a return, then obviously metric capturing was turned on)
         if (($SessionMetricMeasurements | Measure-Object).Count -gt 0) {
-            ## SVEN Question: How should we offset timestamps here?
-            $SessionMetricMeasurements = $SessionMetricMeasurements | Select-Object displayName,instance,fieldName,timestamp,@{Name = "offSetInSeconds"; Expression = { ((New-TimeSpan -Start (Get-Date $TestRun.started) -End (Get-Date $_.timestamp)).TotalSeconds) } },measurement
-            ## SVEN Question: do we need to loop through the greater than 10,000 item logic?
+            
+            $SessionMetricMeasurements = $SessionMetricMeasurements | Select-Object displayName,instance,fieldName,timestamp,userSessionKey,@{Name = "offSetInSeconds"; Expression = { ((New-TimeSpan -Start (Get-Date $TestRun.started) -End (Get-Date $_.timestamp)).TotalSeconds) } },measurement
+            
             if (($SessionMetricMeasurements | Measure-Object).Count -eq 10000) {
                 $FileEnded = $false
                 while (-not $FileEnded){
                     [int]$OffSet = $SessionMetricMeasurements.count + 1
                     $SessionMetricMeasurementsAdditional = Get-LESessionMetricMeasurements -testRunId $testRun.Id -orderBy timestamp -OffSet $OffSet
-                    $SessionMetricMeasurementsAdditional = $SessionMetricMeasurementsAdditional | Select-Object displayName,instance,fieldName,timestamp,@{Name = "offSetInSeconds"; Expression = { ((New-TimeSpan -Start (Get-Date $TestRun.started) -End (Get-Date $_.timestamp)).TotalSeconds) } },measurement
+                    $SessionMetricMeasurementsAdditional = $SessionMetricMeasurementsAdditional | Select-Object displayName,instance,fieldName,timestamp,userSessionKey,@{Name = "offSetInSeconds"; Expression = { ((New-TimeSpan -Start (Get-Date $TestRun.started) -End (Get-Date $_.timestamp)).TotalSeconds) } },measurement
                     $SessionMetricMeasurements = $SessionMetricMeasurements + $SessionMetricMeasurementsAdditional
                     if (($SessionMetricMeasurementsAdditional | Measure-Object).count -lt 10000){
                         $FileEnded = $true
                     }
                 }
             }
-            ## SVEN Question What do we want to export? - Do we need to alter the above before outputting?
+            ## SVEN Question What do we want to export? - Do we need to alter the above before outputting? Need to identify the UserSessionKey
             $SessionMetricMeasurements | Export-Csv -Path "$($Folder)\VM Perf Metrics.csv" -NoTypeInformation
         }
 
