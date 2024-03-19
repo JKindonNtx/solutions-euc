@@ -32,3 +32,12 @@
         $ScriptSource = "$BuildSource\scripts"
 
         & "$ScriptSource\$Script"
+  
+  - name: Create Scheduled Task to Tattoo image on startup
+    ansible.windows.win_powershell:
+      script: |
+        $scriptPath = "C:\deployment\cust-image-tattoo-azure.ps1"
+        $trigger = New-ScheduledTaskTrigger -AtStartup
+        $action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-NoProfile -WindowStyle Hidden -File `"$scriptPath`""
+        Register-ScheduledTask -TaskName "Image Tattoo" -Trigger $trigger -Action $action -Description "Tattoos Machine at Boot" -User "System" -RunLevel Highest
+
