@@ -217,7 +217,7 @@ function Start-InfluxUpload {
                         # Looop through headers and process data values
                         foreach($Header in $Headers){
                             if(($header -ne "Timestamp")){
-                                if(($header -like "*Id") -or ($header -like "*Name*") -or ($header -like "*timer*")){
+                                if(($header -like "*Id") -or ($header -like "*Name*") -or ($header -like "*timer*") -or ($header -like "*instance*") -or ($header -like "*userSessionKey*")){
                                     $Data = $($line.$($Header))
                                     $tag = $tag + ",$($Header)=$($Data)"
                                 } else {
@@ -233,6 +233,8 @@ function Start-InfluxUpload {
 
                         # Format the Tag to allow for influx upload
                         $tag = $tag.replace(' ','_')
+                        $tag = $tag.replace('\','-')
+                        $tag = $tag.replace('%','pct')
 
                         # Get the timestamp for the line and calculate the delta Start Time
                         $CSVDate = $($line.Timestamp)
