@@ -233,6 +233,7 @@ function Start-InfluxUpload {
 
                         # Format the Tag to allow for influx upload
                         $tag = $tag.replace(' ','_')
+                        $tag = $tag.replace('=,','=0,')
                         $tag = $tag.replace('\','-')
                         $tag = $tag.replace('%','pct')
 
