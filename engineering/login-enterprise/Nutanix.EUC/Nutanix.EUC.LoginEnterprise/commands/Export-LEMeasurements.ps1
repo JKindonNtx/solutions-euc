@@ -43,6 +43,30 @@ function Export-LEMeasurements {
                 }
             }
             ## SVEN Question What do we want to export? - Do we need to alter the above before outputting? Need to identify the UserSessionKey
+
+            #Open an Object to capture the update info prior to export
+            $SessionMetricMeasurementsWithHost = @()
+
+            # Loop through each unique session and go learn about the host host they lived on
+            foreach ($userSessionKey in ($SessionMetricMeasurements.userSessionKey | Select-Object -Unique)) {
+                $SessionHostName = ((Get-LESessionDetails -testRunId $testRun.Id -userSessionId $userSessionKey).Properties | Where-Object {$_.propertyId -eq "TargetHost"}).value
+                # now we need to inject the SessionHostName value into the Data used for CSV Export - we need to only do this where the record in the existing data set contains the matching userSessionKey
+                foreach ($Item in $SessionMetricMeasurements | Where-Object {$_.userSessionKey -eq $userSessionKey}) {
+                    $SessionMetricMeasurementsWithHostresult = New-Object PSObject
+                    $SessionMetricMeasurementsWithHostresult | Add-Member -MemberType NoteProperty -Name "timestamp" -Value $item.timestamp
+                    $SessionMetricMeasurementsWithHostresult | Add-Member -MemberType NoteProperty -Name "userSessionKey" -Value $item.userSessionKey
+                    $SessionMetricMeasurementsWithHostresult | Add-Member -MemberType NoteProperty -Name "displayName" -Value $item.displayName
+                    $SessionMetricMeasurementsWithHostresult | Add-Member -MemberType NoteProperty -Name "measurement" -Value $item.measurement
+                    $SessionMetricMeasurementsWithHostresult | Add-Member -MemberType NoteProperty -Name "fieldName" -Value $item.fieldName
+                    $SessionMetricMeasurementsWithHostresult | Add-Member -MemberType NoteProperty -Name "instance" -Value $item.instance
+                    $SessionMetricMeasurementsWithHostresult | Add-Member -MemberType NoteProperty -Name "hostName" -Value $SessionHostName
+
+                    $SessionMetricMeasurementsWithHost += $SessionMetricMeasurementsWithHostresult
+                }
+            }
+            # Set the Data set ready for export
+            $SessionMetricMeasurements = $SessionMetricMeasurementsWithHost
+
             $SessionMetricMeasurements | Export-Csv -Path "$($Folder)\VM Perf Metrics.csv" -NoTypeInformation
         }
 
