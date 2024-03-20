@@ -55,8 +55,6 @@ After making changes in Grafana, to back up the dashboard, you can select the `E
 
 ![Backup Dashboard to File](dashboard-backup.png)
 
-Change the file extension of the backup file to `.txt`.
-
 You can store the dashboard backups in the `dashboard_config` directory.
 
 ### Variables for Filtering
