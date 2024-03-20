@@ -20,9 +20,8 @@ function Export-LEMeasurements {
         }
         $LoginTimesCollection | Export-Csv -Path "$($Folder)\Raw Login Times.csv" -NoTypeInformation
         
-        #------------------------------------------------------------------
-        #### KINDON LE Session Metric Measurements - START
-        # This uses the v7-preview API to pull LE Session Metrics Measurements (WMI counters)
+        #region LE Session Metrics
+        # LE Session Metric Measurements. This uses the v7-preview API to pull LE Session Metrics Measurements (WMI counters)
         $SessionMetricMeasurements = Get-LESessionMetricMeasurements -testRunId $testRun.Id -orderBy timestamp
         # returns timestamp,testrunId,userSessionKey,measurement,displayName,unit,instance,tag,fieldName
 
@@ -42,9 +41,8 @@ function Export-LEMeasurements {
                     }
                 }
             }
-            ## SVEN Question What do we want to export? - Do we need to alter the above before outputting? Need to identify the UserSessionKey
 
-            #Open an Object to capture the update info prior to export
+            # Open an Object to capture the update info prior to export
             $SessionMetricMeasurementsWithHost = @()
 
             # Loop through each unique session and go learn about the host host they lived on
@@ -69,9 +67,8 @@ function Export-LEMeasurements {
 
             $SessionMetricMeasurements | Export-Csv -Path "$($Folder)\VM Perf Metrics.csv" -NoTypeInformation
         }
+        #endregion LE Session Metrics
 
-        #### KINDON LE Session Metric Measurements - END
-        #------------------------------------------------------------------
         #lookup table
         $Applications = Get-LEApplications
 
