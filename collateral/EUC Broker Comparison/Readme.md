@@ -10,7 +10,7 @@ As changes are required, or additional information is added, the source csv must
 
 The process is as follows:
 
--  Backup the source csv file `[euc_influx_format_advanced](euc_influx_format_advanced.csv).
+-  Backup the source csv file [euc_influx_format_advanced](euc_influx_format_advanced.csv).
 -  Add the required data or changes to the csv file.
 -  Clear the current data set from the Influx database.
 -  Import the updated data into the database.
@@ -54,6 +54,8 @@ The dashboard panels are linked with the following logic to allow for filtering 
 After making changes in Grafana, to back up the dashboard, you can select the `Export` option and `save to file`. Ensure to tick `export for sharing externally`.
 
 ![Backup Dashboard to File](dashboard-backup.png)
+
+Change the file extension of the backup file to `.txt`.
 
 You can store the dashboard backups in the [dashboard_config](/dashboard_config/) directory.
 
