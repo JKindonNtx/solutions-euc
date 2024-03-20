@@ -1,0 +1,13 @@
+---
+- name: Deploy Azure Virtual Machines
+  hosts: localhost
+  connection: local
+  vars_files:
+    - ./azure_vars/vars_azure_common.yml
+  tasks:
+
+  - name: wait for the WinRM port to come online
+    wait_for:
+      port: 5986
+      host: '52.156.189.164'
+      timeout: 60
