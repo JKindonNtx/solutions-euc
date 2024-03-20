@@ -26,7 +26,7 @@ First set up a connection to Influx. You will need:
 -  The `org` which is `Nutanix` or equivalent.
 -  A unique token with permissions to the data bucket `EUCBrokerComparison`
 
-`./influx.exe config create --config-name Kindon --host-url http://10.57.64.119:8086/ --org Nutanix --token <TOKEN_GOES_HERE> --active`
+`./influx config create --config-name Kindon --host-url http://10.57.64.119:8086/ --org Nutanix --token <TOKEN_GOES_HERE> --active`
 
 Once the connection has been set up and is active, you can delete the data:
 
