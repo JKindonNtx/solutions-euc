@@ -20,6 +20,8 @@ function Set-LELoadTestv7 {
 
     if ($VSI_Target_SessionMetricsEnabled) {
         $SessionMetricGroupKey = (Get-LESessionMetricGroups | Where-Object { $_.Name -eq "$($SessionMetricGroup)" } | Select-Object -ExpandProperty key)
+    } Else {
+        $SessionMetricGroupKey = ""
     }
 
     Switch ($ConnectorName) {
