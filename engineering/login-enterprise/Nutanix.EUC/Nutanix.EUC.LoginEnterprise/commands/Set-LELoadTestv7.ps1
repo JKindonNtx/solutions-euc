@@ -13,7 +13,8 @@ function Set-LELoadTestv7 {
         $ConnectorName,
         $ConnectorParams,
         $Workload,
-        $VMCount #KindonTest for Session Metric Balancing
+        $VMCount, #KindonTest for Session Metric Balancing
+        $SessionType #KindonTest for Session Metric Balancing
     )
 
     $ExistingTest = $null
@@ -120,6 +121,12 @@ function Set-LELoadTestv7 {
                 launcherGroups = @((Get-LELauncherGroups | Where-Object { $_.Name -eq $LauncherGroupName } | Select-Object -ExpandProperty id))
             } | ConvertTo-Json
 
+            if ($SessionType -eq "MultiSession") { #KindonTest for Session Metric Balancing
+                $sessionMetricScheduleRate = $SessionAmount / $VMCount
+            } elseif ($SessionType -eq "SingleSession") { #KindonTest for Session Metric Balancing
+                $sessionMetricScheduleRate = $SessionAmount
+            }
+
             $UpdateTestBody = @{
                 type                    = "LoadTest"
                 numberOfSessions        = $SessionAmount
@@ -129,7 +136,7 @@ function Set-LELoadTestv7 {
                 euxEnabled              = $VSI_Target_EUXEnabled
                 sessionMetricsEnabled   = $VSI_Target_SessionMetricsEnabled
                 #sessionMetricScheduleRate = $SessionAmount
-                sessionMetricScheduleRate = $SessionAmount / $VMCount #KindonTest for Session Metric Balancing
+                sessionMetricScheduleRate = $sessionMetricScheduleRate #KindonTest for Session Metric Balancing
                 sessionMetricGroupKey   = $SessionMetricGroupKey
                 description             = $ConnectorParams["resource"]
                 connectionResourcesUpdate   = @{

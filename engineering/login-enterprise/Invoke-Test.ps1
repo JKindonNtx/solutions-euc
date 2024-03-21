@@ -1074,6 +1074,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 ConnectorParams   = @{serverURL = $VSI_Target_StorefrontURL; resource = $VSI_Target_DesktopPoolName }
                 Workload          = $VSI_Target_Workload
                 VMCount           = $VSI_Target_NumberOfVMs #KindonTest for Session Metric Balancing
+                SessionType       = $VSI_Target_SessionsSupport #KindonTest for Session Metric Balancing
             }
             $testId = Set-LELoadTestv7 @Params
             $params = $null
