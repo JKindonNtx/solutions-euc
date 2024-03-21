@@ -12,7 +12,8 @@ function Set-LELoadTestv7 {
         $SessionMetricGroup,
         $ConnectorName,
         $ConnectorParams,
-        $Workload
+        $Workload,
+        $VMCount #KindonTest for Session Metric Balancing
     )
 
     $ExistingTest = $null
@@ -127,7 +128,8 @@ function Set-LELoadTestv7 {
                 name                    = $TestName
                 euxEnabled              = $VSI_Target_EUXEnabled
                 sessionMetricsEnabled   = $VSI_Target_SessionMetricsEnabled
-                sessionMetricScheduleRate = $SessionAmount
+                #sessionMetricScheduleRate = $SessionAmount
+                sessionMetricScheduleRate = $SessionAmount / $VMCount #KindonTest for Session Metric Balancing
                 sessionMetricGroupKey   = $SessionMetricGroupKey
                 description             = $ConnectorParams["resource"]
                 connectionResourcesUpdate   = @{
