@@ -1069,11 +1069,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 DurationInMinutes = $VSI_Target_DurationInMinutes
                 LauncherGroupName = $VSI_Launchers_GroupName
                 AccountGroupName  = $VSI_Users_GroupName
+                SessionMetricGroup = $VSI_Target_SessionMetricGroupName
                 ConnectorName     = "Citrix Storefront"
                 ConnectorParams   = @{serverURL = $VSI_Target_StorefrontURL; resource = $VSI_Target_DesktopPoolName }
                 Workload          = $VSI_Target_Workload
             }
-            $testId = Set-LELoadTest @Params
+            $testId = Set-LELoadTestv7 @Params
             $params = $null
         }
         
@@ -1683,7 +1684,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
             # Loop through the test run data files and process each one
             foreach ($File in $Files) {
-                if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*")) {
+                if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*") -or ($File.Name -like "VM Perf Metrics*")) {
                     Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
                     if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
                         Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
