@@ -297,5 +297,89 @@
 		"name": "Paging File % Usage",
 		"description": "Paging File % Usage",
         "tag": "pagefileUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Memory",
+            "counterName": "Page Faults/sec",
+            "displayName": "Memory: Page Faults/sec",
+            "unit": "Units / Sec"
+        },
+		"name": "Memory: Page Faults/sec",
+		"description": "Memory: Page Faults/sec",
+        "tag": "memoryUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Memory",
+            "counterName": "Page Reads/sec",
+            "displayName": "Memory: Page Reads/sec",
+            "unit": "Units / Sec"
+        },
+		"name": "Memory: Page Read/sec",
+		"description": "Memory: Page Reads/sec",
+        "tag": "memoryUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Memory",
+            "counterName": "Page Writes/sec",
+            "displayName": "Memory: Page Writes/sec",
+            "unit": "Units / Sec"
+        },
+		"name": "Memory: Page Writes/sec",
+		"description": "Memory: Page Writes/sec",
+        "tag": "memoryUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Memory",
+            "counterName": "Pages/sec",
+            "displayName": "Memory: Pages/sec",
+            "unit": "Units / Sec"
+        },
+		"name": "Memory: Pages/sec",
+		"description": "Memory: Pages/sec",
+        "tag": "memoryUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "System",
+            "counterName": "Context Switches/sec",
+            "displayName": "System: Context Switches/sec",
+            "unit": "Units / Sec"
+        },
+		"name": "System: Context Switches/sec",
+		"description": "System: Context Switches/sec",
+        "tag": "systemUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "System",
+            "counterName": "System Calls/sec",
+            "displayName": "System: System Calls/sec",
+            "unit": "Units / Sec"
+        },
+		"name": "System: System Calls/sec",
+		"description": "System: System Calls/sec",
+        "tag": "systemUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "System",
+            "counterName": "Processor Queue Length",
+            "displayName": "System: Processor Queue Length",
+            "unit": "Units"
+        },
+		"name": "System: Processor Queue Length",
+		"description": "System: Processor Queue Length",
+        "tag": "systemUtilization"
     }
 ]
