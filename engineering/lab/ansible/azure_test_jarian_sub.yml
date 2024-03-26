@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  vars_files:
+      - ./azure_vars/vars_azure_common.yml
+  connection: local
+  roles:
+    - Azure_deploy_vm_test

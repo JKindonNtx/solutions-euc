@@ -1,6 +1,14 @@
 ---
-- name: "Wait for the WinRM port to come online: {{ vm_name }} at {{ nic_facts.networkinterfaces[0].ip_configurations[0].private_ip_address }}"
-  wait_for:
-    port: "5986"
-    host: '{{ nic_facts.networkinterfaces[0].ip_configurations[0].private_ip_address }}'
-    timeout: "{{ winrm_timeout }}"
+- name: "Create resource group: {{ resource_group }}"
+  azure_rm_resourcegroup:
+    name: "{{ resource_group }}"
+    location: "{{ location }}"
+  register: rg
+- debug:
+    var: rg
+
+#- name: "Wait for the WinRM port to come online: {{ vm_name }} at {{ nic_facts.networkinterfaces[0].ip_configurations[0].private_ip_address }}"
+#  wait_for:
+#    port: "5986"
+#    host: '{{ nic_facts.networkinterfaces[0].ip_configurations[0].private_ip_address }}'
+#    timeout: "{{ winrm_timeout }}"
