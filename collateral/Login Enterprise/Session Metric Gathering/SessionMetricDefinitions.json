@@ -1,0 +1,385 @@
+[
+    { 
+        "type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "LogicalDisk",
+            "counterName": "Disk Transfers/sec",
+            "counterInstance": "_Total",
+            "displayName": "LogicalDisk: Disk Transfers/sec: _Total",
+            "unit": "Units / Sec"
+        },
+		"name": "LogicalDisk: Disk Transfers/sec: _Total",
+		"description": "LogicalDisk: Disk Transfers/sec: _Total",
+        "tag": "diskUtilization"
+    },
+    { 
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "LogicalDisk",
+            "counterName": "Current Disk Queue Length",
+            "counterInstance": "_Total",
+            "displayName": "LogicalDisk: Current Disk Queue Length: _Total",
+            "unit": "Units / Sec"
+        },
+		"name": "LogicalDisk: Current Disk Queue Length: _Total",
+		"description": "LogicalDisk: Current Disk Queue Length: _Total",
+        "tag": "diskUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "LogicalDisk",
+            "counterName": "Current Disk Queue Length",
+            "counterInstance": "C:",
+            "displayName": "LogicalDisk: Current Disk Queue Length: C Drive",
+            "unit": "Units / Sec"
+        },
+		"name": "LogicalDisk: Current Disk Queue Length: C Drive",
+		"description": "LogicalDisk: Current Disk Queue Length: C Drive",
+        "tag": "diskUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "LogicalDisk",
+            "counterName": "Current Disk Queue Length",
+            "counterInstance": "HarddiskVolume1",
+            "displayName": "LogicalDisk: Current Disk Queue Length: HarddiskVolume1",
+            "unit": "Units / Sec"
+        },
+		"name": "LogicalDisk: Current Disk Queue Length: HarddiskVolume1",
+		"description": "LogicalDisk: Current Disk Queue Length: HarddiskVolume1",
+        "tag": "diskUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "LogicalDisk",
+            "counterName": "Current Disk Queue Length",
+            "counterInstance": "HarddiskVolume2",
+            "displayName": "LogicalDisk: Current Disk Queue Length: HarddiskVolume2",
+            "unit": "Units / Sec"
+        },
+		"name": "LogicalDisk: Current Disk Queue Length: HarddiskVolume2",
+		"description": "LogicalDisk: Current Disk Queue Length: HarddiskVolume2",
+        "tag": "diskUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "LogicalDisk",
+            "counterName": "Free Megabytes",
+            "counterInstance": "_Total",
+            "displayName": "LogicalDisk: Free Megabytes: _Total",
+            "unit": "Units / Sec"
+        },
+		"name": "LogicalDisk: Free Megabytes: _Total",
+		"description": "LogicalDisk: Free Megabytes: _Total",
+        "tag": "diskUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "LogicalDisk",
+            "counterName": "Free Megabytes",
+            "counterInstance": "C:",
+            "displayName": "LogicalDisk: Free Megabytes: C:",
+            "unit": "Units / Sec"
+        },
+		"name": "LogicalDisk: Free Megabytes: C:",
+		"description": "LogicalDisk: Free Megabytes: C:",
+        "tag": "diskUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "LogicalDisk",
+            "counterName": "% Free Space",
+            "counterInstance": "_Total",
+            "displayName": "LogicalDisk: % Free Space: _Total",
+            "unit": "%"
+        },
+		"name": "LogicalDisk: % Free Space: _Total",
+		"description": "LogicalDisk: % Free Space Total",
+        "tag": "diskUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "LogicalDisk",
+            "counterName": "% Free Space",
+            "counterInstance": "C:",
+            "displayName": "LogicalDisk: % Free Space: C:",
+            "unit": "%"
+        },
+		"name": "LogicalDisk: % Free Space: C:",
+		"description": "LogicalDisk: % Free Space C:",
+        "tag": "diskUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "LogicalDisk",
+            "counterName": "% User Time",
+            "counterInstance": "_Total",
+            "displayName": "LogicalDisk: % User Time: _Total",
+            "unit": "%"
+        },
+		"name": "LogicalDisk: % User Time: _Total",
+		"description": "LogicalDisk: % User Time: _Total",
+        "tag": "diskUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "LogicalDisk",
+            "counterName": "% User Time",
+            "counterInstance": "C:",
+            "displayName": "LogicalDisk: % User Time: C:",
+            "unit": "%"
+        },
+		"name": "LogicalDisk: % User Time: C:",
+		"description": "LogicalDisk: % User Time: C:",
+        "tag": "diskUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "LogicalDisk",
+            "counterName": "% Disk Write Time",
+            "counterInstance": "_Total",
+            "displayName": "LogicalDisk: % Disk Write Time: _Total",
+            "unit": "%"
+        },
+		"name": "LogicalDisk: % Disk Write Time: _Total",
+		"description": "LogicalDisk: % Disk Write Time: _Total",
+        "tag": "diskUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "LogicalDisk",
+            "counterName": "% Disk Write Time",
+            "counterInstance": "C:",
+            "displayName": "LogicalDisk: % Disk Write Time: C:",
+            "unit": "%"
+        },
+		"name": "LogicalDisk: % Disk Write Time: C:",
+		"description": "LogicalDisk: % Disk Write Time: C:",
+        "tag": "diskUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "LogicalDisk",
+            "counterName": "% Disk Read Time",
+            "counterInstance": "_Total",
+            "displayName": "LogicalDisk: % Disk Read Time: _Total",
+            "unit": "%"
+        },
+		"name": "LogicalDisk: % Disk Read Time: _Total",
+		"description": "LogicalDisk: % Disk Read Time: _Total",
+        "tag": "diskUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "LogicalDisk",
+            "counterName": "% Disk Time",
+            "counterInstance": "_Total",
+            "displayName": "LogicalDisk: % Disk Time: _Total",
+            "unit": "%"
+        },
+		"name": "% Disk Time: _Total",
+		"description": "LogicalDisk: % Disk Time: _Total",
+        "tag": "diskUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "LogicalDisk",
+            "counterName": "% Disk Time",
+            "counterInstance": "C:",
+            "displayName": "LogicalDisk: % Disk Time: C:",
+            "unit": "%"
+        },
+		"name": "LogicalDisk: % Disk Time: C:",
+		"description": "LogicalDisk: % Disk Time: C:",
+        "tag": "diskUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "LogicalDisk",
+            "counterName": "% Idle Time",
+            "counterInstance": "_Total",
+            "displayName": "LogicalDisk: % Idle Time: _Total",
+            "unit": "%"
+        },
+		"name": "LogicalDisk: % Idle Time: _Total",
+		"description": "LogicalDisk: % Idle Time: _Total",
+        "tag": "diskUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Processor",
+            "counterName": "% Idle Time",
+            "counterInstance": "_Total",
+            "displayName": "Processor: % Idle Time: _Total",
+            "unit": "%"
+        },
+		"name": "Processor: % Idle Time: _Total",
+		"description": "Processor: % Idle Time: _Total",
+        "tag": "cpuUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Processor",
+            "counterName": "% Interrupt Time",
+            "counterInstance": "_Total",
+            "displayName": "Processor: % Interrupt Time: _Total",
+            "unit": "%"
+        },
+		"name": "Processor: % Interrupt Time: _Total",
+		"description": "Processor: % Interrupt Time: _Total",
+        "tag": "cpuUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Processor",
+            "counterName": "% Privileged Time",
+            "counterInstance": "_Total",
+            "displayName": "Processor: % Privileged Time: _Total",
+            "unit": "%"
+        },
+		"name": "Processor: % Privileged Time: _Total",
+		"description": "Processor: % Privileged Time: _Total",
+        "tag": "cpuUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Processor",
+            "counterName": "% User Time",
+            "counterInstance": "_Total",
+            "displayName": "Processor: % User Time: _Total",
+            "unit": "%"
+        },
+		"name": "Processor: Processor % User Time: _Total",
+		"description": "Processor: % User Time: _Total",
+        "tag": "cpuUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Processor",
+            "counterName": "% Processor Time",
+            "counterInstance": "_Total",
+            "displayName": "Processor: % Processor Time: _Total",
+            "unit": "%"
+        },
+		"name": "Processor: % Processor Time: _Total",
+		"description": "Processor: % Processor Time: _Total",
+        "tag": "cpuUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Paging File",
+            "counterName": "% Usage",
+            "counterInstance": "_Total",
+            "displayName": "Paging File: % Usage",
+            "unit": "%"
+        },
+		"name": "Paging File % Usage",
+		"description": "Paging File % Usage",
+        "tag": "pagefileUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Memory",
+            "counterName": "Page Faults/sec",
+            "displayName": "Memory: Page Faults/sec",
+            "unit": "Units / Sec"
+        },
+		"name": "Memory: Page Faults/sec",
+		"description": "Memory: Page Faults/sec",
+        "tag": "memoryUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Memory",
+            "counterName": "Page Reads/sec",
+            "displayName": "Memory: Page Reads/sec",
+            "unit": "Units / Sec"
+        },
+		"name": "Memory: Page Read/sec",
+		"description": "Memory: Page Reads/sec",
+        "tag": "memoryUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Memory",
+            "counterName": "Page Writes/sec",
+            "displayName": "Memory: Page Writes/sec",
+            "unit": "Units / Sec"
+        },
+		"name": "Memory: Page Writes/sec",
+		"description": "Memory: Page Writes/sec",
+        "tag": "memoryUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Memory",
+            "counterName": "Pages/sec",
+            "displayName": "Memory: Pages/sec",
+            "unit": "Units / Sec"
+        },
+		"name": "Memory: Pages/sec",
+		"description": "Memory: Pages/sec",
+        "tag": "memoryUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "System",
+            "counterName": "Context Switches/sec",
+            "displayName": "System: Context Switches/sec",
+            "unit": "Units / Sec"
+        },
+		"name": "System: Context Switches/sec",
+		"description": "System: Context Switches/sec",
+        "tag": "systemUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "System",
+            "counterName": "System Calls/sec",
+            "displayName": "System: System Calls/sec",
+            "unit": "Units / Sec"
+        },
+		"name": "System: System Calls/sec",
+		"description": "System: System Calls/sec",
+        "tag": "systemUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "System",
+            "counterName": "Processor Queue Length",
+            "displayName": "System: Processor Queue Length",
+            "unit": "Units"
+        },
+		"name": "System: Processor Queue Length",
+		"description": "System: Processor Queue Length",
+        "tag": "systemUtilization"
+    }
+]

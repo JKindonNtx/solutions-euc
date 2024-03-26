@@ -38,3 +38,9 @@ inventory
 collateral/scripts/Misc/Grafana/Reports/*
 engineering/black-widow/results/*
 engineering/lab/build/LiteTouchPE_x64-NP.iso
+
+# EUC Broker Comparison
+!collateral/EUC Broker Comparison/*/*.json
+
+# Session Matric Gathering
+!collateral/Login Enterprise/Session Metric Gathering/*.json

@@ -117,7 +117,9 @@
                 "OptimizationsVersion":  "", // Autofilled during the script execution and used for reporting
                 "GPUProfile":  "None", // GPU profile. T4-B1, A16-B2 for example
                 "Comment": "Windows 10 Profile FSLogix - All On", // A short comment about this test. Will be added to the Login Enterprise database.
-                "EUXEnabled": true // A true or false value to enable EUX measurements in the Login Enterprise Test
+                "EUXEnabled": true, // A true or false value to enable EUX measurements in the Login Enterprise Test
+                "SessionMetricsEnabled": true, // A true or false value to enable SessionMetrics in the Login Enterprise Test
+                "SessionMetricGroupName": "Nutanix"
             }
         ],
         "ImageIterations": 3 // How many runs per Image?
