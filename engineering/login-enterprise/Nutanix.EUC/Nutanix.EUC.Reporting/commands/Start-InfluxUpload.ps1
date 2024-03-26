@@ -185,7 +185,35 @@ function Start-InfluxUpload {
                     "VSIEUXstate=$($VSIEUXState)," +
                     "VSIvsiMax=$($VSIMax)," +  
                     "VSIvsiMaxstate=$($VSIMaxState)," + 
-                    "VSIvsiMaxversion=$($VSIMaxVersion)"
+                    "VSIvsiMaxversion=$($VSIMaxVersion)," +
+                    #// Azure Components
+                    "AzVMName=$($JSON.AzureGuestDetails.VM_Name)," +
+                    "AzVMLoc=$($JSON.AzureGuestDetails.VM_Location)," +
+                    "AzVMOffer=$($JSON.AzureGuestDetails.VM_Offer)," +
+                    "AzVMSecBoot=$($JSON.AzureGuestDetails.VM_secureBoot)," +
+                    "AzVMvTPM=$($JSON.AzureGuestDetails.VM_vTPM)," +
+                    "AzVMSize=$($JSON.AzureGuestDetails.VM_Size)," +
+                    "AzVMCPUName=$($JSON.AzureGuestDetails.VM_CPU_Name)," +
+                    "AzVMCPUManufacturer=$($JSON.AzureGuestDetails.VM_CPU_Manufacturer)," +
+                    "AzVMCPUClockSpeed=$($JSON.AzureGuestDetails.VM_CPU_ClockSpeed)," +
+                    "AzVMCPUCaption=$($JSON.AzureGuestDetails.VM_CPU_Caption)," +
+                    "AzVMCPUCores=$($JSON.AzureGuestDetails.VM_CPU_Cores)," +
+                    "AzVMCPULogiProcs=$($JSON.AzureGuestDetails.VM_CPU_LogicalProcs)," +
+                    "AzVMCPUThreadCount=$($JSON.AzureGuestDetails.VM_CPU_ThreadCount)," +
+                    "AzVMMemSize=$($JSON.AzureGuestDetails.VM_Memory_Size)," +
+                    "AzVMAccelNetwork=$($JSON.AzureGuestDetails.VM_AcceleratedNetworking)," +
+                    "AzVMpageFile=$($JSON.AzureGuestDetails.VM_pageFile)," +
+                    "AzOSType=$($JSON.AzureGuestDetails.OS_Type)," +
+                    "AzOSOffer=$($JSON.AzureGuestDetails.OS_Offer)," +
+                    "AzOSDeployedVer=$($JSON.AzureGuestDetails.OS_Deployed_Version)," +
+                    "AzOSDeployedSku=$($JSON.AzureGuestDetails.OS_Deployed_Sku)," +
+                    "AzOSRunningVer=$($JSON.AzureGuestDetails.OS_Running_Version)," +
+                    "AzDiskType=$($JSON.AzureGuestDetails.Disk_Type)," +
+                    "AzDiskSize=$($JSON.AzureGuestDetails.Disk_Size)," +
+                    "AzDiskCaching=$($JSON.AzureGuestDetails.Disk_Caching)," +
+                    "AzDiskEncryp=$($JSON.AzureGuestDetails.Disk_Encryption)," +
+                    "AzDiskWriteAccel=$($JSON.AzureGuestDetails.Disk_Write_Accelerator)," +
+                    "AzDiskTempDiskSize=$($JSON.AzureGuestDetails.Disk_TempDisk_Size)"
                 )
 
                 # Check for Blank Tag Value

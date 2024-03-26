@@ -959,14 +959,44 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         try {
             Write-Log -Message "Getting Image Tattoo" -Level Info
-            $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTatoo } -ErrorAction Stop 
-            $NTNXInfra.Target.ImagesToTest.TargetOS = $Tattoo.OSName
-            $NTNXInfra.Target.ImagesToTest.TargetOSVersion = $Tattoo.OSVersion
-            $NTNXInfra.Target.ImagesToTest.OfficeVersion = $Tattoo.OfficeName
-            $NTNXInfra.Target.ImagesToTest.ToolsGuestVersion = $Tattoo.GuestToolsVersion
-            $NTNXInfra.Target.ImagesToTest.OptimizerVendor = $Tattoo.Optimizer
-            $NTNXInfra.Target.ImagesToTest.OptimizationsVersion = $Tattoo.OptimizerVersion
-            $NTNXInfra.Target.ImagesToTest.DesktopBrokerAgentVersion = $Tattoo.VdaVersion
+            $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTattoo } -ErrorAction Stop 
+            $NTNXInfra.Target.ImagesToTest.TargetOS = $Tattoo.TargetOS
+            $NTNXInfra.Target.ImagesToTest.TargetOSVersion = $Tattoo.TargetOSVersion
+            $NTNXInfra.Target.ImagesToTest.OfficeVersion = $Tattoo.OfficeVersion
+            $NTNXInfra.Target.ImagesToTest.ToolsGuestVersion = $Tattoo.ToolsGuestVersion
+            $NTNXInfra.Target.ImagesToTest.OptimizerVendor = $Tattoo.OptimizerVendor
+            $NTNXInfra.Target.ImagesToTest.OptimizationsVersion = $Tattoo.OptimizationsVersion
+            $NTNXInfra.Target.ImagesToTest.DesktopBrokerAgentVersion = $Tattoo.DesktopBrokerAgentVersion
+            if ($NTNXInfra.AzureGuestDetails.IsAzureVM -eq "true") {
+                # If this is An Azure VM, we need to send these details in. They are set by the Tattoo job if the the machine is detected as an Azure VM. Else they are blank
+                $NTNXInfra.AzureGuestDetails.VM_Name = $Tattoo.Azure_VM_Name
+                $NTNXInfra.AzureGuestDetails.VM_Location = $Tattoo.Azure_VM_Location
+                $NTNXInfra.AzureGuestDetails.VM_Offer = $Tattoo.Azure_VM_Offer
+                $NTNXInfra.AzureGuestDetails.VM_secureBoot = $Tattoo.Azure_VM_secureBoot
+                $NTNXInfra.AzureGuestDetails.VM_vTPM = $Tattoo.Azure_VM_vTPM
+                $NTNXInfra.AzureGuestDetails.VM_Size = $Tattoo.Azure_VM_Size
+                $NTNXInfra.AzureGuestDetails.VM_CPU_Name = $Tattoo.Azure_VM_CPU_Name
+                $NTNXInfra.AzureGuestDetails.VM_CPU_Manufacturer = $Tattoo.Azure_VM_CPU_Manufacturer
+                $NTNXInfra.AzureGuestDetails.VM_CPU_ClockSpeed = $Tattoo.Azure_VM_CPU_ClockSpeed
+                $NTNXInfra.AzureGuestDetails.VM_CPU_Caption = $Tattoo.Azure_VM_CPU_Caption
+                $NTNXInfra.AzureGuestDetails.VM_CPU_Cores = $Tattoo.Azure_VM_CPU_Cores
+                $NTNXInfra.AzureGuestDetails.VM_CPU_LogicalProcs = $Tattoo.Azure_VM_CPU_LogicalProcs
+                $NTNXInfra.AzureGuestDetails.VM_CPU_ThreadCount = $Tattoo.Azure_VM_CPU_ThreadCount
+                $NTNXInfra.AzureGuestDetails.VM_Memory_Size = $Tattoo.Azure_VM_Memory_Size
+                $NTNXInfra.AzureGuestDetails.VM_AcceleratedNetworking = $Tattoo.Azure_VM_AcceleratedNetworking
+                $NTNXInfra.AzureGuestDetails.VM_pageFile = $Tattoo.Azure_VM_pageFile
+                $NTNXInfra.AzureGuestDetails.OS_Type = $Tattoo.Azure_OS_Type
+                $NTNXInfra.AzureGuestDetails.OS_Offer = $Tattoo.Azure_OS_Offer
+                $NTNXInfra.AzureGuestDetails.OS_Deployed_Version = $Tattoo.Azure_OS_Deployed_Version
+                $NTNXInfra.AzureGuestDetails.OS_Deployed_Sku = $Tattoo.Azure_OS_Deployed_Sku
+                $NTNXInfra.AzureGuestDetails.OS_Running_Version = $Tattoo.Azure_OS_Running_Version
+                $NTNXInfra.AzureGuestDetails.Disk_Type = $Tattoo.Azure_Disk_Type
+                $NTNXInfra.AzureGuestDetails.Disk_Size = $Tattoo.Azure_Disk_Size
+                $NTNXInfra.AzureGuestDetails.Disk_Caching = $Tattoo.Azure_Disk_Caching
+                $NTNXInfra.AzureGuestDetails.Disk_Encryption = $Tattoo.Azure_Disk_Encryption
+                $NTNXInfra.AzureGuestDetails.Disk_Write_Accelerator = $Tattoo.Azure_Disk_Write_Accelerator
+                $NTNXInfra.AzureGuestDetails.Disk_TempDisk_Size = $Tattoo.Azure_Disk_TempDisk_Size
+            }
         }
         catch {
             Write-Log -Message $_ -Level Error
