@@ -15,7 +15,7 @@ An example `SessionMetricDefinitions.json` file is included in this repository. 
 -  Each `Name` must be unique.
 -  Each `Description` should be unique for easy tracking in LE.
 -  Each `DisplayName` should be unique for easy tracking in LE.
--  You must specify the exact `instance` you want to collect data for.
+-  You must specify the exact `instance` you want to collect data for. You can delete this value if there are no instance specific requirements (such as memory counters):
    -  `*` instance definitions **do not** work
    -  `_total` works.
    -  `C:` works.

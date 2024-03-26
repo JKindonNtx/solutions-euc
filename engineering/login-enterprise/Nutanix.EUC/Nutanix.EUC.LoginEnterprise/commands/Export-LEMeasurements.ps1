@@ -19,7 +19,56 @@ function Export-LEMeasurements {
             $LoginTimesCollection += $LoginTime
         }
         $LoginTimesCollection | Export-Csv -Path "$($Folder)\Raw Login Times.csv" -NoTypeInformation
-    
+        
+        #region LE Session Metrics
+        # LE Session Metric Measurements. This uses the v7-preview API to pull LE Session Metrics Measurements (WMI counters)
+        $SessionMetricMeasurements = Get-LESessionMetricMeasurements -testRunId $testRun.Id -orderBy timestamp
+        # returns timestamp,testrunId,userSessionKey,measurement,displayName,unit,instance,tag,fieldName
+
+        if (($SessionMetricMeasurements | Measure-Object).Count -gt 0) {
+            
+            $SessionMetricMeasurements = $SessionMetricMeasurements | Select-Object displayName,instance,fieldName,timestamp,userSessionKey,@{Name = "offSetInSeconds"; Expression = { ((New-TimeSpan -Start (Get-Date $TestRun.started) -End (Get-Date $_.timestamp)).TotalSeconds) } },measurement
+            
+            if (($SessionMetricMeasurements | Measure-Object).Count -eq 10000) {
+                $FileEnded = $false
+                while (-not $FileEnded){
+                    [int]$OffSet = $SessionMetricMeasurements.count + 1
+                    $SessionMetricMeasurementsAdditional = Get-LESessionMetricMeasurements -testRunId $testRun.Id -orderBy timestamp -OffSet $OffSet
+                    $SessionMetricMeasurementsAdditional = $SessionMetricMeasurementsAdditional | Select-Object displayName,instance,fieldName,timestamp,userSessionKey,@{Name = "offSetInSeconds"; Expression = { ((New-TimeSpan -Start (Get-Date $TestRun.started) -End (Get-Date $_.timestamp)).TotalSeconds) } },measurement
+                    $SessionMetricMeasurements = $SessionMetricMeasurements + $SessionMetricMeasurementsAdditional
+                    if (($SessionMetricMeasurementsAdditional | Measure-Object).count -lt 10000){
+                        $FileEnded = $true
+                    }
+                }
+            }
+
+            # Open an Object to capture the update info prior to export
+            $SessionMetricMeasurementsWithHost = @()
+
+            # Loop through each unique session and go learn about the host host they lived on
+            foreach ($userSessionKey in ($SessionMetricMeasurements.userSessionKey | Select-Object -Unique)) {
+                $SessionHostName = ((Get-LESessionDetails -testRunId $testRun.Id -userSessionId $userSessionKey).Properties | Where-Object {$_.propertyId -eq "TargetHost"}).value
+                # now we need to inject the SessionHostName value into the Data used for CSV Export - we need to only do this where the record in the existing data set contains the matching userSessionKey
+                foreach ($Item in $SessionMetricMeasurements | Where-Object {$_.userSessionKey -eq $userSessionKey}) {
+                    $SessionMetricMeasurementsWithHostresult = New-Object PSObject
+                    $SessionMetricMeasurementsWithHostresult | Add-Member -MemberType NoteProperty -Name "timestamp" -Value $item.timestamp
+                    $SessionMetricMeasurementsWithHostresult | Add-Member -MemberType NoteProperty -Name "userSessionKey" -Value $item.userSessionKey
+                    $SessionMetricMeasurementsWithHostresult | Add-Member -MemberType NoteProperty -Name "displayName" -Value $item.displayName
+                    $SessionMetricMeasurementsWithHostresult | Add-Member -MemberType NoteProperty -Name "measurement" -Value $item.measurement
+                    $SessionMetricMeasurementsWithHostresult | Add-Member -MemberType NoteProperty -Name "fieldName" -Value $item.fieldName
+                    $SessionMetricMeasurementsWithHostresult | Add-Member -MemberType NoteProperty -Name "instance" -Value $item.instance
+                    $SessionMetricMeasurementsWithHostresult | Add-Member -MemberType NoteProperty -Name "hostName" -Value $SessionHostName
+
+                    $SessionMetricMeasurementsWithHost += $SessionMetricMeasurementsWithHostresult
+                }
+            }
+            # Set the Data set ready for export
+            $SessionMetricMeasurements = $SessionMetricMeasurementsWithHost
+
+            $SessionMetricMeasurements | Export-Csv -Path "$($Folder)\VM Perf Metrics.csv" -NoTypeInformation
+        }
+        #endregion LE Session Metrics
+
         #lookup table
         $Applications = Get-LEApplications
 
