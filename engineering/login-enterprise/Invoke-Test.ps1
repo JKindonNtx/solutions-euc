@@ -617,6 +617,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Update Test Dashboard
 
         ## Go and get the RDP Host from The LE test
+        #---------- KINDON: Move this out of here, go and configure the test prooperly you lazy bastard - we will know this from the JSON file - create a new Array
         $LE_Test_ID = (Get-LETests | Where-Object { $_.name -eq $VSI_Test_Name }).Id
         $RDP_Hosts = (Get-LETest -testId $LE_Test_ID).Environment.Connector.Hostlist.endpoint
         foreach ($RDP_Host in $RDP_Hosts) {
@@ -630,6 +631,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 Exit 1
             }
         }
+        #---------- KINDON: Move this out of here, go and configure the test prooperly you lazy bastard
     }
     #endregion RDP validation
 
@@ -904,7 +906,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $NTNXInfra.Testinfra.MaxPercentageActiveActions = $CreatePool.MaxPercentageActiveActions
         }
 
-
         if ($Type -eq "Horizon") {
             #Need to check with Sven here - which config do we use Horizon-NTNX.ps1 or NorizonView.Ps1?
             $params = @{
@@ -1173,9 +1174,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if ($($VSI_Target_SessionCfg.ToLower()) -eq "ica") {
             $SessionsperLauncher = 20
         }
+        elseif ($($VSI_Target_SessionCfg.ToLower()) -eq "rdp") {
+            $SessionsperLauncher = 20
+        }
         else {
             $SessionsperLauncher = 12
         }
+
         if (-not ($SkipLaunchers)) {
             $NumberOfLaunchers = [System.Math]::Ceiling($VSI_Target_NumberOfSessions / $SessionsperLauncher)
             # Wait for all launchers to be registered in LE
@@ -1250,8 +1255,11 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #region Stop and cleanup monitoring job Boot phase
         #----------------------------------------------------------------------------------------------------------------------------
-        $monitoringJob | Stop-Job
-        $monitoringJob | Remove-Job
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $monitoringJob | Stop-Job
+            $monitoringJob | Remove-Job
+        }
         #endregion Stop and cleanup monitoring job Boot phase
 
         #region Set RDA Source and Destination files and clean out source files if they still exist
@@ -1308,6 +1316,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #region Nutanix Curator Stop
         #----------------------------------------------------------------------------------------------------------------------------
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $Message = "Stopping Nutanix Curator" 
+        } else {
+            $Message = "Skipping Stopping Nutanix Curator" 
+        }
 
         #region Update Test Dashboard
         $params = @{
@@ -1318,7 +1332,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
-            CurrentMessage = "Stopping Nutanix Curator" 
+            CurrentMessage = $Message
             TotalPhase     = "$($RunPhases)"
         }
         $null = Set-TestData @params
@@ -1341,8 +1355,11 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        Write-Log -Message "Stopping Nutanix Curator Service" -Level Info
-        Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "stop"
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            Write-Log -Message "Stopping Nutanix Curator Service" -Level Info
+            Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "stop"
+        }
 
         if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
             Write-Log -Message "Stopping Nutanix Curator Service on the Nutanix Files Cluster $($VSI_Target_Files_Cluster_CVM)" -Level Info
@@ -1426,17 +1443,20 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        $Params = @{
-            OutputFolder                 = $OutputFolder 
-            DurationInMinutes            = $VSI_Target_DurationInMinutes 
-            RampupInMinutes              = $VSI_Target_RampupInMinutes 
-            Hostuuid                     = $Hostuuid 
-            IPMI_ip                      = $IPMI_ip 
-            Path                         = $Scriptroot 
-            AsJob                        = $true
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $Params = @{
+                OutputFolder                 = $OutputFolder 
+                DurationInMinutes            = $VSI_Target_DurationInMinutes 
+                RampupInMinutes              = $VSI_Target_RampupInMinutes 
+                Hostuuid                     = $Hostuuid 
+                IPMI_ip                      = $IPMI_ip 
+                Path                         = $Scriptroot 
+                AsJob                        = $true
+            }
+            $monitoringJob = Start-VSINTNXMonitoring @params
+            $Params = $null
         }
-        $monitoringJob = Start-VSINTNXMonitoring @params
-        $Params = $null
 
         #start Monitoring the Files Cluster Hosting Files
         if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
@@ -1602,8 +1622,11 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #region Cleanup monitoring job
         #----------------------------------------------------------------------------------------------------------------------------
-        $monitoringJob | Wait-Job
-        $monitoringJob | Remove-Job
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $monitoringJob | Wait-Job
+            $monitoringJob | Remove-Job
+        }
         if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
             $monitoringJob_files | Wait-Job
             $monitoringJob_files | Remove-Job
@@ -1622,6 +1645,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #----------------------------------------------------------------------------------------------------------------------------
 
         #region Update Test Dashboard
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $Message = "Starting Nutanix Curator" 
+        } else {
+            $Message = "Skipping Starting Nutanix Curator" 
+        }
+
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -1630,7 +1660,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
-            CurrentMessage = "Starting Nutanix Curator" 
+            CurrentMessage = $Message
             TotalPhase     = "$($RunPhases)"
         }
         $null = Set-TestData @params
@@ -1653,9 +1683,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        Write-Log -Message "Starting Nutanix Curator Service" -Level Info
-        Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "start"
-        
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            Write-Log -Message "Starting Nutanix Curator Service" -Level Info
+            Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "start"
+        }
+
         if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
             Write-Log -Message "Starting Nutanix Curator Service on the Nutanix Files Cluster $($VSI_Target_Files_Cluster_CVM)" -Level Info
             Set-NTNXcurator -ClusterIP $VSI_Target_Files_Cluster_CVM -CVMSSHPassword $VSI_Target_Files_Cluster_CVMsshpassword -Action "start"
@@ -1699,7 +1732,11 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        $NTNXInfra.Testinfra.VMCPUCount = [Int]$VSI_Target_NumCPUs * [Int]$VSI_Target_NumCores
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $NTNXInfra.Testinfra.VMCPUCount = [Int]$VSI_Target_NumCPUs * [Int]$VSI_Target_NumCores
+        }
+
         $NTNXInfra.Testinfra.Testname = $FolderName
         $NTNXInfra | ConvertTo-Json -Depth 20 | Set-Content -Path $OutputFolder\Testconfig.json -Force
 
@@ -1809,32 +1846,33 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $Run = $TestDetail[1]
 
             # Get the boot files and start time
-            $Files = Get-ChildItem "$($OutputFolder)\Boot\*.csv"
-            $Started = $($NTNXInfra.TestInfra.Bootstart)
+            if (-not $AzureMode.IsPresent) { 
+                # This is not an Azure configuration
+                $Files = Get-ChildItem "$($OutputFolder)\Boot\*.csv"
+                $Started = $($NTNXInfra.TestInfra.Bootstart)
 
-            # Build the Boot Bucket Name
-            If ($($NTNXInfra.Test.BucketName) -eq "LoginDocuments") {
-                $BucketName = "BootBucket"
-            }
-            Else {
-                $BucketName = "BootBucketRegression"
-            }
+                # Build the Boot Bucket Name
+                If ($($NTNXInfra.Test.BucketName) -eq "LoginDocuments") {
+                    $BucketName = "BootBucket"
+                }
+                Else {
+                    $BucketName = "BootBucketRegression"
+                }
 
-            # Loop through the boot files and process each one
-            foreach ($File in $Files) {
-                if (($File.Name -like "host raw*") -or ($File.Name -like "cluster raw*")) {
-                    Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
-                    #Set Azure VM Value - If this is an Azure VM, we will be sending different tags in to Influx. If not, then it's business as usual.
-                    if ($NTNXInfra.AzureGuestDetails.IsAzureVM -eq $true) { $IsAzureVM = $true } else { $IsAzureVM = $false }
-                    if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName -IsAzureVM $IsAzureVM) {
-                        Write-Log -Message "Finished uploading Boot File $($File.Name) to Influx" -Level Info
+                # Loop through the boot files and process each one
+                foreach ($File in $Files) {
+                    if (($File.Name -like "host raw*") -or ($File.Name -like "cluster raw*")) {
+                        Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
+                        if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
+                            Write-Log -Message "Finished uploading Boot File $($File.Name) to Influx" -Level Info
+                        }
+                        else {
+                            Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
+                        }
                     }
                     else {
-                        Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
+                        Write-Log -Message "Skipped uploading Boot File $($File.Name) to Influx" -Level Info
                     }
-                }
-                else {
-                    Write-Log -Message "Skipped uploading Boot File $($File.Name) to Influx" -Level Info
                 }
             }
 
@@ -1848,7 +1886,9 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             foreach ($File in $Files) {
                 if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*") -or ($File.Name -like "VM Perf Metrics*")) {
                     Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
-                    if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
+                    #Set Azure VM Value - If this is an Azure VM, we will be sending different tags in to Influx. If not, then it's business as usual.
+                    if ($NTNXInfra.AzureGuestDetails.IsAzureVM -eq $true) { $IsAzureVM = $true } else { $IsAzureVM = $false }
+                    if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName -IsAzureVM $IsAzureVM) {
                         Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
                     }
                     else {
