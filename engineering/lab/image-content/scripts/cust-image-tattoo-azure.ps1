@@ -42,50 +42,50 @@ New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "OfficeVersion" -Value
 # Get Optimiser Details
 if(Test-Path -Path "C:\OSOT"){
     $VMwareOSOT = Get-ChildItem -Recurse -Path "C:\OSOT" -Filter "VMwareOSOptimizationTool.EXE"
-    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "OptimizerVendor" -Value "VMware Optimizer"
-    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "OptimizationsVersion" -Value $VMwareOSOT.VersionInfo.ProductVersion
+    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "OptimizerVendor" -Value "VMware Optimizer" -Force
+    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "OptimizationsVersion" -Value $VMwareOSOT.VersionInfo.ProductVersion -Force
 } else {
     if(Test-Path -Path "C:\Tools\CitrixOptimizer"){
         $CO = Get-ChildItem -Recurse -Path "C:\Tools\CitrixOptimizer" -Filter "CitrixOptimizerTool.EXE"
-        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "OptimizerVendor" -Value "Citrix Optimizer"
-        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "OptimizationsVersion" -Value $CO.VersionInfo.ProductVersion
+        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "OptimizerVendor" -Value "Citrix Optimizer" -Force
+        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "OptimizationsVersion" -Value $CO.VersionInfo.ProductVersion -Force
     } else {
-        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "OptimizerVendor" -Value "None"
-        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "OptimizationsVersion" -Value "N/A"
+        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "OptimizerVendor" -Value "None" -Force
+        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "OptimizationsVersion" -Value "N/A" -Force
     }
 }
 
 # Get VDA Version
 if(Test-Path -Path "C:\Program Files\CITRIX") {
-    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "VdaType" -Value "Citrix"
+    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "VdaType" -Value "Citrix" -Force
     $VDA = Get-Package | Where-Object {$_.Name -like "Citrix Virtual Apps and Desktops*" }
     $VdaName = ($VDA.Name).Split("-")
-    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "VdaName" -Value $VdaName[0]
-    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "DesktopBrokerAgentVersion" -Value $VDA.Version
+    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "VdaName" -Value $VdaName[0] -Force
+    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "DesktopBrokerAgentVersion" -Value $VDA.Version -Force
 } else {
     if(Test-Path -Path "C:\Program Files (x86)\Parallels\ApplicationServer") {
-        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "VdaType" -Value "RAS"
+        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "VdaType" -Value "RAS" -Force
         $VDA = Get-Package | Where-Object {$_.Name -like "Parallels Remote Application*" }
-        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "VdaName" -Value $VDA.Name
-        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "DesktopBrokerAgentVersion" -Value $VDA.Version
+        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "VdaName" -Value $VDA.Name -Force
+        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "DesktopBrokerAgentVersion" -Value $VDA.Version -Force
     } else {
-        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "VdaType" -Value "VMware"
+        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "VdaType" -Value "VMware" -Force
         $VDA = Get-Package | Where-Object {$_.Name -like "VMware Horizon*" }
-        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "VdaName" -Value $VDA.Name
-        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "DesktopBrokerAgentVersion" -Value $VDA.Version
+        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "VdaName" -Value $VDA.Name -Force
+        New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "DesktopBrokerAgentVersion" -Value $VDA.Version -Force
     }
 }
 
 # Get Guest Tools Version
 if(Test-Path -Path "C:\Program Files\VMware") {
-    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "HvType" -Value "VMware"
+    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "HvType" -Value "VMware" -Force
     $GuestTools = Get-Package | Where-Object {$_.Name -like "VMware Tools*" }
-    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "GuestTools" -Value $GuestTools.Name
-    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "ToolsGuestVersion" -Value $GuestTools.Version
+    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "GuestTools" -Value $GuestTools.Name -Force
+    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "ToolsGuestVersion" -Value $GuestTools.Version -Force
 } else {
-    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "HvType" -Value "AHV"
-    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "GuestTools" -Value "AHV"
-    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "ToolsGuestVersion" -Value "0"
+    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "HvType" -Value "AHV" -Force
+    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "GuestTools" -Value "AHV" -Force
+    New-ItemProperty -Path "HKLM:\Software\BuildTattoo" -Name "ToolsGuestVersion" -Value "0" -Force
 }
 
 #Azure
