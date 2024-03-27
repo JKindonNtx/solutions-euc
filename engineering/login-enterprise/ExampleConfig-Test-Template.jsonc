@@ -198,5 +198,37 @@
         "SlackChannel": "MANDATORY_TO_DEFINE", //Enter Slack Channel Here
         "SlackToken": "MANDATORY_TO_DEFINE" //Enter Slack Token Here
         // -----------------------------------------------------------------------------------
+    },
+    "AzureGuestDetails": {
+        "IsAzureVM": false, //triggers data for Azure VMs
+        "VM_Name": "", //Filled via Image Tattoo job
+        "VM_Location": "", //Filled via Image Tattoo job
+        "VM_Offer": "", //Filled via Image Tattoo job
+        "VM_secureBoot": "", //Filled via Image Tattoo job
+        "VM_vTPM": "", //Filled via Image Tattoo job
+        "VM_Size": "", //Filled via Image Tattoo job
+        "VM_Credential_Guard": "", //Filled via Image Tattoo job
+        "VM_Bios_Name": "", //Filled via Image Tattoo job
+        "VM_CPU_Name": "", //Filled via Image Tattoo job
+        "VM_CPU_Manufacturer": "", //Filled via Image Tattoo job
+        "VM_CPU_ClockSpeed": "", //Filled via Image Tattoo job
+        "VM_CPU_Caption": "", //Filled via Image Tattoo job
+        "VM_CPU_Cores": "", //Filled via Image Tattoo job
+        "VM_CPU_LogicalProcs": "", //Filled via Image Tattoo job
+        "VM_CPU_ThreadCount": "", //Filled via Image Tattoo job
+        "VM_Memory_Size": "", //Filled via Image Tattoo job
+        "VM_AcceleratedNetworking": "", //Filled via Image Tattoo job
+        "VM_pageFile": "", //Filled via Image Tattoo job
+        "OS_Type": "", //Filled via Image Tattoo job
+        "OS_Offer": "", //Filled via Image Tattoo job
+        "OS_Deployed_Version": "", //Filled via Image Tattoo job
+        "OS_Deployed_Sku": "", //Filled via Image Tattoo job
+        "OS_Running_Version": "", //Filled via Image Tattoo job
+        "Disk_Type": "", //Filled via Image Tattoo job
+        "Disk_Size": "", //Filled via Image Tattoo job
+        "Disk_Caching": "", //Filled via Image Tattoo job
+        "Disk_Encryption": "", //Filled via Image Tattoo job
+        "Disk_Write_Accelerator": "", //Filled via Image Tattoo job
+        "Disk_TempDisk_Size": "" //Filled via Image Tattoo job
     }
 }
