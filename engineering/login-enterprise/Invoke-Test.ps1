@@ -975,8 +975,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 $NTNXInfra.AzureGuestDetails.VM_secureBoot = $Tattoo.Azure_VM_secureBoot
                 $NTNXInfra.AzureGuestDetails.VM_vTPM = $Tattoo.Azure_VM_vTPM
                 $NTNXInfra.AzureGuestDetails.VM_Size = $Tattoo.Azure_VM_Size
-                $NTNXInfra.AzureGuestDetails.VM_Credential_Guard = $Tattoo.VM_Credential_Guard
-                $NTNXInfra.AzureGuestDetails.VM_Bios_Name = $Tattoo.VM_Bios_Name
+                $NTNXInfra.AzureGuestDetails.VM_Credential_Guard = $Tattoo.Azure_VM_Credential_Guard
+                $NTNXInfra.AzureGuestDetails.VM_Bios_Name = $Tattoo.Azure_VM_Bios_Name
                 $NTNXInfra.AzureGuestDetails.VM_CPU_Name = $Tattoo.Azure_VM_CPU_Name
                 $NTNXInfra.AzureGuestDetails.VM_CPU_Manufacturer = $Tattoo.Azure_VM_CPU_Manufacturer
                 $NTNXInfra.AzureGuestDetails.VM_CPU_ClockSpeed = $Tattoo.Azure_VM_CPU_ClockSpeed

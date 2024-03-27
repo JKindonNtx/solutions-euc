@@ -113,8 +113,8 @@ To add metrics, the following touch points apply:
 
 1.  Build the logic into the tattoo script to create the reg value: for example, `Azure_VM_Bios_Name`
 2.  Define the Item Name in the `config.json` file under the `AzureGuestDetails` Block. For example, `"VM_Bios_Name": "", //Filled via Image Tattoo job`. This is JSON format, so be careful.
-3.  Add the value into the `Invoke-Test.ps1` script. For example, `$NTNX.Infra.AzureGuestDetails.VM_Bios_Name = $Tattoo.VM_Bios_Name`
-4.  Add the tag into the `Start-InfluxUpload.ps1` Function Eg: `"InfraBIOS=$($JSON.AzureGuestDetails.VM_Bios_NameBIOS)," +`
+3.  Add the value into the `Invoke-Test.ps1` script. For example, `$NTNX.Infra.AzureGuestDetails.VM_Bios_Name = $Tattoo.Azure_VM_Bios_Name`
+4.  Add the tag into the `Start-InfluxUpload.ps1` Function Eg: `"InfraBIOS=$($JSON.AzureGuestDetails.VM_Bios_Name)," +`
 
 Azure specific testing is sent to a different Influx Bucket and new Grafana reports are created accordingly.
 
