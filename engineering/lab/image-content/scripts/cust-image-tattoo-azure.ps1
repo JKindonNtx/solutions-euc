@@ -122,6 +122,15 @@ if ($metadataEndpoint) {
     $TempDisk = $diskInfo | Where-Object {$_.Partitions -ne 3}
     $TempDiskSize  = [math]::Round($TempDisk.Size / 1GB, 2)
 
+    $AdditionalVMSpec = Get-ComputerInfo
+
+    # DeviceGuard Configuration (Credential Guard)
+    if (($AdditionalVMSpec.DeviceGuardSecurityServicesConfigured) -match 'CredentialGuard') {
+        $CredentialGuard = $true
+    } else {
+        $CredentialGuard = $false
+    }
+
     $vm_properties = @{
         VM_Name                  = $VMSpec.compute.name
         VM_Location              = $VMSpec.compute.location
@@ -129,6 +138,8 @@ if ($metadataEndpoint) {
         VM_secureBoot            = $VMSpec.compute.securityProfile.SecureBootEnabled
         VM_vTPM                  = $VMSpec.compute.securityProfile.virtualTpmEnabled
         VM_Size                  = $VMSpec.compute.vmSize
+        VM_Credential_Guard      = $CredentialGuard
+        VM_Bios_Name             = $AdditionalVMSpec.BiosName
         
         VM_CPU_Name              = $cpuInfo.Name
         VM_CPU_Manufacturer      = $cpuInfo.Manufacturer

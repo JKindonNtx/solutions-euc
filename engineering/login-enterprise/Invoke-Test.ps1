@@ -975,6 +975,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 $NTNXInfra.AzureGuestDetails.VM_secureBoot = $Tattoo.Azure_VM_secureBoot
                 $NTNXInfra.AzureGuestDetails.VM_vTPM = $Tattoo.Azure_VM_vTPM
                 $NTNXInfra.AzureGuestDetails.VM_Size = $Tattoo.Azure_VM_Size
+                $NTNXInfra.AzureGuestDetails.VM_Credential_Guard = $Tattoo.VM_Credential_Guard
+                $NTNXInfra.AzureGuestDetails.VM_Bios_Name = $Tattoo.VM_Bios_Name
                 $NTNXInfra.AzureGuestDetails.VM_CPU_Name = $Tattoo.Azure_VM_CPU_Name
                 $NTNXInfra.AzureGuestDetails.VM_CPU_Manufacturer = $Tattoo.Azure_VM_CPU_Manufacturer
                 $NTNXInfra.AzureGuestDetails.VM_CPU_ClockSpeed = $Tattoo.Azure_VM_CPU_ClockSpeed
@@ -1694,7 +1696,9 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             foreach ($File in $Files) {
                 if (($File.Name -like "host raw*") -or ($File.Name -like "cluster raw*")) {
                     Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
-                    if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
+                    #Set Azure VM Value - If this is an Azure VM, we will be sending different tags in to Influx. If not, then it's business as usual.
+                    if ($NTNXInfra.AzureGuestDetails.IsAzureVM -eq $true) { $IsAzureVM = $true } else { $IsAzureVM = $false }
+                    if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName -IsAzureVM $IsAzureVM) {
                         Write-Log -Message "Finished uploading Boot File $($File.Name) to Influx" -Level Info
                     }
                     else {
