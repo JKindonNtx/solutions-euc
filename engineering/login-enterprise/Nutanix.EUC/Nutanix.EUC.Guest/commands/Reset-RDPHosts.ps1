@@ -142,5 +142,3 @@ function Reset-RDPHosts {
     
     return $Validated
 }
-
-#Reset-RDPHosts -Hosts $VSI_Target_RDP_Hosts -MaxIterations 4 -SleepTime 20 -ClearProfiles -DownloadDelProf -UserName 
