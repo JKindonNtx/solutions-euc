@@ -357,6 +357,21 @@ if (($Mandatory_Undedfined_Config_Entries | Measure-Object).Count -gt 0) {
         Write-Log -Message "Input confirmed" -Level Info
     }
 }
+
+if ($Type -eq "RDP") {
+    if ([string]::IsNullOrEmpty[$VSI_Target_RDP_Hosts]) {
+        Write-Log -Message "Test type is RDP. You must define the RDP Hosts in the JSON File" -Level Warn
+        Exit 1
+    }
+    else {
+        Write-Log -Message "There are $(($VSI_Target_RDP_Hosts | Measure-Object).Count) RDP Hosts defined for test configuration" -Level Info
+    }
+
+    if ([string]::IsNullOrEmpty[$VSI_Domain_LDAPUsername] -or [string]::IsNullOrEmpty[$VSI_Domain_LDAPPassword]) {
+        Write-Log -Message "Test type is RDP. You must define an LDAP Username and Password to be able to execute tasks against the remote Hosts." -Level Warn
+        Exit 1
+    }
+}
 #endregion Mandatory JSON Value Output
 
 #region Nutanix Files Pre Flight Checks
@@ -436,7 +451,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     if (-not $AzureMode.IsPresent) {
         # This is not an Azure configuration
         $NTNXTestname = "$($NTNXid)_$($VSI_Target_NodeCount)n_A$($NTNXInfra.Testinfra.AOSversion)_$($NTNXInfra.Testinfra.HypervisorType)_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
-    } else {
+    }
+    else {
         $NTNXTestname = "$($NTNXid)_Azure_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
     }
     Write-Log -Message "Testname configured: $($NTNXTestname)" -Level Info
@@ -470,26 +486,33 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
     #region Set affinity
     #----------------------------------------------------------------------------------------------------------------------------
-    
     if (-not $AzureMode.IsPresent) {
         # This is not an Azure configuration
-        #region Update Test Dashboard
-        $params = @{
-            ConfigFile     = $NTNXInfra
-            TestName       = $NTNXTestname 
-            RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
-            InfluxBucket   = $InfluxTestDashBucket 
-            Status         = "Running" 
-            CurrentPhase   = $CurrentTotalPhase 
-            CurrentMessage = "Setting Affinity Rules" 
-            TotalPhase     = "$($TotalPhases)"
-        }
-        $null = Set-TestData @params
-        $params = $null
-        $CurrentTotalPhase++
-        #endregion Update Test Dashboard
+        $Message = "Setting Affinity Rules"
+    }
+    else {
+        $Message = "Skipping Setting Affinity Rules"
+    }
 
+    #region Update Test Dashboard
+    $params = @{
+        ConfigFile     = $NTNXInfra
+        TestName       = $NTNXTestname 
+        RunNumber      = "0" 
+        InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+        InfluxBucket   = $InfluxTestDashBucket 
+        Status         = "Running" 
+        CurrentPhase   = $CurrentTotalPhase 
+        CurrentMessage = $Message
+        TotalPhase     = "$($TotalPhases)"
+    }
+    $null = Set-TestData @params
+    $params = $null
+    $CurrentTotalPhase++
+    #endregion Update Test Dashboard
+
+    if (-not $AzureMode.IsPresent) {
+        # This is not an Azure configuration
         if ($VSI_Target_NodeCount -eq "1") {
             $NTNXInfra.Testinfra.SetAffinity = $true
         }
@@ -497,23 +520,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $NTNXInfra.Testinfra.SetAffinity = $false
         }
         Write-Log -Message "Nutanix Host Affinity is set to: $($NTNXInfra.Testinfra.SetAffinity)" -Level Info
-    } else {
-        #region Update Test Dashboard
-        $params = @{
-            ConfigFile     = $NTNXInfra
-            TestName       = $NTNXTestname 
-            RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
-            InfluxBucket   = $InfluxTestDashBucket 
-            Status         = "Running" 
-            CurrentPhase   = $CurrentTotalPhase 
-            CurrentMessage = "Skipping Affinity Rules" 
-            TotalPhase     = "$($TotalPhases)"
-        }
-        $null = Set-TestData @params
-        $params = $null
-        $CurrentTotalPhase++
-        #endregion Update Test Dashboard
     }
     #endregion Set affinity
 
@@ -525,7 +531,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     if (-not $AzureMode.IsPresent) {
         # This is not an Azure configuration
         $SlackMessage = "New Login Enterprise test started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName). Testname: $($NTNXTestname)."
-    } else {
+    } 
+    else {
         $SlackMessage = "New Login Enterprise test started by $VSI_Target_CVM_admin on Azure VM. Testname: $($NTNXTestname)."
     }
     Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
@@ -598,7 +605,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #region RDP validation
     #----------------------------------------------------------------------------------------------------------------------------
     if ($Type -eq "RDP") {
-        Write-Log -Message "Validating RDP" -Level Info
+        Write-Log -Message "Validating RDP Hosts" -Level Info
         #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
@@ -608,7 +615,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
-            CurrentMessage = "Validating RDP Connectivity" 
+            CurrentMessage = "Validating RDP Host Connectivity" 
             TotalPhase     = "$($TotalPhases)"
         }
         $null = Set-TestData @params
@@ -616,11 +623,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        ## Go and get the RDP Host from The LE test
-        #---------- KINDON: Move this out of here, go and configure the test prooperly you lazy bastard - we will know this from the JSON file - create a new Array
-        $LE_Test_ID = (Get-LETests | Where-Object { $_.name -eq $VSI_Test_Name }).Id
-        $RDP_Hosts = (Get-LETest -testId $LE_Test_ID).Environment.Connector.Hostlist.endpoint
-        foreach ($RDP_Host in $RDP_Hosts) {
+        foreach ($RDP_Host in $VSI_Target_RDP_Hosts) {
             try {
                 Write-Log -Message "Validating RDP Connectivity to $($RDP_Host)" -Level Info
                 $Test_Host_Connection = Test-NetConnection -ComputerName $RDP_Host -port 3389 -ErrorAction Stop
@@ -628,10 +631,9 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             }
             catch {
                 Write-Log -Message "Failed to connect to host $($RDP_Host)" -Level Error
-                Exit 1
+                Break # Replace with Exit 1
             }
         }
-        #---------- KINDON: Move this out of here, go and configure the test prooperly you lazy bastard
     }
     #endregion RDP validation
 
@@ -836,7 +838,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if (-not $AzureMode.IsPresent) { 
             # This is not an Azure configuration
             $Message = "Creating $($Type) Desktop Pool" 
-        } else { 
+        }
+        else { 
             $Message = "Skipping Creating $($Type) Desktop Pool" 
         }
 
@@ -931,6 +934,18 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             }
             Set-VSIHVDesktopPool @params
             $Params = $null
+        }
+
+        if ($Type -eq "RDP") {
+            # WIP - Function Inbound
+            $CleanHosts = Reset-RDPHosts -Hosts $VSI_Target_RDP_Hosts -MaxIterations 4 -SleepTime 30 -DownloadDelProf -ClearProfiles -UserName $VSI_Domain_LDAPUsername -Password $VSI_Domain_LDAPPassword
+            if ($CleanHosts -eq $true) {
+                Write-Log -Message "All RDP Hosts prepared for Test Run" -Level Info
+            }
+            else {
+                Write-Log -Message "Failures Found when preparing RDP Hosts." -Level Warn
+                #What do we want to do here?
+            }
         }
 
         #endregion Configure Desktop Pool
@@ -1051,7 +1066,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
 
         if ($Type -eq "RDP") {
-            $MasterImageDNS = ([System.Net.Dns]::GetHostEntry(($RDP_Hosts | Select-Object -First 1)).HostName).Split('.')[0]
+            $MasterImageDNS = [System.Net.Dns]::GetHostEntry(($VSI_Target_RDP_Hosts | Select-Object -First 1)).HostName
         }
 
         #region Update Test Dashboard
@@ -1228,16 +1243,43 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
             ## Placeholder Block to capture the relevent settings below - will change with different tech
             $Params = @{
-                TestName          = $VSI_Test_Name
-                SessionAmount     = $VSI_Target_NumberOfSessions
-                RampupInMinutes   = $VSI_Target_RampupInMinutes
-                DurationInMinutes = $VSI_Target_DurationInMinutes
-                LauncherGroupName = $VSI_Launchers_GroupName
-                AccountGroupName  = $VSI_Users_GroupName
+                TestName           = $VSI_Test_Name
+                SessionAmount      = $VSI_Target_NumberOfSessions
+                RampupInMinutes    = $VSI_Target_RampupInMinutes
+                DurationInMinutes  = $VSI_Target_DurationInMinutes
+                LauncherGroupName  = $VSI_Launchers_GroupName
+                AccountGroupName   = $VSI_Users_GroupName
                 SessionMetricGroup = $VSI_Target_SessionMetricGroupName
-                ConnectorName     = "Citrix Storefront"
-                ConnectorParams   = @{serverURL = $VSI_Target_StorefrontURL; resource = $VSI_Target_DesktopPoolName }
-                Workload          = $VSI_Target_Workload
+                ConnectorName      = "Citrix Storefront"
+                ConnectorParams    = @{serverURL = $VSI_Target_StorefrontURL; resource = $VSI_Target_DesktopPoolName }
+                Workload           = $VSI_Target_Workload
+            }
+            $testId = Set-LELoadTestv7 @Params
+            $params = $null
+        }
+
+        if ($Type -eq "RDP") {
+            # create the host list Array for the test configuration
+            $HostList = @()
+            foreach ($RDP_Host in $VSI_Target_RDP_Hosts) {
+                $Custom_RDP_Host = New-Object -TypeName PSObject -Property @{
+                    endpoint = $RDP_Host
+                    enabled = $true
+                }
+                $HostList += $Custom_RDP_Host
+            }
+
+            $Params = @{
+                TestName           = $VSI_Test_Name #Giggles
+                SessionAmount      = $VSI_Target_NumberOfSessions
+                RampupInMinutes    = $VSI_Target_RampupInMinutes
+                DurationInMinutes  = $VSI_Target_DurationInMinutes
+                LauncherGroupName  = $VSI_Launchers_GroupName
+                AccountGroupName   = $VSI_Users_GroupName ##// KINDON CHECK THIS WITH SVEN (Get-Variable VSI_Users*) "VSILE3"
+                SessionMetricGroup = $VSI_Target_SessionMetricGroupName
+                ConnectorName      = "Microsoft RDS"
+                ConnectorParams    = @{hostList = $HostList; suppressCertWarn = $true; displayResolution = ""; resource = $VSI_Target_DesktopPoolName}
+                Workload           = $VSI_Target_Workload
             }
             $testId = Set-LELoadTestv7 @Params
             $params = $null
@@ -1412,6 +1454,14 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #----------------------------------------------------------------------------------------------------------------------------
 
         #region Update Test Dashboard
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $Message = "Starting Login Enterprise Test Monitor Run $($i)" 
+        }
+        else {
+            $Message = "Skipping Login Enterprise Test Monitor Run $($i)"
+        }
+
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -1420,7 +1470,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
-            CurrentMessage = "Starting Login Enterprise Test Monitor Run $($i)" 
+            CurrentMessage = $Message 
             TotalPhase     = "$($RunPhases)"
         }
         $null = Set-TestData @params
@@ -1951,11 +2001,23 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #region Slack update
         #----------------------------------------------------------------------------------------------------------------------------
-        if ($VSI_Test_SkipLEMetricsDownload -eq $true){ 
-            $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName)."
+        if ($VSI_Test_SkipLEMetricsDownload -eq $true){
+            if (-not $AzureMode.IsPresent) { 
+                # This is not an Azure configuration
+                $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName)."
+            }
+            else {
+                $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Azure."
+            }
         } 
         else {
-            $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName). $($Testresult.activesessionCount) sessions active of $($Testresult."login total") total sessions. EUXscore: $($Testresult."EUX score") - VSImax: $($Testresult.vsiMax). App Success rate: $($Appsuccessrate.tostring("#.###"))"
+            if (-not $AzureMode.IsPresent) { 
+                # This is not an Azure configuration
+                $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName). $($Testresult.activesessionCount) sessions active of $($Testresult."login total") total sessions. EUXscore: $($Testresult."EUX score") - VSImax: $($Testresult.vsiMax). App Success rate: $($Appsuccessrate.tostring("#.###"))"
+            }
+            else {
+                $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Azure. $($Testresult.activesessionCount) sessions active of $($Testresult."login total") total sessions. EUXscore: $($Testresult."EUX score") - VSImax: $($Testresult.vsiMax). App Success rate: $($Appsuccessrate.tostring("#.###"))"
+            }
         }
         Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
 
