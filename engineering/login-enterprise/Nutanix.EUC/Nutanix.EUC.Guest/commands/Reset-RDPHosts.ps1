@@ -22,7 +22,6 @@ function Reset-RDPHosts {
     foreach ($RDP_Host in $Hosts) {
         try {
             Write-Log -Message "Attempting to reboot RDP Host: $($RDP_Host)" -Level Info
-            #Restart-Computer -ComputerName $RDP_Host -Force -Credential $credential -ErrorAction Stop
             Restart-Computer -ComputerName (Resolve-DnsName -Name $RDP_Host -Type PTR).NameHost -Force -Credential $credential -ErrorAction Stop
             Write-Log -Message "Successfully rebooted RDP Host: $($RDP_Host)" -Level Info
             $Reboot_Success += $RDP_Host
@@ -34,7 +33,7 @@ function Reset-RDPHosts {
         }
     }
     # Confirm the VM is back by an RDP Port check
-    $Host_Validation_Iteration_Count = $MaxIterations # Try 4 times
+    $Host_Validation_Iteration_Count = $MaxIterations # Try x number of times to connect after reboot
     $Host_Validation_Wait_Time = $SleepTime # How long to wait between attempts
     $Hosts_Alive = @() # Open an array for Validated hosts
 
@@ -70,7 +69,6 @@ function Reset-RDPHosts {
             Write-Log -Message "All Hosts successfully connected after reboot" -Level Info
 
             #Now proceed with DelProf
-            # Delprof Profiles?
             if ($ClearProfiles.IsPresent) {
                 foreach ($RDP_Host in $Hosts) {
                     try {
