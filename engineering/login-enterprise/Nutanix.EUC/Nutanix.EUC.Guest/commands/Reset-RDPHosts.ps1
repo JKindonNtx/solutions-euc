@@ -6,8 +6,8 @@ function Reset-RDPHosts {
         [Parameter(Mandatory = $true)][int]$SleepTime,
         [Parameter(Mandatory = $false)][switch]$DownloadDelProf,
         [Parameter(Mandatory = $false)][switch]$ClearProfiles,
-        [Parameter(Mandatory = $false)][string]$UserName,
-        [Parameter(Mandatory = $false)][string]$Password
+        [Parameter(Mandatory = $true)][string]$UserName,
+        [Parameter(Mandatory = $true)][string]$Password
     )
 
     $TotalErrorCount = 0
