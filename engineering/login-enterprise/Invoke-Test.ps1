@@ -1270,12 +1270,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             }
 
             $Params = @{
-                TestName           = $VSI_Test_Name #Giggles
+                TestName           = $VSI_Test_Name 
                 SessionAmount      = $VSI_Target_NumberOfSessions
                 RampupInMinutes    = $VSI_Target_RampupInMinutes
                 DurationInMinutes  = $VSI_Target_DurationInMinutes
                 LauncherGroupName  = $VSI_Launchers_GroupName
-                AccountGroupName   = $VSI_Users_GroupName ##// KINDON CHECK THIS WITH SVEN (Get-Variable VSI_Users*) "VSILE3"
+                AccountGroupName   = $VSI_Users_GroupName
                 SessionMetricGroup = $VSI_Target_SessionMetricGroupName
                 ConnectorName      = "Microsoft RDS"
                 ConnectorParams    = @{hostList = $HostList; suppressCertWarn = $true; displayResolution = ""; resource = $VSI_Target_DesktopPoolName}

@@ -22,7 +22,7 @@ function Reset-RDPHosts {
     foreach ($RDP_Host in $Hosts) {
         try {
             Write-Log -Message "Attempting to reboot RDP Host: $($RDP_Host)" -Level Info
-            Restart-Computer -ComputerName (Resolve-DnsName -Name $RDP_Host -Type PTR).NameHost -Force -Credential $credential -ErrorAction Stop
+            Restart-Computer -ComputerName $RDP_Host -Force -Credential $credential -ErrorAction Stop
             Write-Log -Message "Successfully rebooted RDP Host: $($RDP_Host)" -Level Info
             $Reboot_Success += $RDP_Host
         }
@@ -52,7 +52,7 @@ function Reset-RDPHosts {
                     $TotalErrorCount ++
                 }
                 Write-Log -Message "Testing connectivity to RDP Host $($RDP_Host) after reboot. Attempt: $($Host_Validation_Iteration) of $($Host_Validation_Iteration_Count)" -Level Info
-                $Host_Alive = Test-NetConnection -ComputerName (Resolve-DnsName -Name $RDP_Host -Type PTR).NameHost -Port 3389 -ErrorVariable netError -WarningAction SilentlyContinue -InformationAction SilentlyContinue
+                $Host_Alive = Test-NetConnection -ComputerName $RDP_Host -Port 3389 -ErrorVariable netError -WarningAction SilentlyContinue -InformationAction SilentlyContinue
                 if ($Host_Alive.TcpTestSucceeded -eq $true) {
                     $Hosts_Alive += $RDP_Host
                     Write-Log -Message "Successfully connected to RDP Host $($RDP_Host) after reboot" -Level Info
@@ -75,7 +75,7 @@ function Reset-RDPHosts {
                         Write-Log -Message "Cleaning Local Profiles after Reboot for RDP Host: $($RDP_Host)" -Level Info
                         if ($DownloadDelProf.IsPresent) {
                             try {
-                                Invoke-Command -ComputerName (Resolve-DnsName -Name $RDP_Host -Type PTR).NameHost -ScriptBlock {
+                                Invoke-Command -ComputerName $RDP_Host -ScriptBlock {
                                     $extractPath = "c:\tools\delprof"
                                     if (Test-Path "$extractPath\Delprof2 1.6.0\DelProf2.exe") {
                                         Set-Location -Path "$extractPath\Delprof2 1.6.0"
@@ -100,7 +100,7 @@ function Reset-RDPHosts {
                         }
                         else {
                             try {
-                                Invoke-Command -ComputerName (Resolve-DnsName -Name $RDP_Host -Type PTR).NameHost -ScriptBlock { 
+                                Invoke-Command -ComputerName $RDP_Host -ScriptBlock { 
                                     Set-Location -Path "c:\tools\delprof\Delprof2 1.6.0"
                                     .\delprof2.exe /u /q 
                                 } -Credential $credential -ErrorAction Stop
