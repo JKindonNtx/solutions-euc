@@ -938,7 +938,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         if ($Type -eq "RDP") {
             # WIP - Function Inbound
-            $CleanHosts = Reset-RDPHosts -Hosts $VSI_Target_RDP_Hosts -MaxIterations 4 -SleepTime 30 -DownloadDelProf -ClearProfiles -UserName $VSI_Domain_LDAPUsername -Password $VSI_Domain_LDAPPassword
+            $CleanHosts = Reset-RDPHosts -Hosts $VSI_Target_RDP_Hosts -MaxIterations 4 -SleepTime 30 -RebootHosts -ClearProfiles -UserName $VSI_Domain_LDAPUsername -Password $VSI_Domain_LDAPPassword
             if ($CleanHosts -eq $true) {
                 Write-Log -Message "All RDP Hosts prepared for Test Run" -Level Info
             }
@@ -1263,7 +1263,14 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $HostList = @()
             foreach ($RDP_Host in $VSI_Target_RDP_Hosts) {
                 $Custom_RDP_Host = New-Object -TypeName PSObject -Property @{
-                    endpoint = $RDP_Host
+                    endpoint = $(
+                        if ($RDP_Host -notlike "*.$VSI_Target_DomainName") {
+                            $RDP_Host + "." + $VSI_Target_DomainName
+                        }
+                        else {
+                            $RDP_Host
+                        }
+                    )
                     enabled = $true
                 }
                 $HostList += $Custom_RDP_Host

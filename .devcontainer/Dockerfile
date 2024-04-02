@@ -43,3 +43,10 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 
 # Install Powershell
 RUN bash /tmp/library-scripts/powershell.sh ;
+
+# Install PSWSMan Module (PowerShell Remoting Auth Requirement)
+RUN pwsh -Command 'Install-Module -Name PSWSMan -Force' ;
+RUN pwsh -Command Install-WSMan ;
+RUN apt-get update \ 
+    && apt-get -y install gss-ntlmssp ;
+RUN apt-get install -y inetutils-ping ;
