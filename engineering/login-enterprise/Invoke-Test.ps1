@@ -20,13 +20,13 @@ Configured in the test configuration file. Can be overriden by this parameter.
 .PARAMETER LEAppliance
 Configured in the test configuration file. Can be overriden by this parameter. The Login Enterprise Appliance. LE1, LE2, LE3, LE4 etc.
 .PARAMETER SkipPDFExport
-Configured in the test configuration file. Can be overriden by this parameter
+Configured in the test configuration file. Can be overriden by this parameter.
 .PARAMETER Force
 Optional. Forces the recreation of the Horizon desktop pool.
 .PARAMETER ValidateOnly
-.Optional Allows the ability to Validate without and exectution of testing
+.Optional Allows the ability to Validate without and exectution of testing.
 .PARAMETER AzureMode
-.Optional. Ignores Nutanix Considerations
+.Optional. Ignores Nutanix Considerations.
 .NOTES
 #>
 

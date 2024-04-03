@@ -9,17 +9,17 @@
         // -----------------------------------------------------------------------------------
         // Mandatory_Test_Block_Global - Relevant for ALL Tests
         // -----------------------------------------------------------------------------------
-        "DeliveryType":  "Citrix", // Citrix or VMware
-        "DesktopBrokerVersion":  "7.2203_2", // Broker version. Example: Citrix = "7.2203_2", Horizon = "8.8-2212.1", RAS = "19.2"
-        "CloneType": "MCS", // Citrix: MCS or Horizon: Instant Clones. RAS: Full Clone or Linked Clone. Used for reporting database.
-        "SessionCfg": "ICA", // Citrix: ICA or Horizong: PCoIP or Blast or RAS: RDP. Used for reporting database
+        "DeliveryType":  "Citrix", // Citrix or VMware or Microsoft
+        "DesktopBrokerVersion":  "7.2203_2", // Broker version. Example: Citrix = "7.2203_2", Horizon = "8.8-2212.1", RAS = "19.2", RDP=RDP
+        "CloneType": "MCS", // Citrix: MCS or Horizon: Instant Clones. RAS: Full Clone or Linked Clone. RDP: Full Used for reporting database.
+        "SessionCfg": "ICA", // Citrix: ICA or Horizong: PCoIP or Blast or RAS: RDP. RDP: RDP. Used for reporting database
         "SessionsSupport": "SingleSession", // SingleSession or MultiSession
         "Workload": "Knowledge Worker", // Knowledge Worker or Task Worker
         "MinutesToWaitAfterIdleVMs": 30, //The time to await after Worker VMs are registered. Settle down period.
-        "NamingPattern": "W10-FSL-####", // Naming pattern of VMs. Also used to set affinity
-        "ADContainer": "OU=FSLogix,OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com",
-        "DomainName": "wsperf.nutanix.com", // This used for both Citrix and Horizon?
-        "DesktopPoolName": "LE-W10-FSLogix", // Poolname is used to create the desktop pool. For RAS use the resource ID #1 etc
+        "NamingPattern": "W10-FSL-####", // Naming pattern of VMs. Also used to set affinity. Not used for RDP testing in Azure
+        "ADContainer": "OU=FSLogix,OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com", // Not used for RDP testing in Azure
+        "DomainName": "wsperf.nutanix.com", // This used for multiple functions
+        "DesktopPoolName": "LE-W10-FSLogix", // Poolname is used to create the desktop pool. For RAS use the resource ID #1 etc. Not used for RDP testing in Azure
         // -----------------------------------------------------------------------------------
         // Optional_Test_Block_Citrix - Can be DELETED if not setting up a Citrix Config
         // -----------------------------------------------------------------------------------
