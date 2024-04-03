@@ -9,7 +9,14 @@ virtual_network: "/subscriptions/b2008c50-14cb-4d9c-8ac3-4bbac7f2f9a7/resourceGr
 subnet: "10.202.72.16"
 domain_netbios: "WSPERF"
 domain_fqdn: "wsperf.nutanix.com"
-domain_ou_path: "OU=Azure Instances,OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com"
+domain_ou_path_final: "OU=Azure Instances,OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com"
+domain_ou_path: "CN=Computers,DC=wsperf,DC=nutanix,DC=com"
 dns_server_a: "10.57.64.20"
 dns_server_b: "10.57.64.21"
 dns_server_c: "8.8.8.8"
+#// Copied from the group_vars
+ansible_domain_user: wsperf\administrator
+ansible_domain_password: "nutanix/4u"
+ansible_become_user: wsperf\administrator
+ansible_become_pass: "nutanix/4u"
+sourcefiles_path: \\ws-files.wsperf.nutanix.com\Automation
