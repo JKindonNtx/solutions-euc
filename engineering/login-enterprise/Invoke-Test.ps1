@@ -937,8 +937,28 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
 
         if ($Type -eq "RDP") {
-            # WIP - Function Inbound
-            $CleanHosts = Reset-RDPHosts -Hosts $VSI_Target_RDP_Hosts -MaxIterations 4 -SleepTime 30 -RebootHosts -ClearProfiles -UserName $VSI_Domain_LDAPUsername -Password $VSI_Domain_LDAPPassword
+            if ($VSI_Target_RDP_DelProf -eq $true) {
+                # Delete the profiles between each run
+                $ClearProfiles = $true
+            }
+            else {
+                # reboot the host, but do not delete profiles
+                $ClearProfiles = $false
+            }
+
+            $params = @{
+                Hosts         = $VSI_Target_RDP_Hosts 
+                MaxIterations = 4 
+                SleepTime     = 30 
+                RebootHosts   = $true
+                ClearProfiles = $ClearProfiles
+                UserName      = $VSI_Domain_LDAPUsername 
+                Password      = $VSI_Domain_LDAPPassword
+            }
+
+            $CleanHosts = Reset-RDPHosts @params
+            $params = $null
+            
             if ($CleanHosts -eq $true) {
                 Write-Log -Message "All RDP Hosts prepared for Test Run" -Level Info
             }

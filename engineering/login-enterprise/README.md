@@ -54,7 +54,7 @@ To execute a test, there are four key pieces of information required by the scri
 -  `ConfigFile`. Mandatory **`String`**. Defines the path to the test configuration file.
 -  `LEConfigFile`. Mandatory **`String`**. Defines the path for the Global Login Enterprise Configuration File.
 -  `ReportConfigFile`. Mandatory **`String`**. Defines the default report configuration file.
--  `Type`. Mandatory **`String`**. Defines the type of test. `"CitrixVAD", "CitrixDaaS", "Horizon", "RAS"`
+-  `Type`. Mandatory **`String`**. Defines the type of test. `"CitrixVAD", "CitrixDaaS", "Horizon", "RAS", "RDP"`
 
 ### Invoke-Test.ps1 Optional Parameters
 
@@ -68,6 +68,7 @@ The below parameters should be set in the `ConfigFile` as a preferential configu
 -  `Force`. Optional. **`Switch`**. Forces a recreation of the desktop pool. Can be set in `LEConfigFile.jsonc`.
 -  `LEAppliance`. Optional. **`String`**. The Login Enterprise Appliance to use. `LE1`,`LE2`,`LE3`,`LE4`. Can be set in `LEConfigFile.jsonc`.
 -  `ValidateOnly`. Optional. **`Switch`**. Will process only the inputs and pre-execution tasks. Will not process any testing. Use for making sure things look good.
+-   `AzureMode`. Optional. **`Switch`**. Will function with an understanding that the script is in Azure and not Nutanix. Nutanix components are excluded. Different data is gathered for influx.
 
 ### Step 1: Getting Started: Planning
 
@@ -116,7 +117,7 @@ To add metrics, the following touch points apply:
 3.  Add the value into the `Invoke-Test.ps1` script. For example, `$NTNX.Infra.AzureGuestDetails.VM_Bios_Name = $Tattoo.Azure_VM_Bios_Name`
 4.  Add the tag into the `Start-InfluxUpload.ps1` Function Eg: `"InfraBIOS=$($JSON.AzureGuestDetails.VM_Bios_Name)," +`
 
-Azure specific testing is sent to a different Influx Bucket and new Grafana reports are created accordingly.
+Azure specific testing data is sent to a different Influx Bucket and new Grafana reports are created accordingly.
 
 ### Useful URLS
 
