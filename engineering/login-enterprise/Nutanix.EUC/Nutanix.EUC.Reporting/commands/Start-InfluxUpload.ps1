@@ -313,6 +313,13 @@ function Start-InfluxUpload {
                     $Fields = $Fields.TrimEnd(",")
                     $Fields = $Fields.Replace('null', '0')
 
+                    # Re-Format the Tag to allow for additional values added
+                    $tag = $tag.replace(' ','_')
+                    $tag = $tag.Replace('null', '0')
+                    $tag = $tag.replace('=,','=0,')
+                    $tag = $tag.replace('\','-')
+                    $tag = $tag.replace('%','pct')
+
                     # Get the timestamp for the line and calculate the delta Start Time
                     $CSVDate = $($line.Timestamp)
                     $UnixDate = Get-Date -Date $CSVDate -UFormat %s
