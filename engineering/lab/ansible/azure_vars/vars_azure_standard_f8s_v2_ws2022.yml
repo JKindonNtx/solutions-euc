@@ -2,7 +2,7 @@
 vm_name: "f8s-v2-ws2022"
 vm_sku: "Standard_F8s_v2"
 license_type: "Windows_Server"
-disk_sku: "PremiumSSD_LRS"
+disk_sku: "Premium_LRS"
 disk_size: 127
 admin_username: "NtnxAzureAdmin"
 admin_password: "this_is@VeryNaughtyPW1234$$"

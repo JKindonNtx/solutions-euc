@@ -2,7 +2,7 @@
 vm_name: "ds1-v2-ws2022"
 vm_sku: "Standard_DS1_v2"
 license_type: "Windows_Server"
-disk_sku: "StandardSSD_LRS"
+disk_sku: "Premium_LRS"
 disk_size: 127
 admin_username: "NtnxAzureAdmin"
 admin_password: "this_is@VeryNaughtyPW1234$$"
