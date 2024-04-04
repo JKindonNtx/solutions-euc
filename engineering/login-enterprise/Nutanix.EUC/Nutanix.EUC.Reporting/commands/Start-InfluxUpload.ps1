@@ -162,7 +162,7 @@ function Start-InfluxUpload {
                     "InfraCPUBrand=$($JSON.AzureGuestDetails.VM_CPU_Manufacturer)," +
                     "InfraCPUType=$($JSON.AzureGuestDetails.VM_CPU_Name)," +
                     "InfraCPUSpeed=$($JSON.AzureGuestDetails.VM_CPU_ClockSpeed)," +
-                    "InfraBIOS=$($JSON.AzureGuestDetails.VM_Bios_NameBIOS)," +
+                    "InfraBIOS=$($JSON.AzureGuestDetails.VM_Bios_Name)," +
                     "BootStart=$($JSON.TestInfra.BootStart)," +                    
                     "BootTime=$($JSON.TestInfra.Boottime)," +
                     "VSIproductVersion=$($VSIProductVersion)," +
@@ -263,6 +263,13 @@ function Start-InfluxUpload {
                 )
             }
 
+            # Format the tag for any weird stuff
+            $tag = $tag.replace(' ','_')
+            $tag = $tag.Replace('null', '0')
+            $tag = $tag.replace('=,','=0,')
+            $tag = $tag.replace('\','-')
+            $tag = $tag.replace('%','pct')
+
             # Check for Blank Tag Value
             If($Tag -like "*=,*"){
                 $TagValidated = $false
@@ -271,7 +278,7 @@ function Start-InfluxUpload {
             }
 
             if($TagValidated){
-
+                
                 # Set the Base Tag
                 $basetag = $tag
 
@@ -305,12 +312,6 @@ function Start-InfluxUpload {
                     # Remove last comma from fields and replace Null values
                     $Fields = $Fields.TrimEnd(",")
                     $Fields = $Fields.Replace('null', '0')
-
-                    # Format the Tag to allow for influx upload
-                    $tag = $tag.replace(' ','_')
-                    $tag = $tag.replace('=,','=0,')
-                    $tag = $tag.replace('\','-')
-                    $tag = $tag.replace('%','pct')
 
                     # Get the timestamp for the line and calculate the delta Start Time
                     $CSVDate = $($line.Timestamp)

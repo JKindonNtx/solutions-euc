@@ -22,8 +22,8 @@ The configuration file to parse and validate
         $Return = $false
 
         #Target Section Valid Settings
-        $Validated_Delivery_Types = @("Citrix","VMware","RAS")
-        $Validated_Clone_Types = @("MCS", "Instant Clones", "Full Clone", "Linked Clone", "PVS")
+        $Validated_Delivery_Types = @("Citrix","VMware","RAS", "Microsoft")
+        $Validated_Clone_Types = @("MCS", "Instant Clones", "Full Clone", "Linked Clone", "PVS", "Full")
         $Validated_SessionCfg =@("ICA","PCoIP","Blast","RDP")
         $Validated_Workload_Profiles = @("Task Worker", "Knowledge Worker")
         $Validated_Session_Support = @("multisession", "singlesession")
@@ -34,7 +34,7 @@ The configuration file to parse and validate
         $Validated_User_Assignments = @("DEDICATED","FLOATING")
         $Validated_Provisioning_Modes = @("AllMachinesUpFront","OnDemand")
         #Test Section Valid Settings
-        $Validated_Bucket_Names = @("LoginDocuments", "LoginRegression")
+        $Validated_Bucket_Names = @("LoginDocuments", "LoginRegression", "AzurePerfData")
     }
 
     process{

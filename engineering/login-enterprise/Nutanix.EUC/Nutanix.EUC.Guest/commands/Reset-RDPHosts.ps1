@@ -7,15 +7,9 @@ function Reset-RDPHosts {
         [Parameter(Mandatory = $false)][switch]$RebootHosts,
         [Parameter(Mandatory = $false)][switch]$ClearProfiles,
         [Parameter(Mandatory = $true)][string]$UserName,
-        [Parameter(Mandatory = $true)][string]$Password
+        [Parameter(Mandatory = $true)][string]$Password,
+        [Parameter(Mandatory = $true)][string]$DomainName
     )
-
-    if (($PSVersionTable).OS -like "Linux*"){
-        $IsLinux = $true
-    }
-    elseif (($PSVersionTable).OS -like "Windows*"){
-        $IsWindows = $true
-    }
 
     $TotalErrorCount = 0
 
@@ -29,10 +23,11 @@ function Reset-RDPHosts {
 
         # Reboot Each VM in Host List
         foreach ($RDP_Host in $Hosts) {
+            $RDP_Host = ($RDP_Host + "." + $DomainName)
             try {
                 Write-Log -Message "Attempting to reboot RDP Host: $($RDP_Host)" -Level Info
                 if ($IsLinux){
-                    Invoke-Command -ScriptBlock {Restart-Computer -force} -ComputerName $RDP_Host -Credential $credential -Authentication Negotiate -ErrorAction Stop
+                    Invoke-Command -ScriptBlock {Restart-Computer -force} -ComputerName $RDP_Host -Credential $credential -Authentication Negotiate -ErrorAction Stop -AsJob
                 }
                 elseif ($IsWindows){
                     Restart-Computer -ComputerName $RDP_Host -Force -Credential $credential -ErrorAction Stop
@@ -58,7 +53,8 @@ function Reset-RDPHosts {
 
             #Validate Hosts are back online
             foreach ($RDP_Host in $Hosts) {
-            
+                $RDP_Host = ($RDP_Host + "." + $DomainName)
+
                 $Host_Validation_Iteration = 1
         
                 while (($Hosts_Alive -notcontains $RDP_Host)) {
@@ -111,6 +107,7 @@ function Reset-RDPHosts {
     #Now proceed with DelProf
     if ($ClearProfiles.IsPresent) {
         foreach ($RDP_Host in $Hosts) {
+            $RDP_Host = ($RDP_Host + "." + $DomainName)
             try {
                 Write-Log -Message "Cleaning Local Profiles after Reboot for RDP Host: $($RDP_Host)" -Level Info
                 if ($IsLinux){

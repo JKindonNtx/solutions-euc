@@ -77,9 +77,10 @@ Param(
 #endregion Params
 
 
-#$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\W22-1VM.jsonc"
+#$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\W22-1VM-Azure-Test.jsonc"
 #$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-LoginEnterpriseGlobal.jsonc"
 #$Type = "RDP"
+#$AzureMode = $true
 #region Variables
 # ============================================================================
 # Variables
@@ -626,12 +627,18 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         foreach ($RDP_Host in $VSI_Target_RDP_Hosts) {
             try {
                 Write-Log -Message "Validating RDP Connectivity to $($RDP_Host)" -Level Info
-                $Test_Host_Connection = Test-NetConnection -ComputerName $RDP_Host -port 3389 -ErrorAction Stop
+                if ($IsWindows){
+                    $Test_Host_Connection = Test-NetConnection -ComputerName ($RDP_Host + "." + $VSI_Target_DomainName) -port 3389 -ErrorAction Stop
+                }
+                elseif ($IsLinux){
+                    $Test_Host_Connection = Test-Connection -ComputerName ($RDP_Host + "." + $VSI_Target_DomainName) -TcpPort 3389 -ErrorAction Stop
+                }
+                
                 Write-Log -Message "Successfully connected to $($RDP_Host)" -Level Info
             }
             catch {
                 Write-Log -Message "Failed to connect to host $($RDP_Host)" -Level Error
-                Break # Replace with Exit 1
+                Exit 1
             }
         }
     }
@@ -947,7 +954,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             }
 
             $params = @{
-                Hosts         = $VSI_Target_RDP_Hosts 
+                Hosts         = $VSI_Target_RDP_Hosts
+                DomainName    = $VSI_Target_DomainName 
                 MaxIterations = 4 
                 SleepTime     = 30 
                 RebootHosts   = $true
@@ -964,7 +972,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             }
             else {
                 Write-Log -Message "Failures Found when preparing RDP Hosts." -Level Warn
-                #What do we want to do here?
+                Exit 1
             }
         }
 
@@ -974,6 +982,14 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #----------------------------------------------------------------------------------------------------------------------------
         $FolderName = "$($NTNXTestname)_Run$($i)"
         $OutputFolder = "$ScriptRoot\results\$FolderName"
+        try {
+            Write-Log -Message "Creating output directory $($OutputFolder)" -Level Info
+            if (-not (Test-Path $OutputFolder)) { New-Item -ItemType Directory -Path $OutputFolder | Out-Null } -ErrorAction stop
+        }
+        catch {
+            Write-Log -Message $_ -Level Error
+        }
+
         #endregion Configure Folder Details for output
 
         #region Start monitoring Boot phase
@@ -1086,7 +1102,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
 
         if ($Type -eq "RDP") {
-            $MasterImageDNS = [System.Net.Dns]::GetHostEntry(($VSI_Target_RDP_Hosts | Select-Object -First 1)).HostName
+            $MasterImageDNS = ($VSI_target_RDP_hosts | Select-Object -First 1) + "." + $VSI_Target_DomainName
         }
 
         #region Update Test Dashboard
@@ -1123,7 +1139,17 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         try {
             Write-Log -Message "Getting Image Tattoo" -Level Info
-            $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTattoo } -ErrorAction Stop 
+            if ($IsLinux) {
+                $user = $VSI_Domain_LDAPUsername
+                $pass = ConvertTo-SecureString $VSI_Domain_LDAPPassword -AsPlainText -Force
+                $credential = New-Object System.Management.Automation.PSCredential($user, $pass)
+
+                $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTatoo } -Credential $credential -Authentication Negotiate -ErrorAction Stop
+            }
+            elseif ($IsWindows){
+                $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTatoo } -ErrorAction Stop
+            }
+             
             $NTNXInfra.Target.ImagesToTest.TargetOS = $Tattoo.TargetOS
             $NTNXInfra.Target.ImagesToTest.TargetOSVersion = $Tattoo.TargetOSVersion
             $NTNXInfra.Target.ImagesToTest.OfficeVersion = $Tattoo.OfficeVersion
@@ -1958,7 +1984,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv"
             $Started = $vsiresult.started
             $BucketName = $($NTNXInfra.Test.BucketName)
-
+            #Import-Module C:\DevOps\solutions-euc\engineering\login-enterprise\Nutanix.EUC\Nutanix.EUC.Reporting\Nutanix.EUC.Reporting.psd1 -force
             # Loop through the test run data files and process each one
             foreach ($File in $Files) {
                 if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*") -or ($File.Name -like "VM Perf Metrics*")) {
@@ -1976,7 +2002,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                     Write-Log -Message "Skipped uploading File $($File.Name) to Influx" -Level Info
                 }
             }
-
             #region Upload Files Hosting Data to Influx
             if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
                 Write-Log -Message "Uploading Files Cluster $($VSI_Target_Files_Cluster_CVM) Metrics to Influx" -Level Info
