@@ -32,7 +32,7 @@
         hostname: "{{ vm_name }}"
         domain_admin_user: "{{ ansible_domain_user }}"
         domain_admin_password: "{{ ansible_domain_password }}"
-        domain_ou_path: "{{ domain_ou_path }}"
+        #domain_ou_path: "{{ domain_ou_path }}"
         state: domain
         reboot: true
       register: domain_join
