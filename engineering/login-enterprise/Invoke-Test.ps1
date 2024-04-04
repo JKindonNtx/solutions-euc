@@ -984,7 +984,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $OutputFolder = "$ScriptRoot\results\$FolderName"
         try {
             Write-Log -Message "Creating output directory $($OutputFolder)" -Level Info
-            if (-not (Test-Path $OutputFolder)) { New-Item -ItemType Directory -Path $OutputFolder | Out-Null } -ErrorAction stop
+            if (-not (Test-Path $OutputFolder)) { New-Item -ItemType Directory -Path $OutputFolder | Out-Null }
         }
         catch {
             Write-Log -Message $_ -Level Error
