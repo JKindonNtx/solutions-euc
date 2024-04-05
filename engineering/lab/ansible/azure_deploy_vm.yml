@@ -79,6 +79,7 @@
     - role: install_ms_office_2021_x64
     - role: run_ms_file_types
     #- role: run_software_inventory_corp_it
+    #- role: run_cust_imageoptimize_ms_vdot
   tasks:
 
   - name: "Search-only, return list of found updates (if any), log to C:\\ansible_wu.txt: {{ vm_name }}"

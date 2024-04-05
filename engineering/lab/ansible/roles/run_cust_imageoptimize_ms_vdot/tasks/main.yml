@@ -1,0 +1,45 @@
+---
+# Create Directory
+- name: "Create directory structure for VDOT: {{ vm_name }}"
+    ansible.windows.win_file:
+      path: C:\VDOT
+      state: directory
+
+# Copy Data
+- name: "Copy VDOT: {{ vm_name }}"
+    win_copy:
+      src: "{{ sourcefiles_path }}\\Apps\\Microsoft\\VDOT\\Virtual-Desktop-Optimization-Tool-2.2.2009.1.zip"
+      dest: C:\VDOT\Virtual-Desktop-Optimization-Tool-2.2.2009.1.zip
+      remote_src: true
+      force: yes
+    become: yes
+    become_method: runas
+    become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+
+# Prep Optimization Content
+- name: "Setup Optimization Tool: {{ vm_name }}"
+  ansible.windows.win_powershell:
+    script: |
+      Unblock-File C:\VDOT\Virtual-Desktop-Optimization-Tool-2.2.2009.1.zip
+      Expand-Archive C:\VDOT\Virtual-Desktop-Optimization-Tool-2.2.2009.1.zip -DestinationPath C:\VDOT\ -Force
+      push-location C:\VDOT\Virtual-Desktop-Optimization-Tool-2.2.2009.1
+
+# Copy Data
+- name: "Copy VDOT AppX Packages Config JSON: {{ vm_name }}"
+    win_copy:
+      src: "{{ sourcefiles_path }}\\Apps\\Microsoft\\VDOT\\AppxPackages.json"
+      dest: c:\VDOT\Virtual-Desktop-Optimization-Tool-2.2.2009.1\2009\ConfigurationFiles\AppxPackages.json
+      remote_src: true
+      force: yes
+    become: yes
+    become_method: runas
+    become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+
+# Run Optimizations
+- name: "Run Optimization Tool: {{ vm_name }}"
+  ansible.windows.win_powershell:
+    script: |
+      & c:\VDOT\Virtual-Desktop-Optimization-Tool-2.2.2009.1\Windows_VDOT.ps1 -Optimizations All -AdvancedOptimizations All -AcceptEULA
+
+- name: Reboot after Optimizations
+  ansible.windows.win_reboot:
