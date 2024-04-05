@@ -124,6 +124,12 @@ if ($PSVersionTable.PSVersion.Major -lt 5) {
     Exit 1
 }
 
+if ($PSVersionTable.PSVersion.Major -lt 7 -and $Type -eq "RDP") {
+    #No PowerShell 5.1 to be used. Use a container or use PS 7. 
+    Write-Log -Message "You must use PowerShell 7 to run this script with RDP tests" -Level Warn
+    Exit 1
+}
+
 #endregion PowerShell Versions
 
 #region Citrix Snapin Import
@@ -984,10 +990,11 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $OutputFolder = "$ScriptRoot\results\$FolderName"
         try {
             Write-Log -Message "Creating output directory $($OutputFolder)" -Level Info
-            if (-not (Test-Path $OutputFolder)) { New-Item -ItemType Directory -Path $OutputFolder | Out-Null } -ErrorAction stop
+            if (-not (Test-Path $OutputFolder)) { New-Item -ItemType Directory -Path $OutputFolder -ErrorAction Stop | Out-Null }
         }
         catch {
             Write-Log -Message $_ -Level Error
+            Exit 1
         }
 
         #endregion Configure Folder Details for output
@@ -2073,22 +2080,25 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
         Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
 
-        if ($VSI_Test_SkipLEMetricsDownload -ne $true){ 
-            $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -RunNumber $i -TestName $NTNXTestname -TestResult $Testresult
+        if ($VSI_Test_SkipLEMetricsDownload -ne $true){
+            if ( -not $AzureMode.IsPresent) {
+                # This is not an Azure configuration
+                $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -RunNumber $i -TestName $NTNXTestname -TestResult $Testresult
 
-            if (Test-Path -path $Filename) {
-                $Params = @{
-                    ImageURL     = $FileName 
-                    SlackToken   = $NTNXInfra.Testinfra.SlackToken 
-                    SlackChannel = $NTNXInfra.Testinfra.SlackChannel 
-                    SlackTitle   = "$($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)" 
-                    SlackComment = "CPU and EUX score of $($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)"
+                if (Test-Path -path $Filename) {
+                    $Params = @{
+                        ImageURL     = $FileName 
+                        SlackToken   = $NTNXInfra.Testinfra.SlackToken 
+                        SlackChannel = $NTNXInfra.Testinfra.SlackChannel 
+                        SlackTitle   = "$($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)" 
+                        SlackComment = "CPU and EUX score of $($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)"
+                    }
+                    Update-VSISlackImage @params
+                    $Params = $null
                 }
-                Update-VSISlackImage @params
-                $Params = $null
-            }
-            else {
-                Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Level Warn
+                else {
+                    Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Level Warn
+                }
             }
         }
         #endregion Slack update
