@@ -988,6 +988,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #----------------------------------------------------------------------------------------------------------------------------
         $FolderName = "$($NTNXTestname)_Run$($i)"
         $OutputFolder = "$ScriptRoot\results\$FolderName"
+        
         try {
             Write-Log -Message "Creating output directory $($OutputFolder)" -Level Info
             if (-not (Test-Path $OutputFolder)) { New-Item -ItemType Directory -Path $OutputFolder -ErrorAction Stop | Out-Null }
