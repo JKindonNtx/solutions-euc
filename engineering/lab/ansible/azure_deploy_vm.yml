@@ -73,8 +73,9 @@
     - role: install_ms_rds_role
       when: "'Server' in ansible_facts.os_name"
     - role: install_ms_net_framework_core_3.5
+      when: "'Server' in ansible_facts.os_name"
     - role: install_ms_visual_c_2013u5
-    - role: install_ms_edge_116
+    - role: install_latest_ms_edge
     - role: install_adobe_reader_dc
     - role: install_ms_office_2021_x64
     - role: run_ms_file_types
