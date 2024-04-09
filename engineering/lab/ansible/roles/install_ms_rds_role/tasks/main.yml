@@ -3,6 +3,8 @@
     name: RDS-RD-Server
     state: present
     include_management_tools: yes
+  register: role_install_rds_server
 
 - name: Reboot to complete RDS Role
   ansible.windows.win_reboot:
+  when: role_install_rds_server.reboot_required

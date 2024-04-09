@@ -1,0 +1,4 @@
+---
+- name: Restart After Install
+  ansible.windows.win_reboot:
+  listen: "Restart After Install"
