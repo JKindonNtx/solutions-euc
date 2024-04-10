@@ -58,7 +58,7 @@ if($Bucket -eq "LoginDocuments"){
         $MainBucket = $Bucket
         $BootBucket = "BootBucketRegression"
     } else {
-        if($Bucket -eq "Tests"){
+        if($Bucket -eq "Tests" -or $Bucket -eq "AzurePerfData"){
             $MainBucket = $Bucket
         } else {
             Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: Bucket not currently supported. Exit script"
