@@ -1,14 +1,14 @@
 ---
-vm_name: "f16s-v2-w10ms"
-vm_sku: "Standard_F16s_v2"
+vm_name: "d8s-v3-w11ms"
+vm_sku: "Standard_D8s_v3"
 license_type: "Windows_Client"
 disk_sku: "Premium_LRS"
 disk_size: 127
 admin_username: "NtnxAzureAdmin"
 admin_password: "this_is@VeryNaughtyPW1234$$"
-offer: "Windows-10"
+offer: "Windows-11"
 publisher: "MicrosoftWindowsDesktop"
-sku: "win10-22h2-avd-g2"
+sku: "win11-23h2-avd"
 accelerated_networking: true
 winrm_timeout: 30 #600
 winrm_port: 5986

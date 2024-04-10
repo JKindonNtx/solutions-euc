@@ -1,6 +1,6 @@
 ---
-vm_name: "f16s-v2-ws2022"
-vm_sku: "Standard_F16s_v2"
+vm_name: "d8s-v4-ws2022"
+vm_sku: "Standard_D8s_v4"
 license_type: "Windows_Server"
 disk_sku: "Premium_LRS"
 disk_size: 127
