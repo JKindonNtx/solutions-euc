@@ -1152,10 +1152,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 $pass = ConvertTo-SecureString $VSI_Domain_LDAPPassword -AsPlainText -Force
                 $credential = New-Object System.Management.Automation.PSCredential($user, $pass)
 
-                $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTatoo } -Credential $credential -Authentication Negotiate -ErrorAction Stop
+                $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTattoo } -Credential $credential -Authentication Negotiate -ErrorAction Stop
             }
             elseif ($IsWindows){
-                $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTatoo } -ErrorAction Stop
+                $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTattoo } -ErrorAction Stop
             }
              
             $NTNXInfra.Target.ImagesToTest.TargetOS = $Tattoo.TargetOS
