@@ -16,7 +16,12 @@ function Wait-LETest {
             Start-Sleep -Seconds 5
             $TestRun = Get-LETestRuns -testId $testId | Select-Object -Last 1
             #$CurrentDate = (Get-Date).ToUniversalTime()
-            $CurrentDate = Get-Date
+            if ($PSVersionTable.PSVersion.Major -lt 6) {
+                $CurrentDate = Get-Date
+            } else {
+                $CurrentDate = (Get-Date).AddHours(7)
+            }
+
             If ($null -ne $TestRun.Started) {
                 $Timespan = New-TimeSpan (get-date $TestRun.Started) $CurrentDate
                 Write-Log -Update -Message "Test state: $($TestRun.State), $([Math]::Round($TimeSpan.TotalMinutes,0)) of $($test.rampupDurationInMinutes + $test.testDurationInMinutes + $test.rampDownDurationInMinutes ) estimated minutes elapsed, $($TestRun.loginCounts.successCount)/$($TestRun.loginCounts.totalCount) logins, $($TestRun.engineCounts.successCount)/$($TestRun.engineCounts.totalCount) engines, $($TestRun.appExecutionCounts.successCount)/$($TestRun.appExecutionCounts.totalCount) applications"

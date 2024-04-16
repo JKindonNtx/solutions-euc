@@ -150,6 +150,52 @@ function Set-LELoadTestv7 {
                 )   
             } | ConvertTo-Json
         }
+        "Microsoft RDS" {
+            $NewTestBody = @{
+                type           = "LoadTest"
+                name           = $TestName
+                euxEnabled     = $VSI_Target_EUXEnabled
+                description    = $ConnectorParams.resource
+                connector      = @{
+                    type              = "RDP"
+                    hostList          = $ConnectorParams["hostList"]
+                    suppressCertWarn  = $ConnectorParams["suppressCertWarn"]
+                    displayResolution = $ConnectorParams["displayResolution"]
+                }
+                accountGroups  = @((Get-LEAccountGroups | Where-Object { $_.Name -eq $AccountGroupName } | Select-Object -ExpandProperty groupId))
+                launcherGroups = @((Get-LELauncherGroups | Where-Object { $_.Name -eq $LauncherGroupName } | Select-Object -ExpandProperty id))
+            } | ConvertTo-Json -Depth 4
+
+            $UpdateTestBody = @{
+                type                      = "LoadTest"
+                numberOfSessions          = $SessionAmount
+                rampUpDurationInMinutes   = $RampupInMinutes
+                testDurationInMinutes     = $DurationInMinutes
+                name                      = $TestName
+                euxEnabled                = $VSI_Target_EUXEnabled
+                sessionMetricsEnabled     = $VSI_Target_SessionMetricsEnabled
+                sessionMetricScheduleRate = $SessionAmount
+                sessionMetricGroupKey     = $SessionMetricGroupKey
+                description               = $ConnectorParams["resource"]
+                connectionResourcesUpdate = @{
+                    connector      = @{
+                        type              = "RDP"
+                        hostList          = $ConnectorParams["hostList"]
+                        suppressCertWarn  = $ConnectorParams["suppressCertWarn"]
+                        displayResolution = $ConnectorParams["displayResolution"]
+                    }
+                    accountGroups  = @((Get-LEAccountGroups | Where-Object { $_.Name -eq $AccountGroupName } | Select-Object -ExpandProperty groupId))
+                    launcherGroups = @((Get-LELauncherGroups | Where-Object { $_.Name -eq $LauncherGroupName } | Select-Object -ExpandProperty id))
+                }
+                steps                     = @(
+                    @{
+                        type               = "AppGroupReference"
+                        applicationGroupId = (Get-LEApplicationGroups | Where-Object { $_.Name -Like "$($Workload)*" }).Id#@((Get-LEApplicationGroups | Where-Object { $_.Name -Like "$($Workload)*" } | Select-Object -ExpandProperty id))
+                        isEnabled          = $true
+                    }
+                )   
+            } | ConvertTo-Json -Depth 4
+        }
     }
 
     if ($null -eq $ExistingTest) {
