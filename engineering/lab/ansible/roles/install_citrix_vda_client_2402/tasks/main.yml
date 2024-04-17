@@ -1,0 +1,26 @@
+---
+# Install Citrix VDA client
+#- name: Create Log Folder
+#  win_file:
+#    path: C:\Logs
+#    state: directory
+
+- name: Reboot before vda install
+  ansible.windows.win_reboot:
+
+- name: Install VDA client
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Citrix\\Client\\VDA 2402\\VDAWorkstationSetup_2402.exe"
+    arguments: /quiet /noreboot /enable_remote_assistance /controllers "{{ citrix_delivery_controllers_2402 }}" /components VDA /mastermcsimage /virtualmachine /installdir "c:\program files\citrix" /enable_hdx_ports /enable_hdx_udp_ports /includeadditional "Citrix Profile Management","Citrix Profile Management WMI Plug-in" /exclude "Citrix Telemetry Service","Citrix Personalization for App-V - VDA","Citrix Universal Print Client" /disableexperiencemetrics
+    state: present
+    expected_return_code: [0, 3, 3010]
+    product_id: '{FB34BE11-343D-46DA-82B4-2E689836DED9}'
+  become: true
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  register: citrix_vda_install
+
+- name: Reboot after VDA
+  ansible.windows.win_reboot:
+  when: citrix_vda_install.changed
+  
