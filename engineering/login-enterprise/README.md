@@ -54,7 +54,7 @@ To execute a test, there are four key pieces of information required by the scri
 -  `ConfigFile`. Mandatory **`String`**. Defines the path to the test configuration file.
 -  `LEConfigFile`. Mandatory **`String`**. Defines the path for the Global Login Enterprise Configuration File.
 -  `ReportConfigFile`. Mandatory **`String`**. Defines the default report configuration file.
--  `Type`. Mandatory **`String`**. Defines the type of test. `"CitrixVAD", "CitrixDaaS", "Horizon", "RAS"`
+-  `Type`. Mandatory **`String`**. Defines the type of test. `"CitrixVAD", "CitrixDaaS", "Horizon", "RAS", "RDP"`
 
 ### Invoke-Test.ps1 Optional Parameters
 
@@ -68,6 +68,7 @@ The below parameters should be set in the `ConfigFile` as a preferential configu
 -  `Force`. Optional. **`Switch`**. Forces a recreation of the desktop pool. Can be set in `LEConfigFile.jsonc`.
 -  `LEAppliance`. Optional. **`String`**. The Login Enterprise Appliance to use. `LE1`,`LE2`,`LE3`,`LE4`. Can be set in `LEConfigFile.jsonc`.
 -  `ValidateOnly`. Optional. **`Switch`**. Will process only the inputs and pre-execution tasks. Will not process any testing. Use for making sure things look good.
+-   `AzureMode`. Optional. **`Switch`**. Will function with an understanding that the script is in Azure and not Nutanix. Nutanix components are excluded. Different data is gathered for influx.
 
 ### Step 1: Getting Started: Planning
 
@@ -94,6 +95,29 @@ To extend monitoring to non-specific infrastructure services, we use `telegraf`,
 -  For `telegraf` based monitoring to work, you must both install `telegraf`, and deploy and appropriate `configuration file` with the `metrics` you are interested in on the server you want to monitor. For example, in a Citrix Session Recording test, we may want to capture, monitor and report on **Microsoft Perfmon Counters** and **Event Log Entries**. To do this, we need a telegraf configuration file on ***each*** Session Recording Server with the appropriate metrics defined. We also need the Telegraf Service installed with the **default** service name (`telegraf`).
 -  For each non-standard server you want to monitor, you will can either start the service manually, or allow the script to do so by defining the appropriate values in the `ConfigFile.jsonc` configuration file. This will both start and stop the service on the defined machines as part of the test run.
 -  Given that this data is custom, there are no pre-defined grafana reports. You will need to identify what you would like to see, and how you would like the data presented. We capture the data into `InfluxDB` in a specific bucket.
+
+### Azure VM Monitoring
+
+If testing Azure VMs, we have some changes to data capturing and reporting. There are multiple touchpoints for controlling Azure Data capturing listed below:
+
+1. The `test.json` file must be updated to include `AzureGuestDetails` components including `IsAzureVM` which is boolean value.
+2. The image tattoo job must have been run inside the Azure Image. This will poll the IMDS service along with additional in-guest tasks to write the appropriate values to the registry.
+
+The following logic applies to Azure VM Metric gathering and reporting:
+
+1. The `test.json` file is set to enable Azure VM Guest mode (Boolean).
+2. The `cust-image-tattoo.ps1` script captures and sets Azure specific guest details in-guest.
+3. The `Invoke-Test.ps1` retrieves the registry details for the VM. It then updates that `$NTNXInfra` with the appropriate values and exports to `testconfig.json`.
+4. The `Start-InfluxUpload.ps1` function imports the `testconfig.json`. It checks to see if the `$IsAzureVM` is `true` (via a parameter). If so, a new set of Tags are written to map existing Tags to the new values imported from the `testconfig.json`. If not, the existing Tag logic is used.
+
+To add metrics, the following touch points apply:
+
+1.  Build the logic into the tattoo script to create the reg value: for example, `Azure_VM_Bios_Name`
+2.  Define the Item Name in the `config.json` file under the `AzureGuestDetails` Block. For example, `"VM_Bios_Name": "", //Filled via Image Tattoo job`. This is JSON format, so be careful.
+3.  Add the value into the `Invoke-Test.ps1` script. For example, `$NTNX.Infra.AzureGuestDetails.VM_Bios_Name = $Tattoo.Azure_VM_Bios_Name`
+4.  Add the tag into the `Start-InfluxUpload.ps1` Function Eg: `"InfraBIOS=$($JSON.AzureGuestDetails.VM_Bios_Name)," +`
+
+Azure specific testing data is sent to a different Influx Bucket and new Grafana reports are created accordingly.
 
 ### Useful URLS
 

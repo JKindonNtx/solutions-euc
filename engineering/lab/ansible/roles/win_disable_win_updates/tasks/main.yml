@@ -1,0 +1,18 @@
+---
+# Disable Windows Updates Entirely
+- name: Disable Windows Updates
+  ansible.windows.win_powershell:
+    script: |
+      ## Disable auto startup for Windows Update
+      Set-Itemproperty -path 'HKLM:\SYSTEM\CurrentControlSet\Services\UsoSvc' -Name 'Start' -value 4
+      Set-Itemproperty -path 'HKLM:\SYSTEM\CurrentControlSet\Services\WaaSMedicSvc' -Name 'Start' -value 4
+      Set-Itemproperty -path 'HKLM:\SYSTEM\CurrentControlSet\Services\wuauserv' -Name 'Start' -value 4
+      
+      ## Kill the Scheduled Task XML configs
+      remove-Item -Path "C:\Windows\System32\Tasks\Microsoft\Windows\WaaSMedic\PerformRemediation"
+      remove-Item -Path "C:\Windows\System32\Tasks\Microsoft\Windows\WaaSMedic\"
+      remove-Item -Path "C:\Windows\System32\Tasks\Microsoft\Windows\WindowsUpdate\Scheduled Start"
+
+      ## Kill Scheduled Tasks
+      Unregister-ScheduledTask -TaskName "PerformRemediation" -Confirm:$false
+      Unregister-ScheduledTask -TaskName "Scheduled Start" -Confirm:$false

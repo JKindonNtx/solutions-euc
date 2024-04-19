@@ -1,0 +1,23 @@
+- name: "Optimize VM with VDOT and Delprof"
+  hosts: all
+  vars_files:
+    - ./azure_vars/vars_azure_common.yml
+  gather_facts: yes
+  vars:
+    ansible_user: "{{ ansible_domain_user }}"
+    ansible_password: "{{ ansible_domain_password }}"
+    ansible_port: 5986
+    ansible_connection: winrm
+    ansible_winrm_transport: ntlm
+    ansible_winrm_server_cert_validation: ignore
+  roles:
+    - role: run_cust_imageoptimize_ms_vdot
+  tasks:
+
+  - name: "RunDelprof"
+    ansible.windows.win_powershell:
+      script: |
+        $DelProfLocation = "c:\tools\delprof\"
+        $AppExe = "Delprof2.exe"
+        $Arguments = "/id:vsile* /u /q /i"
+        Start-Process -FilePath "$DelProfLocation\$AppExe" -ArgumentList $Arguments -NoNewWindow
