@@ -49,3 +49,9 @@
     name: edgeupdatem
     start_mode: disabled
     state: stopped
+
+- name: Disable Edge Schedule Tasks
+  ansible.windows.win_powershell:
+    script: |
+    Disable-ScheduledTask -TaskName MicrosoftEdgeUpdateTaskMachineCore
+    Disable-ScheduledTask -TaskName MicrosoftEdgeUpdateTaskMachineUA     

@@ -16,7 +16,7 @@ function Set-VSICTXDesktopPool {
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][String]$ZoneName,
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][String]$EntitledGroup,
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][boolean]$SkipImagePrep,
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][String]$FunctionalLevel = "L7_22",
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][String]$FunctionalLevel,
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][String]$DDC
     )
 
