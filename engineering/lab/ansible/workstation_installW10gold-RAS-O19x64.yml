@@ -11,6 +11,7 @@
   - install_ms_office_2019_x64
   - run_ms_file_types
   - install_google_chrome
+  - install_ms_edge_122
   #- run_optimize
   - install_parallels_ras_guest_agent
   - run_image_tattoo

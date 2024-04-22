@@ -1,0 +1,17 @@
+---
+
+- name: Install PVS Target Device
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Citrix\\Provisioning\\2402\\PVS_Device_x64.exe"
+    arguments: /s /v"/qn /norestart"
+    state: present
+    expected_return_code: [0, 3, 3010]
+    product_id: '{CF6B2043-3410-5ED5-BB59-C34F18A087A2}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  register: citrix_pvs_install
+
+- name: Reboot after PVS Target Install
+  ansible.windows.win_reboot:
+  when: citrix_pvs_install.reboot_required

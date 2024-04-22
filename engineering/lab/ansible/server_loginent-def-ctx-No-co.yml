@@ -8,7 +8,7 @@
   - install_ms_rds_role
   - install_citrix_vda_server_2203_2
   - install_ms_office_2019_x64
-  - install_latest_ms_edge
+  - install_ms_edge_122
   - run_ms_file_types
   - run_image_tattoo
   - run_software_inventory_corp_it
