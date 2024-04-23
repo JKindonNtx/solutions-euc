@@ -26,7 +26,7 @@
         "DDC": "WS-CDC1.wsperf.nutanix.com", // Citrix Delivery controller. TestType: Citrix
         "ZoneName": "Primary", // Zonename in Citrix. TestType: Citrix
         "HypervisorConnection": "DRMNX8KB-A-AHV", // Hypervisor connection as known in the Citrix Host connection. AHV-RPTEST83-LAN for example
-        "FunctionalLevel": "L7_9", // L5, L7, L7_6, L7_7, L7_8, L7_9, L7_20, L7_25
+        "FunctionalLevel": "L7_9", // L5, L7, L7_6, L7_7, L7_8, L7_9, L7_20, L7_25, L7_34 (2402)
         "SkipImagePrep": true, //Optionally skip imageprep false of MCS if you image is already generalized.
         "StorefrontURL": "http://storefront.wsperf.nutanix.com/Citrix/Store",
         "MaxRecordCount": 5000, //The max number of machines to retrieve in a CVAD or DaaS Get-BrokerMachine Call
