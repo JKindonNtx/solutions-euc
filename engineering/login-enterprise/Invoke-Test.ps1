@@ -1153,8 +1153,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 $credential = New-Object System.Management.Automation.PSCredential($user, $pass)
 
                 $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTattoo } -Credential $credential -Authentication Negotiate -ErrorAction Stop
-            }
-            elseif ($IsWindows){
+            } 
+            else {
                 $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTattoo } -ErrorAction Stop
             }
              
