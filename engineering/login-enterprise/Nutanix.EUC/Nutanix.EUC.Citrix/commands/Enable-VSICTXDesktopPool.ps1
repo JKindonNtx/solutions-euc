@@ -14,10 +14,18 @@ Function Enable-VSICTXDesktopPool {
         $VMnameprefix,
         $CloneType,
         $Hosts,
-        $Type
+        $Type,
+        ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
+        [Parameter(Mandatory = $false)][int]$MaxRecordCount,
+        [Parameter(Mandatory = $false)][bool]$ForceAlignVMToHost,
+        [Parameter(Mandatory = $false)][string]$TargetCVMAdmin,
+        [Parameter(Mandatory = $false)][string]$TargetCVMPassword,
+        [Parameter(Mandatory = $false)][string]$HostCount,
+        [Parameter(Mandatory = $false)][string]$Run
+        ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
     )
 
-    $MaxRecordCount = "5000"
+    #$MaxRecordCount = "5000"
     $Boot = "" | Select-Object -Property bootstart,boottime
 
     # Get Auth - Check this Dave!
@@ -125,6 +133,40 @@ Function Enable-VSICTXDesktopPool {
         Get-BrokerMachine -Filter {CatalogName -eq $DesktopPoolName -and DesktopGroupName -eq $null} -MaxRecordCount $MaxRecordCount | Select-Object -Property MachineName | Add-BrokerMachine -DesktopGroup $DesktopPoolName
     } 
     # Set affinity to hosts
+
+    ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
+    if (($HypervisorType) -eq "AHV" -and ($ForceAlignVMToHost)) { # ALTER THIS CONTROL BLOCK HERE - NEED A NEW JSON ENTRY, Passed into the parent function here
+
+        $params = @{
+            DDC               = $DDC
+            MachineCount      = $NumberOfVMs
+            HostCount         = $HostCount
+            ClusterIP         = $ClusterIP
+            CVMsshpassword    = $CVMSSHPassword
+            TargetCVMAdmin    = $TargetCVMAdmin 
+            TargetCVMPassword = $TargetCVMPassword 
+            DesktopGroupName  = $DesktopPoolName
+            Run               = $Run
+            MaxRecordCount    = $MaxRecordCount
+        }
+        Set-NTNXHostAlignment @params
+        $Params = $null
+    }
+
+    Write-Log "Hypervisortype = $HypervisorType and Affinity is set to $Affinity"
+    if (($HypervisorType) -eq "AHV" -And ($Affinity) -and (-not $ForceAlignVMToHost)) {
+        $params = @{
+            ClusterIP      = $ClusterIP
+            CVMsshpassword = $CVMSSHPassword
+            VMnameprefix   = $VMnameprefix
+            hosts          = $hosts
+            Run            = $Run
+        }
+        Set-AffinitySingleNode @params
+        $Params = $null
+    }
+    ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
+    <#
     Write-Log "Hypervisortype = $HypervisorType and Affinity is set to $Affinity"
     if (($HypervisorType) -eq "AHV" -And ($Affinity)) {
         Write-Log "Set Affinity to Host with IP $Hosts."
@@ -138,6 +180,7 @@ Function Enable-VSICTXDesktopPool {
         Remove-SSHSession -Name $Session | Out-Null
         Write-Log -Message "Set Affinity Finished." -Level Info
     }
+    #>
 
     # End set affinity to hosts
     $Boot.bootstart = get-date -format o

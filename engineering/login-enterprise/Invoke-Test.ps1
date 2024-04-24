@@ -76,11 +76,6 @@ Param(
 )
 #endregion Params
 
-
-#$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\W22-1VM-Azure-Test.jsonc"
-#$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-LoginEnterpriseGlobal.jsonc"
-#$Type = "RDP"
-#$AzureMode = $true
 #region Variables
 # ============================================================================
 # Variables
@@ -491,7 +486,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
     #endregion Setup Test Dashboard Data
 
-    #region Set affinity
+    #region Set affinity Config
     #----------------------------------------------------------------------------------------------------------------------------
     if (-not $AzureMode.IsPresent) {
         # This is not an Azure configuration
@@ -528,7 +523,11 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
         Write-Log -Message "Nutanix Host Affinity is set to: $($NTNXInfra.Testinfra.SetAffinity)" -Level Info
     }
-    #endregion Set affinity
+    #endregion Set affinity Config
+
+    ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
+    # Need to check the above logic here to cater for Override
+    ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
 
     $NTNXInfra.Target.ImagesToTest = $ImageToTest
 
@@ -892,7 +891,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $VSI_Target_HypervisorConnection + "\" + $VSI_Target_HypervisorNetwork + ".network" }
             $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
 
-            ## Placeholder Block to capture the relevent settings below - will change with different tech
             $params = @{
                 ParentVM             = $ParentVM
                 HypervisorConnection = $VSI_Target_HypervisorConnection
@@ -1060,18 +1058,26 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
             $params = @{
-                DesktopPoolName = $VSI_Target_DesktopPoolName
-                NumberofVMs     = $VSI_Target_NumberOfVMS
-                PowerOnVMs      = $VSI_Target_PowerOnVMs
-                DDC             = $VSI_Target_DDC
-                HypervisorType  = $NTNXInfra.Testinfra.HypervisorType
-                Affinity        = $NTNXInfra.Testinfra.SetAffinity
-                ClusterIP       = $NTNXInfra.Target.CVM
-                CVMSSHPassword  = $NTNXInfra.Target.CVMsshpassword
-                VMnameprefix    = $NTNXInfra.Target.NamingPattern
-                CloneType       = $VSI_Target_CloneType
-                Hosts           = $NTNXInfra.Testinfra.Hostip
-                Type            = $Type
+                DesktopPoolName    = $VSI_Target_DesktopPoolName
+                NumberofVMs        = $VSI_Target_NumberOfVMS
+                PowerOnVMs         = $VSI_Target_PowerOnVMs
+                DDC                = $VSI_Target_DDC
+                HypervisorType     = $NTNXInfra.Testinfra.HypervisorType
+                Affinity           = $NTNXInfra.Testinfra.SetAffinity
+                ClusterIP          = $NTNXInfra.Target.CVM
+                CVMSSHPassword     = $NTNXInfra.Target.CVMsshpassword
+                VMnameprefix       = $NTNXInfra.Target.NamingPattern
+                CloneType          = $VSI_Target_CloneType
+                Hosts              = $NTNXInfra.Testinfra.Hostip
+                Type               = $Type
+                ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
+                ForceAlignVMToHost = $VSI_Target_ForceAlignVMToHost ## NEED TO CREATE THIS IN THE JSON!
+                TargetCVMAdmin     = $VSI_Target_CVM_admin
+                TargetCVMPassword  = $VSI_Target_CVM_password
+                Run                = $CurrentRunPhase
+                MaxRecordCount     = $VSI_Target_MaxRecordCount
+                HostCount          = $VSI_Target_NodeCount
+                ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
             }
             $Boot = Enable-VSICTXDesktopPool @params
     
@@ -1207,7 +1213,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #region Set number of sessions per launcher
         #----------------------------------------------------------------------------------------------------------------------------
-
         #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
@@ -1295,7 +1300,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Update Test Dashboard
 
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
-            ## Placeholder Block to capture the relevent settings below - will change with different tech
             $Params = @{
                 TestName           = $VSI_Test_Name
                 SessionAmount      = $VSI_Target_NumberOfSessions
@@ -1348,13 +1352,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         
         #endregion Update the test params/create test if not exist
 
-        #region Wait for VM's to have settled down
+        #region Wait for VMs to have settled down
         #----------------------------------------------------------------------------------------------------------------------------
         if (-not ($SkipWaitForIdleVMs)) {
             Write-Log -Message "Waiting 60 seconds for VMs to become idle" -Level Info
             Start-Sleep -Seconds 60
         }
-        #endregion Wait for VM's to have settled down
+        #endregion Wait for VMs to have settled down
 
         #region Stop and cleanup monitoring job Boot phase
         #----------------------------------------------------------------------------------------------------------------------------
@@ -2143,6 +2147,23 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
     }
     #endregion Iterate through runs
+
+    ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
+    #region Clear Affinity from VMs
+    if (-not $AzureMode.IsPresent) { 
+        $params = @{
+            ClusterIP = $NTNXInfra.Target.CVM
+            CVMsshpassword = $NTNXInfra.Target.CVMsshpassword
+            VMnameprefix = $NTNXInfra.Target.NamingPattern
+        }
+        $ClearAffinityFromVMS = Set-AffinityClear @Params
+        if ([string]::IsNullOrEmpty($ClearAffinityFromVMS)) {
+            Write-Log -Message "Affinity was not removed from VMs. Please check cluster." -Level Warn
+        }
+        $params = $null
+    }
+    #endregion Clear Affinity from VMs
+    ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
 
     #region Analyze Run results
     #----------------------------------------------------------------------------------------------------------------------------
