@@ -1865,7 +1865,7 @@ if ($BootInfo) {
     Add-Content $mdFullFile "### $($Title)"
 
     # Add Boot Information Table
-    $Title = "Boot Parmeters"
+    $Title = "Boot Parameters"
     Write-Screen -Message "Adding $($Title)"
 
     # Get Filtered Data

@@ -12,6 +12,8 @@
     Will strip all HTML and dump a c:\temp\readme_nothtml.MD file
 #>
 
+#$MdFile = "C:\devops\solutions-euc\collateral\scripts\misc\Grafana\Reports\AMD_Win11_Lin\md\README.MD"
+
 #region Params
 # ============================================================================
 # Parameters
@@ -42,11 +44,13 @@ function Write-Screen {
 #endregion Functions
 
 #region Variables
+$mdOutfile = $null
 # ============================================================================
 # Variables
 # ============================================================================
 if (-not $mdOutfile) {
-    $mdOutfile = (($mdfile -replace ".MD","") + "_nohtml.MD")
+    #$mdOutfile = (($mdfile -replace ".MD","") + "_nohtml.MD")
+    $mdOutfile = (($mdfile -replace '\.MD$',"") + "_nohtml.MD")
 }
 if ($mdOutfile -notlike "*.MD") {
     Write-Screen -Message "You must specify a markdown extension of .MD. Setting Markdown file Extension"
@@ -87,6 +91,7 @@ $Table_Images_To_Delete = @(
     "<img src=../images/appsperf.png alt=Applications>"
     "<img src=../images/infrastructure.png alt=Infrastructure Specifics>",
     "<img src=../images/logintimes.png alt=Login Times>"
+    "<img src=../images/bootinfo.png alt=Boot Parameters>"
 )
 
 $Reference_To_Convert = "Nested Table Image References"
@@ -279,4 +284,3 @@ catch {
 #endregion Execute
 
 Exit 0
-
