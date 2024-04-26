@@ -18,6 +18,7 @@ Function Enable-VSICTXDesktopPool {
         ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
         [Parameter(Mandatory = $false)][int]$MaxRecordCount,
         [Parameter(Mandatory = $false)][bool]$ForceAlignVMToHost,
+        [Parameter(Mandatory = $false)][bool]$EnforceHostMaintenanceMode,
         [Parameter(Mandatory = $false)][string]$TargetCVMAdmin,
         [Parameter(Mandatory = $false)][string]$TargetCVMPassword,
         [Parameter(Mandatory = $false)][string]$HostCount,
@@ -138,16 +139,17 @@ Function Enable-VSICTXDesktopPool {
     if (($HypervisorType) -eq "AHV" -and ($ForceAlignVMToHost)) { # ALTER THIS CONTROL BLOCK HERE - NEED A NEW JSON ENTRY, Passed into the parent function here
 
         $params = @{
-            DDC               = $DDC
-            MachineCount      = $NumberOfVMs
-            HostCount         = $HostCount
-            ClusterIP         = $ClusterIP
-            CVMsshpassword    = $CVMSSHPassword
-            TargetCVMAdmin    = $TargetCVMAdmin 
-            TargetCVMPassword = $TargetCVMPassword 
-            DesktopGroupName  = $DesktopPoolName
-            Run               = $Run
-            MaxRecordCount    = $MaxRecordCount
+            DDC                        = $DDC
+            MachineCount               = $NumberOfVMs
+            HostCount                  = $HostCount
+            ClusterIP                  = $ClusterIP
+            CVMsshpassword             = $CVMSSHPassword
+            TargetCVMAdmin             = $TargetCVMAdmin 
+            TargetCVMPassword          = $TargetCVMPassword 
+            DesktopGroupName           = $DesktopPoolName
+            Run                        = $Run
+            MaxRecordCount             = $MaxRecordCount
+            EnforceHostMaintenanceMode = $EnforceHostMaintenanceMode
         }
         Set-NTNXHostAlignment @params
         $Params = $null

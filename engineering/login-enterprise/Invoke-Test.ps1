@@ -1058,25 +1058,26 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
             $params = @{
-                DesktopPoolName    = $VSI_Target_DesktopPoolName
-                NumberofVMs        = $VSI_Target_NumberOfVMS
-                PowerOnVMs         = $VSI_Target_PowerOnVMs
-                DDC                = $VSI_Target_DDC
-                HypervisorType     = $NTNXInfra.Testinfra.HypervisorType
-                Affinity           = $NTNXInfra.Testinfra.SetAffinity
-                ClusterIP          = $NTNXInfra.Target.CVM
-                CVMSSHPassword     = $NTNXInfra.Target.CVMsshpassword
-                VMnameprefix       = $NTNXInfra.Target.NamingPattern
-                CloneType          = $VSI_Target_CloneType
-                Hosts              = $NTNXInfra.Testinfra.Hostip
-                Type               = $Type
+                DesktopPoolName            = $VSI_Target_DesktopPoolName
+                NumberofVMs                = $VSI_Target_NumberOfVMS
+                PowerOnVMs                 = $VSI_Target_PowerOnVMs
+                DDC                        = $VSI_Target_DDC
+                HypervisorType             = $NTNXInfra.Testinfra.HypervisorType
+                Affinity                   = $NTNXInfra.Testinfra.SetAffinity
+                ClusterIP                  = $NTNXInfra.Target.CVM
+                CVMSSHPassword             = $NTNXInfra.Target.CVMsshpassword
+                VMnameprefix               = $NTNXInfra.Target.NamingPattern
+                CloneType                  = $VSI_Target_CloneType
+                Hosts                      = $NTNXInfra.Testinfra.Hostip
+                Type                       = $Type
                 ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
-                ForceAlignVMToHost = $VSI_Target_ForceAlignVMToHost ## NEED TO CREATE THIS IN THE JSON!
-                TargetCVMAdmin     = $VSI_Target_CVM_admin
-                TargetCVMPassword  = $VSI_Target_CVM_password
-                Run                = $CurrentRunPhase
-                MaxRecordCount     = $VSI_Target_MaxRecordCount
-                HostCount          = $VSI_Target_NodeCount
+                ForceAlignVMToHost         = $NTNXInfra.Target.ForceAlignVMToHost ## NEED TO CREATE THIS IN THE JSON!
+                EnforceHostMaintenanceMode = $NTNXInfra.Target.EnforceHostMaintenanceMode ## NEED TO CREATE THIS IN THE JSON!
+                TargetCVMAdmin             = $VSI_Target_CVM_admin
+                TargetCVMPassword          = $VSI_Target_CVM_password
+                Run                        = $CurrentRunPhase
+                MaxRecordCount             = $VSI_Target_MaxRecordCount
+                HostCount                  = $VSI_Target_NodeCount
                 ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
             }
             $Boot = Enable-VSICTXDesktopPool @params
