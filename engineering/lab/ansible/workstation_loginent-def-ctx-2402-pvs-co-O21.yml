@@ -15,3 +15,19 @@
   - run_image_tattoo
   - run_software_inventory_corp_it
   - win_disable_win_updates
+  
+  tasks:
+   - name: Kill Defender Scheduled Tasks
+     ansible.windows.win_powershell:
+      script: |
+        Get-ScheduledTask -TaskPath '\Microsoft\Windows\Windows Defender\' | Disable-ScheduledTask
+
+   - name: Kill Windows LSA
+     ansible.windows.win_regedit:
+      path: HKLM:\SYSTEM\CurrentControlSet\Control\Lsa
+      name: RunAsPPL
+      data: 00000000
+      type: dword
+     when:
+        - ansible_distribution == 'Windows'
+        - ansible_distribution_version == '11'
