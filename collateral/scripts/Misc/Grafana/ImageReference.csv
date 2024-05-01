@@ -28,6 +28,8 @@ PanelId,ImageName
 53,cluster_resources_cpu_ready.png
 54,cluster_resources_memory_usage.png
 57,cluster_resources_controller_iops.png
+187,cluster_resources_controller_read_iops.png
+188,cluster_resources_controller_write_iops.png
 58,cluster_resources_controller_latency.png
 61,login_times_average.png
 98,login_times_logon_rate_per_minute.png

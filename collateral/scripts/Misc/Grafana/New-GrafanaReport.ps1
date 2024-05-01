@@ -1369,7 +1369,7 @@ else {
 if ($ClusterResources) {
     Write-Screen -Message "Downloading Cluster Resources Graphs"
     # Build the PanelID Array 
-    $Panels = @('53', '120', '54', '57', '58')  
+    $Panels = @('53', '120', '54', '57', '58', '187', '188')  
     $endtime = "1672538820000"
     Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 }
