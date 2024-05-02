@@ -8,6 +8,7 @@ Our results show that if you use MCS-published or Provisioning-streamed servers 
 
 The results from the tests performed show:
 
--  `TBD for Server Tests` 
--  `TBD for Server Tests` 
--  `TBD for Server Tests` 
+-  The tested session host specification provided a consistent user experience across all tests.
+-  There was minimal cluster performance difference between MCS and PVS provisioning.
+-  Both PVS and MCS configurations performed similarly though logon times were slightly higher with PVS.
+-  Application start times were slightly better with PVS than MCS in these tests.

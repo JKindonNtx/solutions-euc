@@ -125,17 +125,15 @@ In this section, we compare the results of a Login Enterprise test on six nodes,
 
 The following charts show the overall system performance during the entire test run.
 
-![CPU usage trends for two six-node clusters, one deployed using Citrix MCS and one deployed using Citrix PVS](../images/cluster_resources_cpu_usage_.png "MCS vs. PVS: CPU Usage")
+![CPU usage trends for two six-node clusters, one deployed using Citrix MCS and one deployed using Citrix PVS](../images/cluster_resources_cpu_usage_WS22_MCS_PVS.png "Cluster Resources Cpu Usage WS22 MCS PVS")
 
-![CPU ready time trends for two six-node clusters, one deployed using Citrix MCS and one deployed using Citrix PVS](../images/cluster_resources_cpu_ready_.png "MCS vs. PVS: CPU Ready Times")
+![CPU ready time trends for two six-node clusters, one deployed using Citrix MCS and one deployed using Citrix PVS](../images/cluster_resources_cpu_ready_WS22_MCS_PVS.png "Cluster Resources Cpu Ready WS22 MCS PVS")
 
-![Controller read IOPS trends for two six-node clusters, one deployed using Citrix MCS and one deployed using Citrix PVS](../images/RA-2053_image09.png "MCS vs. PVS: Controller Read IOPS")
-<!--JK: These need to be updated-->
-![Controller write IOPS trends for two six-node clusters, one deployed using Citrix MCS and one deployed using Citrix PVS](../images/RA-2053_image10.png "MCS vs. PVS: Controller Write IOPS")
-<!--JK: These need to be updated-->
+![Controller read IOPS trends for two six-node clusters, one deployed using Citrix MCS and one deployed using Citrix PVS](../images/cluster_resources_controller_read_iops_WS22_MCS_PVS.png "Cluster Resources Controller Read Iops WS22 MCS PVS")
 
-![Controller latency trends for two six-node clusters, one deployed using Citrix MCS and one deployed using Citrix PVS](../images/cluster_resources_controller_latency_.png "MCS vs. PVS: Controller Latency")
-<!--JK: These need to be updated-->
+![Controller write IOPS trends for two six-node clusters, one deployed using Citrix MCS and one deployed using Citrix PVS](../images/cluster_resources_controller_write_iops_WS22_MCS_PVS.png "Cluster Resources Controller Write Iops WS22 MCS PVS")
+
+![Controller latency trends for two six-node clusters, one deployed using Citrix MCS and one deployed using Citrix PVS](../images/cluster_resources_controller_latency_WS22_MCS_PVS.png "Cluster Resources Controller Latency WS22 MCS PVS")
 
 The following table provides the averages for the overall system performance results displayed in the graphs above.
 
@@ -143,10 +141,10 @@ _Table: System Performance MCS vs. PVS: System Performance Summary_
 
 | Measurement | MCS | PVS |
 | --- | --- | --- | 
-| CPU Usage | `TBD` % | `TBD` % |
-| CPU Ready Time | `TBD` % | `TBD` % |
-| Controller Read IOPS | `TBD` | `TBD` | 
-| Controller Write IOPS | `TBD` | `TBD` | 
+| CPU Usage | 59.1 % | 58.8 % |
+| CPU Ready Time | 0.370 % | 0.434 % |
+| Controller Read IOPS | 4,830 | 3,770 | 
+| Controller Write IOPS | 10,477 | 17,039 | 
 | Controller Latency | <1 ms | <1 ms | 
 
 ### MCS vs. PVS Logon Phase
@@ -161,15 +159,14 @@ _Table: Logon Performance MCS vs. PVS Logon Phase: Logon Times_
 
 | Measurement | MCS | PVS |
 | --- | --- | --- | 
-| Average Logon Time | `TBD` seconds | `TBD` seconds |
-| User Profile Load | `TBD` seconds | `TBD` seconds | 
-| Group Policies | `TBD` seconds | `TBD` seconds |
-| Connection | `TBD` seconds | `TBD` seconds | 
+| Average Logon Time | 7.9 seconds | 7.9 seconds |
+| User Profile Load | 0.76 seconds | 0.78 seconds | 
+| Group Policies | 1.21 seconds | 1.20 seconds |
+| Connection | 3.07 seconds | 3.07 seconds | 
 
 The following chart displays the login times across the tests. A lower result represents a better experience.
 
-![Logon time trends for two six-node clusters, one deployed using Citrix MCS and one deployed using Citrix PVS](../images/login_times_total_logon_time.png "Login Times Total Logon Time")
-<!--JK: This needs to be updated-->
+![Logon time trends for two six-node clusters, one deployed using Citrix MCS and one deployed using Citrix PVS](../images/login_times_total_logon_time_WS22_MCS_PVS.png "Login Times Total Logon Time WS22 MCS PVS")
 
 The following tables show the details for application performance during the logon phase of the test. A lower result represents better performance.
 
@@ -177,17 +174,17 @@ _Table: Application Performance MCS vs. PVS Logon Phase: App Start Times_
 
 | Application | MCS | PVS | 
 | --- | --- | --- | 
-| Microsoft Outlook | `TBD` seconds | `TBD` seconds | 
-| Microsoft Word | `TBD` seconds | `TBD` seconds |
-| Microsoft Excel | `TBD` seconds | `TBD` seconds |
-| Microsoft PowerPoint | `TBD` seconds | `TBD` seconds | 
+| Microsoft Outlook | 1.95 seconds | 1.90 seconds |  
+| Microsoft Word | 0.93 seconds | 0.90 seconds |
+| Microsoft Excel | 0.76 seconds | 0.74 seconds | 
+| Microsoft PowerPoint | 0.79 seconds | 0.76 seconds |
 
 _Table: Application Performance MCS vs. PVS Logon Phase:  Specific Action Times_
 
 | Application (Action) | MCS | PVS | 
 | --- | --- | --- | 
-| Microsoft Word (Open Doc) | `TBD` seconds | `TBD` seconds |
-| Microsoft Excel (Save File) | `TBD` seconds | `TBD` seconds |
+| Microsoft Word (Open Doc) | 0.76 seconds | 0.72 seconds | 
+| Microsoft Excel (Save File) | 0.37 seconds | 0.37 seconds  | 
 
 ### MCS vs. PVS Steady State
 
@@ -197,14 +194,14 @@ _Table: MCS vs. PVS Steady State Phase: App Start Times_
 
 | Application | MCS | PVS | 
 | --- | --- | --- | 
-| Microsoft Word | `TBD` seconds | `TBD` seconds | 
-| Microsoft Excel | `TBD` seconds | `TBD` seconds |
-| Microsoft PowerPoint | `TBD` seconds | `TBD` seconds |
+| Microsoft Word | 1.16 seconds | 1.09 seconds | 
+| Microsoft Excel | 0.93 seconds | 0.86 seconds | 
+| Microsoft PowerPoint | 0.89 seconds | 0.85 seconds | 
 
 _Table: MCS vs. PVS Steady State Phase: Specific Action Times_
 
 | Application (Action) | MCS | PVS | 
 | --- | --- | --- | 
-| Microsoft Edge (Page Load) | `TBD` seconds | `TBD` seconds |
-| Microsoft Word (Open Doc) | `TBD` seconds | `TBD` seconds |
-| Microsoft Excel (Save File) | `TBD` seconds | `TBD` seconds |
+| Microsoft Edge (Page Load) | 1.22 seconds | 1.17 seconds | 
+| Microsoft Word (Open Doc) | 0.93 seconds | 0.85 seconds | 
+| Microsoft Excel (Save File) | 0.42 seconds | 0.41 seconds |

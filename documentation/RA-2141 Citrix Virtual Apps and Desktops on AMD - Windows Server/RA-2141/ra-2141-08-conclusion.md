@@ -9,8 +9,6 @@ Our results show that if you use MCS-published or Provisioning-streamed servers 
 The results from the tests performed show:
 
 -  The tested session host specification provided a consistent user experience across all tests.
-
--  `TBD for Server Tests` CPU configurations with Windows 11 are critical. A 3 vCPU instance performed better than a 2 vCPU instance. Windows 10 with 2 vCPUs still showed lower application response times than Windows 11 with 3 vCPU. 
--  `TBD for Server Tests` The overall cluster metrics were not impacted by using a 3 vCPU spec configuration with Windows 11 vs a 2 vCPU configuration with Windows 10.
--  `TBD for Server Tests` Both PVS and MCS configurations performed similarly though logon times were slightly higher with PVS.
--  `TBD for Server Tests` Application start times were generally better with MCS than PVS. This is logical due to data being streamed on first access with PVS. Subsequent launches will be launched from local cache.
+-  There was minimal cluster performance difference between MCS and PVS provisioning.
+-  Both PVS and MCS configurations performed similarly though logon times were slightly higher with PVS.
+-  Application start times were slightly better with PVS than MCS in these tests.
