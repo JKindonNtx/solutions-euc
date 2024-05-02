@@ -70,7 +70,7 @@ Detail the tests you are planning to run as part of the document.
 | Windows Server 2022 MCS 2n | 3 | ✅ | jameskindon | Windows Server 2022 MCS 2n | 027e07_2n_A6.5.5.1_AHV_20V_360U_KW | ws2022_amd_mcs_2n_A6.5.5_AHV_20V_360U_KW |
 | Windows Server 2022 MCS 4n | 3 | ✅ | jameskindon | Windows Server 2022 MCS 4n | 821e80_4n_A6.5.5.1_AHV_40V_720U_KW | ws2022_amd_mcs_4n_A6.5.5_AHV_40V_720U_KW |
 | Windows Server 2022 MCS 6n | 3 | ✅ | jameskindon | Windows Server 2022 MCS 6n | 867bf4_6n_A6.5.5.1_AHV_60V_1080U_KW | ws2022_amd_mcs_6n_A6.5.5_AHV_60V_1080U_KW |
-| Windows Server 2022 PVS 6n | 3 | ⚠️ | jameskindon | Windows Server 2022 PVS 6n | `TBD` | ws2022_amd_pvs_6n_A6.5.5_AHV_xV_xU_KW |
+| Windows Server 2022 PVS 6n | 3 | 🏃🏻‍♂️ | jameskindon | Windows Server 2022 PVS 6n | bccc6c_6n_A6.5.5.1_AHV_60V_1080U_KW | ws2022_amd_pvs_6n_A6.5.5_AHV_xV_xU_KW |
 
 ## Test Comparisons
 
