@@ -1,0 +1,14 @@
+---
+vm_name: "d8s-v4-ws2022"
+vm_sku: "Standard_D8s_v4"
+license_type: "Windows_Server"
+disk_sku: "Premium_LRS"
+disk_size: 127
+admin_username: "NtnxAzureAdmin"
+admin_password: "this_is@VeryNaughtyPW1234$$"
+offer: "WindowsServer"
+publisher: "MicrosoftWindowsServer"
+sku: "2022-datacenter-g2"
+accelerated_networking: true
+winrm_timeout: 30 #600
+winrm_port: 5986

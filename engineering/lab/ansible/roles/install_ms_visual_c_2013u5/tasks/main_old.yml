@@ -1,0 +1,92 @@
+---
+# Install Visual C++
+- name: Install Visual C++ 2008 x64
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Microsoft\\VisualC++\\Microsoft VcRedist\\2008 SP1MFC x64\\vcredist_x64.exe"
+    arguments: '/Q'
+    state: present
+    expected_return_code: [0, 3010]
+    product_id: '{5FCE6D76-F5DC-37AB-B2B8-22AB8CEDB1D4}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+
+- name: Install Visual C++ 2008 x86
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Microsoft\\VisualC++\\Microsoft VcRedist\\2008 SP1MFC x86\\vcredist_x86.exe"
+    arguments: '/Q'
+    state: present
+    expected_return_code: [0, 3010]
+    product_id: '{9BE518E6-ECC6-35A9-88E4-87755C07200F}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+
+- name: Install Visual C++ 2010 SP1 x64
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Microsoft\\VisualC++\\Microsoft VcRedist\\2010 SP1 x64\\vcredist_x64.exe"
+    arguments: '/passive /norestart'
+    state: present
+    expected_return_code: [0, 3010]
+    product_id: '{1D8E6291-B0D5-35EC-8441-6616F567A0F7}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+
+- name: Install Visual C++ 2010 SP1 x86
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Microsoft\\VisualC++\\Microsoft VcRedist\\2010 SP1 x86\\vcredist_x86.exe"
+    arguments: '/passive /norestart'
+    state: present
+    expected_return_code: [0, 3010]
+    product_id: '{F0C3E5D1-1ADE-321E-8167-68EF0DE699A5}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+
+- name: Install Visual C++ 2012 Update 4 x64
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Microsoft\\VisualC++\\Microsoft VcRedist\\2012 Update4 x64\\vcredist_x64.exe"
+    arguments: '/passive /norestart'
+    state: present
+    expected_return_code: [0, 3010]
+    product_id: '{37B8F9C7-03FB-3253-8781-2517C99D7C00}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+
+- name: Install Visual C++ 2012 Update 4 x86
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Microsoft\\VisualC++\\Microsoft VcRedist\\2012 Update4 x86\\vcredist_x86.exe"
+    arguments: '/passive /norestart'
+    state: present
+    expected_return_code: [0, 3010]
+    product_id: '{B175520C-86A2-35A7-8619-86DC379688B9}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+
+- name: Install Visual C++ 2013 Update 5 x64
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Microsoft\\VisualC++\\Microsoft VcRedist\\2013 Update5 x64\\vcredist_x64.exe"
+    arguments: '/passive /norestart'
+    state: present
+    expected_return_code: [0, 3010]
+    product_id: '{53CF6934-A98D-3D84-9146-FC4EDF3D5641}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+
+- name: Install Visual C++ 2013 Update 5 x86
+  win_package:
+    path: "{{ sourcefiles_path }}\\Apps\\Microsoft\\VisualC++\\Microsoft VcRedist\\2013 Update5 x86\\vcredist_x86.exe"
+    arguments: '/passive /norestart'
+    state: present
+    expected_return_code: [0, 3010]
+    product_id: '{8122DAB1-ED4D-3676-BB0A-CA368196543E}'
+  become: yes
+  become_method: runas
+  become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  
+- name: Reboot to complete Visual C++
+  ansible.windows.win_reboot:

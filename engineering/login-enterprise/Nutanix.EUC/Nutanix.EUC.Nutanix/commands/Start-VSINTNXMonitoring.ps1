@@ -76,7 +76,7 @@ function Start-VSINTNXMonitoring {
                     $item | Add-Member Noteproperty $result.metric $result.values[0]
                 }
             }
-            $item | Add-Member Noteproperty "PowerConsumedWatts" $resultsPower.PowerControl.PowerConsumedWatts
+            $item | Add-Member Noteproperty "PowerConsumedWatts" $resultsPower.PowerControl.PowerConsumedWatts[0]
             $item | Export-Csv -Path $File -NoTypeInformation -Append
 
             foreach ($clusterresult in $resultsCluster.stats_specific_responses) {

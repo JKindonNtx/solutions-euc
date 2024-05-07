@@ -44,7 +44,8 @@ function Start-InfluxUpload {
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][string]$Token,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$File,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$Started,
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$BucketName
+        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$BucketName,
+        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$false)][System.Boolean]$IsAzureVM
     )
 
     begin {
@@ -68,9 +69,11 @@ function Start-InfluxUpload {
 
             # Calculate the Fixed Start Date
             $StartDate = [DateTime] "01/01/2023 1:00 AM"
-            $UnixStartedDate = Get-Date -Date $StartDate -UFormat %s
-            $NewStartDate = $UnixStartedDate.Split(".")
-            $FormattedStartDate = $NewStartDate[0]
+            #$UnixStartedDate = Get-Date -Date $StartDate -UFormat %s  ###(JamesK - Removed)
+            $UnixStartedDate = [math]::Round((New-TimeSpan -Start (Get-Date "1970-01-01") -End (Get-Date -Date $StartDate)).TotalSeconds)
+            #$NewStartDate = $UnixStartedDate.Split(".") ###(JamesK - Removed)
+            #$FormattedStartDate = $NewStartDate[0] ###(JamesK - Removed)
+            $FormattedStartDate = $UnixStartedDate
 
             # Build Web Header
             $WebHeaders = @{
@@ -100,9 +103,11 @@ function Start-InfluxUpload {
             }
 
             # Build Unix Start Date based on new Started Date
-            $UnixStarted = Get-Date -Date $Started -UFormat %s
-            $NewStarted = $UnixStarted.Split(".")
-            $FormattedStarted = $NewStarted[0]
+            #$UnixStarted = Get-Date -Date $Started -UFormat %s ###(JamesK - Removed)
+            $UnixStarted = [math]::Round((New-TimeSpan -Start (Get-Date "1970-01-01") -End (Get-Date -Date $Started)).TotalSeconds)
+            #$NewStarted = $UnixStarted.Split(".") ###(JamesK - Removed)
+            #$FormattedStarted = $NewStarted[0] ###(JamesK - Removed)
+            $FormattedStarted = $UnixStarted
             $DeltaTime = $FormattedStarted - $FormattedStartDate
             
             # Build Influx Upload Uri
@@ -123,7 +128,80 @@ function Start-InfluxUpload {
 
             # Build Tags
             $TopLevelTag = $File.BaseName
-            $Tag = ("Run=$($Run)," +
+            if ($IsAzureVM -eq $true) {
+                # This is an Azure VM, so set specific tags for Azure 
+                $Tag = (
+                    "Run=$($Run)," +
+                    "DataType=$($TopLevelTag)," +
+                    "Year=$($CurrentYear)," +
+                    "Month=$($CurrentMonth)," +
+                    "DocumentName=$($JSON.Test.DocumentName)," +
+                    "DeliveryType=$($JSON.Target.DeliveryType)," +
+                    "DesktopBrokerVersion=$($JSON.Target.DesktopBrokerVersion)," +
+                    "DesktopBrokerAgentVersion=$($JSON.Target.ImagesToTest.DesktopBrokerAgentVersion)," +
+                    "CloneType=$($JSON.Target.CloneType)," +
+                    "SessionCfg=$($JSON.Target.SessionCfg)," +
+                    "SessionsSupport=$($JSON.Target.SessionsSupport)," +
+                    "Workload=$($JSON.Target.Workload)," +
+                    "NumCPUs=$($JSON.AzureGuestDetails.VM_CPU_LogicalProcs)," +
+                    "NumCores=$($JSON.AzureGuestDetails.VM_CPU_Cores)," +
+                    "MemoryGB=$($JSON.AzureGuestDetails.VM_Memory_Size)," +
+                    "HostGPUs=$($JSON.TestInfra.HostGPUs)," +
+                    "SecureBoot=$($JSON.AzureGuestDetails.VM_secureBoot)," +
+                    "vTPM=$($JSON.AzureGuestDetails.VM_vTPM)," +
+                    "CredentialGuard=$($JSON.AzureGuestDetails.VM_Credential_Guard)," +
+                    "AutocalcVMs=$($JSON.Target.ImagesToTest.AutocalcVMs)," +
+                    "Max=$($JSON.Target.ImagesToTest.Max)," +
+                    "NumberOfSessions=$($JSON.Target.ImagesToTest.NumberOfSessions)," +
+                    "NumberOfVMs=$($JSON.Target.ImagesToTest.NumberOfVMs)," +
+                    "TargetOS=$($JSON.Target.ImagesToTest.TargetOS)," +
+                    "TargetOSVersion=$($JSON.Target.ImagesToTest.TargetOSVersion)," +
+                    "OfficeVersion=$($JSON.Target.ImagesToTest.OfficeVersion)," +
+                    "ToolsGuestVersion=$($JSON.Target.ImagesToTest.ToolsGuestVersion)," +
+                    "OptimizerVendor=$($JSON.Target.ImagesToTest.OptimizerVendor)," +
+                    "OptimizationsVersion=$($JSON.Target.ImagesToTest.OptimizationsVersion)," +
+                    "GPUProfile=$($JSON.Target.ImagesToTest.GPUProfile)," +
+                    "Comment=$($JSON.Target.ImagesToTest.Comment)," +
+                    "InfraTestName=$($JSON.TestInfra.TestName)," +
+                    "InfraCPUBrand=$($JSON.AzureGuestDetails.VM_CPU_Manufacturer)," +
+                    "InfraCPUType=$($JSON.AzureGuestDetails.VM_CPU_Name)," +
+                    "InfraCPUSpeed=$($JSON.AzureGuestDetails.VM_CPU_ClockSpeed)," +
+                    "InfraBIOS=$($JSON.AzureGuestDetails.VM_Bios_Name)," +
+                    "BootStart=$($JSON.TestInfra.BootStart)," +                    
+                    "BootTime=$($JSON.TestInfra.Boottime)," +
+                    "VSIproductVersion=$($VSIProductVersion)," +
+                    "VSIEUXversion=$($VSIEUXVersion)," +
+                    "VSIactivesessionCount=$($VSIActiveSessionCount)," +
+                    "VSIEUXscore=$($VSIEUXScore)," +
+                    "VSIEUXstate=$($VSIEUXState)," +
+                    "VSIvsiMax=$($VSIMax)," +  
+                    "VSIvsiMaxstate=$($VSIMaxState)," + 
+                    "VSIvsiMaxversion=$($VSIMaxVersion)," +
+                    #// Azure Components that are not captured above
+                    "AzVMName=$($JSON.AzureGuestDetails.VM_Name)," +
+                    "AzVMLoc=$($JSON.AzureGuestDetails.VM_Location)," +
+                    "AzVMOffer=$($JSON.AzureGuestDetails.VM_Offer)," +
+                    "AzVMSize=$($JSON.AzureGuestDetails.VM_Size)," +
+                    "AzVMCPUCaption=$($JSON.AzureGuestDetails.VM_CPU_Caption)," +
+                    "AzVMCPUThreadCount=$($JSON.AzureGuestDetails.VM_CPU_ThreadCount)," +
+                    "AzVMAccelNetwork=$($JSON.AzureGuestDetails.VM_AcceleratedNetworking)," +
+                    "AzVMpageFile=$($JSON.AzureGuestDetails.VM_pageFile)," +
+                    "AzOSType=$($JSON.AzureGuestDetails.OS_Type)," +
+                    "AzOSOffer=$($JSON.AzureGuestDetails.OS_Offer)," +
+                    "AzOSDeployedVer=$($JSON.AzureGuestDetails.OS_Deployed_Version)," +
+                    "AzOSDeployedSku=$($JSON.AzureGuestDetails.OS_Deployed_Sku)," +
+                    "AzOSRunningVer=$($JSON.AzureGuestDetails.OS_Running_Version)," +
+                    "AzDiskType=$($JSON.AzureGuestDetails.Disk_Type)," +
+                    "AzDiskSize=$($JSON.AzureGuestDetails.Disk_Size)," +
+                    "AzDiskCaching=$($JSON.AzureGuestDetails.Disk_Caching)," +
+                    "AzDiskEncryp=$($JSON.AzureGuestDetails.Disk_Encryption)," +
+                    "AzDiskWriteAccel=$($JSON.AzureGuestDetails.Disk_Write_Accelerator)," +
+                    "AzDiskTempDiskSize=$($JSON.AzureGuestDetails.Disk_TempDisk_Size)"
+                )
+            } else {
+                # This is a noraml test, not an Azure VM. So set the normal tags
+                $Tag = (
+                    "Run=$($Run)," +
                     "DataType=$($TopLevelTag)," +
                     "Year=$($CurrentYear)," +
                     "Month=$($CurrentMonth)," +
@@ -187,73 +265,84 @@ function Start-InfluxUpload {
                     "VSIvsiMaxstate=$($VSIMaxState)," + 
                     "VSIvsiMaxversion=$($VSIMaxVersion)"
                 )
+            }
 
-                # Check for Blank Tag Value
-                If($Tag -like "*=,*"){
-                    $TagValidated = $false
-                } else {
-                    $TagValidated = $true
-                }
+            # Format the tag for any weird stuff
+            $tag = $tag.replace(' ','_')
+            $tag = $tag.Replace('null', '0')
+            $tag = $tag.replace('=,','=0,')
+            $tag = $tag.replace('\','-')
+            $tag = $tag.replace('%','pct')
 
-                if($TagValidated){
+            # Check for Blank Tag Value
+            If($Tag -like "*=,*"){
+                $TagValidated = $false
+            } else {
+                $TagValidated = $true
+            }
 
-                    # Set the Base Tag
-                    $basetag = $tag
+            if($TagValidated){
+                
+                # Set the Base Tag
+                $basetag = $tag
 
-                    # Get the CSV File Data
-                    $csvFilePath = $File
-                    $csvData = Import-Csv $csvFilePath
+                # Get the CSV File Data
+                $csvFilePath = $File
+                $csvData = Import-Csv $csvFilePath
 
-                    # Get the CSV File Headers
-                    $headers = $csvData | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
-        
-                    # Process each line of the CSV File
-                    foreach ($line in $csvData) {
+                # Get the CSV File Headers
+                $headers = $csvData | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
+    
+                # Process each line of the CSV File
+                foreach ($line in $csvData) {
 
-                        # Initialize Fields and set Tag to Base Tag
-                        $fields = ""
-                        $tag = $basetag
+                    # Initialize Fields and set Tag to Base Tag
+                    $fields = ""
+                    $tag = $basetag
 
-                        # Looop through headers and process data values
-                        foreach($Header in $Headers){
-                            if(($header -ne "Timestamp")){
-                                if(($header -like "*Id") -or ($header -like "*Name*") -or ($header -like "*timer*") -or ($header -like "*instance*") -or ($header -like "*userSessionKey*")){
-                                    $Data = $($line.$($Header))
-                                    $tag = $tag + ",$($Header)=$($Data)"
-                                } else {
-                                    $Data = $($line.$($Header))
-                                    $Fields = $Fields + "$($Header)=$($Data),"
-                                }
+                    # Looop through headers and process data values
+                    foreach($Header in $Headers){
+                        if(($header -ne "Timestamp")){
+                            if(($header -like "*Id") -or ($header -like "*Name*") -or ($header -like "*timer*") -or ($header -like "*instance*") -or ($header -like "*userSessionKey*")){
+                                $Data = $($line.$($Header))
+                                $tag = $tag + ",$($Header)=$($Data)"
+                            } else {
+                                $Data = $($line.$($Header))
+                                $Fields = $Fields + "$($Header)=$($Data),"
                             }
                         }
-
-                        # Remove last comma from fields and replace Null values
-                        $Fields = $Fields.TrimEnd(",")
-                        $Fields = $Fields.Replace('null', '0')
-
-                        # Format the Tag to allow for influx upload
-                        $tag = $tag.replace(' ','_')
-                        $tag = $tag.replace('=,','=0,')
-                        $tag = $tag.replace('\','-')
-                        $tag = $tag.replace('%','pct')
-
-                        # Get the timestamp for the line and calculate the delta Start Time
-                        $CSVDate = $($line.Timestamp)
-                        $UnixDate = Get-Date -Date $CSVDate -UFormat %s
-                        $NewDate = $UnixDate.Split(".")
-                        $FormattedDate = $newdate[0] - $DeltaTime   
-
-                        # Build the body
-                        $Body = "$measurementName,$tag $fields $FormattedDate"
-
-                        # Upload the data to Unflux
-                        $null = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $Body
                     }
 
-                    $Return = $true
-                } else {
-                    $Return = $false
+                    # Remove last comma from fields and replace Null values
+                    $Fields = $Fields.TrimEnd(",")
+                    $Fields = $Fields.Replace('null', '0')
+
+                    # Re-Format the Tag to allow for additional values added
+                    $tag = $tag.replace(' ','_')
+                    $tag = $tag.Replace('null', '0')
+                    $tag = $tag.replace('=,','=0,')
+                    $tag = $tag.replace('\','-')
+                    $tag = $tag.replace('%','pct')
+
+                    # Get the timestamp for the line and calculate the delta Start Time
+                    $CSVDate = $($line.Timestamp)
+                    #$UnixDate = Get-Date -Date $CSVDate -UFormat %s ###(JamesK - Removed)
+                    $UnixDate = [math]::Round((New-TimeSpan -Start (Get-Date "1970-01-01") -End (Get-Date -Date $CSVDate)).TotalSeconds)
+                    #$NewDate = $UnixDate.Split(".") ###(JamesK - Removed)
+                    #$FormattedDate = $newdate[0] - $DeltaTime  ###(JamesK - Removed)
+                    $FormattedDate = $UnixDate - $DeltaTime
+
+                    # Build the body
+                    $Body = "$measurementName,$tag $fields $FormattedDate"
+
+                    # Upload the data to Unflux
+                    $null = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $Body
                 }
+
+                $Return = $true
+            } else {
+                $Return = $false
+            }
 
         } else {
 

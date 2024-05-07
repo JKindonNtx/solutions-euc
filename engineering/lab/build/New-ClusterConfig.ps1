@@ -154,7 +154,7 @@ if ($confirmationStart -eq 'n') {
         $SlackMessage = "New User Added: $($github.username)`n"
         $SendToSlack = "y"
     }
-    
+
     # Build Cluster name and Storage Name
     $AOSCluster = Invoke-NutanixAPI -IP "$($JSON.Cluster.IP)" -Password "$($JSON.Cluster.Password)" -UserName "$($github.username)" -APIpath "cluster"
     $AOSClusterName = $AOSCluster.Name

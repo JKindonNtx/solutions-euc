@@ -1,5 +1,12 @@
 ---
 # Install Visual C++
+
+## Check for existence of Uninstall key first
+- name: Check if Visual C++ 2008 x64 Exists
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{5FCE6D76-F5DC-37AB-B2B8-22AB8CEDB1D4}
+  register: reg_check_2008_x64
+
 - name: Install Visual C++ 2008 x64
   win_package:
     path: "{{ sourcefiles_path }}\\Apps\\Microsoft\\VisualC++\\Microsoft VcRedist\\2008 SP1MFC x64\\vcredist_x64.exe"
@@ -10,6 +17,15 @@
   become: yes
   become_method: runas
   become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  when: not reg_check_2008_x64.exists
+  notify: Restart After Install
+  changed_when: true
+
+## Check for existence of Uninstall key first
+- name: Check if Visual C++ 2008 x86 Exists
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{9BE518E6-ECC6-35A9-88E4-87755C07200F}
+  register: reg_check_2008_x86
 
 - name: Install Visual C++ 2008 x86
   win_package:
@@ -21,6 +37,15 @@
   become: yes
   become_method: runas
   become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  when: not reg_check_2008_x86.exists
+  notify: Restart After Install
+  changed_when: true
+
+## Check for existence of Uninstall key first
+- name: Check if Visual C++ 2010 SP1 x64 Exists
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{1D8E6291-B0D5-35EC-8441-6616F567A0F7}
+  register: reg_check_2010_x64
 
 - name: Install Visual C++ 2010 SP1 x64
   win_package:
@@ -32,6 +57,15 @@
   become: yes
   become_method: runas
   become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  when: not reg_check_2010_x64.exists
+  notify: Restart After Install
+  changed_when: true
+
+## Check for existence of Uninstall key first
+- name: Check if Visual C++ 2010 SP1 x86 Exists
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{F0C3E5D1-1ADE-321E-8167-68EF0DE699A5}
+  register: reg_check_2010_x86
 
 - name: Install Visual C++ 2010 SP1 x86
   win_package:
@@ -43,6 +77,15 @@
   become: yes
   become_method: runas
   become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  when: not reg_check_2010_x86.exists
+  notify: Restart After Install
+  changed_when: true
+
+## Check for existence of Uninstall key first
+- name: Check if Visual C++ 2012 Update 4 x64 Exists
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{37B8F9C7-03FB-3253-8781-2517C99D7C00}
+  register: reg_check_2012_x64
 
 - name: Install Visual C++ 2012 Update 4 x64
   win_package:
@@ -54,6 +97,15 @@
   become: yes
   become_method: runas
   become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  when: not reg_check_2012_x64.exists
+  notify: Restart After Install
+  changed_when: true
+
+## Check for existence of Uninstall key first
+- name: Check if Visual C++ 2012 Update 4 x86 Exists
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{B175520C-86A2-35A7-8619-86DC379688B9}
+  register: reg_check_2012_x86
 
 - name: Install Visual C++ 2012 Update 4 x86
   win_package:
@@ -65,6 +117,15 @@
   become: yes
   become_method: runas
   become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  when: not reg_check_2012_x86.exists
+  notify: Restart After Install
+  changed_when: true
+
+## Check for existence of Uninstall key first
+- name: Check if Visual C++ 2013 Update 5 x64 Exists
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{53CF6934-A98D-3D84-9146-FC4EDF3D5641}
+  register: reg_check_2013_x64
 
 - name: Install Visual C++ 2013 Update 5 x64
   win_package:
@@ -76,6 +137,15 @@
   become: yes
   become_method: runas
   become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  when: not reg_check_2013_x64.exists
+  notify: Restart After Install
+  changed_when: true
+
+## Check for existence of Uninstall key first
+- name: Check if Visual C++ 2013 Update 5 x86 Exists
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{8122DAB1-ED4D-3676-BB0A-CA368196543E}
+  register: reg_check_2013_x86
 
 - name: Install Visual C++ 2013 Update 5 x86
   win_package:
@@ -87,6 +157,10 @@
   become: yes
   become_method: runas
   become_flags: logon_type=new_credentials logon_flags=net_credentials_only
-  
-- name: Reboot to complete Visual C++
-  ansible.windows.win_reboot:
+  when: not reg_check_2013_x86.exists
+  notify: Restart After Install
+  changed_when: true
+
+# Force the reboot handler if relevant
+- name: Flush handlers
+  meta: flush_handlers

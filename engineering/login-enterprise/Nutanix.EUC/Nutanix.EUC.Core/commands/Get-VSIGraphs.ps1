@@ -22,6 +22,10 @@ function Get-VSIGraphs {
     $BucketName = $TestConfig.test.BucketName
     Write-Log -Message "BucketName: $($Bucketname)" -Level Info
 
+    if ($BucketName -eq "AzurePerfData"){
+        Write-Log -Message "Skipping Graph Downloads for Azure Tests" -Level Info
+        break
+    }
     # Check on Bucketname and build Uri accordingly
     if (!(($BucketName -eq "LoginDocuments") -or ($BucketName -eq "LoginRegression"))) {
         Write-Log -Message "Invalid Bucket: $($BucketName)" -Level Warn

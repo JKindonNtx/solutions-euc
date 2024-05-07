@@ -6,7 +6,7 @@ Mandatory. The JSON file containing the test configuration
 .PARAMETER ReportConfigFile
 Mandatory.
 .PARAMETER Type
-Mandatory. Specify the type of test to be run, CitrixVAD, CitrixDaaS, Horizon, RAS
+Mandatory. Specify the type of test to be run, CitrixVAD, CitrixDaaS, Horizon, RAS, RDP
 .PARAMETER LEConfigFile
 Mandatory. Config file that holds the Login Enterprise Appliance Information.
 .PARAMETER SkipWaitForIdleVMs
@@ -20,11 +20,13 @@ Configured in the test configuration file. Can be overriden by this parameter.
 .PARAMETER LEAppliance
 Configured in the test configuration file. Can be overriden by this parameter. The Login Enterprise Appliance. LE1, LE2, LE3, LE4 etc.
 .PARAMETER SkipPDFExport
-Configured in the test configuration file. Can be overriden by this parameter
+Configured in the test configuration file. Can be overriden by this parameter.
 .PARAMETER Force
 Optional. Forces the recreation of the Horizon desktop pool.
 .PARAMETER ValidateOnly
-.Optional Allows the ability to Validate without and exectution of testing
+.Optional Allows the ability to Validate without and exectution of testing.
+.PARAMETER AzureMode
+.Optional. Ignores Nutanix Considerations.
 .NOTES
 #>
 
@@ -40,7 +42,7 @@ Param(
     [string]$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\ExampleConfig-LoginEnterpriseGlobal.jsonc",
 
     [Parameter(Mandatory = $true)]
-    [ValidateSet("CitrixVAD", "CitrixDaaS", "Horizon", "RAS")]
+    [ValidateSet("CitrixVAD", "CitrixDaaS", "Horizon", "RAS", "RDP")]
     [string]$Type,
 
     [Parameter(Mandatory = $false)]
@@ -66,11 +68,19 @@ Param(
     [String]$LEAppliance,
     
     [Parameter(Mandatory = $false)]
-    [switch]$ValidateOnly
+    [switch]$ValidateOnly,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$AzureMode
 
 )
 #endregion Params
 
+
+#$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\W22-1VM-Azure-Test.jsonc"
+#$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-LoginEnterpriseGlobal.jsonc"
+#$Type = "RDP"
+#$AzureMode = $true
 #region Variables
 # ============================================================================
 # Variables
@@ -111,6 +121,12 @@ Write-Log -Message "Test Type is:                 $($Type)" -Level Validation
 #----------------------------------------------------------------------------------------------------------------------------
 if ($PSVersionTable.PSVersion.Major -lt 5) { 
     Write-Log -Message "You must upgrade to PowerShell 5.x to run this script" -Level Warn
+    Exit 1
+}
+
+if ($PSVersionTable.PSVersion.Major -lt 7 -and $Type -eq "RDP") {
+    #No PowerShell 5.1 to be used. Use a container or use PS 7. 
+    Write-Log -Message "You must use PowerShell 7 to run this script with RDP tests" -Level Warn
     Exit 1
 }
 
@@ -185,26 +201,29 @@ if ($Type -eq "Horizon") {
 
 #region remove existing SSH Keys 
 #----------------------------------------------------------------------------------------------------------------------------
-Write-Log -Message "Searching all modules for Posh-SSH" -Level Info
-$Temp_Module = (Get-Module -ListAvailable *) | Where-Object { $_.Name -eq "Posh-SSH" }
+if (-not $AzureMode.IsPresent) {
+    # This is not an Azure configuration
+    Write-Log -Message "Searching all modules for Posh-SSH" -Level Info
+    $Temp_Module = (Get-Module -ListAvailable *) | Where-Object { $_.Name -eq "Posh-SSH" }
 
-if ($Null -ne $Temp_Module -and $Temp_Module.Version -contains "2.3.0") {
-    Write-Log -Message "Module Posh-SSH Found. Clearing existing SSH Keys if present" -Level Info
-    Get-SSHTrustedHost | Remove-SSHTrustedHost
-} 
-else {
-    Write-Log -Message "Failed to find appropriate Posh-SSH Module. Attempting to Install" -Level Info
-    try {
-        Install-Module -Name Posh-SSH -RequiredVersion 2.3.0 -Force -ErrorAction Stop
-        Write-Log -Message "Successfully installed Posh-SSH Module" -Level Info
+    if ($Null -ne $Temp_Module -and $Temp_Module.Version -contains "2.3.0") {
+        Write-Log -Message "Module Posh-SSH Found. Clearing existing SSH Keys if present" -Level Info
         Get-SSHTrustedHost | Remove-SSHTrustedHost
+    } 
+    else {
+        Write-Log -Message "Failed to find appropriate Posh-SSH Module. Attempting to Install" -Level Info
+        try {
+            Install-Module -Name Posh-SSH -RequiredVersion 2.3.0 -Force -ErrorAction Stop
+            Write-Log -Message "Successfully installed Posh-SSH Module" -Level Info
+            Get-SSHTrustedHost | Remove-SSHTrustedHost
+        }
+        catch {
+            Write-Log -Message $_ -Level Error
+            Exit 1
+        }
     }
-    catch {
-        Write-Log -Message $_ -Level Error
-        Exit 1
-    }
+    $Temp_Module = $null
 }
-$Temp_Module = $null
 #endregion remove existing SSH Keys
 
 #region Validate JSON
@@ -294,7 +313,13 @@ catch {
 
 #region Get Nutanix Infra
 #----------------------------------------------------------------------------------------------------------------------------
-$NTNXInfra = Get-NTNXinfo -Config $config
+if (-not $AzureMode.IsPresent) {
+    # This is not an Azure configuration
+    $NTNXInfra = Get-NTNXinfo -Config $config
+} else {
+    $NTNXInfra = $config
+}
+
 #endregion Get Nutanix Infra
 
 #endregion variable setting
@@ -339,6 +364,21 @@ if (($Mandatory_Undedfined_Config_Entries | Measure-Object).Count -gt 0) {
         Write-Log -Message "Input confirmed" -Level Info
     }
 }
+
+if ($Type -eq "RDP") {
+    if ([string]::IsNullOrEmpty[$VSI_Target_RDP_Hosts]) {
+        Write-Log -Message "Test type is RDP. You must define the RDP Hosts in the JSON File" -Level Warn
+        Exit 1
+    }
+    else {
+        Write-Log -Message "There are $(($VSI_Target_RDP_Hosts | Measure-Object).Count) RDP Hosts defined for test configuration" -Level Info
+    }
+
+    if ([string]::IsNullOrEmpty[$VSI_Domain_LDAPUsername] -or [string]::IsNullOrEmpty[$VSI_Domain_LDAPPassword]) {
+        Write-Log -Message "Test type is RDP. You must define an LDAP Username and Password to be able to execute tasks against the remote Hosts." -Level Warn
+        Exit 1
+    }
+}
 #endregion Mandatory JSON Value Output
 
 #region Nutanix Files Pre Flight Checks
@@ -357,21 +397,24 @@ if ($VSI_Target_Files -ne "") {
 #endregion Nutanix Files Pre Flight Checks
 
 #region Nutanix Snapshot Pre Flight Checks
-if ($NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
-    # A purely AHV Test
-    $cleansed_snapshot_name = $VSI_Target_ImagesToTest.ParentVM -replace ".template",""
-    Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type
-}
-if (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
-    # A Citrix on ESXi test
-    Get-NutanixSnapshot -VM $VSI_Target_ImagesToTest.ParentVM -HostingConnection $VSI_Target_HypervisorConnection -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type -DDC $VSI_Target_DDC -SnapshotName $VSI_Target_ImagesToTest.ParentVM
-}
-if ($Type -eq "Horizon") {
-    # A Horizon test
-    if ($VSI_Target_ImagesToTest.ParentVM -match '^([^\\]+)\.') { $cleansed_vm_name = $matches[1] }
-    if ($VSI_Target_ImagesToTest.ParentVM -match '\\([^\\]+)\.snapshot$') { $cleansed_snapshot_name = $matches[1] }
+if (-not $AzureMode.IsPresent) {
+    # This is not an Azure configuration
+    if ($NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
+        # A purely AHV Test
+        $cleansed_snapshot_name = $VSI_Target_ImagesToTest.ParentVM -replace ".template",""
+        Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type
+    }
+    if (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
+        # A Citrix on ESXi test
+        Get-NutanixSnapshot -VM $VSI_Target_ImagesToTest.ParentVM -HostingConnection $VSI_Target_HypervisorConnection -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type -DDC $VSI_Target_DDC -SnapshotName $VSI_Target_ImagesToTest.ParentVM
+    }
+    if ($Type -eq "Horizon") {
+        # A Horizon test
+        if ($VSI_Target_ImagesToTest.ParentVM -match '^([^\\]+)\.') { $cleansed_vm_name = $matches[1] }
+        if ($VSI_Target_ImagesToTest.ParentVM -match '\\([^\\]+)\.snapshot$') { $cleansed_snapshot_name = $matches[1] }
 
-    Get-NutanixSnapshot -VM $cleansed_vm_name -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type
+        Get-NutanixSnapshot -VM $cleansed_vm_name -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type
+    }
 }
 
 #endregion Nutanix Snapshot Pre Flight Checks
@@ -412,7 +455,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #----------------------------------------------------------------------------------------------------------------------------
     Write-Log -Message "Setting up Test Details" -Level Info
     $NTNXid = (New-Guid).Guid.SubString(1, 6)
-    $NTNXTestname = "$($NTNXid)_$($VSI_Target_NodeCount)n_A$($NTNXInfra.Testinfra.AOSversion)_$($NTNXInfra.Testinfra.HypervisorType)_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
+    if (-not $AzureMode.IsPresent) {
+        # This is not an Azure configuration
+        $NTNXTestname = "$($NTNXid)_$($VSI_Target_NodeCount)n_A$($NTNXInfra.Testinfra.AOSversion)_$($NTNXInfra.Testinfra.HypervisorType)_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
+    }
+    else {
+        $NTNXTestname = "$($NTNXid)_Azure_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
+    }
     Write-Log -Message "Testname configured: $($NTNXTestname)" -Level Info
     #endregion Setup testname
 
@@ -444,6 +493,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
     #region Set affinity
     #----------------------------------------------------------------------------------------------------------------------------
+    if (-not $AzureMode.IsPresent) {
+        # This is not an Azure configuration
+        $Message = "Setting Affinity Rules"
+    }
+    else {
+        $Message = "Skipping Setting Affinity Rules"
+    }
 
     #region Update Test Dashboard
     $params = @{
@@ -454,7 +510,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         InfluxBucket   = $InfluxTestDashBucket 
         Status         = "Running" 
         CurrentPhase   = $CurrentTotalPhase 
-        CurrentMessage = "Setting Affinity Rules" 
+        CurrentMessage = $Message
         TotalPhase     = "$($TotalPhases)"
     }
     $null = Set-TestData @params
@@ -462,13 +518,16 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     $CurrentTotalPhase++
     #endregion Update Test Dashboard
 
-    if ($VSI_Target_NodeCount -eq "1") {
-        $NTNXInfra.Testinfra.SetAffinity = $true
+    if (-not $AzureMode.IsPresent) {
+        # This is not an Azure configuration
+        if ($VSI_Target_NodeCount -eq "1") {
+            $NTNXInfra.Testinfra.SetAffinity = $true
+        }
+        else {
+            $NTNXInfra.Testinfra.SetAffinity = $false
+        }
+        Write-Log -Message "Nutanix Host Affinity is set to: $($NTNXInfra.Testinfra.SetAffinity)" -Level Info
     }
-    else {
-        $NTNXInfra.Testinfra.SetAffinity = $false
-    }
-    Write-Log -Message "Nutanix Host Affinity is set to: $($NTNXInfra.Testinfra.SetAffinity)" -Level Info
     #endregion Set affinity
 
     $NTNXInfra.Target.ImagesToTest = $ImageToTest
@@ -476,7 +535,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #region Slack update
     #----------------------------------------------------------------------------------------------------------------------------
     Write-Log -Message "Updating Slack" -Level Info
-    $SlackMessage = "New Login Enterprise test started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName). Testname: $($NTNXTestname)."
+    if (-not $AzureMode.IsPresent) {
+        # This is not an Azure configuration
+        $SlackMessage = "New Login Enterprise test started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName). Testname: $($NTNXTestname)."
+    } 
+    else {
+        $SlackMessage = "New Login Enterprise test started by $VSI_Target_CVM_admin on Azure VM. Testname: $($NTNXTestname)."
+    }
     Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
     #endregion Slack update
 
@@ -543,6 +608,47 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $Params = $Null
     }
     #endregion Horizon validation
+
+    #region RDP validation
+    #----------------------------------------------------------------------------------------------------------------------------
+    if ($Type -eq "RDP") {
+        Write-Log -Message "Validating RDP Hosts" -Level Info
+        #region Update Test Dashboard
+        $params = @{
+            ConfigFile     = $NTNXInfra
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Validating RDP Host Connectivity" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData @params
+        $params = $null
+        $CurrentTotalPhase++
+        #endregion Update Test Dashboard
+
+        foreach ($RDP_Host in $VSI_Target_RDP_Hosts) {
+            try {
+                Write-Log -Message "Validating RDP Connectivity to $($RDP_Host)" -Level Info
+                if ($IsWindows){
+                    $Test_Host_Connection = Test-NetConnection -ComputerName ($RDP_Host + "." + $VSI_Target_DomainName) -port 3389 -ErrorAction Stop
+                }
+                elseif ($IsLinux){
+                    $Test_Host_Connection = Test-Connection -ComputerName ($RDP_Host + "." + $VSI_Target_DomainName) -TcpPort 3389 -ErrorAction Stop
+                }
+                
+                Write-Log -Message "Successfully connected to $($RDP_Host)" -Level Info
+            }
+            catch {
+                Write-Log -Message "Failed to connect to host $($RDP_Host)" -Level Error
+                Exit 1
+            }
+        }
+    }
+    #endregion RDP validation
 
     #region LE Test Check
     #----------------------------------------------------------------------------------------------------------------------------
@@ -671,7 +777,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         
         #region Update Slack
         #----------------------------------------------------------------------------------------------------------------------------
-        $SlackMessage = "Testname: $($NTNXTestname) Run$i is started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName)."
+        if (-not $AzureMode.IsPresent) {
+            # This is not an Azure configuration
+            $SlackMessage = "Testname: $($NTNXTestname) Run$i is started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName)."
+        } else {
+            $SlackMessage = "Testname: $($NTNXTestname) Run$i is started by $VSI_Target_CVM_admin on Azure"
+        }
         Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
 
         #endregion Update Slack
@@ -680,6 +791,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #----------------------------------------------------------------------------------------------------------------------------
 
         #region Update Test Dashboard
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $Message = "Gathering Nutanix Information" 
+        } else { 
+            $Message = "Skipping Gathering Nutanix Information" 
+        }
+
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -688,7 +806,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
-            CurrentMessage = "Gathering Nutanix Information" 
+            CurrentMessage = $Message
             TotalPhase     = "$($RunPhases)"
         }
         $null = Set-TestData @params
@@ -711,9 +829,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        $ContainerId = Get-NTNXStorageUUID -Storage $VSI_Target_CVM_storage
-        $Hostuuid = Get-NTNXHostUUID -NTNXHost $VSI_Target_NTNXHost
-        $IPMI_ip = Get-NTNXHostIPMI -NTNXHost $VSI_Target_NTNXHost
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $ContainerId = Get-NTNXStorageUUID -Storage $VSI_Target_CVM_storage
+            $Hostuuid = Get-NTNXHostUUID -NTNXHost $VSI_Target_NTNXHost
+            $IPMI_ip = Get-NTNXHostIPMI -NTNXHost $VSI_Target_NTNXHost
+        }
 
         if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
             # Getting details from Nutanix Files Cluster hosting Files
@@ -727,6 +848,14 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #----------------------------------------------------------------------------------------------------------------------------
 
         #region Update Test Dashboard
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $Message = "Creating $($Type) Desktop Pool" 
+        }
+        else { 
+            $Message = "Skipping Creating $($Type) Desktop Pool" 
+        }
+
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -735,7 +864,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
-            CurrentMessage = "Creating $($Type) Desktop Pool" 
+            CurrentMessage = $Message
             TotalPhase     = "$($RunPhases)"
         }
         $null = Set-TestData @params
@@ -793,7 +922,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $NTNXInfra.Testinfra.MaxPercentageActiveActions = $CreatePool.MaxPercentageActiveActions
         }
 
-
         if ($Type -eq "Horizon") {
             #Need to check with Sven here - which config do we use Horizon-NTNX.ps1 or NorizonView.Ps1?
             $params = @{
@@ -821,18 +949,68 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $Params = $null
         }
 
+        if ($Type -eq "RDP") {
+            if ($VSI_Target_RDP_DelProf -eq $true) {
+                # Delete the profiles between each run
+                $ClearProfiles = $true
+            }
+            else {
+                # reboot the host, but do not delete profiles
+                $ClearProfiles = $false
+            }
+
+            $params = @{
+                Hosts         = $VSI_Target_RDP_Hosts
+                DomainName    = $VSI_Target_DomainName 
+                MaxIterations = 4 
+                SleepTime     = 30 
+                RebootHosts   = $true
+                ClearProfiles = $ClearProfiles
+                UserName      = $VSI_Domain_LDAPUsername 
+                Password      = $VSI_Domain_LDAPPassword
+            }
+
+            $CleanHosts = Reset-RDPHosts @params
+            $params = $null
+            
+            if ($CleanHosts -eq $true) {
+                Write-Log -Message "All RDP Hosts prepared for Test Run" -Level Info
+            }
+            else {
+                Write-Log -Message "Failures Found when preparing RDP Hosts." -Level Warn
+                Exit 1
+            }
+        }
+
         #endregion Configure Desktop Pool
 
         #region Configure Folder Details for output
         #----------------------------------------------------------------------------------------------------------------------------
         $FolderName = "$($NTNXTestname)_Run$($i)"
         $OutputFolder = "$ScriptRoot\results\$FolderName"
+        
+        try {
+            Write-Log -Message "Creating output directory $($OutputFolder)" -Level Info
+            if (-not (Test-Path $OutputFolder)) { New-Item -ItemType Directory -Path $OutputFolder -ErrorAction Stop | Out-Null }
+        }
+        catch {
+            Write-Log -Message $_ -Level Error
+            Exit 1
+        }
+
         #endregion Configure Folder Details for output
 
         #region Start monitoring Boot phase
         #----------------------------------------------------------------------------------------------------------------------------
 
         #region Update Test Dashboard
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $Message = "Booting $($Type) Desktops" 
+        } else { 
+            $Message = "Skipping Booting $($Type) Desktops" 
+        }
+
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -841,7 +1019,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
-            CurrentMessage = "Booting $($Type) Desktops" 
+            CurrentMessage = $Message
             TotalPhase     = "$($RunPhases)"
         }
         $null = Set-TestData @params
@@ -864,18 +1042,21 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        $params = @{
-            OutputFolder                 = $OutputFolder 
-            DurationInMinutes            = "Boot" 
-            RampupInMinutes              = $VSI_Target_RampupInMinutes 
-            Hostuuid                     = $Hostuuid 
-            IPMI_ip                      = $IPMI_ip 
-            Path                         = $Scriptroot
-            AsJob                        = $true
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $params = @{
+                OutputFolder                 = $OutputFolder 
+                DurationInMinutes            = "Boot" 
+                RampupInMinutes              = $VSI_Target_RampupInMinutes 
+                Hostuuid                     = $Hostuuid 
+                IPMI_ip                      = $IPMI_ip 
+                Path                         = $Scriptroot
+                AsJob                        = $true
+            }
+            $monitoringJob = Start-VSINTNXMonitoring @Params
+            
+            $params = $null
         }
-        $monitoringJob = Start-VSINTNXMonitoring @Params
-
-        $params = $null
 
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
             $params = @{
@@ -909,8 +1090,11 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             }
         }
 
-        $NTNXInfra.Testinfra.BootStart = $Boot.bootstart
-        $NTNXInfra.Testinfra.Boottime = $Boot.boottime
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $NTNXInfra.Testinfra.BootStart = $Boot.bootstart
+            $NTNXInfra.Testinfra.Boottime = $Boot.boottime
+        }
         #endregion Start monitoring Boot phase
 
         #region Get Build Tattoo Information and update variable with new values
@@ -923,6 +1107,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         
         if ($Type -eq "Horizon") {
             $MasterImageDNS = $boot.firstvmname
+        }
+
+        if ($Type -eq "RDP") {
+            $MasterImageDNS = ($VSI_target_RDP_hosts | Select-Object -First 1) + "." + $VSI_Target_DomainName
         }
 
         #region Update Test Dashboard
@@ -959,14 +1147,56 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         try {
             Write-Log -Message "Getting Image Tattoo" -Level Info
-            $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTatoo } -ErrorAction Stop 
-            $NTNXInfra.Target.ImagesToTest.TargetOS = $Tattoo.OSName
-            $NTNXInfra.Target.ImagesToTest.TargetOSVersion = $Tattoo.OSVersion
-            $NTNXInfra.Target.ImagesToTest.OfficeVersion = $Tattoo.OfficeName
-            $NTNXInfra.Target.ImagesToTest.ToolsGuestVersion = $Tattoo.GuestToolsVersion
-            $NTNXInfra.Target.ImagesToTest.OptimizerVendor = $Tattoo.Optimizer
-            $NTNXInfra.Target.ImagesToTest.OptimizationsVersion = $Tattoo.OptimizerVersion
-            $NTNXInfra.Target.ImagesToTest.DesktopBrokerAgentVersion = $Tattoo.VdaVersion
+            if ($IsLinux) {
+                $user = $VSI_Domain_LDAPUsername
+                $pass = ConvertTo-SecureString $VSI_Domain_LDAPPassword -AsPlainText -Force
+                $credential = New-Object System.Management.Automation.PSCredential($user, $pass)
+
+                $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTattoo } -Credential $credential -Authentication Negotiate -ErrorAction Stop
+            } 
+            else {
+                $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTattoo } -ErrorAction Stop
+            }
+             
+            $NTNXInfra.Target.ImagesToTest.TargetOS = $Tattoo.TargetOS
+            $NTNXInfra.Target.ImagesToTest.TargetOSVersion = $Tattoo.TargetOSVersion
+            $NTNXInfra.Target.ImagesToTest.OfficeVersion = $Tattoo.OfficeVersion
+            $NTNXInfra.Target.ImagesToTest.ToolsGuestVersion = $Tattoo.ToolsGuestVersion
+            $NTNXInfra.Target.ImagesToTest.OptimizerVendor = $Tattoo.OptimizerVendor
+            $NTNXInfra.Target.ImagesToTest.OptimizationsVersion = $Tattoo.OptimizationsVersion
+            $NTNXInfra.Target.ImagesToTest.DesktopBrokerAgentVersion = $Tattoo.DesktopBrokerAgentVersion
+            if ($NTNXInfra.AzureGuestDetails.IsAzureVM -eq "true") {
+                # If this is An Azure VM, we need to send these details in. They are set by the Tattoo job if the the machine is detected as an Azure VM. Else they are blank
+                $NTNXInfra.AzureGuestDetails.VM_Name = $Tattoo.Azure_VM_Name
+                $NTNXInfra.AzureGuestDetails.VM_Location = $Tattoo.Azure_VM_Location
+                $NTNXInfra.AzureGuestDetails.VM_Offer = $Tattoo.Azure_VM_Offer
+                $NTNXInfra.AzureGuestDetails.VM_secureBoot = $Tattoo.Azure_VM_secureBoot
+                $NTNXInfra.AzureGuestDetails.VM_vTPM = $Tattoo.Azure_VM_vTPM
+                $NTNXInfra.AzureGuestDetails.VM_Size = $Tattoo.Azure_VM_Size
+                $NTNXInfra.AzureGuestDetails.VM_Credential_Guard = $Tattoo.Azure_VM_Credential_Guard
+                $NTNXInfra.AzureGuestDetails.VM_Bios_Name = $Tattoo.Azure_VM_Bios_Name
+                $NTNXInfra.AzureGuestDetails.VM_CPU_Name = $Tattoo.Azure_VM_CPU_Name
+                $NTNXInfra.AzureGuestDetails.VM_CPU_Manufacturer = $Tattoo.Azure_VM_CPU_Manufacturer
+                $NTNXInfra.AzureGuestDetails.VM_CPU_ClockSpeed = $Tattoo.Azure_VM_CPU_ClockSpeed
+                $NTNXInfra.AzureGuestDetails.VM_CPU_Caption = $Tattoo.Azure_VM_CPU_Caption
+                $NTNXInfra.AzureGuestDetails.VM_CPU_Cores = $Tattoo.Azure_VM_CPU_Cores
+                $NTNXInfra.AzureGuestDetails.VM_CPU_LogicalProcs = $Tattoo.Azure_VM_CPU_LogicalProcs
+                $NTNXInfra.AzureGuestDetails.VM_CPU_ThreadCount = $Tattoo.Azure_VM_CPU_ThreadCount
+                $NTNXInfra.AzureGuestDetails.VM_Memory_Size = $Tattoo.Azure_VM_Memory_Size
+                $NTNXInfra.AzureGuestDetails.VM_AcceleratedNetworking = $Tattoo.Azure_VM_AcceleratedNetworking
+                $NTNXInfra.AzureGuestDetails.VM_pageFile = $Tattoo.Azure_VM_pageFile
+                $NTNXInfra.AzureGuestDetails.OS_Type = $Tattoo.Azure_OS_Type
+                $NTNXInfra.AzureGuestDetails.OS_Offer = $Tattoo.Azure_OS_Offer
+                $NTNXInfra.AzureGuestDetails.OS_Deployed_Version = $Tattoo.Azure_OS_Deployed_Version
+                $NTNXInfra.AzureGuestDetails.OS_Deployed_Sku = $Tattoo.Azure_OS_Deployed_Sku
+                $NTNXInfra.AzureGuestDetails.OS_Running_Version = $Tattoo.Azure_OS_Running_Version
+                $NTNXInfra.AzureGuestDetails.Disk_Type = $Tattoo.Azure_Disk_Type
+                $NTNXInfra.AzureGuestDetails.Disk_Size = $Tattoo.Azure_Disk_Size
+                $NTNXInfra.AzureGuestDetails.Disk_Caching = $Tattoo.Azure_Disk_Caching
+                $NTNXInfra.AzureGuestDetails.Disk_Encryption = $Tattoo.Azure_Disk_Encryption
+                $NTNXInfra.AzureGuestDetails.Disk_Write_Accelerator = $Tattoo.Azure_Disk_Write_Accelerator
+                $NTNXInfra.AzureGuestDetails.Disk_TempDisk_Size = $Tattoo.Azure_Disk_TempDisk_Size
+            }
         }
         catch {
             Write-Log -Message $_ -Level Error
@@ -1013,9 +1243,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if ($($VSI_Target_SessionCfg.ToLower()) -eq "ica") {
             $SessionsperLauncher = 20
         }
+        elseif ($($VSI_Target_SessionCfg.ToLower()) -eq "rdp") {
+            $SessionsperLauncher = 20
+        }
         else {
             $SessionsperLauncher = 12
         }
+
         if (-not ($SkipLaunchers)) {
             $NumberOfLaunchers = [System.Math]::Ceiling($VSI_Target_NumberOfSessions / $SessionsperLauncher)
             # Wait for all launchers to be registered in LE
@@ -1063,16 +1297,50 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
             ## Placeholder Block to capture the relevent settings below - will change with different tech
             $Params = @{
-                TestName          = $VSI_Test_Name
-                SessionAmount     = $VSI_Target_NumberOfSessions
-                RampupInMinutes   = $VSI_Target_RampupInMinutes
-                DurationInMinutes = $VSI_Target_DurationInMinutes
-                LauncherGroupName = $VSI_Launchers_GroupName
-                AccountGroupName  = $VSI_Users_GroupName
+                TestName           = $VSI_Test_Name
+                SessionAmount      = $VSI_Target_NumberOfSessions
+                RampupInMinutes    = $VSI_Target_RampupInMinutes
+                DurationInMinutes  = $VSI_Target_DurationInMinutes
+                LauncherGroupName  = $VSI_Launchers_GroupName
+                AccountGroupName   = $VSI_Users_GroupName
                 SessionMetricGroup = $VSI_Target_SessionMetricGroupName
-                ConnectorName     = "Citrix Storefront"
-                ConnectorParams   = @{serverURL = $VSI_Target_StorefrontURL; resource = $VSI_Target_DesktopPoolName }
-                Workload          = $VSI_Target_Workload
+                ConnectorName      = "Citrix Storefront"
+                ConnectorParams    = @{serverURL = $VSI_Target_StorefrontURL; resource = $VSI_Target_DesktopPoolName }
+                Workload           = $VSI_Target_Workload
+            }
+            $testId = Set-LELoadTestv7 @Params
+            $params = $null
+        }
+
+        if ($Type -eq "RDP") {
+            # create the host list Array for the test configuration
+            $HostList = @()
+            foreach ($RDP_Host in $VSI_Target_RDP_Hosts) {
+                $Custom_RDP_Host = New-Object -TypeName PSObject -Property @{
+                    endpoint = $(
+                        if ($RDP_Host -notlike "*.$VSI_Target_DomainName") {
+                            $RDP_Host + "." + $VSI_Target_DomainName
+                        }
+                        else {
+                            $RDP_Host
+                        }
+                    )
+                    enabled = $true
+                }
+                $HostList += $Custom_RDP_Host
+            }
+
+            $Params = @{
+                TestName           = $VSI_Test_Name 
+                SessionAmount      = $VSI_Target_NumberOfSessions
+                RampupInMinutes    = $VSI_Target_RampupInMinutes
+                DurationInMinutes  = $VSI_Target_DurationInMinutes
+                LauncherGroupName  = $VSI_Launchers_GroupName
+                AccountGroupName   = $VSI_Users_GroupName
+                SessionMetricGroup = $VSI_Target_SessionMetricGroupName
+                ConnectorName      = "Microsoft RDS"
+                ConnectorParams    = @{hostList = $HostList; suppressCertWarn = $true; displayResolution = ""; resource = $VSI_Target_DesktopPoolName}
+                Workload           = $VSI_Target_Workload
             }
             $testId = Set-LELoadTestv7 @Params
             $params = $null
@@ -1090,8 +1358,11 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #region Stop and cleanup monitoring job Boot phase
         #----------------------------------------------------------------------------------------------------------------------------
-        $monitoringJob | Stop-Job
-        $monitoringJob | Remove-Job
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $monitoringJob | Stop-Job
+            $monitoringJob | Remove-Job
+        }
         #endregion Stop and cleanup monitoring job Boot phase
 
         #region Set RDA Source and Destination files and clean out source files if they still exist
@@ -1148,6 +1419,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #region Nutanix Curator Stop
         #----------------------------------------------------------------------------------------------------------------------------
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $Message = "Stopping Nutanix Curator" 
+        } else {
+            $Message = "Skipping Stopping Nutanix Curator" 
+        }
 
         #region Update Test Dashboard
         $params = @{
@@ -1158,7 +1435,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
-            CurrentMessage = "Stopping Nutanix Curator" 
+            CurrentMessage = $Message
             TotalPhase     = "$($RunPhases)"
         }
         $null = Set-TestData @params
@@ -1181,8 +1458,11 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        Write-Log -Message "Stopping Nutanix Curator Service" -Level Info
-        Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "stop"
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            Write-Log -Message "Stopping Nutanix Curator Service" -Level Info
+            Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "stop"
+        }
 
         if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
             Write-Log -Message "Stopping Nutanix Curator Service on the Nutanix Files Cluster $($VSI_Target_Files_Cluster_CVM)" -Level Info
@@ -1235,6 +1515,14 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #----------------------------------------------------------------------------------------------------------------------------
 
         #region Update Test Dashboard
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $Message = "Starting Login Enterprise Test Monitor Run $($i)" 
+        }
+        else {
+            $Message = "Skipping Login Enterprise Test Monitor Run $($i)"
+        }
+
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -1243,7 +1531,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
-            CurrentMessage = "Starting Login Enterprise Test Monitor Run $($i)" 
+            CurrentMessage = $Message 
             TotalPhase     = "$($RunPhases)"
         }
         $null = Set-TestData @params
@@ -1266,17 +1554,20 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        $Params = @{
-            OutputFolder                 = $OutputFolder 
-            DurationInMinutes            = $VSI_Target_DurationInMinutes 
-            RampupInMinutes              = $VSI_Target_RampupInMinutes 
-            Hostuuid                     = $Hostuuid 
-            IPMI_ip                      = $IPMI_ip 
-            Path                         = $Scriptroot 
-            AsJob                        = $true
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $Params = @{
+                OutputFolder                 = $OutputFolder 
+                DurationInMinutes            = $VSI_Target_DurationInMinutes 
+                RampupInMinutes              = $VSI_Target_RampupInMinutes 
+                Hostuuid                     = $Hostuuid 
+                IPMI_ip                      = $IPMI_ip 
+                Path                         = $Scriptroot 
+                AsJob                        = $true
+            }
+            $monitoringJob = Start-VSINTNXMonitoring @params
+            $Params = $null
         }
-        $monitoringJob = Start-VSINTNXMonitoring @params
-        $Params = $null
 
         #start Monitoring the Files Cluster Hosting Files
         if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
@@ -1442,8 +1733,11 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #region Cleanup monitoring job
         #----------------------------------------------------------------------------------------------------------------------------
-        $monitoringJob | Wait-Job
-        $monitoringJob | Remove-Job
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $monitoringJob | Wait-Job
+            $monitoringJob | Remove-Job
+        }
         if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
             $monitoringJob_files | Wait-Job
             $monitoringJob_files | Remove-Job
@@ -1462,6 +1756,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #----------------------------------------------------------------------------------------------------------------------------
 
         #region Update Test Dashboard
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $Message = "Starting Nutanix Curator" 
+        } else {
+            $Message = "Skipping Starting Nutanix Curator" 
+        }
+
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -1470,7 +1771,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
-            CurrentMessage = "Starting Nutanix Curator" 
+            CurrentMessage = $Message
             TotalPhase     = "$($RunPhases)"
         }
         $null = Set-TestData @params
@@ -1493,9 +1794,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        Write-Log -Message "Starting Nutanix Curator Service" -Level Info
-        Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "start"
-        
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            Write-Log -Message "Starting Nutanix Curator Service" -Level Info
+            Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "start"
+        }
+
         if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
             Write-Log -Message "Starting Nutanix Curator Service on the Nutanix Files Cluster $($VSI_Target_Files_Cluster_CVM)" -Level Info
             Set-NTNXcurator -ClusterIP $VSI_Target_Files_Cluster_CVM -CVMSSHPassword $VSI_Target_Files_Cluster_CVMsshpassword -Action "start"
@@ -1539,7 +1843,11 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        $NTNXInfra.Testinfra.VMCPUCount = [Int]$VSI_Target_NumCPUs * [Int]$VSI_Target_NumCores
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            $NTNXInfra.Testinfra.VMCPUCount = [Int]$VSI_Target_NumCPUs * [Int]$VSI_Target_NumCores
+        }
+
         $NTNXInfra.Testinfra.Testname = $FolderName
         $NTNXInfra | ConvertTo-Json -Depth 20 | Set-Content -Path $OutputFolder\Testconfig.json -Force
 
@@ -1649,30 +1957,33 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $Run = $TestDetail[1]
 
             # Get the boot files and start time
-            $Files = Get-ChildItem "$($OutputFolder)\Boot\*.csv"
-            $Started = $($NTNXInfra.TestInfra.Bootstart)
+            if (-not $AzureMode.IsPresent) { 
+                # This is not an Azure configuration
+                $Files = Get-ChildItem "$($OutputFolder)\Boot\*.csv"
+                $Started = $($NTNXInfra.TestInfra.Bootstart)
 
-            # Build the Boot Bucket Name
-            If ($($NTNXInfra.Test.BucketName) -eq "LoginDocuments") {
-                $BucketName = "BootBucket"
-            }
-            Else {
-                $BucketName = "BootBucketRegression"
-            }
+                # Build the Boot Bucket Name
+                If ($($NTNXInfra.Test.BucketName) -eq "LoginDocuments") {
+                    $BucketName = "BootBucket"
+                }
+                Else {
+                    $BucketName = "BootBucketRegression"
+                }
 
-            # Loop through the boot files and process each one
-            foreach ($File in $Files) {
-                if (($File.Name -like "host raw*") -or ($File.Name -like "cluster raw*")) {
-                    Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
-                    if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
-                        Write-Log -Message "Finished uploading Boot File $($File.Name) to Influx" -Level Info
+                # Loop through the boot files and process each one
+                foreach ($File in $Files) {
+                    if (($File.Name -like "host raw*") -or ($File.Name -like "cluster raw*")) {
+                        Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
+                        if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
+                            Write-Log -Message "Finished uploading Boot File $($File.Name) to Influx" -Level Info
+                        }
+                        else {
+                            Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
+                        }
                     }
                     else {
-                        Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
+                        Write-Log -Message "Skipped uploading Boot File $($File.Name) to Influx" -Level Info
                     }
-                }
-                else {
-                    Write-Log -Message "Skipped uploading Boot File $($File.Name) to Influx" -Level Info
                 }
             }
 
@@ -1681,12 +1992,14 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv"
             $Started = $vsiresult.started
             $BucketName = $($NTNXInfra.Test.BucketName)
-
+            #Import-Module C:\DevOps\solutions-euc\engineering\login-enterprise\Nutanix.EUC\Nutanix.EUC.Reporting\Nutanix.EUC.Reporting.psd1 -force
             # Loop through the test run data files and process each one
             foreach ($File in $Files) {
                 if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*") -or ($File.Name -like "VM Perf Metrics*")) {
                     Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
-                    if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
+                    #Set Azure VM Value - If this is an Azure VM, we will be sending different tags in to Influx. If not, then it's business as usual.
+                    if ($NTNXInfra.AzureGuestDetails.IsAzureVM -eq $true) { $IsAzureVM = $true } else { $IsAzureVM = $false }
+                    if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName -IsAzureVM $IsAzureVM) {
                         Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
                     }
                     else {
@@ -1697,7 +2010,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                     Write-Log -Message "Skipped uploading File $($File.Name) to Influx" -Level Info
                 }
             }
-
             #region Upload Files Hosting Data to Influx
             if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
                 Write-Log -Message "Uploading Files Cluster $($VSI_Target_Files_Cluster_CVM) Metrics to Influx" -Level Info
@@ -1749,30 +2061,45 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #region Slack update
         #----------------------------------------------------------------------------------------------------------------------------
-        if ($VSI_Test_SkipLEMetricsDownload -eq $true){ 
-            $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName)."
+        if ($VSI_Test_SkipLEMetricsDownload -eq $true){
+            if (-not $AzureMode.IsPresent) { 
+                # This is not an Azure configuration
+                $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName)."
+            }
+            else {
+                $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Azure."
+            }
         } 
         else {
-            $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName). $($Testresult.activesessionCount) sessions active of $($Testresult."login total") total sessions. EUXscore: $($Testresult."EUX score") - VSImax: $($Testresult.vsiMax). App Success rate: $($Appsuccessrate.tostring("#.###"))"
+            if (-not $AzureMode.IsPresent) { 
+                # This is not an Azure configuration
+                $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName). $($Testresult.activesessionCount) sessions active of $($Testresult."login total") total sessions. EUXscore: $($Testresult."EUX score") - VSImax: $($Testresult.vsiMax). App Success rate: $($Appsuccessrate.tostring("#.###"))"
+            }
+            else {
+                $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Azure. $($Testresult.activesessionCount) sessions active of $($Testresult."login total") total sessions. EUXscore: $($Testresult."EUX score") - VSImax: $($Testresult.vsiMax). App Success rate: $($Appsuccessrate.tostring("#.###"))"
+            }
         }
         Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
 
-        if ($VSI_Test_SkipLEMetricsDownload -ne $true){ 
-            $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -RunNumber $i -TestName $NTNXTestname -TestResult $Testresult
+        if ($VSI_Test_SkipLEMetricsDownload -ne $true){
+            if ( -not $AzureMode.IsPresent) {
+                # This is not an Azure configuration
+                $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -RunNumber $i -TestName $NTNXTestname -TestResult $Testresult
 
-            if (Test-Path -path $Filename) {
-                $Params = @{
-                    ImageURL     = $FileName 
-                    SlackToken   = $NTNXInfra.Testinfra.SlackToken 
-                    SlackChannel = $NTNXInfra.Testinfra.SlackChannel 
-                    SlackTitle   = "$($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)" 
-                    SlackComment = "CPU and EUX score of $($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)"
+                if (Test-Path -path $Filename) {
+                    $Params = @{
+                        ImageURL     = $FileName 
+                        SlackToken   = $NTNXInfra.Testinfra.SlackToken 
+                        SlackChannel = $NTNXInfra.Testinfra.SlackChannel 
+                        SlackTitle   = "$($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)" 
+                        SlackComment = "CPU and EUX score of $($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)"
+                    }
+                    Update-VSISlackImage @params
+                    $Params = $null
                 }
-                Update-VSISlackImage @params
-                $Params = $null
-            }
-            else {
-                Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Level Warn
+                else {
+                    Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Level Warn
+                }
             }
         }
         #endregion Slack update

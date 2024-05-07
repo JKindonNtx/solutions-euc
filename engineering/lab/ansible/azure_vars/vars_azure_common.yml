@@ -13,3 +13,9 @@ domain_ou_path: "OU=Azure Instances,OU=Target,OU=Computers,OU=LoginEnterprise,DC
 dns_server_a: "10.57.64.20"
 dns_server_b: "10.57.64.21"
 dns_server_c: "8.8.8.8"
+#// Copied from the group_vars
+ansible_domain_user: wsperf\administrator
+ansible_domain_password: "nutanix/4u"
+ansible_become_user: wsperf\administrator
+ansible_become_pass: "nutanix/4u"
+sourcefiles_path: \\ws-files.wsperf.nutanix.com\Automation

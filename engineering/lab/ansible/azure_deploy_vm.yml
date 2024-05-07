@@ -1,35 +1,131 @@
 ---
-- name: Deploy Azure Virtual Machines
+- name: "Deploy Azure Virtual Machine: {{ vm_name }}"
   hosts: localhost
   vars_files:
     - ./azure_vars/vars_azure_common.yml
   connection: local
   roles:
-    - azure_deploy_vm
+    - role: azure_deploy_vm
   tasks:
     - name: Add the target_host to a dynamic group
       add_host:
         name: "{{ target_host }}"
         groups: target_host
 
-# Need to set WinRM Details here
-#- name: "Image Build for {{ target_host }}"
-#  hosts: target_host
-#  gather_facts: yes
-#  vars:
-#    ansible_user: "{{ ansible_domain_user }}"
-#    ansible_password: "{{ ansible_password }}"
-#    ansible_port: 5986
-#    ansible_connection: winrm
-#    ansible_winrm_transport: ntlm
-#    ansible_winrm_server_cert_validation: ignore
-#  roles:
-#    - run_ms_deployment_scripts
-#  become: true
-#  become_method: runas
+- name: "Join Domain: {{ vm_name }}" 
+  hosts: target_host
+  gather_facts: no
+  vars_files:
+    - ./azure_vars/vars_azure_common.yml
+  vars:
+    ansible_user: "{{ admin_username }}"
+    ansible_password: "{{ admin_password }}"
+    ansible_connection: winrm
+    ansible_winrm_transport: ntlm
+    ansible_port: "{{ winrm_port }}"
+    ansible_winrm_server_cert_validation: ignore
+    target: "{{ target_host }}"
+  tasks:
+    - name: join host {{ vm_name }} to domain {{ domain_fqdn }} with automatic reboot
+      microsoft.ad.membership:
+        dns_domain_name: "{{ domain_fqdn }}"
+        hostname: "{{ vm_name }}"
+        domain_admin_user: "{{ ansible_domain_user }}"
+        domain_admin_password: "{{ ansible_domain_password }}"
+        #domain_ou_path: "{{ domain_ou_path }}"
+        state: domain
+        reboot: true
+      register: domain_join
 
-# Post Build Tasks
-- name: Post Build Tasks
+    - name: reboot host after joining domain
+      ansible.windows.win_reboot:
+      when: domain_join.reboot_required
+
+- name: "Wait for the WinRM port to come online: {{ vm_name }}"
+  hosts: localhost
+  vars_files:
+    - ./azure_vars/vars_azure_common.yml
+  vars:
+    target: "{{ target_host }}"
+  connection: local
+  tasks:
+    - name: "Wait for the WinRM port to come online: {{ vm_name }}"
+      wait_for:
+        port: "{{ winrm_port }}"
+        host: "{{ target }}"
+        timeout: "{{ winrm_timeout }}"
+
+- name: "Image Build Post Domain: {{ vm_name }}"
+  hosts: target_host
+  vars_files:
+    - ./azure_vars/vars_azure_common.yml
+  gather_facts: yes
+  vars:
+    ansible_user: "{{ ansible_domain_user }}"
+    ansible_password: "{{ ansible_domain_password }}"
+    ansible_port: 5986
+    ansible_connection: winrm
+    ansible_winrm_transport: ntlm
+    ansible_winrm_server_cert_validation: ignore
+    target: "{{ target_host }}"
+  roles:
+    - role: run_ms_deployment_scripts
+    - role: install_ms_rds_role
+      when: "'Server' in ansible_facts.os_name"
+    - role: install_ms_net_framework_core_3.5
+      when: "'Server' in ansible_facts.os_name"
+    - role: install_ms_visual_c_2013u5
+    - role: install_latest_ms_edge
+    - role: install_adobe_reader_dc
+    - role: install_ms_office_2021_x64
+    - role: run_ms_file_types
+    #- role: run_software_inventory_corp_it
+    #- role: run_cust_imageoptimize_ms_vdot
+  tasks:
+
+  - name: "Search-only, return list of found updates (if any), log to C:\\ansible_wu.txt: {{ vm_name }}"
+    ansible.windows.win_updates:
+      category_names: '*'
+      state: searched
+      log_path: C:\ansible_wu.txt
+
+  - name: "Tattoo Image: {{ vm_name }}"
+    ansible.windows.win_powershell:
+      script: |
+        $Script = "cust-image-tattoo-azure.ps1"
+        
+        $BuildSource = "C:\deployment"
+        $ScriptSource = "$BuildSource\scripts"
+
+        & "$ScriptSource\$Script"
+
+  - name: "Create directory structure for delprof: {{ vm_name }}"
+    ansible.windows.win_file:
+      path: C:\Tools\Delprof
+      state: directory
+
+  - name: "Copy Delprof2: {{ vm_name }}"
+    win_copy:
+      src: "{{ sourcefiles_path }}\\Apps\\Other\\Delprof2\\DelProf2.exe"
+      dest: C:\Tools\Delprof\DelProf2.exe
+      remote_src: true
+      force: yes
+    become: yes
+    become_method: runas
+    become_flags: logon_type=new_credentials logon_flags=net_credentials_only
+  
+  - name: "Create Scheduled Task to Tattoo image on startup: {{ vm_name }}"
+    ansible.windows.win_powershell:
+      script: |
+        $scriptPath = "C:\deployment\cust-image-tattoo-azure.ps1"
+        $trigger = New-ScheduledTaskTrigger -AtStartup
+        $action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-NoProfile -WindowStyle Hidden -File `"$scriptPath`""
+        Register-ScheduledTask -TaskName "Image Tattoo" -Trigger $trigger -Action $action -Description "Tattoos Machine at Boot" -User "System" -RunLevel Highest
+
+  become: true
+  become_method: runas
+
+- name: "Post Build Tasks: {{ vm_name }}"
   hosts: localhost
   vars_files:
     - ./azure_vars/vars_azure_common.yml
@@ -40,8 +136,8 @@
         resource_group: "{{ resource_group }}"
         name: "{{ vm_name }}"
         allocated: false
-        
-    - name: Take Snapshot of built VM
+
+    - name: "Take Snapshot of built VM: {{ vm_name }}"
       azure_rm_snapshot:
         resource_group: "{{ resource_group }}"
         name: "{{ vm_name }}_snapshot"
@@ -51,3 +147,25 @@
           source_id: "{{ os_disk_id }}"
         sku:
           name: "Standard_LRS"
+
+
+#- name: "Gather Detail for {{ vm_name }}"
+#  hosts: target_host
+#  vars_files:
+#    - ./azure_vars/vars_azure_common.yml
+#  vars:
+#    ansible_user: "{{ admin_username }}"
+#    ansible_password: "{{ admin_password }}"
+#    ansible_connection: winrm
+#    ansible_winrm_transport: ntlm
+#    ansible_port: "{{ winrm_port }}"
+#    ansible_winrm_server_cert_validation: ignore
+#    target: "{{ target_host }}"
+#  tasks:
+#    - name: Print gathered facts
+#      debug:
+#        var: ansible_facts
+#
+#    - name: Pause for 30 seconds after reboot
+#      pause:
+#        seconds: 30

@@ -144,7 +144,7 @@ Function Enable-VSICTXDesktopPool {
     Start-Sleep -Seconds 10
     $BootStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
     Write-Log -Message "Powering on $PowerOnVMs machines" -Level Info
-    $PoweredOnVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $MaxRecordCount -SortBy MachineName | Select-Object -Last $PowerOnVMs
+    $PoweredOnVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $MaxRecordCount -SortBy MachineName | Select-Object -First $PowerOnVMs
     $SetPowerOnVMs = $PoweredOnVMs | New-BrokerHostingPowerAction -Action TurnOn
 
     # Wait untill NumberOfVMs matches buffer provided
@@ -162,7 +162,7 @@ Function Enable-VSICTXDesktopPool {
             $RegisteredVMCount = ($BrokerVMS | Where-Object { $_.RegistrationState -eq "Registered" } | Measure-Object).Count
             $TS = New-TimeSpan -Start $Start -End (Get-Date)
             if ($TS.TotalMinutes -gt 15) {
-                $PoweredOnVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $MaxRecordCount -SortBy MachineName | Select-Object -Last $PowerOnVMs
+                $PoweredOnVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $MaxRecordCount -SortBy MachineName | Select-Object -First $PowerOnVMs
                 $PowerOnStuckVMs = $PoweredOnVMs | Where-Object {$_.PowerState -eq "Off"} | New-BrokerHostingPowerAction -Action TurnOn
                 Write-Log -Message "Sleeping for 120 seconds" -Level Info
                 Start-Sleep -Seconds 120
