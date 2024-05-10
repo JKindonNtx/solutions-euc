@@ -1,4 +1,4 @@
-# Citrix Desktops as a Service on Nutanix
+# Citrix Desktop as a Service on Nutanix
 
 The Nutanix modular web-scale architecture lets you start small and expand to meet increasing demand—a node, a block, or multiple blocks at a time—with no impact on performance. This design removes the hurdle of a large initial infrastructure purchase, decreasing the time to value for your Citrix DaaS implementation. Running Citrix DaaS on Nutanix enables you to run multiple workloads, all on the same scalable converged infrastructure, while achieving these benefits:
 
@@ -12,7 +12,7 @@ Change management
 : Maintain environmental control and separation between development, test, staging, and production environments. Snapshots and fast clones can help share production data with nonproduction jobs without requiring full copies and unnecessary data duplication.
 
 Business continuity and data protection
-: User data and desktops are mission-critical and need enterprise-grade data management features, including backup and disaster recovery. 
+: User data and desktop are mission-critical and need enterprise-grade data management features, including backup and disaster recovery. 
 
 Data efficiency
 : Nutanix storage offers both compression and deduplication to help reduce your storage footprint. The compression functionality is truly VM-centric. Unlike traditional solutions that perform compression mainly at the LUN level, the Nutanix solution provides all these capabilities at the VM and file levels, greatly increasing efficiency and simplicity. These capabilities ensure the highest possible compression and decompression performance, even below the block level.
@@ -26,7 +26,7 @@ High-density architecture
 Time-sliced clusters
 : Like public cloud environments, Nutanix can provide a truly converged cloud infrastructure, allowing you to run your server and desktop virtualization on a single cloud. Gain the efficiency and savings you require with a converged cloud on a unified architecture.
 
-## Citrix Desktops as a Service on Nutanix AHV
+## Citrix Desktop as a Service on Nutanix AHV
 
 The following figure shows the main architectural components of the Citrix DaaS on Nutanix solution and the communication path between services.
  
@@ -42,6 +42,7 @@ _Table: Control Pod Details_
 | --- | :---: |
 | Cloud Connectors | 2 |
 | StoreFront servers | 2 |
+| Provisioning servers | 2 |
 
 <!--Confirm - we need to include storefront here true because of our tooling?-->
 _Table: Services Pod Details_

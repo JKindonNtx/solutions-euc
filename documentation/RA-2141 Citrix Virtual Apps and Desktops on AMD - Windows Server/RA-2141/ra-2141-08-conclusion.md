@@ -12,3 +12,4 @@ The results from the tests performed show:
 -  There was minimal cluster performance difference between MCS and PVS provisioning.
 -  Both PVS and MCS configurations performed similarly though logon times were slightly higher with PVS.
 -  Application start times were slightly better with PVS than MCS in these tests.
+-  PVS has a higher write impact on the cluster hosting the workloads, whereas MCS has a higher read impact. This is expected due to the write heavy nature of the PVS filter driver.
