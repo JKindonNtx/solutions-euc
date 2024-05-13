@@ -147,3 +147,50 @@ The `Remove-Test.ps1` requires a `ConfigFile.jsonc` file. This file contains the
 
 `.\Remove-Test.ps1 -ConfigFile .\Test-Removal.jsonc -Bucket LoginDocuments -Test a4df64_8n_A6.5.2.7_AHV_1000V_1000U_KW`
 
+## Archiving Test Data
+
+Test results are stored on the local machine executing the tests. Over time, this data can become tedious to navigate. Additionally, sometimes tests fail, resulting in orphaned data structures.
+
+Two scripts exist to manage this data. Both can be configured as a scheduled tasks on the appropriate jump host.
+
+### DeleteOrphanedTests.ps1
+
+This script will remove orphaned test data. Its criteria for maching is as follows:
+
+-  Traul the source folder specified by the `TestDirectory` parameter for any folder containing a sub folder specified by the `BootFolder` parameter (defaults to boot) with no other files present in the root folder
+-  Matches based on the `DaysOlderThan` parameter (defaults to 30)
+
+Any data meeting this criteria set will be deleted.
+
+#### Schedule task creation
+
+You can use the following snippet to create a scheduled task which will be actioned under the system context. Adjust your inputs accordingly
+
+```
+$ScriptPath = "C:\DevOps\solutions-euc\engineering\login-enterprise\DeleteOrphanedTests.ps1"
+$TestResultsPath = "C:\devops\solutions-euc\engineering\login-enterprise\results"
+$Trigger = New-ScheduledTaskTrigger -Daily -At 9:00pm
+$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-NoProfile -WindowStyle Hidden -File `"$scriptPath`" -TestDirectory `"$TestResultsPath`" -DaysOlderThan `"30`" "
+Register-ScheduledTask -TaskName "Delete Orphaned Tests" -Trigger $Trigger -Action $action -Description "Deletes Oprhaned Test Results" -User "System" -RunLevel Highest
+```
+
+### ArchiveTestData.ps1
+
+This script will archive test data to a central share so that it can be retrieved at a later date as required. Its criteria for maching is as follows:
+
+-  Traul the source folders specified by the `TestSourceDirectory` and `TestResultsSourceDirectory` parameters
+-  Matches based on the `DaysOlderThan` parameter (defaults to 30)
+-  Moves the data to the central location as specified by the `TestTargetDirectory` (defaults to `\\WS-Files\Automation\Test-Archive\results`) and `TestResultsTargetDirectory` (defaults to `\\WS-Files\Automation\Test-Archive\testresults`) parameters. 
+
+#### Schedule task creation
+
+You can use the following snippet to create a scheduled task which will be actioned under the system context. Adjust your inputs accordingly
+
+```
+$ScriptPath = "C:\DevOps\solutions-euc\engineering\login-enterprise\ArchiveTestData.ps1"
+$TestSourceDirectory = "C:\devops\solutions-euc\engineering\login-enterprise\results"
+$TestResultsSourceDirectory = "C:\devops\solutions-euc\engineering\login-enterprise\testresults"
+$Trigger = New-ScheduledTaskTrigger -Daily -At 9:30pm
+$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-NoProfile -WindowStyle Hidden -File `"$scriptPath`" -TestSourceDirectory `"$TestSourceDirectory`" -TestResultsSourceDirectory `"$TestResultsSourceDirectory`" -DaysOlderThan `"30`" "
+Register-ScheduledTask -TaskName "Archive Tests" -Trigger $Trigger -Action $action -Description "Archive Test Results" -User "System" -RunLevel Highest
+```

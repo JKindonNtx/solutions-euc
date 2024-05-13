@@ -1,4 +1,4 @@
-# Citrix Desktops as a Service on Nutanix
+# Citrix Desktop as a Service on Nutanix
 
 The Nutanix modular web-scale architecture lets you start small and expand to meet increasing demand—a node, a block, or multiple blocks at a time—with no impact on performance. This design removes the hurdle of a large initial infrastructure purchase, decreasing the time to value for your Citrix DaaS implementation. Running Citrix DaaS on Nutanix enables you to run multiple workloads, all on the same scalable converged infrastructure, while achieving these benefits:
 
@@ -26,7 +26,7 @@ High-density architecture
 Time-sliced clusters
 : Like public cloud environments, Nutanix can provide a truly converged cloud infrastructure, allowing you to run your server and desktop virtualization on a single cloud. Gain the efficiency and savings you require with a converged cloud on a unified architecture.
 
-## Citrix Desktops as a Service on Nutanix AHV
+## Citrix Desktop as a Service on Nutanix AHV
 
 The following figure shows the main architectural components of the Citrix DaaS on Nutanix solution and the communication path between services.
  
@@ -42,6 +42,7 @@ _Table: Control Pod Details_
 | --- | :---: |
 | Cloud Connectors | 2 |
 | StoreFront servers | 2 |
+| Provisioning servers | 2 |
 
 _Table: Services Pod Details_
 

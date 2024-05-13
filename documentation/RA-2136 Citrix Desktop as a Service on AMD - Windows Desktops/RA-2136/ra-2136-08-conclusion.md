@@ -14,4 +14,5 @@ The results from the tests performed show:
 -  CPU configurations with Windows 11 are critical. A 3 vCPU instance performed better than a 2 vCPU instance.
 -  The overall cluster metrics were not impacted by using a 3 vCPU spec configuration with Windows 11 vs a 2 vCPU configuration with Windows 10. There was a logical higher CPU ready time with a 3 vCPU configuration.
 -  Both PVS and MCS configurations performed similarly though logon times were slightly higher with PVS.
--  Application start times were generally better with MCS than PVS. This is logical due to data being streamed on first access with PVS. Subsequent launches will be launched from local cache
+-  Application start times were generally better with MCS than PVS. This is logical due to data being streamed on first access with PVS. Subsequent launches will be launched from local cache.
+-  PVS has a higher write impact on the cluster hosting the workloads, whereas MCS has a higher read impact. This is expected due to the write heavy nature of the PVS filter driver.
