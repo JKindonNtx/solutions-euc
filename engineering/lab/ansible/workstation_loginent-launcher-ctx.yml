@@ -3,14 +3,15 @@
   hosts: all
   vars:
     LE:
-      version: "5.5.2"
+      version: "5.9.9"
       url: "https://ws-le1.wsperf.nutanix.com"
       secret: "431BE4CA96D0551635C2B41D487A1572B2BF3DC7"
   roles:
   - run_ms_deployment_scripts
   - install_ms_net_framework_3.5
   - install_ms_visual_c_2013u5
-  - install_citrix_vda_client_2203_2
+  - install_citrix_vda_client_2402
+  - install_ms_edge_122
   - install_latest_workspace_app
   - install_latest_horizon_client
   - install_loginvsi_launcher
