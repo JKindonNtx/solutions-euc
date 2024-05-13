@@ -190,7 +190,7 @@ You can use the following snippet to create a scheduled task which will be actio
 $ScriptPath = "C:\DevOps\solutions-euc\engineering\login-enterprise\ArchiveTestData.ps1"
 $TestSourceDirectory = "C:\devops\solutions-euc\engineering\login-enterprise\results"
 $TestResultsSourceDirectory = "C:\devops\solutions-euc\engineering\login-enterprise\testresults"
-$Trigger = New-ScheduledTaskTrigger -Daily -At 9:00pm
+$Trigger = New-ScheduledTaskTrigger -Daily -At 9:30pm
 $action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-NoProfile -WindowStyle Hidden -File `"$scriptPath`" -TestSourceDirectory `"$TestSourceDirectory`" -TestResultsSourceDirectory `"$TestResultsSourceDirectory`" -DaysOlderThan `"30`" "
 Register-ScheduledTask -TaskName "Archive Tests" -Trigger $Trigger -Action $action -Description "Archive Test Results" -User "System" -RunLevel Highest
 ```
