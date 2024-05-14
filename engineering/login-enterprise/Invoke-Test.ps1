@@ -1075,7 +1075,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 EnforceHostMaintenanceMode = $NTNXInfra.Target.EnforceHostMaintenanceMode ## NEED TO CREATE THIS IN THE JSON!
                 TargetCVMAdmin             = $VSI_Target_CVM_admin
                 TargetCVMPassword          = $VSI_Target_CVM_password
-                Run                        = $CurrentRunPhase
+                Run                        = $i
                 MaxRecordCount             = $VSI_Target_MaxRecordCount
                 HostCount                  = $VSI_Target_NodeCount
                 ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####

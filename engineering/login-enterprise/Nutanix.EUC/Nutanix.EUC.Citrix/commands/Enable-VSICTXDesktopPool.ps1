@@ -164,7 +164,7 @@ Function Enable-VSICTXDesktopPool {
             hosts          = $hosts
             Run            = $Run
         }
-        Set-AffinitySingleNode @params
+        $AffinityProcessed = Set-AffinitySingleNode @params
         $Params = $null
     }
     ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####

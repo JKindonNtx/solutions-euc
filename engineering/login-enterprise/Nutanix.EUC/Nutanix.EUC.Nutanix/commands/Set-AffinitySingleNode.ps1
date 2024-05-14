@@ -9,7 +9,7 @@ Function Set-AffinitySingleNode {
         [Parameter(Mandatory = $true)][string]$hosts,
         [Parameter(Mandatory = $true)][string]$Run
     )
-
+    
     if ($Run -eq 1) {
         # We will process because this is run one
 
@@ -41,6 +41,7 @@ Function Set-AffinitySingleNode {
         
     } else {
         Write-Log -Message "We will not process affinity jobs as they have been completed in run1" -Level Info
+        $AffinityProcessed = $false
     }
 
     return $AffinityProcessed #Check this
