@@ -112,6 +112,7 @@ function Set-NTNXHostAlignment {
 
         }  else {
             $VMSPerHost = $VMSPerHost
+            $MachinesToAssignPostGrouping = 0
         }
 
         # Report output on how many machines will be realigned across hosts
@@ -129,286 +130,305 @@ function Set-NTNXHostAlignment {
         if ($NtnxHosts) {
             $NtnxHosts = $NtnxHosts | Sort-Object -Property name
             $NtnxHostsCount = ($NtnxHosts | Measure-Object).count
+            if ($NtnxHostsCount -lt $HostCount) {
+                Write-Log -Message "There are less hosts in the cluster than specifid for the test. Specfied: $($HostCount) but only found: $($NtnxHostsCount). Ignoring Alignment" -Level Warn
+                $CanProcessAlignment = $false
+            } else {
+                Write-Log -Message "There are $($NtnxHostsCount) Nodes found in the cluster. Test is configured to use $($HostCount) Nodes" -Level Info
+                $CanProcessAlignment = $true
+            }
         } else {
             #Failed to retrieve Nutanix host detail
             Write-Log -Message "Failed to retrieve Nutanix host detail" -Level Warn
             Write-Log -Message $_ -Level Warn
-            Break #Replace with Exit 1
+            Exit 1
         }
         
         #endregion learn about nutanix hosts
 
-        #region learn about Citrix VMs
-        Write-Log -Message "Retrieving list of machines from Delivery Group" -Level Info
-        $MachineList = Get-CitrixBrokerMachineList -DDC $DDC -DesktopGroupName $DesktopGroupName -MaxRecordCount $MaxRecordCount
-        if ($MachineList) {
-            Write-Log -Message "Retrieved $(($MachineList | Measure-Object).Count) Machines from Citrix" -Level Info
-        } else {
-            Write-Log -Message "No Machines Retrieved" -Level Warn
-            Exit 1
-        }
+        if ($CanProcessAlignment -eq $true) {
+            #region learn about Citrix VMs
         
-        #endregion learn about Citrix VMs
-
-        #region sort VM distribution
-        Write-Log -Message "Sorting machines into batches for Affintity" -Level Info
-        $MachineList_Host_1 = ($MachineList | Select-Object -First $MachineCountPerHost).HostedMachineName
-        $MachineList_Host_2 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip $MachineCountPerHost).HostedMachineName
-        $MachineList_Host_3 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 2)).HostedMachineName
-        $MachineList_Host_4 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 3)).HostedMachineName
-        $MachineList_Host_5 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 4)).HostedMachineName
-        $MachineList_Host_6 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 5)).HostedMachineName
-        $MachineList_Host_7 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 6)).HostedMachineName
-        $MachineList_Host_8 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 7)).HostedMachineName
-        #endregion sort VM distribution
-
-        #region deal with orphaned VM distribution
-        if ($MachinesToAssignPostGrouping -gt 1) {
-
-            # We have already sorted the even list by -First, so grab the -Last $MachinesToAssignPostGrouping count to find what is left, then distribute them across nodes starting from node 1
-            $MachineList_Host_Orphaned = ($MachineList | Select-Object -Last $MachinesToAssignPostGrouping).HostedMachineName
-
-            if (($MachineList_Host_Orphaned | Measure-Object).Count -eq 1) {
-                $MachineList_Host_1 =+ $MachineList_Host_Orphaned[0]
+            Write-Log -Message "Retrieving list of machines from Delivery Group" -Level Info
+            $MachineList = Get-CitrixBrokerMachineList -DDC $DDC -DesktopGroupName $DesktopGroupName -MaxRecordCount $MaxRecordCount
+            if ($MachineList) {
+                Write-Log -Message "Retrieved $(($MachineList | Measure-Object).Count) Machines from Citrix" -Level Info
+            } else {
+                Write-Log -Message "No Machines Retrieved" -Level Warn
+                Exit 1
             }
-            if (($MachineList_Host_Orphaned | Measure-Object).Count -eq 2) {
-                $MachineList_Host_1 =+ $MachineList_Host_Orphaned[0]
-                $MachineList_Host_2 =+ $MachineList_Host_Orphaned[1]
-            }
-            if (($MachineList_Host_Orphaned | Measure-Object).Count -eq 3) {
-                $MachineList_Host_1 =+ $MachineList_Host_Orphaned[0]
-                $MachineList_Host_2 =+ $MachineList_Host_Orphaned[1]
-                $MachineList_Host_3 =+ $MachineList_Host_Orphaned[2]
-            }
-            if (($MachineList_Host_Orphaned | Measure-Object).Count -eq 4) {
-                $MachineList_Host_1 =+ $MachineList_Host_Orphaned[0]
-                $MachineList_Host_2 =+ $MachineList_Host_Orphaned[1]
-                $MachineList_Host_3 =+ $MachineList_Host_Orphaned[2]
-                $MachineList_Host_4 =+ $MachineList_Host_Orphaned[3]
-            }
-            if (($MachineList_Host_Orphaned | Measure-Object).Count -eq 5) {
-                $MachineList_Host_1 =+ $MachineList_Host_Orphaned[0]
-                $MachineList_Host_2 =+ $MachineList_Host_Orphaned[1]
-                $MachineList_Host_3 =+ $MachineList_Host_Orphaned[2]
-                $MachineList_Host_4 =+ $MachineList_Host_Orphaned[3]
-                $MachineList_Host_5 =+ $MachineList_Host_Orphaned[4]
-            }
-            if (($MachineList_Host_Orphaned | Measure-Object).Count -eq 6) {
-                $MachineList_Host_1 =+ $MachineList_Host_Orphaned[0]
-                $MachineList_Host_2 =+ $MachineList_Host_Orphaned[1]
-                $MachineList_Host_3 =+ $MachineList_Host_Orphaned[2]
-                $MachineList_Host_4 =+ $MachineList_Host_Orphaned[3]
-                $MachineList_Host_5 =+ $MachineList_Host_Orphaned[4]
-                $MachineList_Host_6 =+ $MachineList_Host_Orphaned[5]
-            }
-            if (($MachineList_Host_Orphaned | Measure-Object).Count -eq 7) {
-                $MachineList_Host_1 =+ $MachineList_Host_Orphaned[0]
-                $MachineList_Host_2 =+ $MachineList_Host_Orphaned[1]
-                $MachineList_Host_3 =+ $MachineList_Host_Orphaned[2]
-                $MachineList_Host_4 =+ $MachineList_Host_Orphaned[3]
-                $MachineList_Host_5 =+ $MachineList_Host_Orphaned[4]
-                $MachineList_Host_6 =+ $MachineList_Host_Orphaned[5]
-                $MachineList_Host_7 =+ $MachineList_Host_Orphaned[6]
-            }
-        }
-        #endregion deal with orphaned VM distribution
+            #endregion learn about Citrix VMs
 
-        #region Sort out the number of hosts we are going to be dealing with for reporting output
-        $HostCount_1_Node = (1,2,3,4,5,6,7,8)   # Host 1 will always be in play
-        $HostCount_2_Node = (2,3,4,5,6,7,8)     # Host 2 will be in a 2, 3, 4, 5, 6, 7, 8 Node test
-        $HostCount_3_Node = (3,4,5,6,7,8)       # Host 3 will be in a 3, 4, 5, 6, 7, 8 Node test
-        $HostCount_4_Node = (4,5,6,7,8)         # Host 4 will be in a 4, 5, 6, 7, 8 Node test
-        $HostCount_5_Node = (5,6,7,8)           # Host 5 will be in a 5, 6, 7, 8 Node test
-        $HostCount_6_Node = (6,7,8)             # Host 6 will be in a 6, 7, 8 Node test
-        $HostCount_7_Node = (7,8)               # Host 7 will be in a 7, 8 Node test
-        $HostCount_8_Node = (8)                 # Host 8 will ony be in an 8 node test
+            #region sort VM distribution
+            $MachineList_Host_1 = $null
+            $MachineList_Host_2 = $null
+            $MachineList_Host_3 = $null
+            $MachineList_Host_4 = $null
+            $MachineList_Host_5 = $null
+            $MachineList_Host_6 = $null
+            $MachineList_Host_7 = $null
+            $MachineList_Host_8 = $null
 
-        if ($HostCount -in $HostCount_1_Node) { Write-Log -Message "Host 1: $($NtnxHosts[0].name) is included with VM count: $(($MachineList_Host_1 | Measure-Object).Count)" -Level Info }
-        if ($HostCount -in $HostCount_2_Node) { Write-Log -Message "Host 2: $($NtnxHosts[1].name) is included with VM count: $(($MachineList_Host_2 | Measure-Object).Count)" -Level Info }
-        if ($HostCount -in $HostCount_3_Node) { Write-Log -Message "Host 3: $($NtnxHosts[2].name) is included with VM count: $(($MachineList_Host_3 | Measure-Object).Count)" -Level Info }
-        if ($HostCount -in $HostCount_4_Node) { Write-Log -Message "Host 4: $($NtnxHosts[3].name) is included with VM count: $(($MachineList_Host_4 | Measure-Object).Count)" -Level Info }
-        if ($HostCount -in $HostCount_5_Node) { Write-Log -Message "Host 5: $($NtnxHosts[4].name) is included with VM count: $(($MachineList_Host_5 | Measure-Object).Count)" -Level Info }
-        if ($HostCount -in $HostCount_6_Node) { Write-Log -Message "Host 6: $($NtnxHosts[5].name) is included with VM count: $(($MachineList_Host_6 | Measure-Object).Count)" -Level Info }
-        if ($HostCount -in $HostCount_7_Node) { Write-Log -Message "Host 7: $($NtnxHosts[6].name) is included with VM count: $(($MachineList_Host_7 | Measure-Object).Count)" -Level Info }
-        if ($HostCount -in $HostCount_8_Node) { Write-Log -Message "Host 8: $($NtnxHosts[7].name) is included with VM count: $(($MachineList_Host_8 | Measure-Object).Count)" -Level Info }
-        #endregion Sort out the number of hosts we are going to be dealing with for reporting output
+            Write-Log -Message "Sorting machines into batches for Affintity" -Level Info
+            $MachineList_Host_1 = ($MachineList | Select-Object -First $MachineCountPerHost).HostedMachineName
+            if ($HostCount -gt 1) { $MachineList_Host_2 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip $MachineCountPerHost).HostedMachineName }
+            if ($HostCount -gt 2) { $MachineList_Host_3 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 2)).HostedMachineName }
+            if ($HostCount -gt 3) { $MachineList_Host_4 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 3)).HostedMachineName }
+            if ($HostCount -gt 4) { $MachineList_Host_5 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 4)).HostedMachineName }
+            if ($HostCount -gt 5) { $MachineList_Host_6 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 5)).HostedMachineName }
+            if ($HostCount -gt 6) { $MachineList_Host_7 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 6)).HostedMachineName }
+            if ($HostCount -gt 7) { $MachineList_Host_8 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 7)).HostedMachineName }
+            
+            #endregion sort VM distribution
 
-        #region Sort Credential and Session for Nutanix Cluster Operations
-        $password = ConvertTo-SecureString "$CVMsshpassword" -AsPlainText -Force
-        $HostCredential = New-Object System.Management.Automation.PSCredential ("nutanix", $password)
-        $session = New-SSHSession -ComputerName $ClusterIP -Credential $HostCredential -AcceptKey -KeepAliveInterval 5
-        #endregion Sort Credential and Session for Nutanix Cluster Operations
+            #region deal with orphaned VM distribution
+            if ($MachinesToAssignPostGrouping -gt 1) {
 
-        #region Process the alignment
+                # We have already sorted the even list by -First, so grab the -Last $MachinesToAssignPostGrouping count to find what is left, then distribute them across nodes starting from node 1
+                $MachineList_Host_Orphaned = ($MachineList | Select-Object -Last $MachinesToAssignPostGrouping).HostedMachineName
 
-        if ($EnforceHostMaintenanceMode -eq $true) {
-            Write-Log -Message "Maintenance Mode processing for hosts is enabled." -Level Info
-        }
+                if (($MachineList_Host_Orphaned | Measure-Object).Count -eq 1) {
+                    $MachineList_Host_1 += $MachineList_Host_Orphaned[0]
+                }
+                if (($MachineList_Host_Orphaned | Measure-Object).Count -eq 2) {
+                    $MachineList_Host_1 += $MachineList_Host_Orphaned[0]
+                    $MachineList_Host_2 += $MachineList_Host_Orphaned[1]
+                }
+                if (($MachineList_Host_Orphaned | Measure-Object).Count -eq 3) {
+                    $MachineList_Host_1 += $MachineList_Host_Orphaned[0]
+                    $MachineList_Host_2 += $MachineList_Host_Orphaned[1]
+                    $MachineList_Host_3 += $MachineList_Host_Orphaned[2]
+                }
+                if (($MachineList_Host_Orphaned | Measure-Object).Count -eq 4) {
+                    $MachineList_Host_1 += $MachineList_Host_Orphaned[0]
+                    $MachineList_Host_2 += $MachineList_Host_Orphaned[1]
+                    $MachineList_Host_3 += $MachineList_Host_Orphaned[2]
+                    $MachineList_Host_4 += $MachineList_Host_Orphaned[3]
+                }
+                if (($MachineList_Host_Orphaned | Measure-Object).Count -eq 5) {
+                    $MachineList_Host_1 += $MachineList_Host_Orphaned[0]
+                    $MachineList_Host_2 += $MachineList_Host_Orphaned[1]
+                    $MachineList_Host_3 += $MachineList_Host_Orphaned[2]
+                    $MachineList_Host_4 += $MachineList_Host_Orphaned[3]
+                    $MachineList_Host_5 += $MachineList_Host_Orphaned[4]
+                }
+                if (($MachineList_Host_Orphaned | Measure-Object).Count -eq 6) {
+                    $MachineList_Host_1 += $MachineList_Host_Orphaned[0]
+                    $MachineList_Host_2 += $MachineList_Host_Orphaned[1]
+                    $MachineList_Host_3 += $MachineList_Host_Orphaned[2]
+                    $MachineList_Host_4 += $MachineList_Host_Orphaned[3]
+                    $MachineList_Host_5 += $MachineList_Host_Orphaned[4]
+                    $MachineList_Host_6 += $MachineList_Host_Orphaned[5]
+                }
+                if (($MachineList_Host_Orphaned | Measure-Object).Count -eq 7) {
+                    $MachineList_Host_1 += $MachineList_Host_Orphaned[0]
+                    $MachineList_Host_2 += $MachineList_Host_Orphaned[1]
+                    $MachineList_Host_3 += $MachineList_Host_Orphaned[2]
+                    $MachineList_Host_4 += $MachineList_Host_Orphaned[3]
+                    $MachineList_Host_5 += $MachineList_Host_Orphaned[4]
+                    $MachineList_Host_6 += $MachineList_Host_Orphaned[5]
+                    $MachineList_Host_7 += $MachineList_Host_Orphaned[6]
+                }
+            }
+            #endregion deal with orphaned VM distribution
 
-        # Our hosts start at item 0 in the array
-        #----------------------------------------------------------
-        # Process Host 1
-        #----------------------------------------------------------
-        if (-not [string]::IsNullOrEmpty($MachineList_Host_1)) {
-            $NtnxHost = $NtnxHosts[0].hypervisor_address_value.ipv4
-            $HostMachineList = $MachineList_Host_1
+            #region Sort out the number of hosts we are going to be dealing with for reporting output
+            $HostCount_1_Node = (1,2,3,4,5,6,7,8)   # Host 1 will always be in play
+            $HostCount_2_Node = (2,3,4,5,6,7,8)     # Host 2 will be in a 2, 3, 4, 5, 6, 7, 8 Node test
+            $HostCount_3_Node = (3,4,5,6,7,8)       # Host 3 will be in a 3, 4, 5, 6, 7, 8 Node test
+            $HostCount_4_Node = (4,5,6,7,8)         # Host 4 will be in a 4, 5, 6, 7, 8 Node test
+            $HostCount_5_Node = (5,6,7,8)           # Host 5 will be in a 5, 6, 7, 8 Node test
+            $HostCount_6_Node = (6,7,8)             # Host 6 will be in a 6, 7, 8 Node test
+            $HostCount_7_Node = (7,8)               # Host 7 will be in a 7, 8 Node test
+            $HostCount_8_Node = (8)                 # Host 8 will ony be in an 8 node test
+
+            if ($HostCount -in $HostCount_1_Node) { Write-Log -Message "Host 1: $($NtnxHosts[0].name) is included with VM count: $(($MachineList_Host_1 | Measure-Object).Count)" -Level Info }
+            if ($HostCount -in $HostCount_2_Node) { Write-Log -Message "Host 2: $($NtnxHosts[1].name) is included with VM count: $(($MachineList_Host_2 | Measure-Object).Count)" -Level Info }
+            if ($HostCount -in $HostCount_3_Node) { Write-Log -Message "Host 3: $($NtnxHosts[2].name) is included with VM count: $(($MachineList_Host_3 | Measure-Object).Count)" -Level Info }
+            if ($HostCount -in $HostCount_4_Node) { Write-Log -Message "Host 4: $($NtnxHosts[3].name) is included with VM count: $(($MachineList_Host_4 | Measure-Object).Count)" -Level Info }
+            if ($HostCount -in $HostCount_5_Node) { Write-Log -Message "Host 5: $($NtnxHosts[4].name) is included with VM count: $(($MachineList_Host_5 | Measure-Object).Count)" -Level Info }
+            if ($HostCount -in $HostCount_6_Node) { Write-Log -Message "Host 6: $($NtnxHosts[5].name) is included with VM count: $(($MachineList_Host_6 | Measure-Object).Count)" -Level Info }
+            if ($HostCount -in $HostCount_7_Node) { Write-Log -Message "Host 7: $($NtnxHosts[6].name) is included with VM count: $(($MachineList_Host_7 | Measure-Object).Count)" -Level Info }
+            if ($HostCount -in $HostCount_8_Node) { Write-Log -Message "Host 8: $($NtnxHosts[7].name) is included with VM count: $(($MachineList_Host_8 | Measure-Object).Count)" -Level Info }
+            #endregion Sort out the number of hosts we are going to be dealing with for reporting output
+
+            #region Sort Credential and Session for Nutanix Cluster Operations
+            $password = ConvertTo-SecureString "$CVMsshpassword" -AsPlainText -Force
+            $HostCredential = New-Object System.Management.Automation.PSCredential ("nutanix", $password)
+            $session = New-SSHSession -ComputerName $ClusterIP -Credential $HostCredential -AcceptKey -KeepAliveInterval 5
+            #endregion Sort Credential and Session for Nutanix Cluster Operations
+
+            #region Process the alignment
 
             if ($EnforceHostMaintenanceMode -eq $true) {
-                Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                Write-Log -Message "Maintenance Mode processing for hosts is enabled." -Level Info
             }
 
-            Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
-        }
-        #----------------------------------------------------------
-        # Process Host 2
-        #----------------------------------------------------------
-        if (-not [string]::IsNullOrEmpty($MachineList_Host_2)) {
-            $NtnxHost = $NtnxHosts[1].hypervisor_address_value.ipv4
-            $HostMachineList = $MachineList_Host_2
+            # Our hosts start at item 0 in the array
+            #----------------------------------------------------------
+            # Process Host 1
+            #----------------------------------------------------------
+            if (-not [string]::IsNullOrEmpty($MachineList_Host_1)) {
+                $NtnxHost = $NtnxHosts[0].hypervisor_address_value.ipv4
+                $HostMachineList = $MachineList_Host_1
 
-            if ($EnforceHostMaintenanceMode -eq $true) {
-                Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                if ($EnforceHostMaintenanceMode -eq $true) {
+                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                }
+
+                Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
             }
-
-            Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
-        } else {
-            if ($NtnxHostsCount -gt 1) {
+            #----------------------------------------------------------
+            # Process Host 2
+            #----------------------------------------------------------
+            if (-not [string]::IsNullOrEmpty($MachineList_Host_2)) {
                 $NtnxHost = $NtnxHosts[1].hypervisor_address_value.ipv4
+                $HostMachineList = $MachineList_Host_2
+
+                if ($EnforceHostMaintenanceMode -eq $true) {
+                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                }
+
+                Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
+            } else {
+                if ($NtnxHostsCount -gt 1) {
+                    $NtnxHost = $NtnxHosts[1].hypervisor_address_value.ipv4
+                    
+                    if ($EnforceHostMaintenanceMode -eq $true) {
+                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
+                    }
+                }
+            }
+            #----------------------------------------------------------
+            # Process Host 3
+            #----------------------------------------------------------
+            if (-not [string]::IsNullOrEmpty($MachineList_Host_3)) {
+                $NtnxHost = $NtnxHosts[2].hypervisor_address_value.ipv4
+                $HostMachineList = $MachineList_Host_3
+
+                if ($EnforceHostMaintenanceMode -eq $true) {
+                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                }
+
+                Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
+            } else {
+                if ($NtnxHostsCount -gt 2) {
+                    $NtnxHost = $NtnxHosts[2].hypervisor_address_value.ipv4
+
+                    if ($EnforceHostMaintenanceMode -eq $true) {
+                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
+                    }
+                }
+            }
+            #----------------------------------------------------------
+            # Process Host 4
+            #----------------------------------------------------------
+            if (-not [string]::IsNullOrEmpty($MachineList_Host_4)) {
+                $NtnxHost = $NtnxHosts[3].hypervisor_address_value.ipv4
+                $HostMachineList = $MachineList_Host_4
+
+                if ($EnforceHostMaintenanceMode -eq $true) {
+                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                }
+
+                Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
+            } else {
+                if ($NtnxHostsCount -gt 3) {
+                    $NtnxHost = $NtnxHosts[3].hypervisor_address_value.ipv4
+
+                    if ($EnforceHostMaintenanceMode -eq $true) {
+                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
+                    }
+                }
+            }
+            #----------------------------------------------------------
+            # Process Host 5
+            #----------------------------------------------------------
+            if (-not [string]::IsNullOrEmpty($MachineList_Host_5)) {
+                $NtnxHost = $NtnxHosts[4].hypervisor_address_value.ipv4
+                $HostMachineList = $MachineList_Host_5
+
+                if ($EnforceHostMaintenanceMode -eq $true) {
+                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                }
+
+                Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
+            } else {
+                if ($NtnxHostsCount -gt 4) {
+                    $NtnxHost = $NtnxHosts[4].hypervisor_address_value.ipv4
+
+                    if ($EnforceHostMaintenanceMode -eq $true) {
+                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
+                    }
+                }
+            }
+            #----------------------------------------------------------
+            # Process Host 6
+            #----------------------------------------------------------
+            if (-not [string]::IsNullOrEmpty($MachineList_Host_6)) {
+                $NtnxHost = $NtnxHosts[5].hypervisor_address_value.ipv4
+                $HostMachineList = $MachineList_Host_6
+
+                if ($EnforceHostMaintenanceMode -eq $true) {
+                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                }
+
+                Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
+            } else {
+                if ($NtnxHostsCount -gt 5) {
+                    $NtnxHost = $NtnxHosts[5].hypervisor_address_value.ipv4
+
+                    if ($EnforceHostMaintenanceMode -eq $true) {
+                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
+                    }
+                }
+            }
+            #----------------------------------------------------------
+            # Process Host 6
+            #----------------------------------------------------------
+            if (-not [string]::IsNullOrEmpty($MachineList_Host_7)) {
+                $NtnxHost = $NtnxHosts[6].hypervisor_address_value.ipv4
+                $HostMachineList = $MachineList_Host_7
+
+                if ($EnforceHostMaintenanceMode -eq $true) {
+                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                }
+
+                Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
+            } else {
+                if ($NtnxHostsCount -gt 6) {
+                    $NtnxHost = $NtnxHosts[6].hypervisor_address_value.ipv4
+
+                    if ($EnforceHostMaintenanceMode -eq $true) {
+                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
+                    }
+                }
+            }
+            #----------------------------------------------------------
+            # Process Host 8
+            #----------------------------------------------------------
+            if (-not [string]::IsNullOrEmpty($MachineList_Host_8)) {
+                $NtnxHost = $NtnxHosts[7].hypervisor_address_value.ipv4
+                $HostMachineList = $MachineList_Host_8
                 
                 if ($EnforceHostMaintenanceMode -eq $true) {
-                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
+                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                }
+
+                Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
+            } else {
+                if ($NtnxHostsCount -gt 7) {
+                    $NtnxHost = $NtnxHosts[7].hypervisor_address_value.ipv4
+
+                    if ($EnforceHostMaintenanceMode -eq $true) {
+                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
+                    }
                 }
             }
+            #endregion Process the alignment
+
+            Remove-SSHSession -Name $Session | Out-Null
         }
-        #----------------------------------------------------------
-        # Process Host 3
-        #----------------------------------------------------------
-        if (-not [string]::IsNullOrEmpty($MachineList_Host_3)) {
-            $NtnxHost = $NtnxHosts[2].hypervisor_address_value.ipv4
-            $HostMachineList = $MachineList_Host_3
-
-            if ($EnforceHostMaintenanceMode -eq $true) {
-                Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
-            }
-
-            Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
-        } else {
-            if ($NtnxHostsCount -gt 2) {
-                $NtnxHost = $NtnxHosts[2].hypervisor_address_value.ipv4
-
-                if ($EnforceHostMaintenanceMode -eq $true) {
-                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
-                }
-            }
-        }
-        #----------------------------------------------------------
-        # Process Host 4
-        #----------------------------------------------------------
-        if (-not [string]::IsNullOrEmpty($MachineList_Host_4)) {
-            $NtnxHost = $NtnxHosts[3].hypervisor_address_value.ipv4
-            $HostMachineList = $MachineList_Host_4
-
-            if ($EnforceHostMaintenanceMode -eq $true) {
-                Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
-            }
-
-            Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
-        } else {
-            if ($NtnxHostsCount -gt 3) {
-                $NtnxHost = $NtnxHosts[3].hypervisor_address_value.ipv4
-
-                if ($EnforceHostMaintenanceMode -eq $true) {
-                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
-                }
-            }
-        }
-        #----------------------------------------------------------
-        # Process Host 5
-        #----------------------------------------------------------
-        if (-not [string]::IsNullOrEmpty($MachineList_Host_5)) {
-            $NtnxHost = $NtnxHosts[4].hypervisor_address_value.ipv4
-            $HostMachineList = $MachineList_Host_5
-
-            if ($EnforceHostMaintenanceMode -eq $true) {
-                Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
-            }
-
-            Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
-        } else {
-            if ($NtnxHostsCount -gt 4) {
-                $NtnxHost = $NtnxHosts[4].hypervisor_address_value.ipv4
-
-                if ($EnforceHostMaintenanceMode -eq $true) {
-                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
-                }
-            }
-        }
-        #----------------------------------------------------------
-        # Process Host 6
-        #----------------------------------------------------------
-        if (-not [string]::IsNullOrEmpty($MachineList_Host_6)) {
-            $NtnxHost = $NtnxHosts[5].hypervisor_address_value.ipv4
-            $HostMachineList = $MachineList_Host_6
-
-            if ($EnforceHostMaintenanceMode -eq $true) {
-                Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
-            }
-
-            Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
-        } else {
-            if ($NtnxHostsCount -gt 5) {
-                $NtnxHost = $NtnxHosts[5].hypervisor_address_value.ipv4
-
-                if ($EnforceHostMaintenanceMode -eq $true) {
-                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
-                }
-            }
-        }
-        #----------------------------------------------------------
-        # Process Host 6
-        #----------------------------------------------------------
-        if (-not [string]::IsNullOrEmpty($MachineList_Host_7)) {
-            $NtnxHost = $NtnxHosts[6].hypervisor_address_value.ipv4
-            $HostMachineList = $MachineList_Host_7
-
-            if ($EnforceHostMaintenanceMode -eq $true) {
-                Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
-            }
-
-            Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
-        } else {
-            if ($NtnxHostsCount -gt 6) {
-                $NtnxHost = $NtnxHosts[6].hypervisor_address_value.ipv4
-
-                if ($EnforceHostMaintenanceMode -eq $true) {
-                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
-                }
-            }
-        }
-        #----------------------------------------------------------
-        # Process Host 8
-        #----------------------------------------------------------
-        if (-not [string]::IsNullOrEmpty($MachineList_Host_8)) {
-            $NtnxHost = $NtnxHosts[7].hypervisor_address_value.ipv4
-            $HostMachineList = $MachineList_Host_8
-            
-            if ($EnforceHostMaintenanceMode -eq $true) {
-                Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
-            }
-
-            Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
-        } else {
-            if ($NtnxHostsCount -gt 7) {
-                $NtnxHost = $NtnxHosts[7].hypervisor_address_value.ipv4
-
-                if ($EnforceHostMaintenanceMode -eq $true) {
-                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
-                }
-            }
-        }
-        #endregion Process the alignment
-
-        Remove-SSHSession -Name $Session | Out-Null
 
     } else {
         #We will not process because this has already been completed on run 1

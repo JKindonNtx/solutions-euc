@@ -525,10 +525,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     }
     #endregion Set affinity Config
 
-    ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
-    # Need to check the above logic here to cater for Override
-    ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
-
     $NTNXInfra.Target.ImagesToTest = $ImageToTest
 
     #region Slack update
@@ -738,7 +734,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 ApplianceURL   = $VSI_LoginEnterprise_ApplianceURL
             }
             New-VSIADUsers @params
-        }
+        }        
         else {
             # Alternative for when invoking the toolkit from a machine that's not part of the domain/ user that does not have the appropriate rights to create users
             $params = @{
@@ -1070,15 +1066,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 CloneType                  = $VSI_Target_CloneType
                 Hosts                      = $NTNXInfra.Testinfra.Hostip
                 Type                       = $Type
-                ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
-                ForceAlignVMToHost         = $NTNXInfra.Target.ForceAlignVMToHost ## NEED TO CREATE THIS IN THE JSON!
-                EnforceHostMaintenanceMode = $NTNXInfra.Target.EnforceHostMaintenanceMode ## NEED TO CREATE THIS IN THE JSON!
+                ForceAlignVMToHost         = $NTNXInfra.Target.ForceAlignVMToHost
+                EnforceHostMaintenanceMode = $NTNXInfra.Target.EnforceHostMaintenanceMode
                 TargetCVMAdmin             = $VSI_Target_CVM_admin
                 TargetCVMPassword          = $VSI_Target_CVM_password
                 Run                        = $i
                 MaxRecordCount             = $VSI_Target_MaxRecordCount
                 HostCount                  = $VSI_Target_NodeCount
-                ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
             }
             $Boot = Enable-VSICTXDesktopPool @params
     
@@ -2149,7 +2143,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     }
     #endregion Iterate through runs
 
-    ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
     #region Clear Affinity from VMs
     if (-not $AzureMode.IsPresent) { 
         $params = @{
@@ -2164,7 +2157,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $params = $null
     }
     #endregion Clear Affinity from VMs
-    ##### -----------------KINDON AFFINITY SETTING TESTING BLOCK---------------- #####
 
     #region Analyze Run results
     #----------------------------------------------------------------------------------------------------------------------------

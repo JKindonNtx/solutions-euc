@@ -66,6 +66,15 @@ The configuration file to parse and validate
 
         #region Target Section Validation - General
 
+        if ($configFileData.Target.psobject.Properties.Name -notcontains "ForceAlignVMToHost"){
+            Write-Log -Message "You are missing the ForceAlignVMToHost object in your JSON file." -Level Error
+            $ErrorCount ++
+        }
+        if ($configFileData.Target.psobject.Properties.Name -notcontains "EnforceHostMaintenanceMode"){
+            Write-Log -Message "You are missing the EnforceHostMaintenanceMode object in your JSON file." -Level Error
+            $ErrorCount ++
+        }
+
         #Target.DeliveryType
         if ($configFileData.Target.DeliveryType -notin $Validated_Delivery_Types) {
             Write-Log -Message "Delivery Type $($configFileData.Target.DeliveryType) is not a valid type. Please check config file" -Level Error
