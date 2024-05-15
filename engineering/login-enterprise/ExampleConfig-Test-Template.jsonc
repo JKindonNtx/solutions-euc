@@ -80,6 +80,8 @@
         "IPMI_password": "MANDATORY_TO_DEFINE", // Used to get power consumption of host
         "CVMsshpassword":  "MANDATORY_TO_DEFINE", // Used to set affinity on VMs and start/stop curator
         "CVM_storage": "VDI", // Storage container where VMs are deployed
+        "ForceAlignVMToHost" : false, // If set to true, all vms will be evenly pinned to hosts using affinity for AHV.
+        "EnforceHostMaintenanceMode" : false, // If set to true, combined with the ForceAlignVMToHost setting, hosts that are not a part of the test run will be put in maintenance mode
         // -----------------------------------------------------------------------------------
         // Optional_Nutanix_Files_Block
         // -----------------------------------------------------------------------------------
