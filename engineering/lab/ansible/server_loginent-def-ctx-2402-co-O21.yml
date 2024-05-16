@@ -13,3 +13,9 @@
   - run_cust_imageoptimize_citrix
   - run_image_tattoo
   - run_software_inventory_corp_it
+
+  tasks:
+   - name: Kill Defender Scheduled Tasks
+     ansible.windows.win_powershell:
+      script: |
+        Get-ScheduledTask -TaskPath '\Microsoft\Windows\Windows Defender\' | Disable-ScheduledTask
