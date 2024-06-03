@@ -5,6 +5,15 @@
         "LDAPUsername": "", // remember it's json, so \ needs to be escaped
         "LDAPPassword": "" // leave empty if current machine/user is part of the domain and has rights to create resources in AD
     },
+    "CitrixDaaS": {
+        // -----------------------------------------------------------------------------------
+        // Optional_Test_Block_Citrix_DaaS - Can be DELETED if not setting up a Citrix DaaS Config
+        // -----------------------------------------------------------------------------------
+        "Region": "US", //Region of the DaaS Tenant. Nutanix is US
+        "CustomerID": "7szgw6b5gks2", // Customer ID
+        "ClientID": "417bc32b-2333-4ddd-ba9f-262f6dcf4e71", //Secure Client ID. Make sure this has not expired
+        "ClientSecret": "YWPQnSXDtZOSC3J-5Mot6g==" // Secure Client Secret
+    },
     "Target": {
         // -----------------------------------------------------------------------------------
         // Mandatory_Test_Block_Global - Relevant for ALL Tests
@@ -23,6 +32,7 @@
         // -----------------------------------------------------------------------------------
         // Optional_Test_Block_Citrix - Can be DELETED if not setting up a Citrix Config
         // -----------------------------------------------------------------------------------
+        "OrchestrationMethod": "API", //How you want to to drive the Citrix Environment. API or Snapin (PowerShell)
         "DDC": "WS-CDC1.wsperf.nutanix.com", // Citrix Delivery controller. TestType: Citrix
         "ZoneName": "Primary", // Zonename in Citrix. TestType: Citrix
         "HypervisorConnection": "DRMNX8KB-A-AHV", // Hypervisor connection as known in the Citrix Host connection. AHV-RPTEST83-LAN for example

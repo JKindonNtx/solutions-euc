@@ -114,6 +114,35 @@ The configuration file to parse and validate
                 Write-Log -Message "Citrix Functional Level Type $($configFileData.Target.FunctionalLevel) is not a valid type. Please check config file" -Level Error
                 $ErrorCount ++
             }
+
+            #Target.OrchestrationMethod
+            if ($configFileData.Target.psobject.Properties.Name -notcontains "OrchestrationMethod"){
+                Write-Log -Message "You are missing the OrchestrationMethod object in your JSON file. This is required to define either API or Snapin (PowerShell) driven automation" -Level Error
+                $ErrorCount ++
+            }
+        }
+
+        if ($Type -eq "CitrixDaaS" -and $configFileData.Target.OrchestrationMethod -eq "API") {
+            #CitrixDaaS.Region
+            if ($configFileData.CitrixDaaS.psobject.Properties.Name -notcontains "Region"){
+                Write-Log -Message "You are missing the Region object in your JSON file. This is required for Citrix DaaS Authentication via API" -Level Error
+                $ErrorCount ++
+            }
+            #CitrixDaaS.CustomerID
+            if ($configFileData.CitrixDaaS.psobject.Properties.Name -notcontains "CustomerID"){
+                Write-Log -Message "You are missing the CustomerID object in your JSON file. This is required for Citrix DaaS Authentication via API" -Level Error
+                $ErrorCount ++
+            }
+            #CitrixDaaS.ClientID
+            if ($configFileData.CitrixDaaS.psobject.Properties.Name -notcontains "ClientID"){
+                Write-Log -Message "You are missing the ClientID object in your JSON file. This is required for Citrix DaaS Authentication via API" -Level Error
+                $ErrorCount ++
+            }
+            #CitrixDaaS.ClientSecret
+            if ($configFileData.CitrixDaaS.psobject.Properties.Name -notcontains "ClientSecret"){
+                Write-Log -Message "You are missing the ClientSecret object in your JSON file. This is required for Citrix DaaS Authentication via API" -Level Error
+                $ErrorCount ++
+            }
         }
         
         #endregion Target Section Validation - Citrix
