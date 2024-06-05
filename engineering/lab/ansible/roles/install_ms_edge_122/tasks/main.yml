@@ -54,4 +54,5 @@
   ansible.windows.win_powershell:
     script: |
       Disable-ScheduledTask -TaskName MicrosoftEdgeUpdateTaskMachineCore
-      Disable-ScheduledTask -TaskName MicrosoftEdgeUpdateTaskMachineUA     
+      Disable-ScheduledTask -TaskName MicrosoftEdgeUpdateTaskMachineUA
+      Disable-ScheduledTask -TaskName MicrosoftEdgeUpdateBrowserReplacementTask     
