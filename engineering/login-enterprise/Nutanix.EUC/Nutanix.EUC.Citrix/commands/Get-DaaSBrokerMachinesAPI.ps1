@@ -16,11 +16,11 @@ function Get-DaaSBrokerMachinesAPI {
     #----------------------------------------------------------------------------------------------------------------------------
     $Global:Headers = Get-DaaSAuthDetailsAPI -CustomerID $CustomerID -ClientID $ClientID -ClientSecret $ClientSecret -CloudUrl $CloudUrl -DomainAdminCredential $DomainAdminCredential
 
-        #----------------------------------------------------------------------------------------------------------------------------
+    #----------------------------------------------------------------------------------------------------------------------------
     # Set API call detail
     #----------------------------------------------------------------------------------------------------------------------------
     $Method = "Get"
-    $RequestUri = "https://$DDC/cvad/manage/jk_replace_this_please/"
+    $RequestUri = "https://$DDC/cvad/manage/DeliveryGroups/$($DesktopPoolName)/Machines/"
     #----------------------------------------------------------------------------------------------------------------------------
 
     try {

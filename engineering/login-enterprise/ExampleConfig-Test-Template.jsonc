@@ -18,6 +18,7 @@
         // -----------------------------------------------------------------------------------
         // Mandatory_Test_Block_Global - Relevant for ALL Tests
         // -----------------------------------------------------------------------------------
+        "HypervisorType": "ESXi", // This is mandatory so we can validate things early. ESXi or AHV
         "DeliveryType":  "Citrix", // Citrix or VMware or Microsoft
         "DesktopBrokerVersion":  "7.2203_2", // Broker version. Example: Citrix = "7.2203_2", Horizon = "8.8-2212.1", RAS = "19.2", RDP=RDP
         "CloneType": "MCS", // Citrix: MCS or Horizon: Instant Clones. RAS: Full Clone or Linked Clone. RDP: Full Used for reporting database.
@@ -36,6 +37,9 @@
         "DDC": "WS-CDC1.wsperf.nutanix.com", // Citrix Delivery controller. TestType: Citrix
         "ZoneName": "Primary", // Zonename in Citrix. TestType: Citrix
         "HypervisorConnection": "DRMNX8KB-A-AHV", // Hypervisor connection as known in the Citrix Host connection. AHV-RPTEST83-LAN for example
+        "HostingConnectionRootName": "Shared-vCenter", // This is the root of the Hosting Connection Name: Eg. Shared-vCenter. This is not the sub resource. This is critical for API operations and is mandatory to define.
+        "vSphereDataCenter": "EUC Solutions", // This is the vSphere Datacenter name. Eg. EUC Solutions. This is This is critical for API operations and is mandatory to define for ESXi tests
+        "vSphereCluster": "DRMNX9KB-A", // This is the vSphere Cluster name. Eg. DRMNX9KB-A. This is This is critical for API operations and is mandatory to define for ESXi tests
         "FunctionalLevel": "L7_9", // L5, L7, L7_6, L7_7, L7_8, L7_9, L7_20, L7_25, L7_34 (2402)
         "SkipImagePrep": true, //Optionally skip imageprep false of MCS if you image is already generalized.
         "StorefrontURL": "http://storefront.wsperf.nutanix.com/Citrix/Store",

@@ -25,14 +25,13 @@ function Get-DaaSImageSnapshotAPI {
         $snapshot_exists = Invoke-RestMethod -Uri $RequestUri -Method $Method -Headers $Headers -UseBasicParsing -SkipCertificateCheck -ErrorAction Stop
     }
     catch {
-        Write-Log -Message $_ -Level Error
-        Break #Replace with Exit 1
+        Write-Log -Message $_.Exception.Message -Level Error
     }
 
     try {$snapshot_exists = $snapshot_exists} catch {$snapshot_exists = $null}
 
     if (-not [string]::IsNullOrEmpty($snapshot_exists)) {
-        Write-Log -Message "Hosting Connection $($HypervisorConnection) has found Snapshot $($Snapshot) via path $($snapshot_exists.XDPath)" -Level Info
+        Write-Log -Message "Hosting Connection $($HypervisorConnection) has found Snapshot via path $($snapshot_exists.XDPath)" -Level Info
     } else {
         Write-Log -Message "Hosting Connection $($HypervisorConnection) cannot find requested Snapshot $($Snapshot)" -Level Error
         Break #Replace with Exit 1

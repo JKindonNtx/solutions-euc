@@ -27,6 +27,8 @@ The configuration file to parse and validate
         $Validated_SessionCfg =@("ICA","PCoIP","Blast","RDP")
         $Validated_Workload_Profiles = @("Task Worker", "Knowledge Worker")
         $Validated_Session_Support = @("multisession", "singlesession")
+        #Target Section Hypervisor Settings
+        $Validated_Hypervisors = @("AHV","ESXi")
         #Target Section Citrix Valid Settings
         $Validated_Functional_Levels = @("L5", "L7", "L7_6", "L7_7", "L7_8", "L7_9", "L7_20", "L7_25", "L7_30", "L7_34")
         #Target Section VMWare Horizon Valid Settings
@@ -66,12 +68,22 @@ The configuration file to parse and validate
 
         #region Target Section Validation - General
 
+        # Check that HypervisorType has been defined and is of a valid type
+        if ($configFileData.Target.psobject.Properties.Name -notcontains "HypervisorType"){
+            Write-Log -Message "You are missing the Target.HypervisorType object in your JSON file." -Level Error
+            $ErrorCount ++
+        }
+        if ($configFileData.Target.HypervisorType -notin $Validated_Hypervisors) {
+            Write-Log -Message "Hypervisor Type $($configFileData.Target.HypervisorType) is not a valid type. Please check config file" -Level Error
+            $ErrorCount ++
+        }
+
         if ($configFileData.Target.psobject.Properties.Name -notcontains "ForceAlignVMToHost"){
-            Write-Log -Message "You are missing the ForceAlignVMToHost object in your JSON file." -Level Error
+            Write-Log -Message "You are missing the Target.ForceAlignVMToHost object in your JSON file." -Level Error
             $ErrorCount ++
         }
         if ($configFileData.Target.psobject.Properties.Name -notcontains "EnforceHostMaintenanceMode"){
-            Write-Log -Message "You are missing the EnforceHostMaintenanceMode object in your JSON file." -Level Error
+            Write-Log -Message "You are missing the Target.EnforceHostMaintenanceMode object in your JSON file." -Level Error
             $ErrorCount ++
         }
 
@@ -117,7 +129,7 @@ The configuration file to parse and validate
 
             #Target.OrchestrationMethod
             if ($configFileData.Target.psobject.Properties.Name -notcontains "OrchestrationMethod"){
-                Write-Log -Message "You are missing the OrchestrationMethod object in your JSON file. This is required to define either API or Snapin (PowerShell) driven automation" -Level Error
+                Write-Log -Message "You are missing the Target.OrchestrationMethod object in your JSON file. This is required to define either API or Snapin (PowerShell) driven automation" -Level Error
                 $ErrorCount ++
             }
         }
@@ -125,22 +137,45 @@ The configuration file to parse and validate
         if ($Type -eq "CitrixDaaS" -and $configFileData.Target.OrchestrationMethod -eq "API") {
             #CitrixDaaS.Region
             if ($configFileData.CitrixDaaS.psobject.Properties.Name -notcontains "Region"){
-                Write-Log -Message "You are missing the Region object in your JSON file. This is required for Citrix DaaS Authentication via API" -Level Error
+                Write-Log -Message "You are missing the CitrixDaaS.Region object in your JSON file. This is required for Citrix DaaS Authentication via API" -Level Error
                 $ErrorCount ++
             }
             #CitrixDaaS.CustomerID
             if ($configFileData.CitrixDaaS.psobject.Properties.Name -notcontains "CustomerID"){
-                Write-Log -Message "You are missing the CustomerID object in your JSON file. This is required for Citrix DaaS Authentication via API" -Level Error
+                Write-Log -Message "You are missing the CitrixDaaS.CustomerID object in your JSON file. This is required for Citrix DaaS Authentication via API" -Level Error
                 $ErrorCount ++
             }
             #CitrixDaaS.ClientID
             if ($configFileData.CitrixDaaS.psobject.Properties.Name -notcontains "ClientID"){
-                Write-Log -Message "You are missing the ClientID object in your JSON file. This is required for Citrix DaaS Authentication via API" -Level Error
+                Write-Log -Message "You are missing the CitrixDaaS.ClientID object in your JSON file. This is required for Citrix DaaS Authentication via API" -Level Error
                 $ErrorCount ++
             }
             #CitrixDaaS.ClientSecret
             if ($configFileData.CitrixDaaS.psobject.Properties.Name -notcontains "ClientSecret"){
-                Write-Log -Message "You are missing the ClientSecret object in your JSON file. This is required for Citrix DaaS Authentication via API" -Level Error
+                Write-Log -Message "You are missing the CitrixDaaS.ClientSecret object in your JSON file. This is required for Citrix DaaS Authentication via API" -Level Error
+                $ErrorCount ++
+            }
+        }
+
+        # Check for API specific hosting requirements
+        if ($configFileData.Target.OrchestrationMethod -eq "API") {
+            # Target.HostingConnectionRootName
+            if ($configFileData.Target.psobject.Properties.Name -notcontains "HostingConnectionRootName") {
+                Write-Log -Message "You are missing the Target.HostingConnectionRootName object in your JSON file. This is required for Citrix Hosting Jobs via API" -Level Error
+                $ErrorCount ++
+            }
+        }
+
+        # Check for API specific hosting requirements with ESXi
+        if ($configFileData.Target.OrchestrationMethod -eq "API" -and $configFileData.Target.HypervisorType -eq "ESXi") {
+            # Target.vSphereDataCenter
+            if ($configFileData.Target.psobject.Properties.Name -notcontains "vSphereDataCenter") {
+                Write-Log -Message "You are missing the Target.vSphereDataCenter object in your JSON file. This is required for Citrix Hosting Jobs via API when using ESXi" -Level Error
+                $ErrorCount ++
+            }
+            # Target.vSphereCluster
+            if ($configFileData.Target.psobject.Properties.Name -notcontains "vSphereCluster") {
+                Write-Log -Message "You are missing the Target.vSphereCluster object in your JSON file. This is required for Citrix Hosting Jobs via API when using ESXi" -Level Error
                 $ErrorCount ++
             }
         }

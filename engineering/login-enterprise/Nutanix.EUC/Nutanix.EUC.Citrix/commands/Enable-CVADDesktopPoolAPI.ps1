@@ -56,7 +56,6 @@ Function Enable-CVADDesktopPoolAPI {
         try { $continuation_token_exists = $delivery_group_machines_grab.ContinuationToken } catch { $continuation_token_exists = $null }
 
         # Check for a continuation token (there are more machines to get) and append the token to the next query in a loop, until its no longer there (all machines have been pulled)
-        #while (-not [string]::IsNullOrEmpty($delivery_group_machines_grab.ContinuationToken)) {
         while (-not [string]::IsNullOrEmpty($continuation_token_exists)) {
             Write-Log -Message "Grabbing next batch of machines using continuation token $($delivery_group_machines_grab.ContinuationToken)" -Level Info
             #----------------------------------------------------------------------------------------------------------------------------
@@ -141,7 +140,6 @@ Function Enable-CVADDesktopPoolAPI {
                 try { $continuation_token_exists = $delivery_group_machines_grab.ContinuationToken } catch { $continuation_token_exists = $null }
 
                 # Check for a continuation token (there are more machines to get) and append the token to the next query in a loop, until its no longer there (all machines have been pulled)
-                ##while (-not [string]::IsNullOrEmpty($delivery_group_machines_grab.ContinuationToken)) {
                 while (-not [string]::IsNullOrEmpty($continuation_token_exists)) {
                     Write-Log -Message "Grabbing next batch of machines using continuation token $($delivery_group_machines_grab.ContinuationToken)" -Level Info
                     #----------------------------------------------------------------------------------------------------------------------------
@@ -199,16 +197,61 @@ Function Enable-CVADDesktopPoolAPI {
 
     if ($CloneType -eq "MCS"){
         # We already have this info from the above call
-        $ExistingVMCount = ($Desktops | Measure-Object).Count
+        $ExistingVMCount = ($Desktops | Measure-Object).Count  ##//JK At this stage, the count has come from the Delivery Group, not the Catalog. Machines may still exist but not be assigned
+
+        #region figure out Catalog vs Delivery Group Numbers
+        if ($ExistingVMCount -lt $NumberOfVMs) {
+            # Delivery Group Needs more machines - check catalog
+            Write-Log -Message "There are not enough machines in the Delivery Group. Delivery Group has $($ExistingVMCount) machines. Checking the Catalog: $($DesktopPoolName)" -Level Info
+            # Now we need to go and poll the Catalog for Machines
+            #----------------------------------------------------------------------------------------------------------------------------
+            # Set API call detail
+            #----------------------------------------------------------------------------------------------------------------------------
+            $Method = "Get"
+            $RequestUri = "https://$DDC/cvad/manage/MachineCatalogs/$($DesktopPoolName)/Machines/"
+            #----------------------------------------------------------------------------------------------------------------------------
+            try {
+                Write-Log -Message "Getting Machines from Catalog: $($DesktopPoolName)" -Level Info
+                $CatalogMachines = (Invoke-RestMethod -Uri $RequestUri -Method $Method -Headers $Headers -UseBasicParsing -SkipCertificateCheck -ErrorAction Stop).Items
+            }
+            catch {
+                Write-Log -Message $_ -Level Error
+                Break #Replace with Exit 1
+            }
+
+            $CatalogMachineCount = ($CatalogMachines | Measure-Object).count
+            # Now figure out where we are at with the counts
+            if ($CatalogMachineCount -lt $NumberOfVMs) {
+                # The Catalog does not have enough machines to handle the requirement.
+                Write-Log -Message "The Catalog $($DesktopPoolName) does not have sufficient machines to meet the requirements. Catalog has $($CatalogMachineCount) machines." -Level Info
+                # We need $numberOfMachines total, so subtract the existing number of Catalog Machines to figure out how many we need to provision.
+                $NumberOfVMsToProvision = $NumberOfVMs - $CatalogMachines
+                Write-Log -Message "Will provision an additional $($NumberOfVMsToProvision) machines in Catalog: $($DesktopPoolName)" -Level Info
+            }
+            elseif ($CatalogMachineCount -eq $NumberOfVMs) {
+                Write-Log -Message "The Catalog $($DesktopPoolName) has sufficient machines to meet the requirements. Catalog has $($CatalogMachineCount) machines." -Level Info
+                $NumberOfVMsToProvision = 0
+                #We need to add machines to the Delivery Group as they are already provisioned. So take the number of VMs we need and minus the number we have. That tells us how many to add
+                $DeliveryGroupAdditions = $NumberOfVMs - $ExistingVMCount
+            }
+            elseif ($CatalogMachineCount -gt $NumberOfVMs) {
+                Write-Log -Message "The Catalog $($DesktopPoolName) has more machines than required to meet the requirements. Catalog has $($CatalogMachineCount) machines." -Level Info
+                $NumberOfVMsToProvision = 0
+                #We need to add machines to the Delivery Group as they are already provisioned. So take the number of VMs we need and minus the number we have. That tells us how many to add
+                $DeliveryGroupAdditions = $NumberOfVMs - $ExistingVMCount
+            }
+        }
+        else {
+            Write-Log -Message "Delivery Group $($DesktopPoolName) has sufficient machines for the test." -Level Info
+        }
+        #endregion figure out Catalog vs Delivery Group Numbers
     } 
     else {
         $ExistingVMCount = $NumberOfVMs
     }
     
-  
-    if ($CloneType -eq "MCS"){ #This was missing originally, added this to handle MCS block
-
-        $NumberOfVMsToProvision = $NumberOfVMs - $ExistingVMCount
+    #region handle MCS provisioning and Delivery Group Assignments
+    if ($CloneType -eq "MCS"){
         
         Write-Log -Message "There are currently $($ExistingVMCount) VMs in $($DesktopPoolName)" -Level Info
 
@@ -382,8 +425,83 @@ Function Enable-CVADDesktopPoolAPI {
 
             #endregion Add Machines to Delivery Group
         }
-    }
 
+        #if we had machines in the Catalog already but need to add them to the Delivery Group
+        if ($DeliveryGroupAdditions -gt 0) {
+            #region Add Machines to Delivery Group
+            $machines_to_add_to_delivery_group = $DeliveryGroupAdditions
+            #----------------------------------------------------------------------------------------------------------------------------
+            # Set API call detail
+            #----------------------------------------------------------------------------------------------------------------------------
+            $Method = "Post"
+            $RequestUri = "https://$DDC/cvad/manage/DeliveryGroups/$($DesktopPoolName)/Machines?async=true"
+            $ContentType = "application/json"
+            $PayloadContent = @{
+                MachineCatalog = $DesktopPoolName
+                Count = $machines_to_add_to_delivery_group 
+            }
+            $Payload = (ConvertTo-Json $PayloadContent -Depth 4)
+            #----------------------------------------------------------------------------------------------------------------------------
+            #----------------------------------------------------------------------------------------------------------------------------
+            # Check that creds aren't expired before proceeding
+            #----------------------------------------------------------------------------------------------------------------------------
+            $Global:Headers = Get-CVADAuthDetailsAPI -DDC $DDC -EncodedAdminCredential $EncodedAdminCredential -DomainAdminCredential $DomainAdminCredential
+
+            Write-Log -Message "Adding $($machines_to_add_to_delivery_group) new machines to Delivery Group $($DesktopPoolName)" -Level Info
+            try {
+                $machine_add_to_delivery_group = Invoke-RestMethod -Method $Method -Headers $Headers -Body $Payload -Uri $RequestUri -SkipCertificateCheck -ContentType $ContentType -ErrorAction Stop
+            }
+            catch {
+                Write-Log -Message $_ -Level Error
+                Break #Replace with Exit 1
+            }
+
+            # Find the Job Id from a list of jobs
+            #----------------------------------------------------------------------------------------------------------------------------
+            # Set API call detail
+            #----------------------------------------------------------------------------------------------------------------------------
+            $Method = "Get"
+            $RequestUri = "https://$DDC/cvad/manage/Jobs/"
+            #----------------------------------------------------------------------------------------------------------------------------
+            try {
+                $jobs = (Invoke-RestMethod -Uri $RequestUri -Method $Method -Headers $Headers -UseBasicParsing -SkipCertificateCheck -ErrorAction Stop).Items
+            }
+            catch {
+                Write-Log -Message $_ -Level Error
+                Break #Replace with Exit 1
+            }
+
+            $job = $Jobs | Where-Object {$_.Type -eq "AddDeliveryGroupMachines"} | Sort-Object CreationTime | Select-Object -Last 1
+
+            while ($job.Status -ne "Complete") {
+                if ($job.Status -eq "Failed") {
+                    Write-Log -Message "Adding Machines to Delivery Group Failed with Error $($job.ErrorString) and Error Code $($job.ErrorCode)" -Level Error
+                    Exit 1
+                }
+                #----------------------------------------------------------------------------------------------------------------------------
+                # Set API call detail
+                #----------------------------------------------------------------------------------------------------------------------------
+                $Method = "Get"
+                $RequestUri = "https://$DDC/cvad/manage/Jobs/$($job.Id)"
+                #----------------------------------------------------------------------------------------------------------------------------
+                try {
+                    $job = Invoke-RestMethod -Uri $RequestUri -Method $Method -Headers $Headers -UseBasicParsing -SkipCertificateCheck -ErrorAction Stop
+                }
+                catch {
+                    Write-Log -Message $_ -Level Error
+                    #Exit 1
+                }
+                Start-Sleep 5
+            }
+
+            Write-Log -Message "Adding Machines to Delivery Group Job is complete" -Level Info
+
+            #endregion Add Machines to Delivery Group
+        }
+    }
+    #endregion handle MCS provisioning and Delivery Group Assignments
+
+    #region handle PVS Delivery Group Assignments
     if ($CloneType -eq "PVS"){
         # add VMs from PVS catalog to delivery group
         #Get-BrokerMachine -Filter {CatalogName -eq $DesktopPoolName -and DesktopGroupName -eq $null} -MaxRecordCount $MaxRecordCount | Select-Object -Property MachineName | Add-BrokerMachine -DesktopGroup $DesktopPoolName
@@ -409,7 +527,6 @@ Function Enable-CVADDesktopPoolAPI {
             try { $continuation_token_exists = $catalog_machines_grab.ContinuationToken } catch { $continuation_token_exists = $null }
 
             # Check for a continuation token (there are more machines to get) and append the token to the next query in a loop, until its no longer there (all machines have been pulled)
-            #while (-not [string]::IsNullOrEmpty($catalog_machines_grab.ContinuationToken)) {
             while (-not [string]::IsNullOrEmpty($continuation_token_exists)) {
                 Write-Log -Message "Grabbing next batch of machines using continuation token $($catalog_machines_grab.ContinuationToken)"
                 #----------------------------------------------------------------------------------------------------------------------------
@@ -499,6 +616,7 @@ Function Enable-CVADDesktopPoolAPI {
 
         Write-Log -Message "Adding Machines to Delivery Group Job is complete" -Level Info
     }
+    #endregion handle PVS Delivery Group Assignments
 
     #region Set affinity to hosts
     if (($HypervisorType) -eq "AHV" -and ($ForceAlignVMToHost)) {
@@ -566,7 +684,6 @@ Function Enable-CVADDesktopPoolAPI {
         try { $continuation_token_exists = $delivery_group_machines_grab.ContinuationToken } catch { $continuation_token_exists = $null }
 
         # Check for a continuation token (there are more machines to get) and append the token to the next query in a loop, until its no longer there (all machines have been pulled)
-        #while (-not [string]::IsNullOrEmpty($delivery_group_machines_grab.ContinuationToken)) {
         while (-not [string]::IsNullOrEmpty($continuation_token_exists)) {
             Write-Log -Message "Grabbing next batch of machines using continuation token $($delivery_group_machines_grab.ContinuationToken)" -Level Info
             #----------------------------------------------------------------------------------------------------------------------------
@@ -656,7 +773,6 @@ Function Enable-CVADDesktopPoolAPI {
         try { $continuation_token_exists = $delivery_group_machines_grab.ContinuationToken } catch { $continuation_token_exists = $null }
 
         # Check for a continuation token (there are more machines to get) and append the token to the next query in a loop, until its no longer there (all machines have been pulled)
-        ##while (-not [string]::IsNullOrEmpty($delivery_group_machines_grab.ContinuationToken)) {
         while (-not [string]::IsNullOrEmpty($continuation_token_exists)) {
             Write-Log -Message "Grabbing next batch of machines using continuation token $($delivery_group_machines_grab.ContinuationToken)" -Level Info
             #----------------------------------------------------------------------------------------------------------------------------
@@ -732,7 +848,6 @@ Function Enable-CVADDesktopPoolAPI {
                 try { $continuation_token_exists = $delivery_group_machines_grab.ContinuationToken } catch { $continuation_token_exists = $null }
 
                 # Check for a continuation token (there are more machines to get) and append the token to the next query in a loop, until its no longer there (all machines have been pulled)
-                #while (-not [string]::IsNullOrEmpty($delivery_group_machines_grab.ContinuationToken)) {
                 while (-not [string]::IsNullOrEmpty($continuation_token_exists)) {
                     Write-Log -Message "Grabbing next batch of machines using continuation token $($delivery_group_machines_grab.ContinuationToken)" -Level Info
                     #----------------------------------------------------------------------------------------------------------------------------
@@ -802,7 +917,6 @@ Function Enable-CVADDesktopPoolAPI {
                     try { $continuation_token_exists = $delivery_group_machines_grab.ContinuationToken } catch { $continuation_token_exists = $null }
 
                     # Check for a continuation token (there are more machines to get) and append the token to the next query in a loop, until its no longer there (all machines have been pulled)
-                    ##while (-not [string]::IsNullOrEmpty($delivery_group_machines_grab.ContinuationToken)) {
                     while (-not [string]::IsNullOrEmpty($continuation_token_exists)) {
                         Write-Log -Message "Grabbing next batch of machines using continuation token $($delivery_group_machines_grab.ContinuationToken)" -Level Info
                         #----------------------------------------------------------------------------------------------------------------------------
@@ -835,10 +949,10 @@ Function Enable-CVADDesktopPoolAPI {
 
                 $BrokerVMs = $delivery_group_machines
 
-                # If there are more machines in the delivery group than the required number of machines, we grab them all and then filter the last. This gives us a consistent set of machines to play with
+                # If there are more machines in the delivery group than the required number of machines, we grab them all and then filter the first. This gives us a consistent set of machines to play with
                 $PoweredOnVMs = $delivery_group_machines | Sort-Object Name | Select-Object -First $PowerOnVMs
 
-                # Now that we have the machines, find which ones are off. They shouldn not be.
+                # Now that we have the machines, find which ones are off. They should not be.
                 $PowerOnStuckVMs = $PoweredOnVMs | Where-Object {$_.PowerState -eq "Off"}
 
                 # get an updated registered VM Count

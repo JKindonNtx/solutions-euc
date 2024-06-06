@@ -460,7 +460,7 @@ if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
             Write-Log -Message "Handling Citrix Credentials and Validating Citrix On Prem Site" -Level Info
             $params = @{
                 DDC                    = $Config.Target.DDC 
-                HostingConnection      = $Config.Target.HypervisorConnection 
+                HostingConnection      = $Config.Target.HostingConnectionRootName
                 Zone                   = $Config.Target.ZoneName 
                 EncodedAdminCredential = $EncodedAdminCredential 
                 DomainAdminCredential  = $DomainAdminCredential
@@ -473,7 +473,7 @@ if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
             Write-Log -Message "Handling Citrix Credentials and Validating Citrix DaaS Access" -Level Info
             $params = @{
                 CloudUrl              = $CloudUrl 
-                HostingConnection     = $Config.Target.HypervisorConnection 
+                HostingConnection     = $Config.Target.HostingConnectionRootName
                 Zone                  = $Config.Target.ZoneName
                 CustomerID            = $Config.CitrixDaaS.CustomerID
                 ClientID              = $Config.CitrixDaaS.ClientID
@@ -494,7 +494,7 @@ if (-not $AzureMode.IsPresent) {
         # A purely AHV Test
         if ($Config.Target.OrchestrationMethod -eq "Snapin") {
             #Legacy PowerShell Approach
-            $cleansed_snapshot_name = $Config.Target.ImagesToTest.ParentVM -replace ".template","" 
+            $cleansed_snapshot_name = $VSI_Target_ParentVM -replace ".template","" 
             $params = @{
                 SnapshotName   = $cleansed_snapshot_name 
                 HypervisorType = $NTNXInfra.Testinfra.HypervisorType 
@@ -504,12 +504,15 @@ if (-not $AzureMode.IsPresent) {
             $params = $null
         }
         elseif ($Config.Target.OrchestrationMethod  -eq "API") {
-            #API Approach - can use the /hypervisors/{nameOrId}/allResources API including the native .ParentVM path -> Test if the Hypervisor can see the snapshot. Might be able to consolidate into a single test for both hypervisors
+
+            #Need to set the XDHypePath for Snapshot Validation
+            $snapshot_path = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($VSI_Target_ParentVM)"
+
             if ($Type -eq "CitrixVAD") {
                 $params = @{
                     DDC                    = $Config.Target.DDC
-                    HypervisorConnection   = $Config.Target.HypervisorConnection 
-                    Snapshot               = $Config.Target.ImagesToTest.ParentVM
+                    HypervisorConnection   = $config.Target.HostingConnectionRootName
+                    Snapshot               = $snapshot_path
                     EncodedAdminCredential = $EncodedAdminCredential 
                     DomainAdminCredential  = $DomainAdminCredential
                 }
@@ -519,8 +522,8 @@ if (-not $AzureMode.IsPresent) {
             elseif ($Type -eq "CitrixDaaS"){
                 $params = @{
                     CloudUrl              = $CloudUrl 
-                    HypervisorConnection  = $Config.Target.HypervisorConnection 
-                    Snapshot              = $Config.Target.ImagesToTest.ParentVM 
+                    HypervisorConnection  = $config.Target.HostingConnectionRootName 
+                    Snapshot              = $snapshot_path
                     ClientID              = $Config.CitrixDaaS.ClientID 
                     ClientSecret          = $Config.CitrixDaaS.ClientSecret 
                     CustomerID            = $Config.CitrixDaaS.CustomerID 
@@ -535,7 +538,7 @@ if (-not $AzureMode.IsPresent) {
         if ($Config.Target.OrchestrationMethod  -eq "Snapin") {
             # A Citrix on ESXi test
             $params = @{
-                VM                = $Config.Target.ImagesToTest.ParentVM 
+                VM                = $VSI_Target_ParentVM
                 HostingConnection = $Config.Target.HypervisorConnection 
                 HypervisorType    = $NTNXInfra.Testinfra.HypervisorType 
                 Type              = $Type 
@@ -546,8 +549,33 @@ if (-not $AzureMode.IsPresent) {
             $params = $null
         }
         elseif ($Config.Target.OrchestrationMethod  -eq "API") {
-            #API Approach - can use the /hypervisors/{nameOrId}/allResources API including the native .ParentVM path -> Test if the Hypervisor can see the snapshot
-            #//JK - TEST THIS -> checking to see if we can use the same calls as the AHV type - reduce code
+            #Need to set the XDHypPath for Snapshot Validation
+            $snapshot_path = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.vSphereDataCenter).datacenter\$($Config.Target.vSphere_Cluster).cluster\$($VSI_Target_ParentVM)"
+
+            if ($Type -eq "CitrixVAD") {
+                $params = @{
+                    DDC                    = $Config.Target.DDC
+                    HypervisorConnection   = $config.Target.HostingConnectionRootName
+                    Snapshot               = $snapshot_path
+                    EncodedAdminCredential = $EncodedAdminCredential 
+                    DomainAdminCredential  = $DomainAdminCredential
+                }
+                Get-CVADImageSnapshotAPI @params
+                $params = $null
+            }
+            elseif ($Type -eq "CitrixDaaS"){
+                $params = @{
+                    CloudUrl              = $CloudUrl 
+                    HypervisorConnection  = $config.Target.HostingConnectionRootName
+                    Snapshot              = $snapshot_path
+                    ClientID              = $Config.CitrixDaaS.ClientID 
+                    ClientSecret          = $Config.CitrixDaaS.ClientSecret 
+                    CustomerID            = $Config.CitrixDaaS.CustomerID 
+                    DomainAdminCredential = $DomainAdminCredential
+                }
+                Get-DaaSImageSnapshotAPI @params
+                $params = $null
+            }
         }
     }
     if ($Type -eq "Horizon") {
@@ -729,7 +757,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 Write-Log -Message "Handling Citrix Credentials and Validating Citrix On Prem Site" -Level Info
                 $params = @{
                     DDC                    = $Config.Target.DDC 
-                    HostingConnection      = $Config.Target.HypervisorConnection 
+                    HostingConnection      = $Config.Target.HostingConnectionRootName 
                     EncodedAdminCredential = $EncodedAdminCredential 
                     DomainAdminCredential  = $DomainAdminCredential
                 }
@@ -743,7 +771,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 Write-Log -Message "Handling Citrix Credentials and Validating Citrix DaaS Access" -Level Info
                 $params = @{
                     CloudUrl              = $CloudUrl 
-                    HostingConnection     = $Config.Target.HypervisorConnection 
+                    HostingConnection     = $Config.Target.HostingConnectionRootName 
                     CustomerID            = $Config.CitrixDaaS.CustomerID
                     ClientID              = $Config.CitrixDaaS.ClientID
                     ClientSecret          = $Config.CitrixDaaS.ClientSecret
@@ -1081,19 +1109,21 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             }
             elseif ($Config.Target.OrchestrationMethod -eq "API") {
                 #API Approach
-                if ($Type -eq "CitrixVAD") {
-                    $networkMap = "XDHyp:\HostingUnits\$($VSI_Target_HypervisorConnection + "_")$VSI_Target_HypervisorNetwork\$VSI_Target_HypervisorNetwork.network"
-                    $ParentVM = "XDHyp:\HostingUnits\$($VSI_Target_HypervisorConnection + "_")$VSI_Target_HypervisorNetwork\$VSI_Target_ParentVM"
+                $networkMap = "XDHyp:\HostingUnits\$($VSI_Target_HypervisorConnection + "_")$VSI_Target_HypervisorNetwork\$VSI_Target_HypervisorNetwork.network" #// JK no idea how this worked in prior testing, this network map needs to be looked at.
+                
+                if ($NTNXInfra.TestInfra.HypervisorType -eq "AHV") {
+                    $ParentVM = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($VSI_Target_ParentVM)"
+                    #Network = XDHyp:\Connections\DRMHX665KB-A\VLAN164.network
                 }
-                elseif ($Type -eq "CitrixDaaS") {#//JK if this works without change, then we will set this for both VAD and DaaS API
-                    $networkMap = "XDHyp:\HostingUnits\$($VSI_Target_HypervisorConnection + "_")$VSI_Target_HypervisorNetwork\$VSI_Target_HypervisorNetwork.network"
-                    $ParentVM = "XDHyp:\HostingUnits\$($VSI_Target_HypervisorConnection + "_")$VSI_Target_HypervisorNetwork\$VSI_Target_ParentVM"
+                elseif ($NTNXInfra.TestInfra.HypervisorType -eq "ESXi") {
+                    $ParentVM = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.vSphereDataCenter).datacenter\$($Config.Target.vSphere_Cluster).cluster\$($VSI_Target_ParentVM)"
+                    #Network = XDHyp:\Connections\Shared-vCenter\EUC-Solutions.datacenter\DRMNX9KB-A.cluster\dvs_VLAN164.network
                 }
             }
             # Set param block for Handling Catalog and Delivery Group Creation. This is the same param block regardless of CVAD/DaaS or Snapin/API
             $params = @{
                 ParentVM             = $ParentVM
-                HypervisorConnection = $VSI_Target_HypervisorConnection
+                HypervisorConnection = $VSI_Target_HypervisorConnection #//JK will this work - need to re-test this
                 HypervisorType       = $NTNXInfra.Testinfra.HypervisorType
                 Networkmap           = $networkMap
                 CpuCount             = $VSI_Target_NumCPUs
@@ -1387,10 +1417,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             if ($Config.Target.OrchestrationMethod -eq "SnapIn") {
                 #Legacy Snapin Approach
                 $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $VSI_Target_DesktopPoolName -MaxRecordCount $MaxRecordCount
-                $RegisteredVMs = ($BrokerVMS | Where-Object { $_.RegistrationState -eq "Registered" }) ## \\JK need to confirm if the return for "registrationState" is the same on API
             }
             elseif ($config.Target.OrchestrationMethod -eq "API") {
-                #//JK Need a Function for this.
                 if ($Type -eq "CitrixVAD") {
                     $params = @{
                         DDC                    = $Config.Target.DDC
@@ -1398,8 +1426,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                         EncodedAdminCredential = $EncodedAdminCredential
                         DomainAdminCredential  = $DomainAdminCredential
                     }
-                    $BrokerVMs = Get-CVADBrokerMachinesAPI @params ##//JK this needs to be tested - AND FINISHED - API is NOT in place
-                    $RegisteredVMS = "" ##// JK Need to get registered VMs here - filter, or decide to consolidate this
+                    $BrokerVMs = Get-CVADBrokerMachinesAPI @params
                     $params = $null
                 }
                 elseif ($Type -eq "CitrixDaaS") {
@@ -1412,13 +1439,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                         DomainAdminCredential = $DomainAdminCredential
                     }
 
-                    $BrokerVMs = Get-DaaSBrokerMachinesAPI @params ##//JK this needs to be tested - AND FINISHED - API is NOT in place
-                    $RegisteredVMS = "" ##// JK Need to get registered VMs here - filter, or decide to consolidate this
+                    $BrokerVMs = Get-DaaSBrokerMachinesAPI @params
                     $params = $null
                 }
             }
-            #$RegisteredVMs \\JK: Placeholder - if we can have a single item here then it's less clunky that looping
-            $MasterImageDNS = $RegisteredVMs[0].DNSName #Need to check this is also accurate on the API return
+            $RegisteredVMs = ($BrokerVMS | Where-Object { $_.RegistrationState -eq "Registered" })
+            $MasterImageDNS = $RegisteredVMs[0].DNSName
         }
         
         if ($Type -eq "Horizon") {

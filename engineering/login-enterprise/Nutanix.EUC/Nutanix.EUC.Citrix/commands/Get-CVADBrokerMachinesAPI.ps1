@@ -18,10 +18,7 @@ function Get-CVADBrokerMachinesAPI {
     # Set API call detail
     #----------------------------------------------------------------------------------------------------------------------------
     $Method = "Get"
-    $RequestUri = "https://$DDC/cvad/manage/jk_replace_this_please/"
-    ## /DeliveryGroups/{nameOrId}/Machines
-    ## /MachineCatalogs/{nameOrId}/Machines
-    ## /Machines
+    $RequestUri = "https://$DDC/cvad/manage/DeliveryGroups/$($DesktopPoolName)/Machines/"
     #----------------------------------------------------------------------------------------------------------------------------
 
     try {
