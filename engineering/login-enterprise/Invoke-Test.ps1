@@ -490,7 +490,7 @@ if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
 #region Nutanix Snapshot Pre Flight Checks
 if (-not $AzureMode.IsPresent) {
     # This is not an Azure configuration
-    if (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
+    if (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $Config.Target.CloneType -eq "MCS" -and $NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
         # A purely AHV Test
         if ($Config.Target.OrchestrationMethod -eq "Snapin") {
             #Legacy PowerShell Approach
@@ -505,7 +505,7 @@ if (-not $AzureMode.IsPresent) {
         }
         elseif ($Config.Target.OrchestrationMethod  -eq "API") {
 
-            #Need to set the XDHypePath for Snapshot Validation
+            #Need to set the XDHyp Path for Snapshot Validation
             $snapshot_path = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($VSI_Target_ParentVM)"
 
             if ($Type -eq "CitrixVAD") {
@@ -534,7 +534,11 @@ if (-not $AzureMode.IsPresent) {
             }
         }
     }
-    if (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
+    elseif (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $Config.Target.CloneType -eq "PVS" -and $NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
+        Write-Log -Message "This is a Provisioning Services test. No snapshot validation required." -Level Info
+    }
+
+    if (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $Config.Target.CloneType -eq "MCS" -and $NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
         if ($Config.Target.OrchestrationMethod  -eq "Snapin") {
             # A Citrix on ESXi test
             $params = @{
@@ -549,7 +553,7 @@ if (-not $AzureMode.IsPresent) {
             $params = $null
         }
         elseif ($Config.Target.OrchestrationMethod  -eq "API") {
-            #Need to set the XDHypPath for Snapshot Validation
+            #Need to set the XDHyp Path for Snapshot Validation
             $snapshot_path = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.vSphereDataCenter).datacenter\$($Config.Target.vSphere_Cluster).cluster\$($VSI_Target_ParentVM)"
 
             if ($Type -eq "CitrixVAD") {
@@ -578,6 +582,10 @@ if (-not $AzureMode.IsPresent) {
             }
         }
     }
+    elseif (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $Config.Target.CloneType -eq "PVS" -and $NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
+        Write-Log -Message "This is a Provisioning Services test. No snapshot validation required." -Level Info
+    }
+
     if ($Type -eq "Horizon") {
         # A Horizon test
         if ($Config.Target.ImagesToTest.ParentVM -match '^([^\\]+)\.') { $cleansed_vm_name = $matches[1] }
@@ -747,8 +755,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         if ($Config.Target.OrchestrationMethod -eq "Snapin") {
             #Legacy PowerShell Approach
-            Connect-VSICTX -DDC $VSI_Target_DDC
-            $NTNXInfra.Target.DesktopBrokerVersion = (Get-BrokerController -AdminAddress $VSI_Target_DDC).ControllerVersion[0]
+            Connect-VSICTX -DDC $Config.Target.DDC
+            $NTNXInfra.Target.DesktopBrokerVersion = (Get-BrokerController -AdminAddress $Config.Target.DDC).ControllerVersion[0]
         }
         elseif ($Config.Target.OrchestrationMethod -eq "API") {
             #API Approach
@@ -1109,15 +1117,19 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             }
             elseif ($Config.Target.OrchestrationMethod -eq "API") {
                 #API Approach
-                $networkMap = "XDHyp:\HostingUnits\$($VSI_Target_HypervisorConnection + "_")$VSI_Target_HypervisorNetwork\$VSI_Target_HypervisorNetwork.network" #// JK no idea how this worked in prior testing, this network map needs to be looked at.
+                #$networkMap = "XDHyp:\HostingUnits\$($VSI_Target_HypervisorConnection + "_")$VSI_Target_HypervisorNetwork\$VSI_Target_HypervisorNetwork.network" #// JK no idea how this worked in prior testing, this network map needs to be looked at.
                 
                 if ($NTNXInfra.TestInfra.HypervisorType -eq "AHV") {
                     $ParentVM = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($VSI_Target_ParentVM)"
                     #Network = XDHyp:\Connections\DRMHX665KB-A\VLAN164.network
+                    $networkMap = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.HypervisorNetwork).network"
+                    $VSI_Target_HypervisorConnection = $Config.Target.HostingConnectionRootName
                 }
                 elseif ($NTNXInfra.TestInfra.HypervisorType -eq "ESXi") {
                     $ParentVM = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.vSphereDataCenter).datacenter\$($Config.Target.vSphere_Cluster).cluster\$($VSI_Target_ParentVM)"
                     #Network = XDHyp:\Connections\Shared-vCenter\EUC-Solutions.datacenter\DRMNX9KB-A.cluster\dvs_VLAN164.network
+                    $networkMap = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.vSphereDataCenter).datacenter\$($Config.Target.vSphere_Cluster).cluster\$($Config.Target.HypervisorNetwork).network"
+                    $VSI_Target_HypervisorConnection = $Config.Target.HostingConnectionRootName
                 }
             }
             # Set param block for Handling Catalog and Delivery Group Creation. This is the same param block regardless of CVAD/DaaS or Snapin/API
