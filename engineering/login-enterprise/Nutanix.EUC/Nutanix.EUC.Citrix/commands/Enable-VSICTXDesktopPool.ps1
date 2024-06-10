@@ -14,10 +14,17 @@ Function Enable-VSICTXDesktopPool {
         $VMnameprefix,
         $CloneType,
         $Hosts,
-        $Type
+        $Type,
+        [Parameter(Mandatory = $false)][int]$MaxRecordCount,
+        [Parameter(Mandatory = $false)][bool]$ForceAlignVMToHost,
+        [Parameter(Mandatory = $false)][bool]$EnforceHostMaintenanceMode,
+        [Parameter(Mandatory = $false)][string]$TargetCVMAdmin,
+        [Parameter(Mandatory = $false)][string]$TargetCVMPassword,
+        [Parameter(Mandatory = $false)][string]$HostCount,
+        [Parameter(Mandatory = $false)][string]$Run
     )
 
-    $MaxRecordCount = "5000"
+    #$MaxRecordCount = "5000"
     $Boot = "" | Select-Object -Property bootstart,boottime
 
     # Get Auth - Check this Dave!
@@ -124,22 +131,41 @@ Function Enable-VSICTXDesktopPool {
         # add VMs from PVS catalog to delivery group
         Get-BrokerMachine -Filter {CatalogName -eq $DesktopPoolName -and DesktopGroupName -eq $null} -MaxRecordCount $MaxRecordCount | Select-Object -Property MachineName | Add-BrokerMachine -DesktopGroup $DesktopPoolName
     } 
+    
     # Set affinity to hosts
-    Write-Log "Hypervisortype = $HypervisorType and Affinity is set to $Affinity"
-    if (($HypervisorType) -eq "AHV" -And ($Affinity)) {
-        Write-Log "Set Affinity to Host with IP $Hosts."
-        # Build the command and set affinity using SSH
-        $VMs = $VMnameprefix -Replace '#','?'
-        $command = "~/bin/acli vm.affinity_set $VMs host_list=$($hosts)"
-        $password = ConvertTo-SecureString "$CVMsshpassword" -AsPlainText -Force
-        $HostCredential = New-Object System.Management.Automation.PSCredential ("nutanix", $password)
-        $session = New-SSHSession -ComputerName $ClusterIP -Credential $HostCredential -AcceptKey -KeepAliveInterval 5
-        $SSHOutput = (Invoke-SSHCommand -Index $session.SessionId -Command $command -Timeout 7200).output
-        Remove-SSHSession -Name $Session | Out-Null
-        Write-Log -Message "Set Affinity Finished." -Level Info
+    if (($HypervisorType) -eq "AHV" -and ($ForceAlignVMToHost)) {
+        Write-Log "Hypervisortype = $HypervisorType and VM to Host Alignment is set to $($ForceAlignVMToHost)"
+        $params = @{
+            DDC                        = $DDC
+            MachineCount               = $NumberOfVMs
+            HostCount                  = $HostCount
+            ClusterIP                  = $ClusterIP
+            CVMsshpassword             = $CVMSSHPassword
+            TargetCVMAdmin             = $TargetCVMAdmin 
+            TargetCVMPassword          = $TargetCVMPassword 
+            DesktopGroupName           = $DesktopPoolName
+            Run                        = $Run
+            MaxRecordCount             = $MaxRecordCount
+            EnforceHostMaintenanceMode = $EnforceHostMaintenanceMode
+        }
+        Set-NTNXHostAlignment @params
+        $Params = $null
     }
 
+    if (($HypervisorType) -eq "AHV" -And ($Affinity) -and (-not $ForceAlignVMToHost)) {
+        Write-Log "Hypervisortype = $HypervisorType and Single Node Affinity is set to $Affinity"
+        $params = @{
+            ClusterIP      = $ClusterIP
+            CVMsshpassword = $CVMSSHPassword
+            VMnameprefix   = $VMnameprefix
+            hosts          = $hosts
+            Run            = $Run
+        }
+        $AffinityProcessed = Set-AffinitySingleNode @params
+        $Params = $null
+    }
     # End set affinity to hosts
+
     $Boot.bootstart = get-date -format o
     Start-Sleep -Seconds 10
     $BootStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
