@@ -225,6 +225,13 @@ if ($confirmationStart -eq 'n') {
     Write-Host (Get-Date) ":Confirmation denied, quitting"
     exit 
 } else {
+    #Remove existing SSH keys.
+    Write-Host (Get-Date)":Remove existing SSH keys."
+    if (((Get-Module -ListAvailable *) | Where-Object {$_.Name -eq "Posh-SSH"})) {
+        Import-Module Posh-SSH -RequiredVersion 3.1.1 -force
+        Get-SSHTrustedHost | Remove-SSHTrustedHost
+    }
+
     # Get the OS GUID from the MDT configuration files
     if ($JSON.VM.method -eq "MDT"){
         $MdtOSGuid = Get-MdtOSGuid -WinVerBuild "$($OSDetails.WinVerBuild)" -OSversion $OSversion
