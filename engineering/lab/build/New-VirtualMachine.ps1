@@ -54,8 +54,13 @@ if($null -eq ($JSON = (Get-JSON -JSONFile $JSONFile))){
     Write-Host (Get-Date) ":JSON configuration file loaded"
 }
 
-# Build VLAN Name 
-$VLANName = "VLAN" + $($JSON.VM.VLAN)
+# Build VLAN Name
+if ($JSON.VM.Hypervisor -eq "AHV") {
+    $VLANName = "VLAN" + $($JSON.VM.VLAN)
+}
+elseif ($JSON.VM.Hypervisor -eq "ESXi") {
+    $VLANName = $JSON.VM.VLAN
+}
 
 # Fetching local GitHub user to report owner
 $GitHub = Get-GitHubInfo
