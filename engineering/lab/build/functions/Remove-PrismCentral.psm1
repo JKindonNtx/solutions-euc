@@ -58,7 +58,7 @@ function Remove-PrismCentral {
             Write-Host (Get-Date)":Checking for existing Prism Central Registration" 
     
             # Install the Posh-SSH Module to enable vTPM Connection
-            Install-Module -Name Posh-SSH -RequiredVersion 3.1.1 -Force
+            Install-Module -Name Posh-SSH -RequiredVersion 3.1.1 -Scope CurrentUser -Force
             Import-Module Posh-SSH -RequiredVersion 3.1.1
 
             $pswd = ConvertTo-SecureString "$($PCPassword)" -AsPlainText -Force
