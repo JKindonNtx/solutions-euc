@@ -37,12 +37,14 @@ $TargetCVMAdmin = "davidbrett"
 $TargetCVMPassword = "Nutanix/4u$"
 $var_Number_Of_Vms = 5
 $var_Naming_Convention = "W10-OMN-####"
-$var_Start_Index = "1"
 $var_Domain = "wsperf.nutanix.com"
 $var_Admin_Password = "nutanix/4u"
 $var_OU = "OU=Omnissa,OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com"
-$var_Ansible_Path = "/workspaces/solutions-euc/engineering/login-enterprise/ansible/"
+$var_Ansible_Path = "C:\Users\dave\Documents\GitHub\solutions-euc\engineering\login-enterprise\ansible\"
 $var_OS_Type = "WINDOWS_10"
+
+$CurrentVms = Get-ADComputers -filter $Filter
+$var_Start_Index = Get-NextComputerNumber -CurrentVMs $CurrentVMs
 
 $var_Deployed_VMs = Set-OmnissaVMsAhv -BaseVM $var_Omnissa_Base_Vm_Name -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword -NumberOfVMs $var_Number_Of_Vms -NamingConvention $var_Naming_Convention -StartIndex $var_Start_Index -Domain $var_Domain -AdminPassword $var_Admin_Password -OU $var_OU -RootPath $var_Ansible_Path
 
@@ -62,13 +64,3 @@ foreach($var_VM in $var_Deployed_VMs){
 }
 
 
-#Set-StrictMode -Version Latest
-#$ErrorActionPreference = 'Stop'
-
-$DirSearcher = New-Object -TypeName System.DirectoryServices.DirectorySearcher -ArgumentList ([adsi]'')
-$DirSearcher = [adsisearcher]""
-$DirSearcher.Filter = '(objectClass=Computer)'
-
-# These properties are part of a DirectoryServices.ResultPropertyCollection
-# NB! These properties need to be all lowercase!
-$DirSearcher.FindAll().GetEnumerator() | ForEach-Object { $_.Properties.name }

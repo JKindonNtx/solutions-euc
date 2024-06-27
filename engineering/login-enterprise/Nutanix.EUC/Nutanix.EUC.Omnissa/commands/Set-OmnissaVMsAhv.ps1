@@ -35,6 +35,8 @@ function Set-OmnissaVMsAhv {
         $var_Number_Padding = ([regex]::Matches($NamingConvention, "#" )).count
         $var_Naming_Convention_Base = $NamingConvention.replace("#", "")   
 
+        $machineNames = New-Object System.Collections.Generic.List[System.Object]
+
         For ($i = 1; $i -le $var_Number_Of_Vms; $i++) {
             
             $var_Machine_Prefix = $StartIndex.PadLeft($var_Number_Padding, "0")
@@ -58,17 +60,18 @@ function Set-OmnissaVMsAhv {
 
             Write-Log -Update -Message "Deploying Machine $($i) of $($var_Number_Of_Vms)." -Level Info
             $var_result = Set-NTNXVmClone -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword -VmUuid $var_Omnissa_Base_Vm_Uuid -Body $Payload
+
+            $machineNames.Add($var_Machine_Name)
         }
 
         Write-Log -Message "Sleeping 30 Seconds to let deployment complete" -Level Info
         Start-Sleep -Seconds 30
 
-        $var_Deployed_VMs = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -like "$($var_Naming_Convention_Base)*" }
-
         $i = 1
-        foreach ($var_VM in $var_Deployed_VMs) {
+        foreach ($var_VM in $machineNames) {
             Write-Log -Update -Message "Turning On Machine $($i) of $($var_Number_Of_Vms)." -Level Info
-            $var_Power_Result = Set-VmPower -VmUuid $var_VM.uuid -PowerState "ON" -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
+            $CurrentVM = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq "$($var_VM)" }
+            $var_Power_Result = Set-VmPower -VmUuid $CurrentVM.uuid -PowerState "ON" -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
             $i++
         }
 
@@ -78,8 +81,9 @@ function Set-OmnissaVMsAhv {
         Write-Log -Message "Checking All VMs have a valid IP Address - Please wait" -Level Info
         do {
             $var_Valid_Ips = $false
-            foreach ($var_VM in $var_Deployed_VMs) {
-                $var_VM_Details = Get-OmnissaVMsIP -VmUuid $var_VM.uuid -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
+            foreach ($var_VM in $machineNames) {
+                $CurrentVM = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq "$($var_VM)" }
+                $var_VM_Details = Get-OmnissaVMsIP -VmUuid $CurrentVM.uuid -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
                 $var_VM_IP = $var_VM_Details.vm_nics[0].ip_address
                 if([string]::IsNullOrEmpty($var_VM_IP) -Or $var_VM_IP.StartsWith("169.254")) {
                     $var_Valid_Ips = $false
@@ -95,10 +99,11 @@ function Set-OmnissaVMsAhv {
         Start-Sleep -Seconds 120
 
         $var_Inventory_List = ""
-        foreach ($var_VM in $var_Deployed_VMs) {
-                $var_VM_Details = Get-OmnissaVMsIP -VmUuid $var_VM.uuid -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
-                $var_VM_IP = $var_VM_Details.vm_nics[0].ip_address
-                $var_Inventory_List += "$($var_VM_IP),"
+        foreach ($var_VM in $machineNames) {
+            $CurrentVM = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq "$($var_VM)" }
+            $var_VM_Details = Get-OmnissaVMsIP -VmUuid $CurrentVM.uuid -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
+            $var_VM_IP = $var_VM_Details.vm_nics[0].ip_address
+            $var_Inventory_List += "$($var_VM_IP),"
         }
         $var_Inventory_List_Cleaned = $var_Inventory_List.Substring(0,$var_Inventory_List.Length - 1)
 
@@ -107,7 +112,7 @@ function Set-OmnissaVMsAhv {
         $command = "ansible-playbook"
         $arguments = " -i " + $var_Inventory_List_Cleaned + ", " + $playbook
         start-process -filepath $command -argumentlist $arguments -passthru -wait 
-
-        return $var_Deployed_VMs
+        
+        return $machineNames
     }
 }
