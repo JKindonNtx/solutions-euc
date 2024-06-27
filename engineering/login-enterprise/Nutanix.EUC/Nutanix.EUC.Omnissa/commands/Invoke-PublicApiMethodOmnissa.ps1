@@ -1,4 +1,4 @@
-function Invoke-PublicApiMethodNTNX {
+function Invoke-PublicApiMethodOmnissa {
     param
     (
         $Path,
@@ -8,9 +8,9 @@ function Invoke-PublicApiMethodNTNX {
         $ContentType = 'application/json',
         $OutFile,
         $Form,
-        [Parameter(Mandatory = $false)][String]$TargetCVM,
-        [Parameter(Mandatory = $false)][String]$TargetCVMAdmin,
-        [Parameter(Mandatory = $false)][String]$TargetCVMPassword
+        [Parameter(Mandatory = $false)][String]$TargetApiClient,
+        [Parameter(Mandatory = $false)][String]$TargetApiAdmin,
+        [Parameter(Mandatory = $false)][String]$TargetApiPassword
     )
 
     if ($TargetCVM) {

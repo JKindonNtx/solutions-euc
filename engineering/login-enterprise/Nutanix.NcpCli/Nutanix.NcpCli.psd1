@@ -16,7 +16,7 @@ ModuleVersion = '2311.001'
 # CompatiblePSEditions = @()
 
 # ID used to uniquely identify this module
-GUID = 'b09ba4f1-68f2-49cb-8b8d-ee86e7ac6ef8'
+GUID = '04664bea-8cd1-4d36-9832-ab449a011e6b'
 
 # Author of this module
 Author = 'Nutanix Solutions Engineering'
@@ -28,10 +28,10 @@ CompanyName = 'Nutanix'
 Copyright = '(c) Nutanix. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'PowerShell module to manage Nutanix Login Enterprise.'
+Description = 'PowerShell module to manage Nutanix Cloud Platform.'
 
 # Minimum version of the PowerShell engine required by this module
-# PowerShellVersion = ''
+PowerShellVersion = '6.1'
 
 # Name of the PowerShell host required by this module
 PowerShellHostName = ''
@@ -65,17 +65,16 @@ TypesToProcess = @()
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
 NestedModules = @(
-    'Nutanix.EUC.ps1',
-    @{ModuleName="Nutanix.EUC.Citrix"; ModuleVersion="2311.001"}
-    @{ModuleName="Nutanix.EUC.Core"; ModuleVersion="2311.001"}
-    @{ModuleName="Nutanix.EUC.Guest"; ModuleVersion="2311.001"}
-    @{ModuleName="Nutanix.EUC.LoginEnterprise"; ModuleVersion="2311.001"}
-    @{ModuleName="Nutanix.EUC.Microsoft"; ModuleVersion="2311.001"}
-    @{ModuleName="Nutanix.EUC.Nutanix"; ModuleVersion="2311.001"}
-    @{ModuleName="Nutanix.EUC.Parallels"; ModuleVersion="2311.001"}
-    @{ModuleName="Nutanix.EUC.Reporting"; ModuleVersion="2311.001"}
-    @{ModuleName="Nutanix.EUC.VMware"; ModuleVersion="2311.001"}
-    @{ModuleName="Nutanix.EUC.Omnissa"; ModuleVersion="2311.001"}
+    'Nutanix.NcpCli.ps1',
+    @{ModuleName="Nutanix.NcpCli.Core"; ModuleVersion="2311.001"}
+    @{ModuleName="Nutanix.NcpCli.AIOps"; ModuleVersion="2311.001"}
+    @{ModuleName="Nutanix.NcpCli.Cluster"; ModuleVersion="2311.001"}
+    @{ModuleName="Nutanix.NcpCli.LCM"; ModuleVersion="2311.001"}
+    @{ModuleName="Nutanix.NcpCli.Prism"; ModuleVersion="2311.001"}
+    @{ModuleName="Nutanix.NcpCli.VMM"; ModuleVersion="2311.001"}
+    @{ModuleName="Nutanix.NcpCli.Storage"; ModuleVersion="2311.001"} 
+    @{ModuleName="Nutanix.NcpCli.DataProtection"; ModuleVersion="2311.001"}   
+    @{ModuleName="Nutanix.NcpCli.Flow"; ModuleVersion="2311.001"} 
 )
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
