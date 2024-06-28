@@ -28,7 +28,7 @@ The configuration file to parse and validate
         $Validated_Workload_Profiles = @("Task Worker", "Knowledge Worker")
         $Validated_Session_Support = @("multisession", "singlesession")
         #Target Section Hypervisor Settings
-        $Validated_Hypervisors = @("AHV","ESXi")
+        $Validated_Hypervisors = @("AHV","ESXi","Azure")
         #Target Section Citrix Valid Settings
         $Validated_Functional_Levels = @("L5", "L7", "L7_6", "L7_7", "L7_8", "L7_9", "L7_20", "L7_25", "L7_30", "L7_34")
         #Target Section VMWare Horizon Valid Settings
@@ -181,6 +181,45 @@ The configuration file to parse and validate
         }
         
         #endregion Target Section Validation - Citrix
+
+        if ($configFileData.Target.HypervisorType -eq "ESXi" -and $configFileData.vSphere.RestartHostd -eq $true) {
+            # This test is going to want to restart the hostd services. Check for required values in the JSON file
+            #vSphere.vCenter
+            if ($configFileData.vSphere.psobject.Properties.Name -notcontains "vCenter"){
+                Write-Log -Message "You are missing the vSphere.vCenter object in your JSON file. This is required for communication to vCenter" -Level Error
+                $ErrorCount ++
+            }
+            #vSphere.User
+            if ($configFileData.vSphere.psobject.Properties.Name -notcontains "User"){
+                Write-Log -Message "You are missing the vSphere.User object in your JSON file. This is required for communication to vCenter" -Level Error
+                $ErrorCount ++
+            }
+            #vSphere.Password
+            if ($configFileData.vSphere.psobject.Properties.Name -notcontains "Password"){
+                Write-Log -Message "You are missing the vSphere.Password object in your JSON file. This is required for communication to vCenter" -Level Error
+                $ErrorCount ++
+            }
+            #vSphere.ClusterName
+            if ($configFileData.vSphere.psobject.Properties.Name -notcontains "ClusterName"){
+                Write-Log -Message "You are missing the vSphere.ClusterName object in your JSON file. This is required for communication to vCenter" -Level Error
+                $ErrorCount ++
+            }
+            #vSphere.Datacenter
+            if ($configFileData.vSphere.psobject.Properties.Name -notcontains "DataCenter"){
+                Write-Log -Message "You are missing the vSphere.DataCenter object in your JSON file. This is required for communication to vCenter" -Level Error
+                $ErrorCount ++
+            }
+            #vSphere.SshUsername
+            if ($configFileData.vSphere.psobject.Properties.Name -notcontains "SshUsername"){
+                Write-Log -Message "You are missing the vSphere.SshUsername object in your JSON file. This is required for communication with esxi hosts" -Level Error
+                $ErrorCount ++
+            }
+            #vSphere.SshPassword
+            if ($configFileData.vSphere.psobject.Properties.Name -notcontains "SshPassword"){
+                Write-Log -Message "You are missing the vSphere.SshPassword object in your JSON file. This is required for communication with esxi hosts" -Level Error
+                $ErrorCount ++
+            }
+        }
 
         #region Target Section Validation - Horizon
         if ($Type -eq "Horizon") {

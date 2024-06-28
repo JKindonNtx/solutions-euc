@@ -21,7 +21,12 @@ Function Enable-VSICTXDesktopPool {
         [Parameter(Mandatory = $false)][string]$TargetCVMAdmin,
         [Parameter(Mandatory = $false)][string]$TargetCVMPassword,
         [Parameter(Mandatory = $false)][string]$HostCount,
-        [Parameter(Mandatory = $false)][string]$Run
+        [Parameter(Mandatory = $false)][string]$Run,
+        [Parameter(Mandatory = $false)][string]$VCenter, # for vCenter
+        [Parameter(Mandatory = $false)][string]$User, #for vCenter Access
+        [Parameter(Mandatory = $false)][string]$password, # for vCenter User
+        [Parameter(Mandatory = $false)][string]$ClusterName, # for vCenter Cluster
+        [Parameter(Mandatory = $false)][string]$DataCenter # for vCenter Datacenter
     )
 
     #$MaxRecordCount = "5000"
@@ -150,6 +155,25 @@ Function Enable-VSICTXDesktopPool {
         }
         Set-NTNXHostAlignment @params
         $Params = $null
+    }
+    if (($HypervisorType) -eq "ESXi" -and ($ForceAlignVMToHost)) {
+        Write-Log "Hypervisortype = $HypervisorType and VM to Host Alignment is set to $($ForceAlignVMToHost)"
+        $params = @{
+            DDC              = $DDC
+            MachineCount     = $NumberOfVMs
+            HostCount        = $HostCount
+            VCenter          = $VCenter
+            User             = $User
+            Password         = $Password
+            ClusterName      = $ClusterName
+            DataCenter       = $DataCenter
+            DesktopGroupName = $DesktopPoolName
+            Run              = $Run
+            MaxRecordCount   = $MaxRecordCount
+        }
+        
+        Set-VMWareHostAlignment @params
+        $params = $null
     }
 
     if (($HypervisorType) -eq "AHV" -And ($Affinity) -and (-not $ForceAlignVMToHost)) {

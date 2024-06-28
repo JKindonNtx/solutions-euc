@@ -76,6 +76,12 @@ Param(
 )
 #endregion Params
 
+##Testing
+#$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-Citrix2402-ESXi-WS2022-NVD-Files.jsonc"
+#$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-LoginEnterpriseGlobal.jsonc"
+#$Type = "CitrixVAD"
+##Testing
+
 #region Variables
 # ============================================================================
 # Variables
@@ -243,7 +249,7 @@ if ($VSI_Test_LEAppliance -eq "MANDATORY_TO_DEFINE" -and (!$LEAppliance)) {
 elseif ($VSI_Test_LEAppliance -eq "MANDATORY_TO_DEFINE" -and $LEAppliance) {
     #Set LEAppliance based on Param
     $LEAppliance = $LEAppliance
-}
+} 
 else {
     #Use the valid value from the Config JSON
     $LEAppliance = $VSI_Test_LEAppliance
@@ -603,6 +609,33 @@ if (-not $AzureMode.IsPresent) {
 
 #endregion Nutanix Snapshot Pre Flight Checks
 
+#region Validate vSphere and ESXi Host Access if required
+if (-not $AzureMode.IsPresent) {
+    # This is not an Azure configuration
+    if ($config.Target.HypervisorType -eq "ESXi" -and ($config.vSphere.RestartHostd -eq $true -or $config.Target.ForceAlignVMToHost -eq $true )) {
+        $params = @{
+            VCenter      = $Config.vSphere.vCenter 
+            User         = $Config.vSphere.User 
+            Password     = $Config.vSphere.Password 
+            ClusterName  = $Config.vSphere.ClusterName 
+            DataCenter   = $Config.vSphere.DataCenter 
+            SshUsername  = $Config.vSphere.SshUsername 
+            SshPassword  = $Config.vSphere.SshPassword
+        }
+        $vSphereValidated = Invoke-vSphereAccessCheck @params
+        $params = $null
+        
+
+        if ($vSphereValidated -eq $true) {
+            Write-Log -Message "vSphere vCenter and Host access validated successfully." -Level Info
+        } else {
+            Write-Log -Message "vSphere vCenter and Host access not validated successfully." -Level Warn
+            Exit 1
+        }
+    }
+}
+#endregion Validate vSphere and ESXi Host Access if required
+
 if ($ValidateOnly.IsPresent) {
     Write-Log -Message "Script is operating in a validation only mode. Exiting script before any form of execution occurs" -Level Info
     Exit 0
@@ -643,7 +676,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     if (-not $AzureMode.IsPresent) {
         # This is not an Azure configuration
         $NTNXTestname = "$($NTNXid)_$($VSI_Target_NodeCount)n_A$($NTNXInfra.Testinfra.AOSversion)_$($NTNXInfra.Testinfra.HypervisorType)_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
-    }
+    }    
     else {
         $NTNXTestname = "$($NTNXid)_Azure_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
     }
@@ -681,7 +714,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     if (-not $AzureMode.IsPresent) {
         # This is not an Azure configuration
         $Message = "Setting Affinity Rules"
-    }
+    }    
     else {
         $Message = "Skipping Setting Affinity Rules"
     }
@@ -723,7 +756,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     if (-not $AzureMode.IsPresent) {
         # This is not an Azure configuration
         $SlackMessage = "New Login Enterprise test started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName). Testname: $($NTNXTestname)."
-    } 
+    }     
     else {
         $SlackMessage = "New Login Enterprise test started by $VSI_Target_CVM_admin on Azure VM. Testname: $($NTNXTestname)."
     }
@@ -1072,7 +1105,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if (-not $AzureMode.IsPresent) { 
             # This is not an Azure configuration
             $Message = "Creating $($Type) Desktop Pool" 
-        }
+        }        
         else { 
             $Message = "Skipping Creating $($Type) Desktop Pool" 
         }
@@ -1358,12 +1391,27 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                     EnforceHostMaintenanceMode = $NTNXInfra.Target.EnforceHostMaintenanceMode
                     TargetCVMAdmin             = $VSI_Target_CVM_admin
                     TargetCVMPassword          = $VSI_Target_CVM_password
-                    Run                        = $i
+                    Run                        = $i 
                     MaxRecordCount             = $VSI_Target_MaxRecordCount
                     HostCount                  = $VSI_Target_NodeCount
                 }
-                $Boot = Enable-VSICTXDesktopPool @params
-    
+
+                if ($NTNXInfra.Target.HypervisorType -eq "AHV") {
+                    $Boot = Enable-VSICTXDesktopPool @params
+                }
+                if ($NTNXInfra.Target.HypervisorType -eq "ESXi") {
+                    # Params for vSphere DRS Group configuration
+                    $vsphere_boot_params = @{
+                        VCenter          = $Config.vSphere.vCenter
+                        User             = $Config.vSphere.User
+                        Password         = $Config.vSphere.Password
+                        ClusterName      = $Config.vSphere.ClusterName
+                        DataCenter       = $Config.vSphere.DataCenter
+                    }
+                    $Boot = Enable-VSICTXDesktopPool @params @vsphere_boot_params
+                    $sphere_boot_params = $null
+                }
+                
                 $Params = $null
             }
             elseif ($config.Target.OrchestrationMethod -eq "API") {
@@ -1396,6 +1444,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 if ($Type -eq "CitrixVAD"){
 
                     $Boot = Enable-CVADDesktopPoolAPI @Params
+                    #// JK - Need to handly the vSphere boot affinity additions - should be the same for API as it was for Snapin.
                 }
                 elseif ($Type -eq "CitrixDaaS") {
                     #//JK need to write this - Enable-DaaSDesktopPoolAPI
@@ -1764,6 +1813,27 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $params = $null
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
+
+        #region Restart ESXi HostD Service if set
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            if ($NTNXInfra.Testinfra.HypervisorType -eq "ESXi" -and $Config.vSphere.RestartHostd -eq $true) {
+                
+                $params = @{
+                    VCenter      = $Config.vSphere.vCenter
+                    User         = $Config.vSphere.User 
+                    Password     = $Config.vSphere.Password 
+                    ClusterName  = $Config.vSphere.ClusterName 
+                    DataCenter   = $Config.vSphere.DataCenter 
+                    SshUsername  = $Config.vSphere.SshUsername 
+                    SshPassword  = $Config.vSphere.SshPassword 
+                }
+                
+                Invoke-ESXHostDRestart @params
+                $Params = $null
+            }
+        }
+        #endregion Restart ESXi HostD Service if set
 
         Write-Log -Message "Waiting for $VSI_Target_MinutesToWaitAfterIdleVMs minutes before starting test" -Level Info
         Start-sleep -Seconds $($VSI_Target_MinutesToWaitAfterIdleVMs * 60)
@@ -2344,7 +2414,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv"
             $Started = $vsiresult.started
             $BucketName = $($NTNXInfra.Test.BucketName)
-            #Import-Module C:\DevOps\solutions-euc\engineering\login-enterprise\Nutanix.EUC\Nutanix.EUC.Reporting\Nutanix.EUC.Reporting.psd1 -force
             # Loop through the test run data files and process each one
             foreach ($File in $Files) {
                 if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*") -or ($File.Name -like "VM Perf Metrics*")) {
@@ -2498,16 +2567,30 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
     #region Clear Affinity from VMs
     if (-not $AzureMode.IsPresent) { 
-        $params = @{
-            ClusterIP = $NTNXInfra.Target.CVM
-            CVMsshpassword = $NTNXInfra.Target.CVMsshpassword
-            VMnameprefix = $NTNXInfra.Target.NamingPattern
+        if ($NTNXInfra.Target.HypervisorType -eq "AHV") {
+            $params = @{
+                ClusterIP = $NTNXInfra.Target.CVM
+                CVMsshpassword = $NTNXInfra.Target.CVMsshpassword
+                VMnameprefix = $NTNXInfra.Target.NamingPattern
+            }
+            $ClearAffinityFromVMS = Set-AffinityClear @Params
+            if ([string]::IsNullOrEmpty($ClearAffinityFromVMS)) {
+                Write-Log -Message "Affinity was not removed from VMs. Please check cluster." -Level Warn
+            }
+            $params = $null
         }
-        $ClearAffinityFromVMS = Set-AffinityClear @Params
-        if ([string]::IsNullOrEmpty($ClearAffinityFromVMS)) {
-            Write-Log -Message "Affinity was not removed from VMs. Please check cluster." -Level Warn
+        if ($NTNXInfra.Target.HypervisorType -eq "ESXi" -and $Config.Target.ForceAlignVMToHost -eq $true) {
+            $params = @{
+                VCenter     = $Config.vSphere.vCenter
+                User        = $Config.vSphere.User
+                Password    = $Config.Vsphere.Password
+                ClusterName = $Config.vSphere.ClusterName
+                DataCenter  = $Config.vSphere.DataCenter
+            }
+            
+            Set-VMwareClusterAffinityClear @params
+            $params = $null
         }
-        $params = $null
     }
     #endregion Clear Affinity from VMs
 
@@ -2549,6 +2632,28 @@ if ($VSI_Test_StartInfrastructureMonitoring -eq $true -and $VSI_Test_ServersToMo
     Start-ServerMonitoring -ServersToMonitor $VSI_Test_ServersToMonitor -Mode StopMonitoring -ServiceName "Telegraf"
 }
 #endregion Stop Infrastructure Monitoring
+
+#region shutdown citrix machines after final run
+if (-not $AzureMode.IsPresent) { 
+    if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
+        if ($Config.Target.OrchestrationMethod -eq "SnapIn") {
+            $Params = @{
+                DDC            = $Config.Target.DDC
+                CatalogName    = $Config.Target.DesktopPoolName
+                MaxRecordCount = $Config.Target.MaxRecordCount
+            }
+            $CitrixMachinesFinalShutdown = Invoke-CVADMachineShutdown @Params
+            $Params = $null
+        }
+        elseif ($config.Target.OrchestrationMethod -eq "API") {}
+    }
+    if ($CitrixMachinesFinalShutdown -eq $true) {
+        Write-Log -Message "All machines powered down ready for next test" -level Info
+    } else {
+        Write-Log -Message "Not all machines confirmed down. Check before next test run." -Level Warn
+    }
+}
+#endregion shutdown citrix machines after final run
 
 #region Update Test Dashboard
 $params = @{

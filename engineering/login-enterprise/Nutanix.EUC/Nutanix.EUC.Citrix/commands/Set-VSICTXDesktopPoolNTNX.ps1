@@ -31,7 +31,14 @@ function Set-VSICTXDesktopPoolNTNX {
     Else {
         $CreatePool = $true
     }
+
+    if ($SessionsSupport -eq "MultiSession") {
+        $ShutdownDesktopsAfterUse = $false
+    } else {
+        $ShutdownDesktopsAfterUse = $true
+    }
     
+    #region Check Desktop Group Exists
     Write-Log -Message "Checking if desktoppool $DesktopPoolName exists..." -Level Info
     $DG = Get-BrokerDesktopGroup -AdminAddress $DDC -Name $DesktopPoolName -erroraction SilentlyContinue
     if ($null -ne $DG) {
@@ -53,6 +60,9 @@ function Set-VSICTXDesktopPoolNTNX {
             Write-Log -Message "Catalog $DesktopPoolName does not exist, creating" -Level Info
         }
     }
+    #endregion Check Desktop Group Exists
+    
+    #region Create Catalog and Delivery Group
     if ($Force) { Write-Log -Message "Force specified, removing existing configuration and recreating..." -Level Info }
     if ($CreatePool -eq $true -or $Force) {
         
@@ -66,16 +76,15 @@ function Set-VSICTXDesktopPoolNTNX {
         }
         if ($null -ne (Get-ProvScheme -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -ea SilentlyContinue)) {
             Write-Log -Message "Removing existing VMS for $DesktopPoolName" -Level Info
-            Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -MaxRecordCount 2500 | Unlock-ProvVM
+            Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -MaxRecordCount 5000 | Unlock-ProvVM
             #$Tasks = Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -MaxRecordCount 2500 | Remove-ProvVM
-            $Tasks = ,(Get-ProvVM -ProvisioningSchemeName $DesktopPoolName -MaxRecordCount 2500) | Remove-ProvVM $DesktopPoolName
+            $Tasks = ,(Get-ProvVM -ProvisioningSchemeName $DesktopPoolName -MaxRecordCount 5000) | Remove-ProvVM $DesktopPoolName
             foreach ($Task in $Tasks) {
                 if ($Task.TaskState -ne "Finished") {
                     Write-Log -Message "Failed to remove VM, attempting to remove with forget" -Level Info
                     $VM = Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -MaxRecordCount 2500 | Where-Object { $_.ADAccountSid -eq $Task.FailedVirtualMachines[0] }
                     $Task2 = $VM  | Remove-ProvVM -AdminAddress $DDC -ForgetVM
                     if ($Task2.TaskState -ne "Finished") {
-                        #throw "Failed to remove existing VM $($VM.VMName) from provisioning scheme"
                         Write-Log -Message "Failed to remove existing VM $($VM.VMName) from provisioning scheme" -Level Error
                         Exit 1
                     }
@@ -92,9 +101,9 @@ function Set-VSICTXDesktopPoolNTNX {
                 $IP | Unlock-AcctIdentityPool
             }
             Write-Log -Message "Removing existing AD Accounts for $DesktopPoolName" -Level Info
-            if ($null -ne (Get-AcctADAccount -AdminAddress $DDC -IdentityPoolName $DesktopPoolName -MaxRecordCount 2500 -ea SilentlyContinue)) {
-                Get-AcctADAccount -AdminAddress $DDC -IdentityPoolName $DesktopPoolName -MaxRecordCount 2500 | Where-Object { $_.Lock -eq $true } | Foreach-Object { $_ | Unlock-AcctADAccount | Out-Null }
-                Get-AcctADAccount -AdminAddress $DDC -IdentityPoolName $DesktopPoolName -MaxRecordCount 2500 | Foreach-Object { $_ | Remove-AcctADAccount -Force | Out-Null }
+            if ($null -ne (Get-AcctADAccount -AdminAddress $DDC -IdentityPoolName $DesktopPoolName -MaxRecordCount 5000 -ea SilentlyContinue)) {
+                Get-AcctADAccount -AdminAddress $DDC -IdentityPoolName $DesktopPoolName -MaxRecordCount 5000 | Where-Object { $_.Lock -eq $true } | Foreach-Object { $_ | Unlock-AcctADAccount | Out-Null }
+                Get-AcctADAccount -AdminAddress $DDC -IdentityPoolName $DesktopPoolName -MaxRecordCount 5000 | Foreach-Object { $_ | Remove-AcctADAccount -Force | Out-Null }
             }
             Write-Log -Message "Removing existing identitypool $DesktopPoolName" -Level Info
             Remove-AcctIdentityPool -AdminAddress $DDC -IdentityPoolName $DesktopPoolName
@@ -103,7 +112,6 @@ function Set-VSICTXDesktopPoolNTNX {
         $Zone = Get-ConfigZone -AdminAddress $DDC -Name $ZoneName
         $IP = New-AcctIdentityPool -AdminAddress $DDC -IdentityPoolName $DesktopPoolName -NamingScheme $NamingPattern -NamingSchemeType Numeric -OU $OU -Domain $DomainName -ZoneUid $Zone.Uid -AllowUnicode -ErrorAction Stop
         Write-Log -Message "Creating provisioningscheme $DesktopPoolName" -Level Info
-        #Write-Host $HypervisorConnection $ParentVM
         
         $MemoryMB = $($MemoryGB) * 1024
         
@@ -131,7 +139,6 @@ function Set-VSICTXDesktopPoolNTNX {
             if ($Task.TaskState -ne "Finished") {
                 Write-Log -Message "Failed to create Provisioning scheme" -Level Error
                 Write-Log -Message "$($Task.TerminatingError)" -Level Error
-                #throw $Task.TerminatingError
                 Exit 1
             }
             ## ESXi ##
@@ -158,18 +165,10 @@ function Set-VSICTXDesktopPoolNTNX {
             if ($Task.TaskState -ne "Finished") {
                 Write-Log -Message "Failed to create Provisioning scheme" -Level Error
                 Write-Log -Message "$($Task.TerminatingError)" -Level Error
-                #throw $Task.TerminatingError
                 Exit 1
             }
         }
-        
-        #if ($SessionsSupport -eq "MultiSession") {
-        $DesktopKind = "Shared"
-        $AllocationType = "Random"
-        #} else {
-        #   $DesktopKind = "Private"
-        #   $AllocationType = "Static"
-        #
+
         Write-Log -Message "Creating catalog $DesktopPoolName" -Level Info
         $Params = @{
             AdminAddress           = $DDC
@@ -192,17 +191,7 @@ function Set-VSICTXDesktopPoolNTNX {
             Break
         }
         $params = $null
-        <#
-        $Catalog = New-BrokerCatalog -AdminAddress $DDC -AllocationType $AllocationType `
-            -Description "Created by EUC Performance Engineering" `
-            -MinimumFunctionalLevel $FunctionalLevel `
-            -Name $DesktopPoolName `
-            -PersistUserChanges "Discard" `
-            -SessionSupport $SessionsSupport `
-            -ProvisioningType "MCS" `
-            -ProvisioningSchemeId $Task.ProvisioningSchemeUid `
-            -ZoneUid $Zone.Uid
-        #>
+
         Write-Log -Message "Creating desktopgroup $DesktopPoolName" -Level Info
         $Params = @{
             AdminAddress             = $DDC
@@ -214,7 +203,7 @@ function Set-VSICTXDesktopPoolNTNX {
             PublishedName            = $DesktopPoolName 
             SessionSupport           = $SessionsSupport 
             MachineLogonType         = "ActiveDirectory"
-            ShutdownDesktopsAfterUse = $true 
+            ShutdownDesktopsAfterUse = $ShutdownDesktopsAfterUse
             MinimumFunctionalLevel   = $FunctionalLevel 
         }
         try {
@@ -228,12 +217,11 @@ function Set-VSICTXDesktopPoolNTNX {
 
         Write-Log -Message "Sleeping for 30 seconds" -Level Info
         Start-Sleep -Seconds 30
-        <#
-        $DG = New-BrokerDesktopGroup -AdminAddress $DDC -DeliveryType DesktopsOnly -DesktopKind $DesktopKind -Description "Created by EUC Performance Engineering" -ColorDepth TwentyFourBit -Name $DesktopPoolName -PublishedName $DesktopPoolName -SessionSupport $SessionsSupport -MachineLogonType ActiveDirectory -ShutdownDesktopsAfterUse $true -MinimumFunctionalLevel $FunctionalLevel -ErrorAction Stop
-        Start-Sleep -Seconds 30
-        #>
         
     }
+    #endregion Create Catalog
+
+    #region Create Desktop Group and Delivery Group
     if ($null -eq $DG) {
         if ($CloneType -eq "PVS") {
             Write-Log -Message "Creating desktopgroup $DesktopPoolName" -Level Info
@@ -247,7 +235,7 @@ function Set-VSICTXDesktopPoolNTNX {
                 PublishedName            = $DesktopPoolName 
                 SessionSupport           = $SessionsSupport 
                 MachineLogonType         = "ActiveDirectory" 
-                ShutdownDesktopsAfterUse = $true 
+                ShutdownDesktopsAfterUse = $ShutdownDesktopsAfterUse 
                 MinimumFunctionalLevel   = $FunctionalLevel
             }
             try {
@@ -261,14 +249,12 @@ function Set-VSICTXDesktopPoolNTNX {
             
             Write-Log -Message "Sleeping for 30 seconds" -Level Info
             Start-Sleep -Seconds 30
-            <#
-            Write-Log "Creating desktopgroup $DesktopPoolName"
-            $DG = New-BrokerDesktopGroup -AdminAddress $DDC -DeliveryType DesktopsOnly -DesktopKind $DesktopKind -Description "Created by EUC Performance Engineering" -ColorDepth TwentyFourBit -Name $DesktopPoolName -PublishedName $DesktopPoolName -SessionSupport $SessionsSupport -MachineLogonType ActiveDirectory -ShutdownDesktopsAfterUse $true -MinimumFunctionalLevel $FunctionalLevel -ErrorAction Stop
-            Start-Sleep -Seconds 30
-            #>
+
         }
     }
+    #endregion Create Desktop Group
 
+    #region Alter Desktop Group Access Policies
     Write-Log -Message "Handling Access Policies on $($DesktopPoolName)" -Level Info
     $DG = Get-BrokerDesktopGroup -AdminAddress $DDC -Name $DesktopPoolName
     if ($DesktopKind -eq "Shared") {
@@ -282,7 +268,8 @@ function Set-VSICTXDesktopPoolNTNX {
     Get-BrokerAccessPolicyRule -AdminAddress $DDC -Name "$($DesktopPoolName)*" -ea SilentlyContinue | Remove-BrokerAccessPolicyRule
     $AccessPolicyViaAG = New-BrokerAccessPolicyRule -AdminAddress $DDC -AllowedUsers Filtered -AllowedConnections ViaAG -AllowRestart $true -AllowedProtocol @("HDX", "RDP") -DesktopGroupUid $DG.Uid -Name "$($DesktopPoolName)_AG" -IncludedUserFilterEnabled $true -IncludedSmartAccessFilterEnabled $true  -IncludedUsers "$EntitledGroup" 
     $AccessPolicyNotViaAG = New-BrokerAccessPolicyRule -AdminAddress $DDC -AllowedUsers Filtered -AllowedConnections NotViaAG -AllowRestart $true -AllowedProtocol @("HDX", "RDP") -DesktopGroupUid $DG.Uid -Name "$($DesktopPoolName)_Direct" -IncludedUserFilterEnabled $true -IncludedSmartAccessFilterEnabled $true  -IncludedUsers "$EntitledGroup"
-    
+    #endregion Alter Desktop Group Access Policies
+
     $HypConnectionName = (Get-Item -adminaddress $DDC XDHyp:\HostingUnits\$HypervisorConnection).HypervisorConnection.HypervisorConnectionName
     $PowerActions = Get-BrokerHypervisorConnection -adminaddress $DDC -Name $HypConnectionName | Select-Object *Actions*
     Return $PowerActions

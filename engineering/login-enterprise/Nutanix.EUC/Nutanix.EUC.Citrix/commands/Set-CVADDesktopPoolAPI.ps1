@@ -46,6 +46,11 @@ function Set-CVADDesktopPoolAPI {
         $CreatePool = $true
     }
     
+    if ($SessionsSupport -eq "MultiSession") {
+        $ShutdownDesktopsAfterUse = $false
+    } else {
+        $ShutdownDesktopsAfterUse = $true
+    }
 
     #region Check to see if the Delivery Group Exists and its associated Catalog/Prov Scheme
     Write-Log -Message "Checking if Delivery Group $($DesktopPoolName) exists" -Level Info
@@ -506,7 +511,7 @@ function Set-CVADDesktopPoolAPI {
             )
             Name                     = $DesktopPoolName
             SessionSupport           = $SessionsSupport
-            ShutdownDesktopsAfterUse = $true
+            ShutdownDesktopsAfterUse = $ShutdownDesktopsAfterUse
             SimpleAccessPolicy       = @{
                 IncludedUserFilterEnabled = $true 
                 IncludedUsers             = @(
@@ -575,7 +580,7 @@ function Set-CVADDesktopPoolAPI {
                 )
                 Name                     = $DesktopPoolName
                 SessionSupport           = $SessionsSupport
-                ShutdownDesktopsAfterUse = $true
+                ShutdownDesktopsAfterUse = $ShutdownDesktopsAfterUse
                 SimpleAccessPolicy       = @{
                     IncludedUserFilterEnabled = $true 
                     IncludedUsers             = @(
