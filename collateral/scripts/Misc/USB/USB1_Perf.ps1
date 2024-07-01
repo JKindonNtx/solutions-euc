@@ -1,12 +1,12 @@
-﻿$USBControllers =Get-PnPDevice | where {$_.Class -Match "USB"}
+﻿$USBControllers = Get-PnPDevice | Where-Object {$_.Class -match "USB"}
 
-if ($USBControllers | ?{$_.instanceid -like "*0001*"})
+if ($USBControllers | Where-Object {$_.InstanceId -like "*0001*"})
 {
-Remove-Item -Path HLM\SYSTEM\CurrentControlSet\Control\usbflags -Recurse
-Remove-Item -Path HLM\SYSTEM\CurrentControlSet\Enum\USB -Recurse
-Write-Host "USB1 devices found"
+    Remove-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\usbflags" -Recurse
+    Remove-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USB" -Recurse
+    Write-Host "USB1 devices found"
 }
 else 
 {
-Write-Host "USB2 devices found"
+    Write-Host "USB2 devices found"
 }
