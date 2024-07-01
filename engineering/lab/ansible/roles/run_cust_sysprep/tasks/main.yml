@@ -2,4 +2,4 @@
 # sysprep the virtual machine
 - name: Sysprep the Virtual Machine
   win_shell: |
-    Sysprep /generalize /oobe /quiet /quit
+    Sysprep /generalize /oobe /quit
