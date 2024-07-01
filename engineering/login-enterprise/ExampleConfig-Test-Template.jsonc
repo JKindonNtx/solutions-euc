@@ -9,7 +9,7 @@
         // -----------------------------------------------------------------------------------
         // Mandatory_Test_Block_Global - Relevant for ALL Tests
         // -----------------------------------------------------------------------------------
-        "DeliveryType":  "Citrix", // Citrix or VMware or Microsoft
+        "DeliveryType":  "Citrix", // Citrix or VMware or Microsoft or Omnissa
         "DesktopBrokerVersion":  "7.2203_2", // Broker version. Example: Citrix = "7.2203_2", Horizon = "8.8-2212.1", RAS = "19.2", RDP=RDP
         "CloneType": "MCS", // Citrix: MCS or Horizon: Instant Clones. RAS: Full Clone or Linked Clone. RDP: Full Used for reporting database.
         "SessionCfg": "ICA", // Citrix: ICA or Horizong: PCoIP or Blast or RAS: RDP. RDP: RDP. Used for reporting database
@@ -62,6 +62,15 @@
         "ProvisioningMode": "AllMachinesUpFront", // AllMachinesUpFront or OnDemand
         "VMPoolIncrement": 0, // How many VM's are provisioned at a time, 0 = Horizon controls the provisioning amount according to it's settings, only valid when using allmachinesupfront provisioning
         "NumberOfSpareVMs": 1, // When ProvisioningMode is OnDemand, this controls the Spare (Powered On) Machines
+        // -----------------------------------------------------------------------------------
+        // Optional_Test_Block_Omnissa - Can be DELETED if not setting up a Omnissa Config
+        // -----------------------------------------------------------------------------------
+        "OmnissaConnectionServer": false, //
+        "OmnissaApiUserName": false, //
+        "OmnissaApiPassword": "${Domain.NetBios}\\Domain Users", //
+        "OmnissaApiDomain": "${Domain.NetBios}\\Domain Users", //
+        "OmnissaProvisioningMode": "Manual", // Currently only supports Manual
+        "OmnissaPoolName": "W10-OMN-MANUAL",
         // -----------------------------------------------------------------------------------
         // Optional_Test_Block_RAS - Can be DELETED if not setting up a RAS Config
         // -----------------------------------------------------------------------------------

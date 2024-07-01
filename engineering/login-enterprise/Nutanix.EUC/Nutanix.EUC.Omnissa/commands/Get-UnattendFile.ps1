@@ -6,6 +6,7 @@ function Get-UnattendFile {
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$DomainJoin,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$Domain,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$OU,
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$AdminUserName,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$AdminPassword,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$ProductKey,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$HostName
@@ -17,7 +18,9 @@ function Get-UnattendFile {
         if ($DomainJoin -eq $true){
             $JoinDomain = '<component name=\"Microsoft-Windows-UnattendedJoin\" processorArchitecture=\"amd64\" publicKeyToken=\"31bf3856ad364e35\" language=\"neutral\" versionScope=\"nonSxS\" xmlns:wcm=\"http://schemas.microsoft.com/WMIConfig/2002/State\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"> <Identification> <Credentials> <Domain>'
             $JoinDomain += $Domain
-            $JoinDomain += '</Domain> <Username>administrator</Username> <Password>'
+            $JoinDomain += '</Domain> <Username>'
+            $JoinDomain += $AdminUserName
+            $JoinDomain += '</Username> <Password>'
             $JoinDomain += $AdminPassword
             $JoinDomain += '</Password> </Credentials> <JoinDomain>'
             $JoinDomain += $Domain

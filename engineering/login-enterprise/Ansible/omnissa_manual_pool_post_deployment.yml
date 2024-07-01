@@ -4,7 +4,8 @@
   vars_files:
     - ./omnissa_vars/all.yml
   roles:
-  - run_optimize
+    - install_omnissa_horizon_agent_8.12_2312_manual
+    - run_optimize
 
   tasks:
    - name: Kill Defender Scheduled Tasks

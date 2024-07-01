@@ -7,17 +7,17 @@ function Set-OmnissaVMsAhv {
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$TargetCVM,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$TargetCVMAdmin,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$TargetCVMPassword,
-        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$NumberOfVMs,
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][Int]$NumberOfVMs,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$NamingConvention,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$StartIndex,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$Domain,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$HostName,
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$AdminUserName,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$AdminPassword,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$OU,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$RootPath
 
     )
-
 
     Write-Log -Message "Getting Omnissa Base VM UUID" -Level Info
     $var_Omnissa_Base_Vm_Uuid = (Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq $BaseVM }).uuid
@@ -37,7 +37,7 @@ function Set-OmnissaVMsAhv {
 
         $machineNames = New-Object System.Collections.Generic.List[System.Object]
 
-        For ($i = 1; $i -le $var_Number_Of_Vms; $i++) {
+        For ($i = 1; $i -le $NumberOfVMs; $i++) {
             
             $var_Machine_Prefix = $StartIndex.PadLeft($var_Number_Padding, "0")
             $var_Machine_Name = "$($var_Naming_Convention_Base)$($var_Machine_Prefix)"
@@ -45,7 +45,7 @@ function Set-OmnissaVMsAhv {
             $var_Prefix_Int++
             $StartIndex = [string]$var_Prefix_Int
 
-            $var_Unattend = Get-UnattendFile -DomainJoin $true -Domain $Domain -HostName $var_Machine_Name -AdminPassword $AdminPassword -OU $OU
+            $var_Unattend = Get-UnattendFile -DomainJoin $true -Domain $Domain -HostName $var_Machine_Name -AdminUserName $AdminUserName -AdminPassword $AdminPassword -OU $OU
 
             $Payload = "{ `
             ""spec_list"": [ `
@@ -58,7 +58,7 @@ function Set-OmnissaVMsAhv {
                 } `
             }"
 
-            Write-Log -Update -Message "Deploying Machine $($i) of $($var_Number_Of_Vms)." -Level Info
+            Write-Log -Update -Message "Deploying Machine $($i) of $($NumberOfVMs)." -Level Info
             $var_result = Set-NTNXVmClone -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword -VmUuid $var_Omnissa_Base_Vm_Uuid -Body $Payload
 
             $machineNames.Add($var_Machine_Name)
@@ -69,7 +69,7 @@ function Set-OmnissaVMsAhv {
 
         $i = 1
         foreach ($var_VM in $machineNames) {
-            Write-Log -Update -Message "Turning On Machine $($i) of $($var_Number_Of_Vms)." -Level Info
+            Write-Log -Update -Message "Turning On Machine $($i) of $($NumberOfVMs)." -Level Info
             $CurrentVM = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq "$($var_VM)" }
             $var_Power_Result = Set-VmPower -VmUuid $CurrentVM.uuid -PowerState "ON" -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
             $i++
@@ -95,8 +95,8 @@ function Set-OmnissaVMsAhv {
         } While ($var_Valid_Ips -eq $false)
         Write-Log -Message "IP Addresses Validated - Continuing" -Level Info
 
-        Write-Log -Message "Sleeping 120 Seconds to let reboot complete" -Level Info
-        Start-Sleep -Seconds 120
+        Write-Log -Message "Sleeping 5 Minutes to let reboot complete" -Level Info
+        Start-Sleep -Seconds 300
 
         $var_Inventory_List = ""
         foreach ($var_VM in $machineNames) {

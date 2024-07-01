@@ -1,7 +1,8 @@
 function Get-NextComputerNumber(){
 
     param(
-        $CurrentVMs
+        $CurrentVMs,
+        $NamingConvention
     )
 
     try {
@@ -9,9 +10,9 @@ function Get-NextComputerNumber(){
         If ($CurrentVmCount.Count = 0) {
             $var_Start_Index = "1"
         } else {
-            $LastVM = $CurrentVms[$CurrentVmCount.count - 1].Name
-            $Position = $var_Naming_Convention.IndexOf("#")
-            $NumberCount =([regex]::Matches($var_Naming_Convention, "#" )).count
+            $LastVM = $CurrentVms[$CurrentVmCount.count - 1]
+            $Position = $NamingConvention.IndexOf("#")
+            $NumberCount =([regex]::Matches($NamingConvention, "#" )).count
             $LastNumber = $LastVM.Substring($Position, $NumberCount)
             $NumberInt = [int]$LastNumber
             $NumberInt++

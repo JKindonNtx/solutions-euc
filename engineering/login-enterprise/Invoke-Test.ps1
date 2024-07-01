@@ -42,7 +42,7 @@ Param(
     [string]$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\ExampleConfig-LoginEnterpriseGlobal.jsonc",
 
     [Parameter(Mandatory = $true)]
-    [ValidateSet("CitrixVAD", "CitrixDaaS", "Horizon", "RAS", "RDP")]
+    [ValidateSet("CitrixVAD", "CitrixDaaS", "Horizon", "RAS", "RDP", "Omnissa")]
     [string]$Type,
 
     [Parameter(Mandatory = $false)]
@@ -393,22 +393,31 @@ if ($VSI_Target_Files -ne "") {
 
 #region Nutanix Snapshot Pre Flight Checks
 if (-not $AzureMode.IsPresent) {
-    # This is not an Azure configuration
-    if ($NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
-        # A purely AHV Test
-        $cleansed_snapshot_name = $VSI_Target_ImagesToTest.ParentVM -replace ".template",""
-        Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type
-    }
-    if (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
-        # A Citrix on ESXi test
-        Get-NutanixSnapshot -VM $VSI_Target_ImagesToTest.ParentVM -HostingConnection $VSI_Target_HypervisorConnection -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type -DDC $VSI_Target_DDC -SnapshotName $VSI_Target_ImagesToTest.ParentVM
-    }
-    if ($Type -eq "Horizon") {
-        # A Horizon test
-        if ($VSI_Target_ImagesToTest.ParentVM -match '^([^\\]+)\.') { $cleansed_vm_name = $matches[1] }
-        if ($VSI_Target_ImagesToTest.ParentVM -match '\\([^\\]+)\.snapshot$') { $cleansed_snapshot_name = $matches[1] }
+    If ($NTNXInfra.Target.DeliveryType -eq "Omnissa") {
+        # This is a placeholder for Omnissa Specific Tests
+        if ($NTNXInfra.Target.OmnissaProvisioningMode -eq "Manual") {
+            # Manual Pool - Skip or placeholder for future code
+        } else {
+            # Placeholder to validate VM Template
+        }
+    } else {
+        # This is not an Azure configuration
+        if ($NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
+            # A purely AHV Test
+            $cleansed_snapshot_name = $VSI_Target_ImagesToTest.ParentVM -replace ".template",""
+            Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type
+        }
+        if (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
+            # A Citrix on ESXi test
+            Get-NutanixSnapshot -VM $VSI_Target_ImagesToTest.ParentVM -HostingConnection $VSI_Target_HypervisorConnection -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type -DDC $VSI_Target_DDC -SnapshotName $VSI_Target_ImagesToTest.ParentVM
+        }
+        if ($Type -eq "Horizon") {
+            # A Horizon test
+            if ($VSI_Target_ImagesToTest.ParentVM -match '^([^\\]+)\.') { $cleansed_vm_name = $matches[1] }
+            if ($VSI_Target_ImagesToTest.ParentVM -match '\\([^\\]+)\.snapshot$') { $cleansed_snapshot_name = $matches[1] }
 
-        Get-NutanixSnapshot -VM $cleansed_vm_name -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type
+            Get-NutanixSnapshot -VM $cleansed_vm_name -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type
+        }
     }
 }
 
@@ -644,6 +653,30 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
     }
     #endregion RDP validation
+
+    #region Omnissa validation
+    #----------------------------------------------------------------------------------------------------------------------------
+    if ($Type -eq "Omnissa") {
+        Write-Log -Message "Validating Omnissa" -Level Info
+
+        #region Update Test Dashboard
+        $params = @{
+            ConfigFile     = $NTNXInfra
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Validating Omnissa Connectivity" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData @params
+        $params = $null
+        $CurrentTotalPhase++
+        #endregion Update Test Dashboard
+
+    #endregion Omnissa validation
 
     #region LE Test Check
     #----------------------------------------------------------------------------------------------------------------------------
@@ -976,6 +1009,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             }
         }
 
+        if ($Type -eq "Omnissa") {
+            Write-Log -Message "Skipping Desktop Pool Creation - Omnissa Manual Desktop Pool" -Level Info
+        }
+
         #endregion Configure Desktop Pool
 
         #region Configure Folder Details for output
@@ -1091,6 +1128,19 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             }
         }
 
+        if ($Type -eq "Omnissa") {
+            if ($NTNXInfra.Target.OmnissaProvisioningMode -eq "Manual") {
+                $Boot = "" | Select-Object -Property bootstart, boottime, firstvmname
+                $Boot.bootstart = get-date -format o
+                $BootStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+                Start-Sleep -Seconds 5
+                $BootStopwatch.stop()
+                $Boot.boottime = $BootStopwatch.elapsed.totalseconds
+            } else {
+                # Placeholder for Omnissa Cloned Desktops
+            }
+        }
+
         if (-not $AzureMode.IsPresent) { 
             # This is not an Azure configuration
             $NTNXInfra.Testinfra.BootStart = $Boot.bootstart
@@ -1112,6 +1162,28 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         if ($Type -eq "RDP") {
             $MasterImageDNS = ($VSI_target_RDP_hosts | Select-Object -First 1) + "." + $VSI_Target_DomainName
+        }
+
+        if ($Type -eq "Omnissa") {
+            $params = @{
+                ApiEndpoint     = $VSI_Target_OmnissaConnectionServer
+                UserName       = $VSI_Target_OmnissaApiUserName
+                Password      = $VSI_Target_OmnissaApiPassword
+                Domain      = $VSI_Target_OmnissaApiDomain
+                PoolName   = $VSI_Target_OmnissaPoolName
+            }
+            $OmnissaPool = Get-OmnissaDesktopPools @params
+
+            $params = @{
+                ApiEndpoint     = $VSI_Target_OmnissaConnectionServer
+                UserName       = $VSI_Target_OmnissaApiUserName
+                Password      = $VSI_Target_OmnissaApiPassword
+                Domain      = $VSI_Target_OmnissaApiDomain
+                PoolID   = $OmnissaPool.id
+            }
+            $OmnissaMachines = Get-OmnissaMachines @params
+
+            $MasterImageDNS = $OmnissaMachines[0].dns_name
         }
 
         #region Update Test Dashboard
@@ -1339,6 +1411,24 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 SessionMetricGroup = $VSI_Target_SessionMetricGroupName
                 ConnectorName      = "Microsoft RDS"
                 ConnectorParams    = @{hostList = $HostList; suppressCertWarn = $true; displayResolution = ""; resource = $VSI_Target_DesktopPoolName}
+                Workload           = $VSI_Target_Workload
+            }
+            $testId = Set-LELoadTestv7 @Params
+            $params = $null
+        }
+
+        if ($Type -eq "Omnissa") {
+
+            $Params = @{
+                TestName           = $VSI_Test_Name 
+                SessionAmount      = $VSI_Target_NumberOfSessions
+                RampupInMinutes    = $VSI_Target_RampupInMinutes
+                DurationInMinutes  = $VSI_Target_DurationInMinutes
+                LauncherGroupName  = $VSI_Launchers_GroupName
+                AccountGroupName   = $VSI_Users_GroupName
+                SessionMetricGroup = $VSI_Target_SessionMetricGroupName
+                ConnectorName      = "VMware Horizon View"
+                ConnectorParams    = @{serverUrl = $VSI_Target_OmnissaConnectionServer; resource = $VSI_Target_OmnissaPoolName }
                 Workload           = $VSI_Target_Workload
             }
             $testId = Set-LELoadTestv7 @Params
