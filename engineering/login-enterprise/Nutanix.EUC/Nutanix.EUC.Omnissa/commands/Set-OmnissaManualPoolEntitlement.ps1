@@ -11,15 +11,7 @@ function Set-OmnissaManualPoolEntitlement {
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$GroupID
     )
 
-    $OmnissaConnection = Connect-OmnissaApi -url $ApiEndpoint -username $UserName -password $Password -domain $Domain
-    
-    $header = @{
-            'Authorization' = "Bearer " + $OmnissaConnection.access_token
-            'Accept' = "application/json"
-            'Content-Type' = "application/json"
-        }
-
-    $URL = "$($ApiEndpoint)/rest/entitlements/v1/desktop-pools"
+    $Path = "$($ApiEndpoint)/rest/entitlements/v1/desktop-pools"
 
     $Payload = "[ `
         { `
@@ -31,8 +23,7 @@ function Set-OmnissaManualPoolEntitlement {
     ]"
 
     Write-Log -Message "Setting Omnissa Manual Desktop Pool Entitlement" -Level Info
-
-    $poolAssignment = invoke-restmethod -Method Post -uri $url -Headers $header -body $Payload -SkipCertificateCheck
+    $poolAssignment = Invoke-PublicApiMethodOmnissa -ApiEndpoint $ApiEndpoint -UserName $UserName -Password $Password -Domain $Domain -Method "POST" -Path $Path -Body $Payload
     
     Return $poolAssignment
 }

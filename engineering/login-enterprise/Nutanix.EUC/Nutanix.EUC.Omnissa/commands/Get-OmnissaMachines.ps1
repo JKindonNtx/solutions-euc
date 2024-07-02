@@ -10,18 +10,9 @@ function Get-OmnissaMachines {
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$PoolID
     )
 
-    $OmnissaConnection = Connect-OmnissaApi -url $ApiEndpoint -username $UserName -password $Password -domain $Domain
     $returnMachines = New-Object System.Collections.Generic.List[System.Object]
-
-    $header = @{
-            'Authorization' = "Bearer " + $OmnissaConnection.access_token
-            'Accept' = "application/json"
-            'Content-Type' = "application/json"
-        }
-
-    $URL = "$($ApiEndpoint)/rest/inventory/v1/machines"
-    $virtualMachines = invoke-restmethod -Method Get -uri $url -Headers $header -SkipCertificateCheck
-
+    $Path = "$($ApiEndpoint)/rest/inventory/v1/machines"
+    $virtualMachines = Invoke-PublicApiMethodOmnissa -ApiEndpoint $ApiEndpoint -UserName $UserName -Password $Password -Domain $Domain -Method "GET" -Path $Path
     Write-Log -Message "Getting Omnissa machines" -Level Info
 
     foreach ($machine in $virtualMachines){

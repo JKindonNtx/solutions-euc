@@ -10,18 +10,9 @@ function Get-OmnissaPhysicalMachines {
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$MachineNaming
     )
 
-    $OmnissaConnection = Connect-OmnissaApi -url $ApiEndpoint -username $UserName -password $Password -domain $Domain
     $machines = New-Object System.Collections.Generic.List[System.Object]
-
-    $header = @{
-            'Authorization' = "Bearer " + $OmnissaConnection.access_token
-            'Accept' = "application/json"
-            'Content-Type' = "application/json"
-        }
-
-    $URL = "$($ApiEndpoint)/rest/inventory/v2/physical-machines"
-    $physicalMachines = invoke-restmethod -Method Get -uri $url -Headers $header -SkipCertificateCheck
-
+    $Path = "$($ApiEndpoint)/rest/inventory/v2/physical-machines"
+    $physicalMachines = Invoke-PublicApiMethodOmnissa -ApiEndpoint $ApiEndpoint -UserName $UserName -Password $Password -Domain $Domain -Method "GET" -Path $Path
     Write-Log -Message "Getting Manual machines to add to Desktop Pool" -Level Info
 
     foreach ($machine in $physicalMachines){

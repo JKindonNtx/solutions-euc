@@ -10,16 +10,8 @@ function New-OmnissaManualPool {
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$PoolName
     )
 
-    $OmnissaConnection = Connect-OmnissaApi -url $ApiEndpoint -username $UserName -password $Password -domain $Domain
-    
-    $header = @{
-            'Authorization' = "Bearer " + $OmnissaConnection.access_token
-            'Accept' = "application/json"
-            'Content-Type' = "application/json"
-        }
-
-    $URL = "$($ApiEndpoint)/rest/config/v2/local-access-groups"
-    $Entitlements = invoke-restmethod -Method Get -uri $url -Headers $header -SkipCertificateCheck
+    $Path = "$($ApiEndpoint)/rest/config/v2/local-access-groups"
+    $Entitlements = Invoke-PublicApiMethodOmnissa -ApiEndpoint $ApiEndpoint -UserName $UserName -Password $Password -Domain $Domain -Method "GET" -Path $Path
 
     foreach ($ent in $Entitlements){
         if ($ent.name -eq "Root") {
@@ -38,10 +30,9 @@ function New-OmnissaManualPool {
             }
         }"
 
-    $URL = "$($ApiEndpoint)/rest/inventory/v2/desktop-pools"
-
+    $desktopPoolPath = "$($ApiEndpoint)/rest/inventory/v2/desktop-pools"
     Write-Log -Message "Creating Desktop Pool $($PoolName)" -Level Info
-    $Pool = invoke-restmethod -Method Post -uri $url -Body $Payload -Headers $header -SkipCertificateCheck
+    $Pool = Invoke-PublicApiMethodOmnissa -ApiEndpoint $ApiEndpoint -UserName $UserName -Password $Password -Domain $Domain -Method "POST" -Path $desktopPoolPath -Body $Payload
     
     Return $Pool
 }

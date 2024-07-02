@@ -11,19 +11,9 @@ function Set-OmnissaManualPoolMachines {
         $Payload
     )
 
-    $OmnissaConnection = Connect-OmnissaApi -url $ApiEndpoint -username $UserName -password $Password -domain $Domain
-    
-    $header = @{
-            'Authorization' = "Bearer " + $OmnissaConnection.access_token
-            'Accept' = "application/json"
-            'Content-Type' = "application/json"
-        }
-
-    $URL = "$($ApiEndpoint)/rest/inventory/v1/desktop-pools/$($PoolID)/action/add-machines"
-
+    $Path = "$($ApiEndpoint)/rest/inventory/v1/desktop-pools/$($PoolID)/action/add-machines"
     Write-Log -Message "Adding Omnissa Manual Machines to Desktop Pool" -Level Info
-
-    $desktopPools = invoke-restmethod -Method Post -uri $url -Headers $header -body $Payload -SkipCertificateCheck
+    $desktopPools = Invoke-PublicApiMethodOmnissa -ApiEndpoint $ApiEndpoint -UserName $UserName -Password $Password -Domain $Domain -Method "POST" -Path $Path -Body $Payload
     
     Return $desktopPools
 }
