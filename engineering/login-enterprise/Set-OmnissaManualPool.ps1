@@ -21,7 +21,7 @@ $Slack = "https://hooks.slack.com/services/T0252CLM8/B04DW5DEMF1/pKxm5a4MWFFxKGD
 # Omnissa Variables
 $var_Naming_Convention = "W10-OMN-####"
 $var_OU = "OU=Omnissa,OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com"
-$var_Omnissa_Base_Vm_Name = "Omnissa_Base_VM"
+$var_Omnissa_Base_Vm_Name = "W10-22H2-df34"
 $var_Number_Of_Vms = 20
 $var_Ansible_Path = "/workspaces/solutions-euc/engineering/login-enterprise/ansible/"
 $var_Omnissa_Pool_Name = "W10-OMN-MANUAL"
