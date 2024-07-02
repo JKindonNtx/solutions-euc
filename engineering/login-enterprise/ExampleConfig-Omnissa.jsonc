@@ -1,47 +1,31 @@
 {
     "Nutanix": {
-        "TargetCVM": "https://WS-LE1.wsperf.nutanix.com",
-        "TargetCVMAdmin": "",
-        "TargetCVMPassword": "" //Get this from external notifications/public api, make sure to create a system access token with access level: Configuration
+        "TargetCVM": "xx.xx.xx.xx", // IP Address for the Cluster
+        "TargetCVMAdmin": "username", // CVM Admin UserName
+        "TargetCVMPassword": "SuperSecurePassword!123" // AHV CVM Password
     },
-        "Launchers": {
-            "NamingPattern": "LE1-202405-", // Create your own Launcher VMs and put them in the Launcher AD OU container. Reboot them 2-3 times after creation to set autologin and registering to LE. Use ansible playbook.
-            "GroupName": "LE1-Launchers" // Launcher group name to be used in login enterprise    
-        },
-        "Users": {
-            "BaseName": "VSILE1", // Use BaseName with your initials.
-            "GroupName": "${Users.BaseName}", // Resolves to "testUser"
-            "Password": "SuperSecurePassword!123", // Password of VSI accounts
-            "NetBios": "${Domain.NetBios}", // Resolves to "EXAMPLE"
-            "OU": "OU=Target,OU=Users,OU=LoginEnterprise",
-            "NumberOfDigits": 4 // usernames will be basename + numberofdigits, e.g. testUser001 etc in this example
-        }
+    "Microsoft": {
+        "ADUserRegular": "User", // Regular User
+        "ADUserAdmin": "Administrator", // Admin User
+        "ADAdminPassword": "SuperSecurePassword!123", // Password for the Admin User
+        "LDAPServer": "xx.xx.xx.xx", // IP Address of the LDAP Server
+        "BaseDN": "dc=wsperf,dc=nutanix,dc=com", // Base DN for the Domain
+        "DomainNetBiosName": "WSPERF", // Domain Netbios Name
+        "DomainDNSName": "wsperf.nutanix.com", // Domain DNS Namespace
+        "TargetOU": "OU=Omnissa,OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com" // The OU to deploy the desktops in
+    },
+    "Omnissa": {
+        "ConnectionServer": "https://connectionserver.domain.com", // FQDN to the connection server including https://
+        "ConnectionServerUserName": "UserName", // Connection Server UserName
+        "ConnectionServerPassword": "SuperSecurePassword!123", // Connection Server Password
+        "PoolName": "DesktopPoolName", // The Omnissa Desktop Pool Name
+        "NamingConvention": "NAMING-####", // Naming Convention - use the # char to indicate numbers
+        "EntitlementGroup": "GroupName", // The AD Group Name for the entitlement
+        "BaseVmName": "BaseVM", // Base VM Name (Not Snapshot Name)
+        "NumberOfVMs": 20 // Number of VMs you want to deploy
+    },
+    "Various": {
+        "Slack": "Slack_Api_Uri", // The Slack Api Uri
+        "AnsiblePath": "Path_To_Ansible_Playbooks" // The Path to the Ansible Playbooks
     }
 }
-# Nutanix CVM Variables
-$TargetCVM = "10.56.68.127"
-$TargetCVMAdmin = "davidbrett"
-$TargetCVMPassword = "Nutanix/4u$"
-
-# Microsoft Active Directory Variables
-$var_AD_User = "administrator"
-$var_AD_Admin = "administrator"
-$var_Admin_Password = "nutanix/4u"
-$var_LDAPServer = "10.57.64.20"
-$var_Base_DN = "dc=wsperf,dc=nutanix,dc=com"
-$var_NetBios_Domain = "wsperf"
-$var_Omnissa_Group = "VSILE3"
-$Slack = "https://hooks.slack.com/services/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"
-
-# Omnissa Variables
-$var_Naming_Convention = "W10-OMN-####"
-$var_OU = "OU=Omnissa,OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com"
-$var_Omnissa_Base_Vm_Name = "Omnissa_Base_VM"
-$var_Number_Of_Vms = 20
-$var_Ansible_Path = "/workspaces/solutions-euc/engineering/login-enterprise/ansible/"
-$var_Omnissa_Pool_Name = "W10-OMN-MANUAL"
-$var_Domain = "wsperf.nutanix.com"
-#$var_OS_Type = "WINDOWS_10"
-$var_Api_Endpoint = "https://10.57.64.71"
-$var_UserName = "Dave"
-$var_Password = "Nutanix/4u$"

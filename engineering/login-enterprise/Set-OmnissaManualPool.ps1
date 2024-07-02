@@ -1,54 +1,20 @@
-#region Variables
+#region Params
 # ============================================================================
-# Variables
-# ============================================================================
-
-# Nutanix CVM Variables
-$TargetCVM = "10.56.68.127"
-$TargetCVMAdmin = "davidbrett"
-$TargetCVMPassword = "Nutanix/4u$"
-
-# Microsoft Active Directory Variables
-$var_AD_User = "administrator"
-$var_AD_Admin = "administrator"
-$var_Admin_Password = "nutanix/4u"
-$var_LDAPServer = "10.57.64.20"
-$var_Base_DN = "dc=wsperf,dc=nutanix,dc=com"
-$var_NetBios_Domain = "wsperf"
-$var_Omnissa_Group = "VSILE3"
-$Slack = "https://hooks.slack.com/services/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"
-
-# Omnissa Variables
-$var_Naming_Convention = "W10-OMN-####"
-$var_OU = "OU=Omnissa,OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com"
-$var_Omnissa_Base_Vm_Name = "W10-22H2-df34"
-$var_Number_Of_Vms = 20
-$var_Ansible_Path = "/workspaces/solutions-euc/engineering/login-enterprise/ansible/"
-$var_Omnissa_Pool_Name = "W10-OMN-MANUAL"
-$var_Domain = "wsperf.nutanix.com"
-#$var_OS_Type = "WINDOWS_10"
-$var_Api_Endpoint = "https://10.57.64.71"
-$var_UserName = "Dave"
-$var_Password = "Nutanix/4u$"
-
-#endregion Variables
-
-#region Variables
-# ============================================================================
-# Variables
+# Parameters
 # ============================================================================
 
-If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $ScriptRoot = $PSScriptRoot }
+Param(
+    [Parameter(Mandatory = $true)]
+    [string]$ConfigFile = "C:\Users\Dave\Documents\Github\solutions-euc\engineering\login-enterprise\ExampleConfig-Omnissa.jsonc",
+)
+#endregion Params
 
-#endregion Variables
-
-#Region Execute
-# ============================================================================
-# Execute
+#region Execute
 # ============================================================================
 
 #region Nutanix Module Import
 #----------------------------------------------------------------------------------------------------------------------------
+If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $ScriptRoot = $PSScriptRoot }
 $var_ModuleName = "Nutanix.EUC"
 Write-Host "$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: Trying to import $var_ModuleName module"
 try {
@@ -62,9 +28,77 @@ catch {
 }
 #endregion Nutanix Module Import
 
-# Check for Ansible
+#region Param Output
+#----------------------------------------------------------------------------------------------------------------------------
+Write-Log -Message "Configuration File is:        $($ConfigFile)" -Level Validation
+#endregion Param Output
 
-#endregion variable setting
+#region PowerShell Versions
+#----------------------------------------------------------------------------------------------------------------------------
+if ($PSVersionTable.PSVersion.Major -lt 5) { 
+    Write-Log -Message "You must upgrade to PowerShell 5.x to run this script" -Level Warn
+    Exit 1
+}
+
+if ($PSVersionTable.PSVersion.Major -lt 7 -and $Type -eq "RDP") {
+    #No PowerShell 5.1 to be used. Use a container or use PS 7. 
+    Write-Log -Message "You must use PowerShell 7 to run this script with RDP tests" -Level Warn
+    Exit 1
+}
+
+#endregion PowerShell Versions
+
+#region Config File
+#----------------------------------------------------------------------------------------------------------------------------
+Write-Log -Message "Importing config file: $($ConfigFile)" -Level Info
+try {
+    $configFileData = Get-Content -Path $ConfigFile -ErrorAction Stop
+}
+catch {
+    Write-Log -Message "Failed to import config file: $($configFile)" -Level Error
+    Write-Log -Message $_ -Level Error
+    Exit 1
+}
+
+$configFileData = $configFileData -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/'
+
+try {
+    $config = $configFileData | ConvertFrom-Json -ErrorAction Stop
+}
+catch {
+    Write-Log -Message $_ -Level Error
+    Exit 1
+}
+#endregion Config File
+
+#region Set Variables
+#----------------------------------------------------------------------------------------------------------------------------
+
+$TargetCVM = $config.Nutanix.TargetCVM
+$TargetCVMAdmin = $config.Nutanix.TargetCVMAdmin
+$TargetCVMPassword = $config.Nutanix.TargetCVMPassword
+$var_AD_User = $config.Microsoft.ADUserRegular
+$var_AD_Admin = $Config.Microsoft.ADUserAdmin
+$var_Admin_Password = $config.Microsoft.ADAdminPassword
+$var_LDAPServer = $config.Microsoft.LDAPServer
+$var_Base_DN = $config.Microsoft.BaseDN
+$var_NetBios_Domain = $config.Microsoft.DomainNetBiosName
+$var_Domain = $config.Microsoft.DomainDNSName
+$var_OU = $config.Microsoft.TargetOU
+$var_Api_Endpoint = $config.Omnissa.ConnectionServer
+$var_UserName = $config.Omnissa.ConnectionServerUserName
+$var_Password = $config.Omnissa.ConnectionServerPassword
+$var_Omnissa_Pool_Name = $config.Omnissa.PoolName
+$var_Naming_Convention = $config.Omnissa.NamingConvention
+$var_Omnissa_Group = $config.Omnissa.EntitlementGroup
+$var_Omnissa_Base_Vm_Name = $config.Omnissa.BaseVmName
+$var_Number_Of_Vms = $config.Omnissa.NumberOfVMs
+$Slack = $config.Various.Slack
+$var_Ansible_Path = $config.Various.AnsiblePath
+#endregion Set Variables
+
+#region Build New VMs
+#----------------------------------------------------------------------------------------------------------------------------
 
 $Filter = $var_Naming_Convention.Replace("#","")
 $CurrentVmsUnsorted = Get-ADComputers -filter $Filter -UserName "$($var_NetBios_Domain)\$var_AD_User" -Password $var_Admin_Password -LDAPServer $var_LDAPServer -BaseDN $var_Base_DN
@@ -85,8 +119,11 @@ $var_Deployed_VMs = Set-OmnissaVMsAhv -BaseVM $var_Omnissa_Base_Vm_Name -TargetC
 
 $CurrentVmsUnsorted = Get-ADComputers -filter $Filter -UserName "$($var_NetBios_Domain)\$var_AD_User" -Password $var_Admin_Password -LDAPServer $var_LDAPServer -BaseDN $var_Base_DN
 $CurrentVms = $CurrentVmsUnsorted | Sort-Object
+#endregion Build New VMs
 
-# Validate this code
+#region Remove CD ROM
+#----------------------------------------------------------------------------------------------------------------------------
+
 $i = 1
 foreach($VM in $CurrentVms){
     Write-Log -Update -Message "Removing CD-ROM $($i) of $($var_Number_Of_Vms)." -Level Info
@@ -94,8 +131,11 @@ foreach($VM in $CurrentVms){
     $Result = Remove-NutanixCDROM -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword -VmUuid $vmUUID
     $i++
 }
+#endregion Remove CD ROM
 
-# Create Desktop Pool etc
+#region Create Omnissa Pool
+#----------------------------------------------------------------------------------------------------------------------------
+
 $Pool = New-OmnissaManualPool -ApiEndpoint $var_Api_Endpoint -UserName $var_UserName -Password $var_Password -Domain $var_Domain -PoolName $var_Omnissa_Pool_Name
 
 $CreatedPool = Get-OmnissaDesktopPools -ApiEndpoint $var_Api_Endpoint -UserName $var_UserName -Password $var_Password -Domain $var_Domain -PoolName $var_Omnissa_Pool_Name
@@ -113,6 +153,10 @@ $addingMachines = Set-OmnissaManualPoolMachines -ApiEndpoint $var_Api_Endpoint -
 $OmnissaGroup = Get-OmnissaGroupSID -GroupName $var_Omnissa_Group -ApiEndpoint $var_Api_Endpoint -UserName $var_UserName -Password $var_Password -Domain $var_Domain
 
 $Entitlement = Set-OmnissaManualPoolEntitlement -ApiEndpoint $var_Api_Endpoint -UserName $var_UserName -Password $var_Password -Domain $var_Domain -PoolID $CreatedPool.id -GroupID $OmnissaGroup.id
+#endregion Create Omnissa Pool
+
+#region Update Slack
+#----------------------------------------------------------------------------------------------------------------------------
 
 Write-Log -Message "Updating Slack" -Level Info
 $SlackMessage = "AHV Omnissa Manual Pool Created`r
@@ -120,3 +164,6 @@ Pool Name: $($var_Omnissa_Pool_Name)`r
 Number of VMs: $($var_Number_Of_Vms)`r
 VM Naming Convention: $($var_Naming_Convention)"
 Update-VSISlack -Message $SlackMessage -Slack $Slack
+#endregion Update Slack
+
+#endregion Execute
