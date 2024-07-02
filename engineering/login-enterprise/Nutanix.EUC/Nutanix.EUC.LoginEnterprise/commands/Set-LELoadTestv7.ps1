@@ -17,6 +17,9 @@ function Set-LELoadTestv7 {
 
     $ExistingTest = $null
     $ExistingTest = Get-LETests -testType "loadTest" | Where-Object { $_.Name -eq $TestName }
+    if($null -ne $ExistingTest) {
+        $DeleteTest = Delete-LETest -TestID $ExistingTest.id
+    }
 
     if ($VSI_Target_SessionMetricsEnabled) {
         $SessionMetricGroupKey = (Get-LESessionMetricGroups | Where-Object { $_.Name -eq "$($SessionMetricGroup)" } | Select-Object -ExpandProperty key)
@@ -207,6 +210,9 @@ function Set-LELoadTestv7 {
             } | ConvertTo-Json -Depth 4
         }
     }
+
+    $ExistingTest = $null
+    $ExistingTest = Get-LETests -testType "loadTest" | Where-Object { $_.Name -eq $TestName }
 
     if ($null -eq $ExistingTest) {
         # Create the test if it doesn't exist
