@@ -675,7 +675,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $params = $null
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
-
+    }
     #endregion Omnissa validation
 
     #region LE Test Check
@@ -1170,7 +1170,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 UserName       = $VSI_Target_OmnissaApiUserName
                 Password      = $VSI_Target_OmnissaApiPassword
                 Domain      = $VSI_Target_OmnissaApiDomain
-                PoolName   = $VSI_Target_OmnissaPoolName
+                PoolName   = $VSI_Target_DesktopPoolName
             }
             $OmnissaPool = Get-OmnissaDesktopPools @params
 
@@ -1428,7 +1428,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 AccountGroupName   = $VSI_Users_GroupName
                 SessionMetricGroup = $VSI_Target_SessionMetricGroupName
                 ConnectorName      = "VMware Horizon View"
-                ConnectorParams    = @{serverUrl = $VSI_Target_OmnissaConnectionServer; resource = $VSI_Target_OmnissaPoolName }
+                ConnectorParams    = @{serverUrl = $VSI_Target_OmnissaConnectionServer; resource = $VSI_Target_DesktopPoolName }
                 Workload           = $VSI_Target_Workload
             }
             $testId = Set-LELoadTestv7 @Params

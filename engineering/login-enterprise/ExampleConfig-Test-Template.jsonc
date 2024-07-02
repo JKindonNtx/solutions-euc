@@ -65,12 +65,11 @@
         // -----------------------------------------------------------------------------------
         // Optional_Test_Block_Omnissa - Can be DELETED if not setting up a Omnissa Config
         // -----------------------------------------------------------------------------------
-        "OmnissaConnectionServer": false, //
-        "OmnissaApiUserName": false, //
-        "OmnissaApiPassword": "${Domain.NetBios}\\Domain Users", //
-        "OmnissaApiDomain": "${Domain.NetBios}\\Domain Users", //
+        "OmnissaConnectionServer": "https://connection server", // The Horizon Connection Server
+        "OmnissaApiUserName": "Username with rights to add Desktop Pools", // Username for API Access to Horizon
+        "OmnissaApiPassword": "Password", // Password for API User
+        "OmnissaApiDomain": "Windows Domain Name", // Domain name for the user
         "OmnissaProvisioningMode": "Manual", // Currently only supports Manual
-        "OmnissaPoolName": "W10-OMN-MANUAL",
         // -----------------------------------------------------------------------------------
         // Optional_Test_Block_RAS - Can be DELETED if not setting up a RAS Config
         // -----------------------------------------------------------------------------------
