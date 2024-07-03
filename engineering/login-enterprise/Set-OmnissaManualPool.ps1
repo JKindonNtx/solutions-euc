@@ -5,7 +5,7 @@
 
 Param(
     [Parameter(Mandatory = $true)]
-    [string]$ConfigFile = "C:\Users\Dave\Documents\Github\solutions-euc\engineering\login-enterprise\ExampleConfig-Omnissa.jsonc",
+    [string]$ConfigFile = "C:\Users\Dave\Documents\Github\solutions-euc\engineering\login-enterprise\ExampleConfig-Omnissa.jsonc"
 )
 #endregion Params
 
@@ -124,13 +124,13 @@ $CurrentVms = $CurrentVmsUnsorted | Sort-Object
 #region Remove CD ROM
 #----------------------------------------------------------------------------------------------------------------------------
 
-$i = 1
-foreach($VM in $CurrentVms){
-    Write-Log -Update -Message "Removing CD-ROM $($i) of $($var_Number_Of_Vms)." -Level Info
-    $vmUUID = (Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq $VM }).uuid
-    $Result = Remove-NutanixCDROM -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword -VmUuid $vmUUID
-    $i++
-}
+#$i = 1
+#foreach($VM in $CurrentVms){
+#    Write-Log -Update -Message "Removing CD-ROM $($i) of $($var_Number_Of_Vms)." -Level Info
+#    $vmUUID = (Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq $VM }).uuid
+#    $Result = Remove-NutanixCDROM -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword -VmUuid $vmUUID
+#    $i++
+#}
 #endregion Remove CD ROM
 
 #region Create Omnissa Pool
