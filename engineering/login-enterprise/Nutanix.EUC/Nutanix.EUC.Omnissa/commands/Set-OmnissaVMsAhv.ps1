@@ -110,7 +110,7 @@ function Set-OmnissaVMsAhv {
         Write-Log -Message "Running Optimizations" -Level Info
         $Playbook = $RootPath + "omnissa_manual_pool_post_deployment.yml"
         $command = "ansible-playbook"
-        $arguments = " -i " + $var_Inventory_List_Cleaned + ", " + $playbook
+        $arguments = "-f 20 -i " + $var_Inventory_List_Cleaned + ", " + $playbook
         start-process -filepath $command -argumentlist $arguments -passthru -wait 
         
         return $machineNames
