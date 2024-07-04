@@ -1,7 +1,7 @@
 function Get-NextComputerNumber(){
 
     param(
-        $CurrentVMs,
+        [array]$CurrentVMs,
         $NamingConvention
     )
 
@@ -11,7 +11,6 @@ function Get-NextComputerNumber(){
             $var_Start_Index = "1"
         } else {
             $LastVM = $CurrentVms[$CurrentVmCount.count - 1]
-            write-host $lastVM
             $Position = $NamingConvention.IndexOf("#")
             $NumberCount =([regex]::Matches($NamingConvention, "#" )).count
             $LastNumber = $LastVM.Substring($Position, $NumberCount)

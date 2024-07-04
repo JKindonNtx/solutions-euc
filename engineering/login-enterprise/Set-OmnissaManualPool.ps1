@@ -101,9 +101,8 @@ $var_Ansible_Path = $config.Various.AnsiblePath
 #----------------------------------------------------------------------------------------------------------------------------
 
 $Filter = $var_Naming_Convention.Replace("#","")
-$CurrentVmsUnsorted = Get-ADComputers -filter $Filter -UserName "$($var_NetBios_Domain)\$var_AD_User" -Password $var_Admin_Password -LDAPServer $var_LDAPServer -BaseDN $var_Base_DN
-$CurrentVms = $CurrentVmsUnsorted | Sort-Object
-write-host "current VMs unsorted: $CurrentVms"
+[array]$CurrentVmsUnsorted = Get-ADComputers -filter $Filter -UserName "$($var_NetBios_Domain)\$var_AD_User" -Password $var_Admin_Password -LDAPServer $var_LDAPServer -BaseDN $var_Base_DN
+[array]$CurrentVms = $CurrentVmsUnsorted | Sort-Object
 
 if($null -eq $CurrentVmsUnsorted){
     $var_Start_Index = "1"
@@ -118,8 +117,8 @@ Update-VSISlack -Message $SlackMessage -Slack $Slack
 
 $var_Deployed_VMs = Set-OmnissaVMsAhv -BaseVM $var_Omnissa_Base_Vm_Name -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword -NumberOfVMs $var_Number_Of_Vms -NamingConvention $var_Naming_Convention -StartIndex $var_Start_Index -Domain $var_Domain -AdminUserName $var_AD_Admin -AdminPassword $var_Admin_Password -OU $var_OU -RootPath $var_Ansible_Path
 
-$CurrentVmsUnsorted = Get-ADComputers -filter $Filter -UserName "$($var_NetBios_Domain)\$var_AD_User" -Password $var_Admin_Password -LDAPServer $var_LDAPServer -BaseDN $var_Base_DN
-$CurrentVms = $CurrentVmsUnsorted | Sort-Object
+[array]$CurrentVmsUnsorted = Get-ADComputers -filter $Filter -UserName "$($var_NetBios_Domain)\$var_AD_User" -Password $var_Admin_Password -LDAPServer $var_LDAPServer -BaseDN $var_Base_DN
+[array]$CurrentVms = $CurrentVmsUnsorted | Sort-Object
 #endregion Build New VMs
 
 #region Remove CD ROM
@@ -140,7 +139,7 @@ $CurrentVms = $CurrentVmsUnsorted | Sort-Object
 $Pool = New-OmnissaManualPool -ApiEndpoint $var_Api_Endpoint -UserName $var_UserName -Password $var_Password -Domain $var_Domain -PoolName $var_Omnissa_Pool_Name
 
 $CreatedPool = Get-OmnissaDesktopPools -ApiEndpoint $var_Api_Endpoint -UserName $var_UserName -Password $var_Password -Domain $var_Domain -PoolName $var_Omnissa_Pool_Name
-$Machines = Get-OmnissaPhysicalMachines -ApiEndpoint $var_Api_Endpoint -UserName $var_UserName -Password $var_Password -Domain $var_Domain -MachineNaming $Filter
+[array]$Machines = Get-OmnissaPhysicalMachines -ApiEndpoint $var_Api_Endpoint -UserName $var_UserName -Password $var_Password -Domain $var_Domain -MachineNaming $Filter
 
 $machinesToAdd = @()
 
