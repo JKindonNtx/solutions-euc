@@ -141,13 +141,13 @@ $Pool = New-OmnissaManualPool -ApiEndpoint $var_Api_Endpoint -UserName $var_User
 $CreatedPool = Get-OmnissaDesktopPools -ApiEndpoint $var_Api_Endpoint -UserName $var_UserName -Password $var_Password -Domain $var_Domain -PoolName $var_Omnissa_Pool_Name
 $Machines = Get-OmnissaPhysicalMachines -ApiEndpoint $var_Api_Endpoint -UserName $var_UserName -Password $var_Password -Domain $var_Domain -MachineNaming $Filter
 
-$machinesToAdd = New-Object System.Collections.Generic.List[System.Object]
+$machinesToAdd = @()
 
 foreach ($machine in $machines){
-    $machinesToAdd.Add($machine.id)
+    $machinesToAdd += $machine.id
 }
 
-$machinesToAddPayload = $machinesToAdd | ConvertTo-Json
+$machinesToAddPayload = ConvertTo-Json @($machinesToAdd)
 $addingMachines = Set-OmnissaManualPoolMachines -ApiEndpoint $var_Api_Endpoint -UserName $var_UserName -Password $var_Password -Domain $var_Domain -PoolID $CreatedPool.id -Payload $machinesToAddPayload
 
 $OmnissaGroup = Get-OmnissaGroupSID -GroupName $var_Omnissa_Group -ApiEndpoint $var_Api_Endpoint -UserName $var_UserName -Password $var_Password -Domain $var_Domain

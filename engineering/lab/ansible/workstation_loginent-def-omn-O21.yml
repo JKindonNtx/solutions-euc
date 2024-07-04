@@ -11,4 +11,4 @@
   - run_ms_file_types
   - run_software_inventory_corp_it
   - win_disable_win_updates
-  - run_cust_sysprep
+  - run_windows_sysprep
