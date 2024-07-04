@@ -103,6 +103,7 @@ $var_Ansible_Path = $config.Various.AnsiblePath
 $Filter = $var_Naming_Convention.Replace("#","")
 $CurrentVmsUnsorted = Get-ADComputers -filter $Filter -UserName "$($var_NetBios_Domain)\$var_AD_User" -Password $var_Admin_Password -LDAPServer $var_LDAPServer -BaseDN $var_Base_DN
 $CurrentVms = $CurrentVmsUnsorted | Sort-Object
+write-host "current VMs unsorted: $CurrentVms"
 
 if($null -eq $CurrentVmsUnsorted){
     $var_Start_Index = "1"
