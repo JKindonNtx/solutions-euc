@@ -6,8 +6,6 @@ function Restart-LELaunchers {
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][array]$Launchers
     )
 
-    Write-Log "Rebooting launchers."
-
     foreach ($launcher in $launchers) { 
         
         $try = 10
@@ -20,7 +18,7 @@ function Restart-LELaunchers {
                 $rebootLauncher = $true
             }
             catch {
-                Write-Log -Message "Something went wrong while rebooting launcher: $($launcher.machineName)." -Level Error
+                Write-Log -Message "Something went wrong while rebooting launcher: $($launcher.machineName)." -Level Warn
                 Write-Log -Message "Attempt $i of $try." -Level Error
                 $rebootLauncher = $false
                     

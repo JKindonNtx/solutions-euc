@@ -182,6 +182,7 @@ The configuration file to parse and validate
         
         #endregion Target Section Validation - Citrix
 
+        #region vSphere and hostd service restart
         if ($configFileData.Target.HypervisorType -eq "ESXi" -and $configFileData.vSphere.RestartHostd -eq $true) {
             # This test is going to want to restart the hostd services. Check for required values in the JSON file
             #vSphere.vCenter
@@ -220,6 +221,7 @@ The configuration file to parse and validate
                 $ErrorCount ++
             }
         }
+        #endregion vSphere and hostd service restart
 
         #region Target Section Validation - Horizon
         if ($Type -eq "Horizon") {
@@ -248,6 +250,12 @@ The configuration file to parse and validate
         #Test.BucketName
         if ($configFileData.Test.BucketName -notin $Validated_Bucket_Names) {
             Write-Log -Message "Test Bucket Name $($configFileData.Target.BucketName) is not a valid type. Please check config file" -Level Error
+            $ErrorCount ++
+        }
+
+        #Test.RebootLaunchers
+        if ($configFileData.Test.psobject.Properties.Name -notcontains "RebootLaunchers"){
+            Write-Log -Message "You are missing the Test.RebootLaunchers object in your JSON file. This is required to control LE Launcher reboots" -Level Error
             $ErrorCount ++
         }
 

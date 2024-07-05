@@ -173,6 +173,7 @@
         "LEAppliance": "MANDATORY_TO_DEFINE", // The Login Enterprise Appliance to be used. Will switch valued found in the LoginEnterpriseGlobal.json
         "SkipPDFExport": true, //
         "SkipLaunchers": false, //
+        "RebootLaunchers": true, // Reboot LE Launchers between runs. Will impact Citrix Connection time for first launch.
         "Target_RampupInMinutes": 48, //The test ramp up time. How long it takes to get to Steady State
         "InfluxTestDashBucket": "Tests", //The Influx Bucket for test status reporting
         "Delete_Files_Data": false, // Delete Nutanix Files Data after each run (Effectively making each run a Run1 from a Files perspective)

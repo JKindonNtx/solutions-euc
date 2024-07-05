@@ -56,6 +56,7 @@ if($null -eq ($JSON = (Get-JSON -JSONFile $JSONFile))){
 
 # Build VLAN Name 
 $VLANName = "VLAN" + $($JSON.VM.VLAN)
+# $VLANName = $($JSON.VM.VLAN) # for dvSwitch Builds
 
 # Fetching local GitHub user to report owner
 $GitHub = Get-GitHubInfo

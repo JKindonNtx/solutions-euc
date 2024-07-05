@@ -1655,7 +1655,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if (-not ($SkipLaunchers)) {
             $NumberOfLaunchers = [System.Math]::Ceiling($VSI_Target_NumberOfSessions / $SessionsperLauncher)
             # Wait for all launchers to be registered in LE
-            Wait-LELaunchers -Amount $NumberOfLaunchers -NamingPattern $VSI_Launchers_NamingPattern
+            Wait-LELaunchers -Amount $NumberOfLaunchers -NamingPattern $VSI_Launchers_NamingPattern -RebootLaunchers $config.Test.RebootLaunchers
             # Create/update launchergroup with the launchers
             Set-LELauncherGroup -LauncherGroupName $VSI_Launchers_GroupName -NamingPattern $VSI_Launchers_NamingPattern
         }
