@@ -54,9 +54,13 @@ if($null -eq ($JSON = (Get-JSON -JSONFile $JSONFile))){
     Write-Host (Get-Date) ":JSON configuration file loaded"
 }
 
-# Build VLAN Name 
-$VLANName = "VLAN" + $($JSON.VM.VLAN)
-# $VLANName = $($JSON.VM.VLAN) # for dvSwitch Builds
+# Build VLAN Name
+if ($JSON.VM.Hypervisor -eq "AHV") {
+    $VLANName = "VLAN" + $($JSON.VM.VLAN)
+}
+elseif ($JSON.VM.Hypervisor -eq "ESXi") {
+    $VLANName = $JSON.VM.VLAN
+}
 
 # Fetching local GitHub user to report owner
 $GitHub = Get-GitHubInfo
@@ -226,6 +230,13 @@ if ($confirmationStart -eq 'n') {
     Write-Host (Get-Date) ":Confirmation denied, quitting"
     exit 
 } else {
+    #Remove existing SSH keys.
+    Write-Host (Get-Date)":Remove existing SSH keys."
+    if (((Get-Module -ListAvailable *) | Where-Object {$_.Name -eq "Posh-SSH"})) {
+        Import-Module Posh-SSH -RequiredVersion 3.1.1 -force
+        Get-SSHTrustedHost | Remove-SSHTrustedHost
+    }
+
     # Get the OS GUID from the MDT configuration files
     if ($JSON.VM.method -eq "MDT"){
         $MdtOSGuid = Get-MdtOSGuid -WinVerBuild "$($OSDetails.WinVerBuild)" -OSversion $OSversion
