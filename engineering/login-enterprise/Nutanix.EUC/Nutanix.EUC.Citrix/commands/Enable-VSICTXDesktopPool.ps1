@@ -131,6 +131,8 @@ Function Enable-VSICTXDesktopPool {
             New-BrokerMachine -AdminAddress $DDC -Cataloguid $Uid -MachineName $VM.ADAccountSid -ErrorAction Stop | Add-BrokerMachine -DesktopGroup $DesktopPoolName -ErrorAction Stop
         }
         Write-Log -Message " " -Level Info
+        Write-Log -Message "Sleeping 30 seconds after provisioning" -level Info
+        Start-Sleep -Seconds 30
     }
     if ($CloneType -eq "PVS"){
         # add VMs from PVS catalog to delivery group
