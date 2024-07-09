@@ -18,6 +18,9 @@ function Get-OmnissaDesktopPools {
     foreach ($pool in $desktopPools){
         if ($pool.name -eq $PoolName) {
             $Return = $pool
+            break
+        } else {
+            $Return = "NoPool"
         }
     }
     

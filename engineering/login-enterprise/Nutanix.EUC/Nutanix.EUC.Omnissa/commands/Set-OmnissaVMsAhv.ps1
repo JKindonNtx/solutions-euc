@@ -64,6 +64,9 @@ function Set-OmnissaVMsAhv {
             $machineNames.Add($var_Machine_Name)
         }
 
+        # Get Tasks from PE
+        # Loop Until all tasks complete - 5 second loop
+        # Write log with update task complete
         Write-Log -Message "Sleeping 30 Seconds to let deployment complete" -Level Info
         Start-Sleep -Seconds 30
 
@@ -75,15 +78,19 @@ function Set-OmnissaVMsAhv {
             $i++
         }
 
-        Write-Log -Message "Sleeping 120 Seconds to let unattend install complete" -Level Info
-        Start-Sleep -Seconds 120
+        # Check for Computer Object in AD using the Omnissa Api
+        # Count here needs to equal the number of desktops
+        Write-Log -Message "Waiting 1 minute to let VMs settle" -Level Info
+        Start-Sleep -Seconds 60
 
         Write-Log -Message "Checking All VMs have a valid IP Address - Please wait" -Level Info
         do {
             $var_Valid_Ips = $false
+            Write-Log -Update -Message "Still waiting for valid IPs on all the VMs - Please wait" -Level Info
             foreach ($var_VM in $machineNames) {
                 $CurrentVM = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq "$($var_VM)" }
                 $var_VM_Details = Get-OmnissaVMsIP -VmUuid $CurrentVM.uuid -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
+                #try catch here for pre boot situation
                 $var_VM_IP = $var_VM_Details.vm_nics[0].ip_address
                 if([string]::IsNullOrEmpty($var_VM_IP) -Or $var_VM_IP.StartsWith("169.254")) {
                     $var_Valid_Ips = $false
@@ -92,11 +99,12 @@ function Set-OmnissaVMsAhv {
                 }
             }
             Write-Log -Update -Message "Still waiting for valid IPs on all the VMs - Please wait" -Level Info
+            Start-Sleep -Seconds 5
         } While ($var_Valid_Ips -eq $false)
         Write-Log -Message "IP Addresses Validated - Continuing" -Level Info
 
-        Write-Log -Message "Sleeping 5 Minutes to let reboot complete" -Level Info
-        Start-Sleep -Seconds 300
+        Write-Log -Message "Waiting 1 minute to let VM services start up" -Level Info
+        Start-Sleep -Seconds 60
 
         $var_Inventory_List = ""
         foreach ($var_VM in $machineNames) {
@@ -110,9 +118,10 @@ function Set-OmnissaVMsAhv {
         Write-Log -Message "Running Optimizations" -Level Info
         $Playbook = $RootPath + "omnissa_manual_pool_post_deployment.yml"
         $command = "ansible-playbook"
-        $arguments = "-f 20 -i " + $var_Inventory_List_Cleaned + ", " + $playbook
+        $arguments = "-f 50 -i " + $var_Inventory_List_Cleaned + ", " + $playbook
         start-process -filepath $command -argumentlist $arguments -passthru -wait 
         
         return $machineNames
+
     }
 }

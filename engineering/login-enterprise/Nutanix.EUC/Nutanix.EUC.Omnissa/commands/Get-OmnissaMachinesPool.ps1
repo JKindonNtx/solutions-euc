@@ -1,4 +1,4 @@
-function Get-OmnissaMachines {
+function Get-OmnissaMachinesPool {
 
     [CmdletBinding()]
 
@@ -12,7 +12,7 @@ function Get-OmnissaMachines {
     )
 
     $returnMachines = New-Object System.Collections.Generic.List[System.Object]
-    $Path = "$($ApiEndpoint)/rest/inventory/v1/physical-machines"
+    $Path = "$($ApiEndpoint)/rest/inventory/v1/machines"
     Write-Log -Message "Getting Omnissa machines" -Level Info
     $virtualMachines = Invoke-PublicApiMethodOmnissa -ApiEndpoint $ApiEndpoint -UserName $UserName -Password $Password -Domain $Domain -Method "GET" -Path $Path
 
