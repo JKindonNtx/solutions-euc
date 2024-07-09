@@ -3,6 +3,8 @@
 .DESCRIPTION
 .PARAMETER TestName
 Mandatory. Test Name you want to upload the results for
+.PARAMETER LogonMetricsOnly
+Optional. Will execute upload of only Raw Logon Data. Use wisely.
 .NOTES
 None
 
@@ -17,7 +19,9 @@ Param(
     [Parameter(Mandatory = $true)]
     [string]$TestName,
     [Parameter(Mandatory = $false)]
-    [switch]$AzureMode
+    [switch]$AzureMode,
+    [Parameter(Mandatory = $false)]
+    [switch]$LogonMetricsOnly
 )
 #endregion Params
 
@@ -91,6 +95,40 @@ Write-Log -Message "Uploading Test Run Data to Influx" -Level Info
             
 $TestDetail = $NTNXInfra.TestInfra.TestName -Split '_Run'
 $Run = $TestDetail[1]
+
+# Check and execute Logon Metrics only
+if (-not $AzureMode.IsPresent) {
+    if ($LogonMetricsOnly) {
+        # Get the test run files and start time
+        $Files = Get-ChildItem "$($OutputFolder)\*.csv"
+        $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv"
+        $Started = $vsiresult.started
+        $BucketName = $($NTNXInfra.Test.BucketName)
+
+        # Loop through the test run data files and process each one
+        foreach ($File in $Files) {
+            if (($File.Name -like "Raw Login Times*")) {
+                
+                Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
+                #Set Azure VM Value - If this is an Azure VM, we will be sending different tags in to Influx. If not, then it's business as usual.
+                if ($NTNXInfra.AzureGuestDetails.IsAzureVM -eq $true) { $IsAzureVM = $true } else { $IsAzureVM = $false }
+                
+                if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName -IsAzureVM $IsAzureVM) {
+                    Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
+                }
+                else {
+                    Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
+                }
+            }
+            else {
+                Write-Log -Message "Skipped uploading File $($File.Name) to Influx" -Level Info
+            }
+        }
+
+        Write-Log -Message "Script Finished" -Level Info
+        Exit 0
+    } 
+}
 
 # Get the boot files and start time
 if (-not $AzureMode.IsPresent) {
