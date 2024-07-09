@@ -5,10 +5,33 @@
         "LDAPUsername": "", // remember it's json, so \ needs to be escaped
         "LDAPPassword": "" // leave empty if current machine/user is part of the domain and has rights to create resources in AD
     },
+    "CitrixDaaS": {
+        // -----------------------------------------------------------------------------------
+        // Optional_Test_Block_Citrix_DaaS - Can be DELETED if not setting up a Citrix DaaS Config
+        // -----------------------------------------------------------------------------------
+        "Region": "US", //Region of the DaaS Tenant. Nutanix is US
+        "CustomerID": "customer-id-value", // Customer ID
+        "ClientID": "secure-client-id", //Secure Client ID. Make sure this has not expired
+        "ClientSecret": "secure-client-secret" // Secure Client Secret
+    },
+    "vSphere": {
+        // -----------------------------------------------------------------------------------
+        // ESXi Host Block Details - used for hostd restart and Alignment Groups
+        // -----------------------------------------------------------------------------------
+        "RestartHostd": true, // If set to true, the hostd service will be reset on each run prior to test. This is to fix metrics
+        "VCenter": "MANDATORY_TO_DEFINE", // vCenter for testing vcenter.domain.com
+        "User": "MANDATORY_TO_DEFINE", // vCenter user user@vsphere.local
+        "Password": "MANDATORY_TO_DEFINE", // vCenter password
+        "ClusterName": "MANDATORY_TO_DEFINE", // vCenter cluster for alignment etc
+        "DataCenter": "MANDATORY_TO_DEFINE", // vCenter datacenter for alignment etc EUC-Solutions
+        "SshUsername": "MANDATORY_TO_DEFINE", // esxi ssh user for hostd restart, typically root
+        "SshPassword": "MANDATORY_TO_DEFINE" // esxi ssh password for hostd restart
+    },
     "Target": {
         // -----------------------------------------------------------------------------------
         // Mandatory_Test_Block_Global - Relevant for ALL Tests
         // -----------------------------------------------------------------------------------
+        "HypervisorType": "ESXi", // This is mandatory so we can validate things early. ESXi or AHV
         "DeliveryType":  "Citrix", // Citrix or VMware or Microsoft
         "DesktopBrokerVersion":  "7.2203_2", // Broker version. Example: Citrix = "7.2203_2", Horizon = "8.8-2212.1", RAS = "19.2", RDP=RDP
         "CloneType": "MCS", // Citrix: MCS or Horizon: Instant Clones. RAS: Full Clone or Linked Clone. RDP: Full Used for reporting database.
@@ -23,9 +46,13 @@
         // -----------------------------------------------------------------------------------
         // Optional_Test_Block_Citrix - Can be DELETED if not setting up a Citrix Config
         // -----------------------------------------------------------------------------------
+        "OrchestrationMethod": "Snapin", //How you want to to drive the Citrix Environment. API or Snapin (PowerShell)
         "DDC": "WS-CDC1.wsperf.nutanix.com", // Citrix Delivery controller. TestType: Citrix
         "ZoneName": "Primary", // Zonename in Citrix. TestType: Citrix
         "HypervisorConnection": "DRMNX8KB-A-AHV", // Hypervisor connection as known in the Citrix Host connection. AHV-RPTEST83-LAN for example
+        "HostingConnectionRootName": "Shared-vCenter", // This is the root of the Hosting Connection Name: Eg. Shared-vCenter. This is not the sub resource. This is critical for API operations and is mandatory to define.
+        "vSphereDataCenter": "EUC Solutions", // This is the vSphere Datacenter name. Eg. EUC Solutions. This is This is critical for API operations and is mandatory to define for ESXi tests
+        "vSphereCluster": "DRMNX9KB-A", // This is the vSphere Cluster name. Eg. DRMNX9KB-A. This is This is critical for API operations and is mandatory to define for ESXi tests
         "FunctionalLevel": "L7_9", // L5, L7, L7_6, L7_7, L7_8, L7_9, L7_20, L7_25, L7_34 (2402)
         "SkipImagePrep": true, //Optionally skip imageprep false of MCS if you image is already generalized.
         "StorefrontURL": "http://storefront.wsperf.nutanix.com/Citrix/Store",
@@ -146,6 +173,7 @@
         "LEAppliance": "MANDATORY_TO_DEFINE", // The Login Enterprise Appliance to be used. Will switch valued found in the LoginEnterpriseGlobal.json
         "SkipPDFExport": true, //
         "SkipLaunchers": false, //
+        "RebootLaunchers": true, // Reboot LE Launchers between runs. Will impact Citrix Connection time for first launch.
         "Target_RampupInMinutes": 48, //The test ramp up time. How long it takes to get to Steady State
         "InfluxTestDashBucket": "Tests", //The Influx Bucket for test status reporting
         "Delete_Files_Data": false, // Delete Nutanix Files Data after each run (Effectively making each run a Run1 from a Files perspective)

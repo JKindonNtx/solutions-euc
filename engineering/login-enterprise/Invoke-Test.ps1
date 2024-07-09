@@ -76,6 +76,12 @@ Param(
 )
 #endregion Params
 
+##Testing
+#$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-Citrix2402-ESXi-WS2022-NVD-Files.jsonc"
+#$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-LoginEnterpriseGlobal.jsonc"
+#$Type = "CitrixVAD"
+##Testing
+
 #region Variables
 # ============================================================================
 # Variables
@@ -126,27 +132,6 @@ if ($PSVersionTable.PSVersion.Major -lt 7 -and $Type -eq "RDP") {
 }
 
 #endregion PowerShell Versions
-
-#region Citrix Snapin Import
-#----------------------------------------------------------------------------------------------------------------------------
-if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
-    if ($PSVersionTable.PSVersion.Major -gt 6) { 
-        Write-Log -Message "You cannot use PowerShell $($PSVersionTable.PSVersion.Major) with Citrix snapins. Please revert to PowerShell 5.x" -Level Warn
-        Exit 1
-    }
-    try {
-        Write-Log -Message "Importing Citrix Snapins" -Level Info
-        Add-PSSnapin Citrix* -ErrorAction Stop
-        Get-PSSnapin Citrix* -ErrorAction Stop | out-null
-        Write-Log -Message "Successfully imported Citrix Snapins" -Level Info
-    }
-    catch {
-        Write-Log -Message "Failed to import Citrix Snapins" -Level Error
-        Write-Log -Message $_ -Level Error
-        Exit 1
-    }
-}
-#endregion Citrix Snapin Import
 
 #region VMWare Module Import
 if ($Type -eq "Horizon") {
@@ -264,7 +249,7 @@ if ($VSI_Test_LEAppliance -eq "MANDATORY_TO_DEFINE" -and (!$LEAppliance)) {
 elseif ($VSI_Test_LEAppliance -eq "MANDATORY_TO_DEFINE" -and $LEAppliance) {
     #Set LEAppliance based on Param
     $LEAppliance = $LEAppliance
-}
+} 
 else {
     #Use the valid value from the Config JSON
     $LEAppliance = $VSI_Test_LEAppliance
@@ -319,6 +304,36 @@ if (-not $AzureMode.IsPresent) {
 
 #endregion variable setting
 
+#region Citrix Snapin Import
+#----------------------------------------------------------------------------------------------------------------------------
+if ($Type -eq "CitrixVAD" -or "CitrixDaaS") {
+    if ($Config.Target.OrchestrationMethod -eq "Snapin") {
+        if ($PSVersionTable.PSVersion.Major -gt 6) { 
+            Write-Log -Message "You cannot use PowerShell $($PSVersionTable.PSVersion.Major) with Citrix snapins. Please revert to PowerShell 5.x" -Level Warn
+            Exit 1
+        }
+        try {
+            Write-Log -Message "Importing Citrix Snapins" -Level Info
+            Add-PSSnapin Citrix* -ErrorAction Stop
+            Get-PSSnapin Citrix* -ErrorAction Stop | out-null
+            Write-Log -Message "Successfully imported Citrix Snapins" -Level Info
+        }
+        catch {
+            Write-Log -Message "Failed to import Citrix Snapins" -Level Error
+            Write-Log -Message $_ -Level Error
+            Exit 1
+        }
+    }
+    elseif ($Config.Target.OrchestrationMethod -eq "API") {
+        Write-Log -Message "Executing Citrix Orchestration using API method" -Level Info
+    }
+    else {
+        Write-Log -Message "Invalid option specified for Orchestration Method. You must define either API or Snapin" -Level Warn
+        Exit 1
+    }
+}
+#endregion Citrix Snapin Import
+
 #region Script behaviour from file (params)
 #----------------------------------------------------------------------------------------------------------------------------
 
@@ -331,7 +346,13 @@ if ($SkipWaitForIdleVMs.IsPresent) { $SkipWaitForIdleVMs = $true } else { $SkipW
 
 $VSI_Target_RampupInMinutes = $VSI_Test_Target_RampupInMinutes
 $InfluxTestDashBucket = $VSI_Test_InfluxTestDashBucket
-$Global:MaxRecordCount = $VSI_Target_MaxRecordCount
+
+if ($Type -eq "CitrixVAD" -or "CitrixDaaS"){
+    if ($Config.Target.OrchestrationMethod -eq "Snapin"){
+        $Global:MaxRecordCount = $Config.Target.MaxRecordCount
+    }
+    $Global:DDC = $Config.Target.DDC
+}
 
 #endregion Script behaviour from file (params)
 
@@ -391,28 +412,229 @@ if ($VSI_Target_Files -ne "") {
 }
 #endregion Nutanix Files Pre Flight Checks
 
+#region Citrix API Authentication Setup
+if ($Type -eq "CitrixVAD" -or "CitrixDaaS"){
+    if ($Config.Target.OrchestrationMethod -eq "API") {
+        if ([string]::IsNullOrEmpty[$Config.Domain.LDAPUsername] -or [string]::IsNullOrEmpty[$Config.Domain.LDAPPassword]) {
+            Write-Log -Message "You must define an LDAP Username and Password to be able to execute tasks using the API method" -Level Warn
+            Exit 1
+        }
+        if ($Type -eq "CitrixVAD"){
+            # Convert Username and Password to base64. This is used to talk to Citrix API
+            $AdminCredential = "$($Config.Domain.LDAPUsername):$($Config.Domain.LDAPPassword)"
+            $Bytes = [System.Text.Encoding]::UTF8.GetBytes($AdminCredential)
+            $Global:EncodedAdminCredential = [Convert]::ToBase64String($Bytes)
+        }
+        elseif ($Type -eq "CitrixDaaS"){
+            $Global:CustomerID = $Config.CitrixDaaS.CustomerID
+            $Global:ClientID = $Config.CitrixDaaS.ClientID
+            $Global:ClientSecret = $Config.CitrixDaaS.ClientSecret
+            $Global:Region = $Config.CitrixDaaS.Region
+            #------------------------------------------------------------
+            # Set Cloud API URL based on Region
+            #------------------------------------------------------------
+            switch ($Global:Region) {
+                'AP-S' { 
+                    $Global:CloudUrl = "api-ap-s.cloud.com"
+                }
+                'EU' {
+                    $Global:CloudUrl = "api-eu.cloud.com"
+                }
+                'US' {
+                    $Global:CloudUrl = "api-us.cloud.com"
+                }
+                'JP' {
+                    $Global:CloudUrl = "api.citrixcloud.jp"
+                }
+            }
+        }
+        # Convert Username and Password to base64. This is used for Active Directory Operations. 
+        # Currently the same username and password as the Citrix Auth account. Sent in API headers.
+        $DomainAdminCredential = "$($Config.Domain.LDAPUsername):$($Config.Domain.LDAPPassword)"
+        $Bytes = [System.Text.Encoding]::UTF8.GetBytes($DomainAdminCredential)
+        $Global:DomainAdminCredential = [Convert]::ToBase64String($Bytes)
+    }
+}
+#endregion Citrix API Authentication Setup
+
+#region Citrix Site Access Pre Flight Checks
+if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
+    if ($Config.Target.OrchestrationMethod -eq "Snapin") {}
+    elseif ($Config.Target.OrchestrationMethod  -eq "API") {
+        if ($Type -eq "CitrixVAD") {
+            # pull relevant validation detail into $cvad_environment_details
+            Write-Log -Message "Handling Citrix Credentials and Validating Citrix On Prem Site" -Level Info
+            $params = @{
+                DDC                    = $Config.Target.DDC 
+                HostingConnection      = $Config.Target.HostingConnectionRootName
+                Zone                   = $Config.Target.ZoneName 
+                EncodedAdminCredential = $EncodedAdminCredential 
+                DomainAdminCredential  = $DomainAdminCredential
+            }
+            $cvad_environment_details = Get-CVADSiteDetailAPI @params
+            $params = $null
+        }
+        elseif ($Type -eq "CitrixDaaS"){
+            # pull relevant validation detail into $daaas_environment_details
+            Write-Log -Message "Handling Citrix Credentials and Validating Citrix DaaS Access" -Level Info
+            $params = @{
+                CloudUrl              = $CloudUrl 
+                HostingConnection     = $Config.Target.HostingConnectionRootName
+                Zone                  = $Config.Target.ZoneName
+                CustomerID            = $Config.CitrixDaaS.CustomerID
+                ClientID              = $Config.CitrixDaaS.ClientID
+                ClientSecret          = $Config.CitrixDaaS.ClientSecret
+                DomainAdminCredential = $DomainAdminCredential
+            }
+            $daas_environment_details = Get-DaaSSiteDetailAPI @params
+            $params = $null
+        }
+    }
+}
+#endregion Citrix Site Access Pre Flight Checks
+
 #region Nutanix Snapshot Pre Flight Checks
 if (-not $AzureMode.IsPresent) {
     # This is not an Azure configuration
-    if ($NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
+    if (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $Config.Target.CloneType -eq "MCS" -and $NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
         # A purely AHV Test
-        $cleansed_snapshot_name = $VSI_Target_ImagesToTest.ParentVM -replace ".template",""
-        Get-NutanixSnapshot -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type
+        if ($Config.Target.OrchestrationMethod -eq "Snapin") {
+            #Legacy PowerShell Approach
+            $cleansed_snapshot_name = $VSI_Target_ParentVM -replace ".template","" 
+            $params = @{
+                SnapshotName   = $cleansed_snapshot_name 
+                HypervisorType = $NTNXInfra.Testinfra.HypervisorType 
+                Type           = $Type
+            }
+            Get-NutanixSnapshot @params
+            $params = $null
+        }
+        elseif ($Config.Target.OrchestrationMethod  -eq "API") {
+
+            #Need to set the XDHyp Path for Snapshot Validation
+            $snapshot_path = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($VSI_Target_ParentVM)"
+
+            if ($Type -eq "CitrixVAD") {
+                $params = @{
+                    DDC                    = $Config.Target.DDC
+                    HypervisorConnection   = $config.Target.HostingConnectionRootName
+                    Snapshot               = $snapshot_path
+                    EncodedAdminCredential = $EncodedAdminCredential 
+                    DomainAdminCredential  = $DomainAdminCredential
+                }
+                Get-CVADImageSnapshotAPI @params
+                $params = $null
+            }
+            elseif ($Type -eq "CitrixDaaS"){
+                $params = @{
+                    CloudUrl              = $CloudUrl 
+                    HypervisorConnection  = $config.Target.HostingConnectionRootName 
+                    Snapshot              = $snapshot_path
+                    ClientID              = $Config.CitrixDaaS.ClientID 
+                    ClientSecret          = $Config.CitrixDaaS.ClientSecret 
+                    CustomerID            = $Config.CitrixDaaS.CustomerID 
+                    DomainAdminCredential = $DomainAdminCredential
+                }
+                Get-DaaSImageSnapshotAPI @params
+                $params = $null
+            }
+        }
     }
-    if (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
-        # A Citrix on ESXi test
-        Get-NutanixSnapshot -VM $VSI_Target_ImagesToTest.ParentVM -HostingConnection $VSI_Target_HypervisorConnection -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type -DDC $VSI_Target_DDC -SnapshotName $VSI_Target_ImagesToTest.ParentVM
+    elseif (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $Config.Target.CloneType -eq "PVS" -and $NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
+        Write-Log -Message "This is a Provisioning Services test. No snapshot validation required." -Level Info
     }
+
+    if (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $Config.Target.CloneType -eq "MCS" -and $NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
+        if ($Config.Target.OrchestrationMethod  -eq "Snapin") {
+            # A Citrix on ESXi test
+            $params = @{
+                VM                = $VSI_Target_ParentVM
+                HostingConnection = $Config.Target.HypervisorConnection 
+                HypervisorType    = $NTNXInfra.Testinfra.HypervisorType 
+                Type              = $Type 
+                DDC               = $Config.Target.DDC 
+                SnapshotName      = $Config.Target.ImagesToTest.ParentVM
+            }
+            Get-NutanixSnapshot @params
+            $params = $null
+        }
+        elseif ($Config.Target.OrchestrationMethod  -eq "API") {
+            #Need to set the XDHyp Path for Snapshot Validation
+            $snapshot_path = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.vSphereDataCenter).datacenter\$($Config.Target.vSphere_Cluster).cluster\$($VSI_Target_ParentVM)"
+
+            if ($Type -eq "CitrixVAD") {
+                $params = @{
+                    DDC                    = $Config.Target.DDC
+                    HypervisorConnection   = $config.Target.HostingConnectionRootName
+                    Snapshot               = $snapshot_path
+                    EncodedAdminCredential = $EncodedAdminCredential 
+                    DomainAdminCredential  = $DomainAdminCredential
+                }
+                Get-CVADImageSnapshotAPI @params
+                $params = $null
+            }
+            elseif ($Type -eq "CitrixDaaS"){
+                $params = @{
+                    CloudUrl              = $CloudUrl 
+                    HypervisorConnection  = $config.Target.HostingConnectionRootName
+                    Snapshot              = $snapshot_path
+                    ClientID              = $Config.CitrixDaaS.ClientID 
+                    ClientSecret          = $Config.CitrixDaaS.ClientSecret 
+                    CustomerID            = $Config.CitrixDaaS.CustomerID 
+                    DomainAdminCredential = $DomainAdminCredential
+                }
+                Get-DaaSImageSnapshotAPI @params
+                $params = $null
+            }
+        }
+    }
+    elseif (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $Config.Target.CloneType -eq "PVS" -and $NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
+        Write-Log -Message "This is a Provisioning Services test. No snapshot validation required." -Level Info
+    }
+
     if ($Type -eq "Horizon") {
         # A Horizon test
-        if ($VSI_Target_ImagesToTest.ParentVM -match '^([^\\]+)\.') { $cleansed_vm_name = $matches[1] }
-        if ($VSI_Target_ImagesToTest.ParentVM -match '\\([^\\]+)\.snapshot$') { $cleansed_snapshot_name = $matches[1] }
-
-        Get-NutanixSnapshot -VM $cleansed_vm_name -SnapshotName $cleansed_snapshot_name -HypervisorType $NTNXInfra.Testinfra.HypervisorType -Type $Type
+        if ($Config.Target.ImagesToTest.ParentVM -match '^([^\\]+)\.') { $cleansed_vm_name = $matches[1] }
+        if ($Config.Target.ImagesToTest.ParentVM -match '\\([^\\]+)\.snapshot$') { $cleansed_snapshot_name = $matches[1] }
+        $params = @{
+            VM             = $cleansed_vm_name 
+            SnapshotName   = $cleansed_snapshot_name 
+            HypervisorType = $NTNXInfra.Testinfra.HypervisorType 
+            Type           = $Type
+        }
+        Get-NutanixSnapshot @params
+        $params = $null
     }
 }
 
 #endregion Nutanix Snapshot Pre Flight Checks
+
+#region Validate vSphere and ESXi Host Access if required
+if (-not $AzureMode.IsPresent) {
+    # This is not an Azure configuration
+    if ($config.Target.HypervisorType -eq "ESXi" -and ($config.vSphere.RestartHostd -eq $true -or $config.Target.ForceAlignVMToHost -eq $true )) {
+        $params = @{
+            VCenter      = $Config.vSphere.vCenter 
+            User         = $Config.vSphere.User 
+            Password     = $Config.vSphere.Password 
+            ClusterName  = $Config.vSphere.ClusterName 
+            DataCenter   = $Config.vSphere.DataCenter 
+            SshUsername  = $Config.vSphere.SshUsername 
+            SshPassword  = $Config.vSphere.SshPassword
+        }
+        $vSphereValidated = Invoke-vSphereAccessCheck @params
+        $params = $null
+        
+
+        if ($vSphereValidated -eq $true) {
+            Write-Log -Message "vSphere vCenter and Host access validated successfully." -Level Info
+        } else {
+            Write-Log -Message "vSphere vCenter and Host access not validated successfully." -Level Warn
+            Exit 1
+        }
+    }
+}
+#endregion Validate vSphere and ESXi Host Access if required
 
 if ($ValidateOnly.IsPresent) {
     Write-Log -Message "Script is operating in a validation only mode. Exiting script before any form of execution occurs" -Level Info
@@ -422,6 +644,7 @@ if ($ValidateOnly.IsPresent) {
 
 #region Start Infrastructure Monitoring
 if ($VSI_Test_StartInfrastructureMonitoring -eq $true -and $VSI_Test_ServersToMonitor) {
+    #// JK - I think we will have an issue with container based configurations here - need to fix the same as RDP DelProf Approach
     Write-Log -Message "Starting Infrastructure Monitoring" -Level Info
     Start-ServerMonitoring -ServersToMonitor $VSI_Test_ServersToMonitor -Mode StartMonitoring -ServiceName "Telegraf"
 }
@@ -453,7 +676,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     if (-not $AzureMode.IsPresent) {
         # This is not an Azure configuration
         $NTNXTestname = "$($NTNXid)_$($VSI_Target_NodeCount)n_A$($NTNXInfra.Testinfra.AOSversion)_$($NTNXInfra.Testinfra.HypervisorType)_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
-    }
+    }    
     else {
         $NTNXTestname = "$($NTNXid)_Azure_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
     }
@@ -491,7 +714,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     if (-not $AzureMode.IsPresent) {
         # This is not an Azure configuration
         $Message = "Setting Affinity Rules"
-    }
+    }    
     else {
         $Message = "Skipping Setting Affinity Rules"
     }
@@ -533,7 +756,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     if (-not $AzureMode.IsPresent) {
         # This is not an Azure configuration
         $SlackMessage = "New Login Enterprise test started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName). Testname: $($NTNXTestname)."
-    } 
+    }     
     else {
         $SlackMessage = "New Login Enterprise test started by $VSI_Target_CVM_admin on Azure VM. Testname: $($NTNXTestname)."
     }
@@ -563,8 +786,44 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        Connect-VSICTX -DDC $VSI_Target_DDC
-        $NTNXInfra.Target.DesktopBrokerVersion = (Get-BrokerController -AdminAddress $VSI_Target_DDC).ControllerVersion[0]
+        if ($Config.Target.OrchestrationMethod -eq "Snapin") {
+            #Legacy PowerShell Approach
+            Connect-VSICTX -DDC $Config.Target.DDC
+            $NTNXInfra.Target.DesktopBrokerVersion = (Get-BrokerController -AdminAddress $Config.Target.DDC).ControllerVersion[0]
+        }
+        elseif ($Config.Target.OrchestrationMethod -eq "API") {
+            #API Approach
+            if ($Type -eq "CitrixVAD"){
+                # pull relevant validation detail into $cvad_environment_details
+                Write-Log -Message "Handling Citrix Credentials and Validating Citrix On Prem Site" -Level Info
+                $params = @{
+                    DDC                    = $Config.Target.DDC 
+                    HostingConnection      = $Config.Target.HostingConnectionRootName 
+                    EncodedAdminCredential = $EncodedAdminCredential 
+                    DomainAdminCredential  = $DomainAdminCredential
+                }
+                $cvad_environment_details = Get-CVADSiteDetailAPI @params
+                $params = $null
+
+                $NTNXInfra.Target.DesktopBrokerVersion = $cvad_environment_details.cvad_site.ProductVersion
+            }
+            elseif ($Type -eq "CitrixDaaS"){
+                # pull relevant validation detail into $daas_environment_details
+                Write-Log -Message "Handling Citrix Credentials and Validating Citrix DaaS Access" -Level Info
+                $params = @{
+                    CloudUrl              = $CloudUrl 
+                    HostingConnection     = $Config.Target.HostingConnectionRootName 
+                    CustomerID            = $Config.CitrixDaaS.CustomerID
+                    ClientID              = $Config.CitrixDaaS.ClientID
+                    ClientSecret          = $Config.CitrixDaaS.ClientSecret
+                    DomainAdminCredential = $DomainAdminCredential
+                }
+                $daas_environment_details = Get-DaaSSiteDetailAPI @params
+                $params = $null
+
+                $NTNXInfra.Target.DesktopBrokerVersion = $daas_environment_details.daas_site.ProductVersion
+            }
+        }
     }
     #endregion Citrix validation
 
@@ -846,7 +1105,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if (-not $AzureMode.IsPresent) { 
             # This is not an Azure configuration
             $Message = "Creating $($Type) Desktop Pool" 
-        }
+        }        
         else { 
             $Message = "Skipping Creating $($Type) Desktop Pool" 
         }
@@ -884,12 +1143,32 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
 
-            $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $VSI_Target_HypervisorConnection + "\" + $VSI_Target_HypervisorNetwork + ".network" }
-            $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
-
+            if ($Config.Target.OrchestrationMethod -eq "Snapin") {
+                #Legacy Snapin Approach
+                $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $VSI_Target_HypervisorConnection + "\" + $VSI_Target_HypervisorNetwork + ".network" }
+                $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
+            }
+            elseif ($Config.Target.OrchestrationMethod -eq "API") {
+                #API Approach
+                #$networkMap = "XDHyp:\HostingUnits\$($VSI_Target_HypervisorConnection + "_")$VSI_Target_HypervisorNetwork\$VSI_Target_HypervisorNetwork.network" #// JK no idea how this worked in prior testing, this network map needs to be looked at.
+                
+                if ($NTNXInfra.TestInfra.HypervisorType -eq "AHV") {
+                    $ParentVM = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($VSI_Target_ParentVM)"
+                    #Network = XDHyp:\Connections\DRMHX665KB-A\VLAN164.network
+                    $networkMap = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.HypervisorNetwork).network"
+                    $VSI_Target_HypervisorConnection = $Config.Target.HostingConnectionRootName
+                }
+                elseif ($NTNXInfra.TestInfra.HypervisorType -eq "ESXi") {
+                    $ParentVM = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.vSphereDataCenter).datacenter\$($Config.Target.vSphere_Cluster).cluster\$($VSI_Target_ParentVM)"
+                    #Network = XDHyp:\Connections\Shared-vCenter\EUC-Solutions.datacenter\DRMNX9KB-A.cluster\dvs_VLAN164.network
+                    $networkMap = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.vSphereDataCenter).datacenter\$($Config.Target.vSphere_Cluster).cluster\$($Config.Target.HypervisorNetwork).network"
+                    $VSI_Target_HypervisorConnection = $Config.Target.HostingConnectionRootName
+                }
+            }
+            # Set param block for Handling Catalog and Delivery Group Creation. This is the same param block regardless of CVAD/DaaS or Snapin/API
             $params = @{
                 ParentVM             = $ParentVM
-                HypervisorConnection = $VSI_Target_HypervisorConnection
+                HypervisorConnection = $VSI_Target_HypervisorConnection #//JK will this work - need to re-test this
                 HypervisorType       = $NTNXInfra.Testinfra.HypervisorType
                 Networkmap           = $networkMap
                 CpuCount             = $VSI_Target_NumCPUs
@@ -902,18 +1181,58 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 SessionsSupport      = $VSI_Target_SessionsSupport
                 DesktopPoolName      = $VSI_Target_DesktopPoolName
                 ZoneName             = $VSI_Target_ZoneName
-                Force                = $Force.IsPresent ## Command line required this -Force:$Force.IsPresent note the :
+                Force                = $Force.IsPresent
                 EntitledGroup        = $VSI_Users_BaseName
                 SkipImagePrep        = $VSI_Target_SkipImagePrep
                 FunctionalLevel      = $VSI_Target_FunctionalLevel
                 CloneType            = $VSI_Target_CloneType
-                DDC                  = $VSI_Target_DDC
             }
-            $CreatePool = Set-VSICTXDesktopPoolNTNX @params
-    
-            $NTNXInfra.Testinfra.MaxAbsoluteActiveActions = $CreatePool.MaxAbsoluteActiveActions
-            $NTNXInfra.Testinfra.MaxAbsoluteNewActionsPerMinute = $CreatePool.MaxAbsoluteNewActionsPerMinute
-            $NTNXInfra.Testinfra.MaxPercentageActiveActions = $CreatePool.MaxPercentageActiveActions
+
+            if ($Config.Target.OrchestrationMethod -eq "Snapin") {
+                #Legacy Snapin Approach
+                $CreatePool = Set-VSICTXDesktopPoolNTNX @params -DDC $Config.Target.DDC
+                $NTNXInfra.Testinfra.MaxAbsoluteActiveActions = $CreatePool.MaxAbsoluteActiveActions
+                $NTNXInfra.Testinfra.MaxAbsoluteNewActionsPerMinute = $CreatePool.MaxAbsoluteNewActionsPerMinute
+                $NTNXInfra.Testinfra.MaxPercentageActiveActions = $CreatePool.MaxPercentageActiveActions
+            }
+            elseif ($Config.Target.OrchestrationMethod -eq "API") {
+                #API Approach
+                if ($Type -eq "CitrixVAD") {
+                    $cvad_params = @{
+                        DDC                    = $Config.Target.DDC
+                        DomainAdminCredential  = $DomainAdminCredential 
+                        EncodedAdminCredential = $EncodedAdminCredential
+                    }
+                    $CreatePool = Set-CVADDesktopPoolAPI @params @cvad_params
+                    $cvad_params = $null
+                    
+                    # Values pulled via validation phase and set in $cvad_environment_details
+                    $NTNXInfra.Testinfra.MaxAbsoluteActiveActions = $cvad_environment_details.hosting_connection_detail.MaxAbsoluteActiveActions 
+                    $NTNXInfra.Testinfra.MaxAbsoluteNewActionsPerMinute = $cvad_environment_details.hosting_connection_detail.MaxAbsoluteNewActionsPerMinute
+                    $NTNXInfra.Testinfra.MaxPercentageActiveActions = $cvad_environment_details.hosting_connection_detail.MaxPowerActionsPercentageOfMachines
+                    Write-Log -Message "Successfully set hosting MaxAbsoluteActiveActions: $($cvad_environment_details.hosting_connection_detail.MaxAbsoluteActiveActions) / MaxAbsoluteNewActionsPerMinute: $($cvad_environment_details.hosting_connection_detail.MaxAbsoluteNewActionsPerMinute) / MaxPercentageActiveActions: $($cvad_environment_details.hosting_connection_detail.MaxPowerActionsPercentageOfMachines)" -Level Info
+                }
+                elseif ($Type -eq "CitrixDaaS") {
+                    $daas_params = @{
+                        CloudUrl               = $CloudUrl 
+                        CustomerID             = $Config.CitrixDaaS.CustomerID 
+                        ClientID               = $Config.CitrixDaaS.ClientID 
+                        ClientSecret           = $Config.CitrixDaaS.ClientSecret 
+                        EncodedAdminCredential = $EncodedAdminCredential
+                    }
+
+                    $CreatePool = Set-DaaSDesktopPoolAPI @params @daas_params
+                    $daas_params = $null
+
+                    # Values pulled via validation phase and set in $daas_environment_details
+                    $NTNXInfra.Testinfra.MaxAbsoluteActiveActions = $daas_environment_details.hosting_connection_detail.MaxAbsoluteActiveActions
+                    $NTNXInfra.Testinfra.MaxAbsoluteNewActionsPerMinute = $daas_environment_details.hosting_connection_detail.MaxAbsoluteNewActionsPerMinute
+                    $NTNXInfra.Testinfra.MaxPercentageActiveActions = $daas_environment_details.hosting_connection_detail.MaxPowerActionsPercentageOfMachines
+                    Write-Log -Message "Successfully set hosting MaxAbsoluteActiveActions: $($daas_environment_details.hosting_connection_detail.MaxAbsoluteActiveActions) / MaxAbsoluteNewActionsPerMinute: $($daas_environment_details.hosting_connection_detail.MaxAbsoluteNewActionsPerMinute) / MaxPercentageActiveActions: $($daas_environment_details.hosting_connection_detail.MaxPowerActionsPercentageOfMachines)" -Level Info
+                }
+            }
+
+            $params = $null
         }
 
         if ($Type -eq "Horizon") {
@@ -1053,30 +1372,85 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
 
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
-            $params = @{
-                DesktopPoolName            = $VSI_Target_DesktopPoolName
-                NumberofVMs                = $VSI_Target_NumberOfVMS
-                PowerOnVMs                 = $VSI_Target_PowerOnVMs
-                DDC                        = $VSI_Target_DDC
-                HypervisorType             = $NTNXInfra.Testinfra.HypervisorType
-                Affinity                   = $NTNXInfra.Testinfra.SetAffinity
-                ClusterIP                  = $NTNXInfra.Target.CVM
-                CVMSSHPassword             = $NTNXInfra.Target.CVMsshpassword
-                VMnameprefix               = $NTNXInfra.Target.NamingPattern
-                CloneType                  = $VSI_Target_CloneType
-                Hosts                      = $NTNXInfra.Testinfra.Hostip
-                Type                       = $Type
-                ForceAlignVMToHost         = $NTNXInfra.Target.ForceAlignVMToHost
-                EnforceHostMaintenanceMode = $NTNXInfra.Target.EnforceHostMaintenanceMode
-                TargetCVMAdmin             = $VSI_Target_CVM_admin
-                TargetCVMPassword          = $VSI_Target_CVM_password
-                Run                        = $i
-                MaxRecordCount             = $VSI_Target_MaxRecordCount
-                HostCount                  = $VSI_Target_NodeCount
+            if ($config.Target.OrchestrationMethod -eq "Snapin") {
+                #Legacy Snapin Approach
+                $params = @{
+                    DesktopPoolName            = $VSI_Target_DesktopPoolName
+                    NumberofVMs                = $VSI_Target_NumberOfVMS
+                    PowerOnVMs                 = $VSI_Target_PowerOnVMs
+                    DDC                        = $VSI_Target_DDC
+                    HypervisorType             = $NTNXInfra.Testinfra.HypervisorType
+                    Affinity                   = $NTNXInfra.Testinfra.SetAffinity
+                    ClusterIP                  = $NTNXInfra.Target.CVM
+                    CVMSSHPassword             = $NTNXInfra.Target.CVMsshpassword
+                    VMnameprefix               = $NTNXInfra.Target.NamingPattern
+                    CloneType                  = $VSI_Target_CloneType
+                    Hosts                      = $NTNXInfra.Testinfra.Hostip
+                    Type                       = $Type
+                    ForceAlignVMToHost         = $NTNXInfra.Target.ForceAlignVMToHost
+                    EnforceHostMaintenanceMode = $NTNXInfra.Target.EnforceHostMaintenanceMode
+                    TargetCVMAdmin             = $VSI_Target_CVM_admin
+                    TargetCVMPassword          = $VSI_Target_CVM_password
+                    Run                        = $i 
+                    MaxRecordCount             = $VSI_Target_MaxRecordCount
+                    HostCount                  = $VSI_Target_NodeCount
+                }
+
+                if ($NTNXInfra.Target.HypervisorType -eq "AHV") {
+                    $Boot = Enable-VSICTXDesktopPool @params
+                }
+                if ($NTNXInfra.Target.HypervisorType -eq "ESXi") {
+                    # Params for vSphere DRS Group configuration
+                    $vsphere_boot_params = @{
+                        VCenter          = $Config.vSphere.vCenter
+                        User             = $Config.vSphere.User
+                        Password         = $Config.vSphere.Password
+                        ClusterName      = $Config.vSphere.ClusterName
+                        DataCenter       = $Config.vSphere.DataCenter
+                    }
+                    $Boot = Enable-VSICTXDesktopPool @params @vsphere_boot_params
+                    $sphere_boot_params = $null
+                }
+                
+                $Params = $null
             }
-            $Boot = Enable-VSICTXDesktopPool @params
-    
-            $Params = $null
+            elseif ($config.Target.OrchestrationMethod -eq "API") {
+                #API Approach
+                $params = @{
+                    DesktopPoolName            = $VSI_Target_DesktopPoolName
+                    NumberofVMs                = $VSI_Target_NumberOfVMS
+                    PowerOnVMs                 = $VSI_Target_PowerOnVMs
+                    DDC                        = $VSI_Target_DDC
+                    HypervisorType             = $NTNXInfra.Testinfra.HypervisorType
+                    Affinity                   = $NTNXInfra.Testinfra.SetAffinity
+                    ClusterIP                  = $NTNXInfra.Target.CVM
+                    CVMSSHPassword             = $NTNXInfra.Target.CVMsshpassword
+                    VMnameprefix               = $NTNXInfra.Target.NamingPattern
+                    DomainName                 = $VSI_Target_DomainName
+                    OU                         = $VSI_Target_ADContainer
+                    CloneType                  = $VSI_Target_CloneType
+                    Hosts                      = $NTNXInfra.Testinfra.Hostip
+                    Type                       = $Type
+                    ForceAlignVMToHost         = $NTNXInfra.Target.ForceAlignVMToHost
+                    EnforceHostMaintenanceMode = $NTNXInfra.Target.EnforceHostMaintenanceMode
+                    TargetCVMAdmin             = $VSI_Target_CVM_admin
+                    TargetCVMPassword          = $VSI_Target_CVM_password
+                    Run                        = $i
+                    MaxRecordCount             = $VSI_Target_MaxRecordCount
+                    HostCount                  = $VSI_Target_NodeCount
+                    EncodedAdminCredential     = $EncodedAdminCredential
+                    DomainAdminCredential      = $DomainAdminCredential
+                }
+                if ($Type -eq "CitrixVAD"){
+
+                    $Boot = Enable-CVADDesktopPoolAPI @Params
+                    #// JK - Need to handly the vSphere boot affinity additions - should be the same for API as it was for Snapin.
+                }
+                elseif ($Type -eq "CitrixDaaS") {
+                    #//JK need to write this - Enable-DaaSDesktopPoolAPI
+                }
+            }
+
         }
 
         if ($Type -eq "Horizon") {
@@ -1101,7 +1475,35 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #region Get Build Tattoo Information and update variable with new values
         #----------------------------------------------------------------------------------------------------------------------------
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
-            $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $VSI_Target_DesktopPoolName -MaxRecordCount $MaxRecordCount
+            if ($Config.Target.OrchestrationMethod -eq "SnapIn") {
+                #Legacy Snapin Approach
+                $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $VSI_Target_DesktopPoolName -MaxRecordCount $MaxRecordCount
+            }
+            elseif ($config.Target.OrchestrationMethod -eq "API") {
+                if ($Type -eq "CitrixVAD") {
+                    $params = @{
+                        DDC                    = $Config.Target.DDC
+                        DesktopPoolName        = $Config.Target.DesktopPoolName
+                        EncodedAdminCredential = $EncodedAdminCredential
+                        DomainAdminCredential  = $DomainAdminCredential
+                    }
+                    $BrokerVMs = Get-CVADBrokerMachinesAPI @params
+                    $params = $null
+                }
+                elseif ($Type -eq "CitrixDaaS") {
+                    $params = @{
+                        CloudUrl              = $CloudUrl
+                        DesktopPoolName       = $Config.Target.DesktopPoolName
+                        CustomerID            = $Contig.CitrixDaaS.CustomerID
+                        ClientID              = $Config.CitrixDaaS.ClientID
+                        ClientSecret          = $Config.CitrixDaaS.ClientSecret
+                        DomainAdminCredential = $DomainAdminCredential
+                    }
+
+                    $BrokerVMs = Get-DaaSBrokerMachinesAPI @params
+                    $params = $null
+                }
+            }
             $RegisteredVMs = ($BrokerVMS | Where-Object { $_.RegistrationState -eq "Registered" })
             $MasterImageDNS = $RegisteredVMs[0].DNSName
         }
@@ -1253,7 +1655,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if (-not ($SkipLaunchers)) {
             $NumberOfLaunchers = [System.Math]::Ceiling($VSI_Target_NumberOfSessions / $SessionsperLauncher)
             # Wait for all launchers to be registered in LE
-            Wait-LELaunchers -Amount $NumberOfLaunchers -NamingPattern $VSI_Launchers_NamingPattern
+            Wait-LELaunchers -Amount $NumberOfLaunchers -NamingPattern $VSI_Launchers_NamingPattern -RebootLaunchers $config.Test.RebootLaunchers
             # Create/update launchergroup with the launchers
             Set-LELauncherGroup -LauncherGroupName $VSI_Launchers_GroupName -NamingPattern $VSI_Launchers_NamingPattern
         }
@@ -1411,6 +1813,27 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $params = $null
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
+
+        #region Restart ESXi HostD Service if set
+        if (-not $AzureMode.IsPresent) { 
+            # This is not an Azure configuration
+            if ($NTNXInfra.Testinfra.HypervisorType -eq "ESXi" -and $Config.vSphere.RestartHostd -eq $true) {
+                
+                $params = @{
+                    VCenter      = $Config.vSphere.vCenter
+                    User         = $Config.vSphere.User 
+                    Password     = $Config.vSphere.Password 
+                    ClusterName  = $Config.vSphere.ClusterName 
+                    DataCenter   = $Config.vSphere.DataCenter 
+                    SshUsername  = $Config.vSphere.SshUsername 
+                    SshPassword  = $Config.vSphere.SshPassword 
+                }
+                
+                Invoke-ESXHostDRestart @params
+                $Params = $null
+            }
+        }
+        #endregion Restart ESXi HostD Service if set
 
         Write-Log -Message "Waiting for $VSI_Target_MinutesToWaitAfterIdleVMs minutes before starting test" -Level Info
         Start-sleep -Seconds $($VSI_Target_MinutesToWaitAfterIdleVMs * 60)
@@ -1991,7 +2414,6 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv"
             $Started = $vsiresult.started
             $BucketName = $($NTNXInfra.Test.BucketName)
-            #Import-Module C:\DevOps\solutions-euc\engineering\login-enterprise\Nutanix.EUC\Nutanix.EUC.Reporting\Nutanix.EUC.Reporting.psd1 -force
             # Loop through the test run data files and process each one
             foreach ($File in $Files) {
                 if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*") -or ($File.Name -like "VM Perf Metrics*")) {
@@ -2145,16 +2567,30 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
     #region Clear Affinity from VMs
     if (-not $AzureMode.IsPresent) { 
-        $params = @{
-            ClusterIP = $NTNXInfra.Target.CVM
-            CVMsshpassword = $NTNXInfra.Target.CVMsshpassword
-            VMnameprefix = $NTNXInfra.Target.NamingPattern
+        if ($NTNXInfra.Target.HypervisorType -eq "AHV") {
+            $params = @{
+                ClusterIP = $NTNXInfra.Target.CVM
+                CVMsshpassword = $NTNXInfra.Target.CVMsshpassword
+                VMnameprefix = $NTNXInfra.Target.NamingPattern
+            }
+            $ClearAffinityFromVMS = Set-AffinityClear @Params
+            if ([string]::IsNullOrEmpty($ClearAffinityFromVMS)) {
+                Write-Log -Message "Affinity was not removed from VMs. Please check cluster." -Level Warn
+            }
+            $params = $null
         }
-        $ClearAffinityFromVMS = Set-AffinityClear @Params
-        if ([string]::IsNullOrEmpty($ClearAffinityFromVMS)) {
-            Write-Log -Message "Affinity was not removed from VMs. Please check cluster." -Level Warn
+        if ($NTNXInfra.Target.HypervisorType -eq "ESXi" -and $Config.Target.ForceAlignVMToHost -eq $true) {
+            $params = @{
+                VCenter     = $Config.vSphere.vCenter
+                User        = $Config.vSphere.User
+                Password    = $Config.Vsphere.Password
+                ClusterName = $Config.vSphere.ClusterName
+                DataCenter  = $Config.vSphere.DataCenter
+            }
+            
+            Set-VMwareClusterAffinityClear @params
+            $params = $null
         }
-        $params = $null
     }
     #endregion Clear Affinity from VMs
 
@@ -2196,6 +2632,28 @@ if ($VSI_Test_StartInfrastructureMonitoring -eq $true -and $VSI_Test_ServersToMo
     Start-ServerMonitoring -ServersToMonitor $VSI_Test_ServersToMonitor -Mode StopMonitoring -ServiceName "Telegraf"
 }
 #endregion Stop Infrastructure Monitoring
+
+#region shutdown citrix machines after final run
+if (-not $AzureMode.IsPresent) { 
+    if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
+        if ($Config.Target.OrchestrationMethod -eq "SnapIn") {
+            $Params = @{
+                DDC            = $Config.Target.DDC
+                CatalogName    = $Config.Target.DesktopPoolName
+                MaxRecordCount = $Config.Target.MaxRecordCount
+            }
+            $CitrixMachinesFinalShutdown = Invoke-CVADMachineShutdown @Params
+            $Params = $null
+        }
+        elseif ($config.Target.OrchestrationMethod -eq "API") {}
+    }
+    if ($CitrixMachinesFinalShutdown -eq $true) {
+        Write-Log -Message "All machines powered down ready for next test" -level Info
+    } else {
+        Write-Log -Message "Not all machines confirmed down. Check before next test run." -Level Warn
+    }
+}
+#endregion shutdown citrix machines after final run
 
 #region Update Test Dashboard
 $params = @{

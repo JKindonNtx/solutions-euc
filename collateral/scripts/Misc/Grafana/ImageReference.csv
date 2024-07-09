@@ -31,6 +31,10 @@ PanelId,ImageName
 187,cluster_resources_controller_read_iops.png
 188,cluster_resources_controller_write_iops.png
 58,cluster_resources_controller_latency.png
+190,cluster_disk_iops_total.png
+193,cluster_disk_iops_total_all.png
+191,cluster_disk_iops_read.png
+192,cluster_disk_iops_write.png
 61,login_times_average.png
 98,login_times_logon_rate_per_minute.png
 16,login_times_total_logon_time.png
@@ -44,6 +48,10 @@ PanelId,ImageName
 69,individual_runs_cluster_controller_latency.png
 119,individual_runs_cluster_cpu_with_eux_score.png
 156,individual_runs_cluster_cpu.png
+194,individual_runs_cluster_disk_iops_total.png
+195,individual_runs_cluster_disk_iops_total_all.png
+196,individual_runs_cluster_disk_iops_read.png
+197,individual_runs_cluster_disk_iops_write.png
 31,applications_word_start.png
 32,applications_word_open_doc.png
 33,applications_word_save_file.png
