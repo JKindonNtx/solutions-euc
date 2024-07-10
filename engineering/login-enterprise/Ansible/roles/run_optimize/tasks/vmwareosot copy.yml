@@ -1,0 +1,16 @@
+---
+- name: Reboot before Optimizations
+  ansible.windows.win_reboot:
+  
+- name: Optimize with VMware OSOT
+  win_shell: >
+    Start-Process -FilePath "{{ sourcefiles_path }}\\Scripts\\Optimizations\\VMware-OSOT\\VMwareOSOptimizationTool.exe"
+    -ArgumentList "-o -v -SyncHkcuToHku enable 
+    -visualeffect performance -notification disable 
+    -windowsupdate disable -officeupdate disable 
+    -windowssearch enablecortana searchboxasicon 
+    -storeapp remove-all --exclude alarms calculator 
+    -background #034EA2 -firewall enable -antivirus disable" -Wait
+
+- name: Reboot after Optimizations
+  ansible.windows.win_reboot:

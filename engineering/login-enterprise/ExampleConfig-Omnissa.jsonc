@@ -1,0 +1,31 @@
+{
+    "Nutanix": {
+        "TargetCVM": "xx.xx.xx.xx", // IP Address for the Cluster
+        "TargetCVMAdmin": "username", // CVM Admin UserName
+        "TargetCVMPassword": "SuperSecurePassword!123" // AHV CVM Password
+    },
+    "Microsoft": {
+        "ADUserRegular": "User", // Regular User
+        "ADUserAdmin": "Administrator", // Admin User
+        "ADAdminPassword": "SuperSecurePassword!123", // Password for the Admin User
+        "LDAPServer": "xx.xx.xx.xx", // IP Address of the LDAP Server
+        "BaseDN": "dc=wsperf,dc=nutanix,dc=com", // Base DN for the Domain
+        "DomainNetBiosName": "WSPERF", // Domain Netbios Name
+        "DomainDNSName": "wsperf.nutanix.com", // Domain DNS Namespace
+        "TargetOU": "OU=Omnissa,OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com" // The OU to deploy the desktops in
+    },
+    "Omnissa": {
+        "ConnectionServer": "https://connectionserver.domain.com", // FQDN to the connection server including https://
+        "ConnectionServerUserName": "UserName", // Connection Server UserName
+        "ConnectionServerPassword": "SuperSecurePassword!123", // Connection Server Password
+        "PoolName": "DesktopPoolName", // The Omnissa Desktop Pool Name
+        "NamingConvention": "NAMING-####", // Naming Convention - use the # char to indicate numbers
+        "EntitlementGroup": "GroupName", // The AD Group Name for the entitlement
+        "BaseVmName": "BaseVM", // Base VM Name (Not Snapshot Name)
+        "NumberOfVMs": 20 // Number of VMs you want to deploy
+    },
+    "Various": {
+        "Slack": "Slack_Api_Uri", // The Slack Api Uri
+        "AnsiblePath": "Path_To_Ansible_Playbooks" // The Path to the Ansible Playbooks
+    }
+}

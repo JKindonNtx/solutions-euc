@@ -17,6 +17,9 @@ function Set-LELoadTestv7 {
 
     $ExistingTest = $null
     $ExistingTest = Get-LETests -testType "loadTest" | Where-Object { $_.Name -eq $TestName }
+    if($null -ne $ExistingTest) {
+        $DeleteTest = Delete-LETest -TestID $ExistingTest.id
+    }
 
     if ($VSI_Target_SessionMetricsEnabled) {
         $SessionMetricGroupKey = (Get-LESessionMetricGroups | Where-Object { $_.Name -eq "$($SessionMetricGroup)" } | Select-Object -ExpandProperty key)
@@ -44,14 +47,17 @@ function Set-LELoadTestv7 {
             } | ConvertTo-Json
                 
             $UpdateTestBody = @{
-                type                    = "LoadTest"
-                numberOfSessions        = $SessionAmount
-                rampUpDurationInMinutes = $RampupInMinutes
-                testDurationInMinutes   = $DurationInMinutes
-                name                    = $TestName
-                euxEnabled              = $VSI_Target_EUXEnabled
-                description             = $ConnectorParams["resource"]
-                environmentUpdate       = @{
+                type                      = "LoadTest"
+                numberOfSessions          = $SessionAmount
+                rampUpDurationInMinutes   = $RampupInMinutes
+                testDurationInMinutes     = $DurationInMinutes
+                name                      = $TestName
+                euxEnabled                = $VSI_Target_EUXEnabled
+                sessionMetricsEnabled     = $VSI_Target_SessionMetricsEnabled
+                sessionMetricScheduleRate = $SessionAmount
+                sessionMetricGroupKey     = $SessionMetricGroupKey
+                description               = $ConnectorParams["resource"]
+                environmentUpdate         = @{
                     connector      = @{
                         type        = "Horizon"
                         serverUrl   = $ConnectorParams["serverUrl"]
@@ -61,6 +67,13 @@ function Set-LELoadTestv7 {
                     accountGroups  = @((Get-LEAccountGroups | Where-Object { $_.Name -eq $AccountGroupName } | Select-Object -ExpandProperty groupId))
                     launcherGroups = @((Get-LELauncherGroups | Where-Object { $_.Name -eq $LauncherGroupName } | Select-Object -ExpandProperty id))
                 }
+                steps                   = @(
+                    @{
+                        type               = "AppGroupReference"
+                        applicationGroupId = @((Get-LEApplicationGroups | Where-Object { $_.Name -Like "$($Workload)*" } | Select-Object -ExpandProperty id))
+                        isEnabled          = $true
+                    }
+                ) 
             } | ConvertTo-Json
         }
         "Custom Connector" {
@@ -197,6 +210,9 @@ function Set-LELoadTestv7 {
             } | ConvertTo-Json -Depth 4
         }
     }
+
+    $ExistingTest = $null
+    $ExistingTest = Get-LETests -testType "loadTest" | Where-Object { $_.Name -eq $TestName }
 
     if ($null -eq $ExistingTest) {
         # Create the test if it doesn't exist

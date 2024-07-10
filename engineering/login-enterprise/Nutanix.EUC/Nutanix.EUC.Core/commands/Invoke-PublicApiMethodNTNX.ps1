@@ -15,12 +15,16 @@ function Invoke-PublicApiMethodNTNX {
 
     if ($TargetCVM) {
         $header = @{
-            Authorization = "Basic " + [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($($TargetCVMAdmin) + ":" + $($TargetCVMPassword)))
+            'Authorization' = "Basic " + [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($($TargetCVMAdmin) + ":" + $($TargetCVMPassword)))
+            'Accept' = "application/json"
+            'Content-Type' = "application/json"
         }
     }
     else {
         $header = @{
             Authorization = "Basic " + [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($($VSI_Target_CVM_admin) + ":" + $($VSI_Target_CVM_Password)))
+            'Accept' = "application/json"
+            'Content-Type' = "application/json"
         }
     }
     

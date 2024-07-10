@@ -75,6 +75,7 @@ NestedModules = @(
     @{ModuleName="Nutanix.EUC.Parallels"; ModuleVersion="2311.001"}
     @{ModuleName="Nutanix.EUC.Reporting"; ModuleVersion="2311.001"}
     @{ModuleName="Nutanix.EUC.VMware"; ModuleVersion="2311.001"}
+    @{ModuleName="Nutanix.EUC.Omnissa"; ModuleVersion="2311.001"}
 )
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.

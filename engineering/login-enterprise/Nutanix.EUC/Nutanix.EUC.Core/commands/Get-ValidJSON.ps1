@@ -22,10 +22,10 @@ The configuration file to parse and validate
         $Return = $false
 
         #Target Section Valid Settings
-        $Validated_Delivery_Types = @("Citrix","VMware","RAS", "Microsoft")
-        $Validated_Clone_Types = @("MCS", "Instant Clones", "Full Clone", "Linked Clone", "PVS", "Full")
+        $Validated_Delivery_Types = @("Citrix","VMware","RAS", "Microsoft", "Omnissa")
+        $Validated_Clone_Types = @("MCS", "Instant Clones", "Full Clone", "Linked Clone", "PVS", "Full", "Manual")
         $Validated_SessionCfg =@("ICA","PCoIP","Blast","RDP")
-        $Validated_Workload_Profiles = @("Task Worker", "Knowledge Worker")
+        $Validated_Workload_Profiles = @("Task Worker", "Knowledge Worker", "GPU Worker")
         $Validated_Session_Support = @("multisession", "singlesession")
         #Target Section Hypervisor Settings
         $Validated_Hypervisors = @("AHV","ESXi","Azure")
@@ -34,7 +34,7 @@ The configuration file to parse and validate
         #Target Section VMWare Horizon Valid Settings
         $Validated_RefreshOsDiskAfterLogoff = @("ALWAYS","NEVER")
         $Validated_User_Assignments = @("DEDICATED","FLOATING")
-        $Validated_Provisioning_Modes = @("AllMachinesUpFront","OnDemand")
+        $Validated_Provisioning_Modes = @("AllMachinesUpFront","OnDemand","Manual")
         #Test Section Valid Settings
         $Validated_Bucket_Names = @("LoginDocuments", "LoginRegression", "AzurePerfData")
     }

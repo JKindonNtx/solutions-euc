@@ -42,7 +42,7 @@ Param(
     [string]$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\ExampleConfig-LoginEnterpriseGlobal.jsonc",
 
     [Parameter(Mandatory = $true)]
-    [ValidateSet("CitrixVAD", "CitrixDaaS", "Horizon", "RAS", "RDP")]
+    [ValidateSet("CitrixVAD", "CitrixDaaS", "Horizon", "RAS", "RDP", "Omnissa")]
     [string]$Type,
 
     [Parameter(Mandatory = $false)]
@@ -605,6 +605,15 @@ if (-not $AzureMode.IsPresent) {
         Get-NutanixSnapshot @params
         $params = $null
     }
+    
+    If ($NTNXInfra.Target.DeliveryType -eq "Omnissa") {
+        # This is a placeholder for Omnissa Specific Tests
+        if ($NTNXInfra.Target.OmnissaProvisioningMode -eq "Manual") {
+            # Manual Pool - Skip or placeholder for future code
+        } else {
+            # Placeholder to validate VM Template
+        }
+    }    
 }
 
 #endregion Nutanix Snapshot Pre Flight Checks
@@ -903,6 +912,30 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
     }
     #endregion RDP validation
+
+    #region Omnissa validation
+    #----------------------------------------------------------------------------------------------------------------------------
+    if ($Type -eq "Omnissa") {
+        Write-Log -Message "Validating Omnissa" -Level Info
+
+        #region Update Test Dashboard
+        $params = @{
+            ConfigFile     = $NTNXInfra
+            TestName       = $NTNXTestname 
+            RunNumber      = "0" 
+            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxBucket   = $InfluxTestDashBucket 
+            Status         = "Running" 
+            CurrentPhase   = $CurrentTotalPhase 
+            CurrentMessage = "Validating Omnissa Connectivity" 
+            TotalPhase     = "$($TotalPhases)"
+        }
+        $null = Set-TestData @params
+        $params = $null
+        $CurrentTotalPhase++
+        #endregion Update Test Dashboard
+    }
+    #endregion Omnissa validation
 
     #region LE Test Check
     #----------------------------------------------------------------------------------------------------------------------------
@@ -1295,6 +1328,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             }
         }
 
+        if ($Type -eq "Omnissa") {
+            Write-Log -Message "Skipping Desktop Pool Creation - Omnissa Manual Desktop Pool" -Level Info
+        }
+
         #endregion Configure Desktop Pool
 
         #region Configure Folder Details for output
@@ -1465,6 +1502,19 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             }
         }
 
+        if ($Type -eq "Omnissa") {
+            if ($NTNXInfra.Target.OmnissaProvisioningMode -eq "Manual") {
+                $Boot = "" | Select-Object -Property bootstart, boottime, firstvmname
+                $Boot.bootstart = get-date -format o
+                $BootStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+                Start-Sleep -Seconds 5
+                $BootStopwatch.stop()
+                $Boot.boottime = $BootStopwatch.elapsed.totalseconds
+            } else {
+                # Placeholder for Omnissa Cloned Desktops
+            }
+        }
+
         if (-not $AzureMode.IsPresent) { 
             # This is not an Azure configuration
             $NTNXInfra.Testinfra.BootStart = $Boot.bootstart
@@ -1514,6 +1564,28 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         if ($Type -eq "RDP") {
             $MasterImageDNS = ($VSI_target_RDP_hosts | Select-Object -First 1) + "." + $VSI_Target_DomainName
+        }
+
+        if ($Type -eq "Omnissa") {
+            $params = @{
+                ApiEndpoint     = $VSI_Target_OmnissaConnectionServer
+                UserName       = $VSI_Target_OmnissaApiUserName
+                Password      = $VSI_Target_OmnissaApiPassword
+                Domain      = $VSI_Target_OmnissaApiDomain
+                PoolName   = $VSI_Target_DesktopPoolName
+            }
+            $OmnissaPool = Get-OmnissaDesktopPools @params
+
+            $params = @{
+                ApiEndpoint     = $VSI_Target_OmnissaConnectionServer
+                UserName       = $VSI_Target_OmnissaApiUserName
+                Password      = $VSI_Target_OmnissaApiPassword
+                Domain      = $VSI_Target_OmnissaApiDomain
+                PoolID   = $OmnissaPool.id
+            }
+            $OmnissaMachines = Get-OmnissaMachines @params
+
+            $MasterImageDNS = $OmnissaMachines[0].dns_name
         }
 
         #region Update Test Dashboard
@@ -1745,6 +1817,52 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             }
             $testId = Set-LELoadTestv7 @Params
             $params = $null
+        }
+
+        if ($Type -eq "Omnissa") {
+
+            $Params = @{
+                TestName           = $VSI_Test_Name 
+                SessionAmount      = $VSI_Target_NumberOfSessions
+                RampupInMinutes    = $VSI_Target_RampupInMinutes
+                DurationInMinutes  = $VSI_Target_DurationInMinutes
+                LauncherGroupName  = $VSI_Launchers_GroupName
+                AccountGroupName   = $VSI_Users_GroupName
+                SessionMetricGroup = $VSI_Target_SessionMetricGroupName
+                ConnectorName      = "VMware Horizon View"
+                ConnectorParams    = @{serverUrl = $VSI_Target_OmnissaConnectionServer; resource = $VSI_Target_DesktopPoolName }
+                Workload           = $VSI_Target_Workload
+            }
+            $testId = Set-LELoadTestv7 @Params
+            $params = $null
+            
+            $params = @{
+                ApiEndpoint     = $VSI_Target_OmnissaConnectionServer
+                UserName       = $VSI_Target_OmnissaApiUserName
+                Password      = $VSI_Target_OmnissaApiPassword
+                Domain      = $VSI_Target_OmnissaApiDomain
+                PoolName   = $VSI_Target_DesktopPoolName
+            }
+            $CreatedPool = Get-OmnissaDesktopPools @params
+
+            $params = @{
+                ApiEndpoint     = $VSI_Target_OmnissaConnectionServer
+                UserName       = $VSI_Target_OmnissaApiUserName
+                Password      = $VSI_Target_OmnissaApiPassword
+                Domain      = $VSI_Target_OmnissaApiDomain
+                GroupName   = $VSI_Users_GroupName
+            }
+            $OmnissaGroup = Get-OmnissaGroupSID @params
+
+            $params = @{
+                ApiEndpoint     = $VSI_Target_OmnissaConnectionServer
+                UserName       = $VSI_Target_OmnissaApiUserName
+                Password      = $VSI_Target_OmnissaApiPassword
+                Domain      = $VSI_Target_OmnissaApiDomain
+                PoolId   = $CreatedPool.id
+                GroupID = $OmnissaGroup.id
+            }
+            $Entitlement = Set-OmnissaManualPoolEntitlement @params
         }
         
         #endregion Update the test params/create test if not exist
@@ -2285,7 +2403,11 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #----------------------------------------------------------------------------------------------------------------------------
         if (Test-Path -Path $RDASource) {
             Write-Log -Message "Exporting RDA Data to output folder" -Level Info
-            $csvData = get-content $RDASource | ConvertFrom-String -Delimiter "," -PropertyNames Timestamp, screenResolutionid, encoderid, movingImageCompressionConfigurationid, preferredColorDepthid, videoCodecid, VideoCodecUseid, VideoCodecTextOptimizationid, VideoCodecColorspaceid, VideoCodecTypeid, HardwareEncodeEnabledid, VisualQualityid, FramesperSecondid, RDHSMaxFPS, currentCPU, currentRAM, totalCPU, currentFps, totalFps, currentRTT, NetworkLatency, NetworkLoss, CurrentBandwidthEDT, totalBandwidthusageEDT, averageBandwidthusageEDT, currentavailableEDTBandwidth, EDTInUseId, currentBandwithoutput, currentLatency, currentavailableBandwidth, totalBandwidthusage, averageBandwidthUsage, averageBandwidthAvailable, GPUusage, GPUmemoryusage, GPUmemoryInUse, GPUvideoEncoderusage, GPUvideoDecoderusage, GPUtotalUsage, GPUVideoEncoderSessions, GPUVideoEncoderAverageFPS, GPUVideoEncoderLatency | Select -Skip 1
+            if ($Type -eq "Omnissa") {
+                $csvData = get-content $RDASource | ConvertFrom-String -Delimiter "," -PropertyNames Timestamp, currentCPU, currentRAM, totalCPU, encoderid, videoCodecid, VideoCodecUseid, currentBandwithoutput, currentLatency, currentavailableBandwidth, currentFps, NetworkLoss, totalBandwidthusage, averageBandwidthUsage, GPUusage, GPUmemoryusage, GPUmemoryInUse, GPUvideoEncoderusage, GPUvideoDecoderusage, GPUtotalUsage, GPUVideoEncoderSessions, GPUVideoEncoderAverageFPS, GPUVideoEncoderLatency | Select -Skip 1
+            } else {
+                $csvData = get-content $RDASource | ConvertFrom-String -Delimiter "," -PropertyNames Timestamp, screenResolutionid, encoderid, movingImageCompressionConfigurationid, preferredColorDepthid, videoCodecid, VideoCodecUseid, VideoCodecTextOptimizationid, VideoCodecColorspaceid, VideoCodecTypeid, HardwareEncodeEnabledid, VisualQualityid, FramesperSecondid, RDHSMaxFPS, currentCPU, currentRAM, totalCPU, currentFps, totalFps, currentRTT, NetworkLatency, NetworkLoss, CurrentBandwidthEDT, totalBandwidthusageEDT, averageBandwidthusageEDT, currentavailableEDTBandwidth, EDTInUseId, currentBandwithoutput, currentLatency, currentavailableBandwidth, totalBandwidthusage, averageBandwidthUsage, averageBandwidthAvailable, GPUusage, GPUmemoryusage, GPUmemoryInUse, GPUvideoEncoderusage, GPUvideoDecoderusage, GPUtotalUsage, GPUVideoEncoderSessions, GPUVideoEncoderAverageFPS, GPUVideoEncoderLatency | Select -Skip 1
+            }
             $csvData | Export-Csv -Path $RDADestination -NoTypeInformation
             Remove-Item -Path $RDASource -ErrorAction SilentlyContinue
         }
