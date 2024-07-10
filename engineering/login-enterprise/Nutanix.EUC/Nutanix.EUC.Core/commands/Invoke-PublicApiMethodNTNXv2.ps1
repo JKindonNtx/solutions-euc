@@ -37,10 +37,10 @@ function Invoke-PublicApiMethodNTNXv2 {
             $count++
             try {
                 if ($TargetCVM) {
-                    $URL = "https://$($TargetCVM):9440/api/nutanix/v0.8/$Path"
+                    $URL = "https://$($TargetCVM):9440/api/nutanix/v2.0/$Path"
                 }
                 else {
-                    $URL = "https://$($VSI_Target_CVM):9440/api/nutanix/v0.8/$Path"
+                    $URL = "https://$($VSI_Target_CVM):9440/api/nutanix/v2.0/$Path"
                 }
                 
                 if ($null -ne $Body) {

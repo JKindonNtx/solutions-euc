@@ -19,13 +19,20 @@ function Set-OmnissaVMsAhv {
 
     )
 
+    if (Test-Path -Path $RootPath -PathType Container) {
+        Write-Log -Message "Ansible playbook path $($RootPath) Exists" -Level Info
+    } else {
+        Write-Log -Message "Ansible playbook path $($RootPath) Does Not Exist" -Level Error
+        Exit 1
+    }
+
     Write-Log -Message "Getting Omnissa Base VM UUID" -Level Info
     $var_Omnissa_Base_Vm_Uuid = (Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq $BaseVM }).uuid
 
     if ($null -eq $var_Omnissa_Base_Vm_Uuid){
 
         Write-Log -Message "Omnissa Base VM $($BaseVM) Not Found" -Level Error
-        Break
+        Exit 1
 
     } else {
 
@@ -61,14 +68,18 @@ function Set-OmnissaVMsAhv {
             Write-Log -Update -Message "Deploying Machine $($i) of $($NumberOfVMs)." -Level Info
             $var_result = Set-NTNXVmClone -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword -VmUuid $var_Omnissa_Base_Vm_Uuid -Body $Payload
 
+            $VMtaskID = $var_result.task_uuid
+            Write-Log -Update -Message "Waiting for $($i) of $($NumberOfVMs) to complete." -Level Info
+            Do {
+                $VMtaskinfo = Invoke-PublicApiMethodNTNX -Method "GET" -Path "tasks/$($VMtaskID)" -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
+                $VMtaskstatus = $VMtaskinfo.percentage_complete
+                If ( $VMtaskstatus -ne 100) {
+                    Start-Sleep -seconds 1
+                }
+            }
+            Until ($VMtaskstatus -eq 100)
             $machineNames.Add($var_Machine_Name)
         }
-
-        # Get Tasks from PE
-        # Loop Until all tasks complete - 5 second loop
-        # Write log with update task complete
-        Write-Log -Message "Sleeping 30 Seconds to let deployment complete" -Level Info
-        Start-Sleep -Seconds 30
 
         $i = 1
         foreach ($var_VM in $machineNames) {
@@ -78,10 +89,13 @@ function Set-OmnissaVMsAhv {
             $i++
         }
 
-        # Check for Computer Object in AD using the Omnissa Api
-        # Count here needs to equal the number of desktops
-        Write-Log -Message "Waiting 1 minute to let VMs settle" -Level Info
-        Start-Sleep -Seconds 60
+        $machineCount = $machineNames | Measure-Object
+        Do {
+            Write-Log -Update -Message "Waiting for machines to power on" -Level Info
+            $VMsOn = (Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { ($_.name -like "$($var_Naming_Convention_Base)*") -and ($_.power_state -eq "on") } | measure-object).Count
+            Start-Sleep -seconds 1
+        }
+        Until ($VMsOn -eq $machineCount.Count)
 
         Write-Log -Message "Checking All VMs have a valid IP Address - Please wait" -Level Info
         do {
@@ -90,12 +104,15 @@ function Set-OmnissaVMsAhv {
             foreach ($var_VM in $machineNames) {
                 $CurrentVM = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq "$($var_VM)" }
                 $var_VM_Details = Get-OmnissaVMsIP -VmUuid $CurrentVM.uuid -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
-                #try catch here for pre boot situation
-                $var_VM_IP = $var_VM_Details.vm_nics[0].ip_address
-                if([string]::IsNullOrEmpty($var_VM_IP) -Or $var_VM_IP.StartsWith("169.254")) {
+                try {
+                    $var_VM_IP = $var_VM_Details.vm_nics[0].ip_address
+                    if([string]::IsNullOrEmpty($var_VM_IP) -Or $var_VM_IP.StartsWith("169.254")) {
+                        $var_Valid_Ips = $false
+                    } else {
+                        $var_Valid_Ips = $true
+                    }
+                } catch {
                     $var_Valid_Ips = $false
-                } else {
-                    $var_Valid_Ips = $true
                 }
             }
             Write-Log -Update -Message "Still waiting for valid IPs on all the VMs - Please wait" -Level Info
@@ -103,9 +120,43 @@ function Set-OmnissaVMsAhv {
         } While ($var_Valid_Ips -eq $false)
         Write-Log -Message "IP Addresses Validated - Continuing" -Level Info
 
-        Write-Log -Message "Waiting 1 minute to let VM services start up" -Level Info
+        Write-Log -Message "Checking All VMs have a valid WinRM Connection" -Level Info
+        do {
+            $var_Valid_WinRM = $false
+            Write-Log -Update -Message "Still waiting for all VMs to have a valid WinRM Connection - Please wait" -Level Info
+            foreach ($var_VM in $machineNames) {
+                $CurrentVM = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq "$($var_VM)" }
+                $var_VM_Details = Get-OmnissaVMsIP -VmUuid $CurrentVM.uuid -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
+                try {
+                    $var_VM_IP = $var_VM_Details.vm_nics[0].ip_address
+                    if([string]::IsNullOrEmpty($var_VM_IP) -Or $var_VM_IP.StartsWith("169.254")) {
+                        $var_Valid_WinRM = $false
+                    } else {
+                        $port = 5985
+                        $socket = New-Object System.Net.Sockets.TcpClient
+                        $connection = $socket.BeginConnect("$($var_VM_IP)", $port, $null, $null)
+                        $timeout = 1000
+                        $wait = $connection.AsyncWaitHandle.WaitOne($timeout, $false)
+                        if ($wait -and $socket.Connected) {
+                            $var_Valid_WinRM = $true
+                        } else {
+                            $var_Valid_WinRM = $false
+                        }
+                        $socket.Close()
+                    }
+                } catch {
+                    $var_Valid_WinRM = $false
+                }
+            }
+            Write-Log -Update -Message "Still waiting for all VMs to have a valid WinRM Connection - Please wait" -Level Info
+            Start-Sleep -Seconds 5
+        } While ($var_Valid_WinRM -eq $false)
+        Write-Log -Message "WinRM Validated - Continuing" -Level Info
+
+        Write-Log -Message "Pausing 1 minute to let VMs settle down" -Level Info
         Start-Sleep -Seconds 60
 
+        Write-Log -Message "Building Ansible Inventory List" -Level Info
         $var_Inventory_List = ""
         foreach ($var_VM in $machineNames) {
             $CurrentVM = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq "$($var_VM)" }
