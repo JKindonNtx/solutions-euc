@@ -10,7 +10,7 @@
     The path to the configuration file. Default value is "C:\Users\Dave\Documents\Github\solutions-euc\engineering\login-enterprise\ExampleConfig-Omnissa.jsonc".
 
 .EXAMPLE
-    Set-OmnissaManualPool.ps1 -ConfigFile "C:\Path\To\ConfigFile.jsonc"
+    Set-OmnissaManualPool.ps1 -ConfigFile "C:\Path\To\ConfigFile.jsonc" -Create
 #>
 
 #region Params
