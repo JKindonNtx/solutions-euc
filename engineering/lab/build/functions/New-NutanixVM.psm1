@@ -157,8 +157,8 @@ function New-NutanixVM {
         $Payload = "{ `
         ""boot"": { `
           ""boot_device_order"": [ `
-            ""CDROM"", `
             ""DISK"", `
+            ""CDROM"", `
             ""NIC""
           ], `
           ""secure_boot"": " + $Secureboot + ", `

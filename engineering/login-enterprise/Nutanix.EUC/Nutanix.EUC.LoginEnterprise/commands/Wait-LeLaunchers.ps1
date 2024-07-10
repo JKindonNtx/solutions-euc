@@ -5,15 +5,25 @@ function Wait-LELaunchers {
     Param (
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][Int32]$Amount,
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][String]$NamingPattern,
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][Int32]$TimeOutMinutes = 30
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][Int32]$TimeOutMinutes = 30,
+        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][Boolean]$RebootLaunchers
     )
 
     $NamingPattern = $NamingPattern -replace "_", ""
     $Launchers = Get-LELaunchers | Where-Object { $_.machineName -like "$($NamingPattern)*" }
-    # Testing without a Launcher Reboot as per Citrix Connection time
-    # Restart-LELaunchers -Launchers $Launchers
+    
+    # Handle Luancher Reboot Logic
+    if ($RebootLaunchers -eq $true) {
+        Write-Log -Message "Rebooting launchers." -Level Info
+        Restart-LELaunchers -Launchers $Launchers
+    } else {
+        # Testing without a Launcher Reboot as per Citrix Connection time
+        Write-Log -Message "Skipping Rebooting of launchers." -Level Info
+    }
+    
     Write-Log -Message "Waiting 15 seconds" -Level Info
     Start-Sleep 15
+    
     $StartStamp = Get-Date
     while ($true) {
         $NamingPattern = $NamingPattern -replace "_", ""

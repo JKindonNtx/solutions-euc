@@ -59,7 +59,7 @@ function Start-VSINTNXMonitoring {
 
             $results = Invoke-PublicApiMethodNTNX -Method "GET" -Path "hosts/$($Hostuuid)/stats/?metrics=hypervisor_cpu_usage_ppm&metrics=hypervisor_memory_usage_ppm"
             $resultsPower = Invoke-PublicApiMethodRedfish -IPMI_ip $IPMI_ip -Method "GET" -Path "Chassis/1/Power"
-            $resultsCluster = Invoke-PublicApiMethodNTNX -Method "GET" -Path "cluster/stats/?metrics=hypervisor_cpu_usage_ppm&metrics=hypervisor_cpu_usage_ppm&metrics=hypervisor_memory_usage_ppm&metrics=controller_num_write_iops&metrics=controller_num_read_iops&metrics=controller_num_iops&metrics=controller_avg_io_latency_usecs&metrics=controller_avg_read_io_latency_usecs&metrics=controller_avg_write_io_latency_usecs"
+            $resultsCluster = Invoke-PublicApiMethodNTNX -Method "GET" -Path "cluster/stats/?metrics=hypervisor_cpu_usage_ppm&metrics=hypervisor_cpu_usage_ppm&metrics=hypervisor_memory_usage_ppm&metrics=controller_num_write_iops&metrics=controller_num_read_iops&metrics=controller_num_iops&metrics=controller_avg_io_latency_usecs&metrics=controller_avg_read_io_latency_usecs&metrics=controller_avg_write_io_latency_usecs&metrics=num_iops&metrics=num_read_iops&metrics=num_write_iops"
             $allvms = Invoke-PublicApiMethodNTNXv1 -Method "GET" -Path "vms"
 
             $item = New-Object PSObject  
