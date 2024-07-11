@@ -24,7 +24,8 @@ function Remove-TestData {
             [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$false)]$Stop = "2023-01-14T00:00:00.000000000Z",
             [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$Test,
             [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$false)]$Run,
-            [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$false)]$Token
+            [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$false)]$Token,
+            [Parameter(ValuefromPipelineByPropertyName = $true,mandatory = $false)][switch]$LogonMetricsOnly
         )
     
         begin{
@@ -42,11 +43,31 @@ function Remove-TestData {
 
             # Remove Influx Test
             if($Run){
-                $Params = "delete --bucket $($Bucket) --start $($Start) --stop $($Stop) --predicate ""_measurement=\""$($Test)\"" and Run=\""$($Run)\"" "" --token $($Token)"
+                if ($LogonMetricsOnly) {
+                    $Values_to_delete = @('total_login_time','connection','user_profile','group_policies')
+                    foreach ($Value in $Values_to_delete) {
+                        Write-Log -Message "Processing delete of $($Value) for Run $($Run)" -Level Info
+                        $Params = "delete --bucket $($Bucket) --start $($Start) --stop $($Stop) --predicate ""_measurement=\""$($Test)\"" AND Run=\""$($Run)\"" AND id=\""$($Value)\"" "" --token $($Token)"
+                        $InfluxTest = Start-Process -FilePath $InfluxEXE -Wait -ArgumentList $Params -WindowStyle Minimized
+                    }
+                } else {
+                    $Params = "delete --bucket $($Bucket) --start $($Start) --stop $($Stop) --predicate ""_measurement=\""$($Test)\"" and Run=\""$($Run)\"" "" --token $($Token)"
+                    $InfluxTest = Start-Process -FilePath $InfluxEXE -Wait -ArgumentList $Params -WindowStyle Minimized
+                }
+                
             } else {
-                $Params = "delete --bucket $($Bucket) --start $($Start) --stop $($Stop) --predicate _measurement=\""$($Test)\"" --token $($Token)"
+                if ($LogonMetricsOnly) {
+                    $Values_to_delete = @('total_login_time','connection','user_profile','group_policies')
+                    foreach ($Value in $Values_to_delete) {
+                        Write-Log -Message "Processing delete of $($Value)" -Level Info
+                        $Params = "delete --bucket $($Bucket) --start $($Start) --stop $($Stop) --predicate _measurement=\""$($Test)\"" AND id=\""$($Value)\"" --token $($Token)"
+                        $InfluxTest = Start-Process -FilePath $InfluxEXE -Wait -ArgumentList $Params -WindowStyle Minimized
+                    }
+                } else {
+                    $Params = "delete --bucket $($Bucket) --start $($Start) --stop $($Stop) --predicate _measurement=\""$($Test)\"" --token $($Token)"
+                    $InfluxTest = Start-Process -FilePath $InfluxEXE -Wait -ArgumentList $Params -WindowStyle Minimized
+                }   
             }
-            $InfluxTest = Start-Process -FilePath $InfluxEXE -Wait -ArgumentList $Params -WindowStyle Minimized
 
             # Remove Influx Config
             $ConfigRemoveParams = "config delete influxdb"
