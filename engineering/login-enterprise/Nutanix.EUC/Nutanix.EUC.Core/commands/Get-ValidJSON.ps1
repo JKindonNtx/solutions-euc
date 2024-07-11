@@ -121,7 +121,7 @@ The configuration file to parse and validate
         #endregion Target Section Validation - General
         
         #region Target Section Validation - Citrix
-        if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
+        if (($Type -eq "CitrixVAD") -or ($Type -eq "CitrixDaaS")) {
             #Target.FunctionalLevel
             if ($configFileData.Target.FunctionalLevel -notin $Validated_Functional_Levels) {
                 Write-Log -Message "Citrix Functional Level Type $($configFileData.Target.FunctionalLevel) is not a valid type. Please check config file" -Level Error
@@ -158,26 +158,28 @@ The configuration file to parse and validate
             }
         }
 
-        # Check for API specific hosting requirements
-        if ($configFileData.Target.OrchestrationMethod -eq "API") {
-            # Target.HostingConnectionRootName
-            if ($configFileData.Target.psobject.Properties.Name -notcontains "HostingConnectionRootName") {
-                Write-Log -Message "You are missing the Target.HostingConnectionRootName object in your JSON file. This is required for Citrix Hosting Jobs via API" -Level Error
-                $ErrorCount ++
+        if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
+            # Check for API specific hosting requirements
+            if ($configFileData.Target.OrchestrationMethod -eq "API") {
+                # Target.HostingConnectionRootName
+                if ($configFileData.Target.psobject.Properties.Name -notcontains "HostingConnectionRootName") {
+                    Write-Log -Message "You are missing the Target.HostingConnectionRootName object in your JSON file. This is required for Citrix Hosting Jobs via API" -Level Error
+                    $ErrorCount ++
+                }
             }
-        }
 
-        # Check for API specific hosting requirements with ESXi
-        if ($configFileData.Target.OrchestrationMethod -eq "API" -and $configFileData.Target.HypervisorType -eq "ESXi") {
-            # Target.vSphereDataCenter
-            if ($configFileData.Target.psobject.Properties.Name -notcontains "vSphereDataCenter") {
-                Write-Log -Message "You are missing the Target.vSphereDataCenter object in your JSON file. This is required for Citrix Hosting Jobs via API when using ESXi" -Level Error
-                $ErrorCount ++
-            }
-            # Target.vSphereCluster
-            if ($configFileData.Target.psobject.Properties.Name -notcontains "vSphereCluster") {
-                Write-Log -Message "You are missing the Target.vSphereCluster object in your JSON file. This is required for Citrix Hosting Jobs via API when using ESXi" -Level Error
-                $ErrorCount ++
+            # Check for API specific hosting requirements with ESXi
+            if ($configFileData.Target.OrchestrationMethod -eq "API" -and $configFileData.Target.HypervisorType -eq "ESXi") {
+                # Target.vSphereDataCenter
+                if ($configFileData.Target.psobject.Properties.Name -notcontains "vSphereDataCenter") {
+                    Write-Log -Message "You are missing the Target.vSphereDataCenter object in your JSON file. This is required for Citrix Hosting Jobs via API when using ESXi" -Level Error
+                    $ErrorCount ++
+                }
+                # Target.vSphereCluster
+                if ($configFileData.Target.psobject.Properties.Name -notcontains "vSphereCluster") {
+                    Write-Log -Message "You are missing the Target.vSphereCluster object in your JSON file. This is required for Citrix Hosting Jobs via API when using ESXi" -Level Error
+                    $ErrorCount ++
+                }
             }
         }
         

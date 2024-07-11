@@ -306,7 +306,7 @@ if (-not $AzureMode.IsPresent) {
 
 #region Citrix Snapin Import
 #----------------------------------------------------------------------------------------------------------------------------
-if ($Type -eq "CitrixVAD" -or "CitrixDaaS") {
+if (($Type -eq "CitrixVAD") -or ($Type -eq "CitrixDaaS")) {
     if ($Config.Target.OrchestrationMethod -eq "Snapin") {
         if ($PSVersionTable.PSVersion.Major -gt 6) { 
             Write-Log -Message "You cannot use PowerShell $($PSVersionTable.PSVersion.Major) with Citrix snapins. Please revert to PowerShell 5.x" -Level Warn
@@ -1583,7 +1583,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 Domain      = $Config.Target.OmnissaApiDomain
                 PoolID      = $OmnissaPool.id
             }
-            $OmnissaMachines = Get-OmnissaMachines @params
+            $OmnissaMachines = Get-OmnissaMachinesPool @params
 
             $MasterImageDNS = $OmnissaMachines[0].dns_name
         }
