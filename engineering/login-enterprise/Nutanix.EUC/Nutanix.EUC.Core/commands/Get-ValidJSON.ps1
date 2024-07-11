@@ -35,6 +35,7 @@ The configuration file to parse and validate
         $Validated_RefreshOsDiskAfterLogoff = @("ALWAYS","NEVER")
         $Validated_User_Assignments = @("DEDICATED","FLOATING")
         $Validated_Provisioning_Modes = @("AllMachinesUpFront","OnDemand","Manual")
+        $Validated_Omnissa_Provisioning_Modes = @("Manual")
         #Test Section Valid Settings
         $Validated_Bucket_Names = @("LoginDocuments", "LoginRegression", "AzurePerfData")
     }
@@ -244,6 +245,41 @@ The configuration file to parse and validate
             }
         }
         #endregion Target Section Validation - Horizon
+
+        #region Target Section Validation - Omnissa
+        if ($Type -eq "Omnissa") {
+            #Target.OmnissaConnectionServer
+            if ($ConfigFileData.Target.psobject.Properties.Name -notcontains "OmnissaConnectionServer") {
+                Write-Log -Message "You are missing the Target.OmnissaConnectionServer object in your JSON file. This is required for Omnissa Tests" -Level Error
+                $ErrorCount ++
+            }
+            #Target.OmnissaApiUserName
+            if ($ConfigFileData.Target.psobject.Properties.Name -notcontains "OmnissaApiUserName") {
+                Write-Log -Message "You are missing the Target.OmnissaApiUserName object in your JSON file. This is required for Omnissa Tests" -Level Error
+                $ErrorCount ++
+            }
+            #Target.OmnissaApiPassword
+            if ($ConfigFileData.Target.psobject.Properties.Name -notcontains "OmnissaApiPassword") {
+                Write-Log -Message "You are missing the Target.OmnissaApiPassword object in your JSON file. This is required for Omnissa Tests" -Level Error
+                $ErrorCount ++
+            }
+            #Target.OmnissaApiDomain
+            if ($ConfigFileData.Target.psobject.Properties.Name -notcontains "OmnissaApiDomain") {
+                Write-Log -Message "You are missing the Target.OmnissaApiDomain object in your JSON file. This is required for Omnissa Tests" -Level Error
+                $ErrorCount ++
+            }
+            #Target.OmnissaProvisioningMode
+            if ($ConfigFileData.Target.psobject.Properties.Name -notcontains "OmnissaProvisioningMode") {
+                Write-Log -Message "You are missing the Target.OmnissaProvisioningMode object in your JSON file. This is required for Omnissa Tests" -Level Error
+                $ErrorCount ++
+            }
+            # Provisioning Mode Validation
+            if ($configFileData.Target.OmnissaProvisioningMode -notin $Validated_Omnissa_Provisioning_Modes) {
+                Write-Log -Message "Omnissa Provisioning Mode Type $($configFileData.Target.OmnissaProvisioningMode) is not a valid type. Please check config file" -Level Error
+                $ErrorCount ++
+            }
+        }
+        #endregion Target Section Validation - Omnissa
 
         #region Test Section
 
