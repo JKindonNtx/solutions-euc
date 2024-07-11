@@ -606,7 +606,7 @@ if (-not $AzureMode.IsPresent) {
         $params = $null
     }
     
-    If ($NTNXInfra.Target.DeliveryType -eq "Omnissa") {
+    If ($Type -eq "Omnissa") {
         # This is a placeholder for Omnissa Specific Tests
         if ($NTNXInfra.Target.OmnissaProvisioningMode -eq "Manual") {
             # Manual Pool - Skip or placeholder for future code
@@ -1568,20 +1568,20 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         if ($Type -eq "Omnissa") {
             $params = @{
-                ApiEndpoint     = $VSI_Target_OmnissaConnectionServer
-                UserName       = $VSI_Target_OmnissaApiUserName
-                Password      = $VSI_Target_OmnissaApiPassword
-                Domain      = $VSI_Target_OmnissaApiDomain
-                PoolName   = $VSI_Target_DesktopPoolName
+                ApiEndpoint = $Config.Target.OmnissaConnectionServer
+                UserName    = $Config.Target.OmnissaApiUserName
+                Password    = $Config.Target.OmnissaApiPassword
+                Domain      = $Config.Target.OmnissaApiDomain
+                PoolName    = $Config.Target.DesktopPoolName
             }
             $OmnissaPool = Get-OmnissaDesktopPools @params
 
             $params = @{
-                ApiEndpoint     = $VSI_Target_OmnissaConnectionServer
-                UserName       = $VSI_Target_OmnissaApiUserName
-                Password      = $VSI_Target_OmnissaApiPassword
-                Domain      = $VSI_Target_OmnissaApiDomain
-                PoolID   = $OmnissaPool.id
+                ApiEndpoint = $Config.Target.OmnissaConnectionServer
+                UserName    = $Config.Target.OmnissaApiUserName
+                Password    = $Config.Target.OmnissaApiPassword
+                Domain      = $Config.Target.OmnissaApiDomain
+                PoolID      = $OmnissaPool.id
             }
             $OmnissaMachines = Get-OmnissaMachines @params
 
@@ -1830,37 +1830,37 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 AccountGroupName   = $VSI_Users_GroupName
                 SessionMetricGroup = $VSI_Target_SessionMetricGroupName
                 ConnectorName      = "VMware Horizon View"
-                ConnectorParams    = @{serverUrl = $VSI_Target_OmnissaConnectionServer; resource = $VSI_Target_DesktopPoolName }
+                ConnectorParams    = @{serverUrl = $Config.Target.OmnissaConnectionServer; resource = $Config.Target.DesktopPoolName }
                 Workload           = $VSI_Target_Workload
             }
             $testId = Set-LELoadTestv7 @Params
             $params = $null
             
             $params = @{
-                ApiEndpoint     = $VSI_Target_OmnissaConnectionServer
-                UserName       = $VSI_Target_OmnissaApiUserName
-                Password      = $VSI_Target_OmnissaApiPassword
-                Domain      = $VSI_Target_OmnissaApiDomain
-                PoolName   = $VSI_Target_DesktopPoolName
+                ApiEndpoint = $Config.Target.OmnissaConnectionServer
+                UserName    = $Config.Target.OmnissaApiUserName
+                Password    = $Config.Target.OmnissaApiPassword
+                Domain      = $Config.Target.OmnissaApiDomain
+                PoolName    = $Config.Target.DesktopPoolName
             }
             $CreatedPool = Get-OmnissaDesktopPools @params
 
             $params = @{
-                ApiEndpoint     = $VSI_Target_OmnissaConnectionServer
-                UserName       = $VSI_Target_OmnissaApiUserName
-                Password      = $VSI_Target_OmnissaApiPassword
-                Domain      = $VSI_Target_OmnissaApiDomain
+                ApiEndpoint = $Config.Target.OmnissaConnectionServer
+                UserName    = $Config.Target.OmnissaApiUserName
+                Password    = $Config.Target.OmnissaApiPassword
+                Domain      = $Config.Target.OmnissaApiDomain
                 GroupName   = $VSI_Users_GroupName
             }
             $OmnissaGroup = Get-OmnissaGroupSID @params
 
             $params = @{
-                ApiEndpoint     = $VSI_Target_OmnissaConnectionServer
-                UserName       = $VSI_Target_OmnissaApiUserName
-                Password      = $VSI_Target_OmnissaApiPassword
-                Domain      = $VSI_Target_OmnissaApiDomain
-                PoolId   = $CreatedPool.id
-                GroupID = $OmnissaGroup.id
+                ApiEndpoint = $Config.Target.OmnissaConnectionServer
+                UserName    = $Config.Target.OmnissaApiUserName
+                Password    = $Config.Target.OmnissaApiPassword
+                Domain      = $Config.Target.OmnissaApiDomain
+                PoolId      = $CreatedPool.id
+                GroupID     = $OmnissaGroup.id
             }
             $Entitlement = Set-OmnissaManualPoolEntitlement @params
         }
