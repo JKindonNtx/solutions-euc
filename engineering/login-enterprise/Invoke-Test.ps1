@@ -609,9 +609,9 @@ if (-not $AzureMode.IsPresent) {
     If ($Type -eq "Omnissa") {
         # This is a placeholder for Omnissa Specific Tests
         if ($NTNXInfra.Target.OmnissaProvisioningMode -eq "Manual") {
-            # Manual Pool - Skip or placeholder for future code
+            Write-Log -Message "This is a Omnissa Manual Pool test. No snapshot validation required." -Level Info
         } else {
-            # Placeholder to validate VM Template
+            # Placeholder to validate VM Template for Omnissa Automated Pool
         }
     }    
 }
@@ -674,6 +674,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     if ($VSI_Target_Workload -eq "Knowledge Worker") {
         $LEWorkload = "KW"
         $WLmultiplier = 1.1
+    }
+    if ($VSI_Target_Workload -eq "GPU Worker") {
+        $LEWorkload = "GPU"
+        $WLmultiplier = 1.0
     }
     Write-Log -Message "LE Worker Profile is: $($VSI_Target_Workload) and the Workload is set to: $($LEWorkload)" -Level Info
     #endregion Define Workload Profiles
@@ -934,6 +938,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $params = $null
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
+
+        # Placeholder for any future Omnissa specific validation steps
     }
     #endregion Omnissa validation
 
@@ -1137,7 +1143,11 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #region Update Test Dashboard
         if (-not $AzureMode.IsPresent) { 
             # This is not an Azure configuration
-            $Message = "Creating $($Type) Desktop Pool" 
+            if (($Type -eq "Omnissa") -and ($NTNXInfra.Target.OmnissaProvisioningMode -eq "Manual")) {
+                $Message = "Skipping Creating $($Type) Manual Desktop Pool" 
+            } else {
+                $Message = "Creating $($Type) Desktop Pool" 
+            }
         }        
         else { 
             $Message = "Skipping Creating $($Type) Desktop Pool" 
@@ -1329,7 +1339,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
 
         if ($Type -eq "Omnissa") {
-            Write-Log -Message "Skipping Desktop Pool Creation - Omnissa Manual Desktop Pool" -Level Info
+            if ($NTNXInfra.Target.OmnissaProvisioningMode -eq "Manual") {
+                # Placeholder for integrating Set-OmnissaManualPool function to potentially create the manual pool as part of the test run
+                # Would rely on either running in a container for Ansible
+                $Message = "Skipping Creating $($Type) Manual Desktop Pool" 
+            } else {
+                # Placeholder for creating an automated Omnissa Desktop Pool 
+            }
         }
 
         #endregion Configure Desktop Pool
@@ -1503,16 +1519,24 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
 
         if ($Type -eq "Omnissa") {
-            if ($NTNXInfra.Target.OmnissaProvisioningMode -eq "Manual") {
-                $Boot = "" | Select-Object -Property bootstart, boottime, firstvmname
-                $Boot.bootstart = get-date -format o
-                $BootStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-                Start-Sleep -Seconds 5
-                $BootStopwatch.stop()
-                $Boot.boottime = $BootStopwatch.elapsed.totalseconds
-            } else {
-                # Placeholder for Omnissa Cloned Desktops
+            $params = @{
+                ApiEndpoint         = $VSI_Target_OmnissaConnectionServer
+                UserName            = $VSI_Target_OmnissaApiUserName
+                Password            = $VSI_Target_OmnissaApiPassword
+                Domain              = $VSI_Target_OmnissaApiDomain
+                CloneType           = $VSI_Target_OmnissaProvisioningMode
+                PoolName            = $VSI_Target_DesktopPoolName
+                TargetCVM           = $VSI_Target_CVM
+                TargetCVMAdmin      = $VSI_Target_CVM_admin
+                TargetCVMPassword   = $VSI_Target_CVM_password
+                Affinity            = $NTNXInfra.Testinfra.SetAffinity
+                HypervisorType      = $VSI_Target_HypervisorType
+                ForceAlignVMToHost  = $NTNXInfra.Target.ForceAlignVMToHost
+                VMnameprefix        = $NTNXInfra.Target.NamingPattern
+                Hosts               = $NTNXInfra.Testinfra.Hostip
+                Run                 = $i
             }
+            $Boot = Enable-OmnissaPool @params
         }
 
         if (-not $AzureMode.IsPresent) { 
