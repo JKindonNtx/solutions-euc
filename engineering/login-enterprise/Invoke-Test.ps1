@@ -1526,7 +1526,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 Domain              = $VSI_Target_OmnissaApiDomain
                 CloneType           = $VSI_Target_OmnissaProvisioningMode
                 PoolName            = $VSI_Target_DesktopPoolName
-                TargetCVM           = $VSI_Target_CVM
+                TargetCVM           = $NTNXInfra.Target.CVM
                 TargetCVMAdmin      = $VSI_Target_CVM_admin
                 TargetCVMPassword   = $VSI_Target_CVM_password
                 Affinity            = $NTNXInfra.Testinfra.SetAffinity
@@ -1535,6 +1535,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 VMnameprefix        = $NTNXInfra.Target.NamingPattern
                 Hosts               = $NTNXInfra.Testinfra.Hostip
                 Run                 = $i
+                CVMSSHPassword      = $NTNXInfra.Target.CVMsshpassword
             }
             $Boot = Enable-OmnissaPool @params
         }
@@ -2792,11 +2793,11 @@ if (-not $AzureMode.IsPresent) {
             $Params = $null
         }
         elseif ($config.Target.OrchestrationMethod -eq "API") {}
-    }
-    if ($CitrixMachinesFinalShutdown -eq $true) {
-        Write-Log -Message "All machines powered down ready for next test" -level Info
-    } else {
-        Write-Log -Message "Not all machines confirmed down. Check before next test run." -Level Warn
+        if ($CitrixMachinesFinalShutdown -eq $true) {
+            Write-Log -Message "All machines powered down ready for next test" -level Info
+        } else {
+            Write-Log -Message "Not all machines confirmed down. Check before next test run." -Level Warn
+        }
     }
 }
 #endregion shutdown citrix machines after final run

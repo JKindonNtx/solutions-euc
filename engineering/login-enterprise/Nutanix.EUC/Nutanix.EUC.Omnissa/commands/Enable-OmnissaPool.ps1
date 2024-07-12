@@ -17,7 +17,8 @@ function Enable-OmnissaPool {
         $ForceAlignVMToHost,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$VMnameprefix,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$hosts,
-        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$Run
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$Run,
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$CVMsshpassword
     )
 
     $Boot = "" | Select-Object -Property bootstart,boottime
@@ -43,7 +44,7 @@ function Enable-OmnissaPool {
     if (($HypervisorType) -eq "AHV" -And ($Affinity) -and (-not $ForceAlignVMToHost)) {
         Write-Log "Hypervisortype = $HypervisorType and Single Node Affinity is set to $Affinity"
         $params = @{
-            ClusterIP      = $ClusterIP
+            ClusterIP      = $TargetCVM
             CVMsshpassword = $CVMSSHPassword
             VMnameprefix   = $VMnameprefix
             hosts          = $hosts
@@ -73,7 +74,7 @@ function Enable-OmnissaPool {
         Write-Log -Message "Waiting for VMs to register with Omnissa - Please wait" -Level Info
         do {
             Write-Log -Update -Message "Still waiting for VMs to register with Omnissa - Please wait" -Level Info
-            $Unregistered = ((Get-OmnissaMachinesPool -ApiEndpoint $var_Api_Endpoint -UserName $var_UserName -Password $var_Password -Domain $var_Domain -PoolID $ExistingPool.id | Where-Object { $_.state -ne "AVAILABLE" }) | Measure-Object).Count
+            $Unregistered = ((Get-OmnissaMachinesPool -ApiEndpoint $ApiEndpoint -UserName $UserName -Password $Password -Domain $Domain -PoolID $ExistingPool.id | Where-Object { $_.state -ne "AVAILABLE" }) | Measure-Object).Count
             Start-Sleep -Seconds 1
         } While ($Unregistered -ne 0)
 
