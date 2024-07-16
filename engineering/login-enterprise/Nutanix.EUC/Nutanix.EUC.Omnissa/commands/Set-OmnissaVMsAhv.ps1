@@ -93,7 +93,7 @@ function Set-OmnissaVMsAhv {
         Do {
             Write-Log -Update -Message "Waiting for machines to power on" -Level Info
             $VMsOn = (Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { ($_.name -like "$($var_Naming_Convention_Base)*") -and ($_.power_state -eq "on") } | measure-object).Count
-            Start-Sleep -seconds 1
+            Start-Sleep -seconds 5
         }
         Until ($VMsOn -eq $machineCount.Count)
 
@@ -169,7 +169,7 @@ function Set-OmnissaVMsAhv {
         Write-Log -Message "Running Optimizations" -Level Info
         $Playbook = $RootPath + "omnissa_manual_pool_post_deployment.yml"
         $command = "ansible-playbook"
-        $arguments = "-f 50 -i " + $var_Inventory_List_Cleaned + ", " + $playbook
+        $arguments = "-f 20 -i " + $var_Inventory_List_Cleaned + ", " + $playbook
         start-process -filepath $command -argumentlist $arguments -passthru -wait 
         
         return $machineNames
