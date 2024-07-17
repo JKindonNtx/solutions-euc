@@ -14,6 +14,8 @@
 .PARAMETER iconsSource
 .PARAMETER ExcludedComponentList
     Optional Array. Excludes specific items from processing. Default Exclusion is "BootInfo","IndividualRuns","NutanixFiles","CitrixNetScaler". Include "none" to Exclude none.
+.PARAMETER GraphsToExcludeList
+    Optional Array. Excludes specific graph downloads. Default Exclusion is "None". Include "none" to Exclude none.
 .EXAMPLE
     .\New-GrafanaReport.ps1 -SourceUri "http://grafanareport" -ReportTitle RAS_WinServ2022_Linked_vs_Full_Clone -ImageSuffix 2022_prov
     Will use the "http://grafanareport" Uri, create a folder structure and report based on the "RAS_WinServ2022_Linked_vs_Full_Clone" input and suffix all images with "2022_prov"
@@ -38,6 +40,7 @@
     29.11.2023: Added Cluster Hosting Files Panels to Nutanix Files download section (Panel ID: 159-166)
     27.06.2024: Added Nutanix Cluster Disk Panels for Download, both cluster and individual runs. (Panel ID: 190-197)
     27.06.2024: Added RapidRA switch. Only downloads panels in the RapidRA array. Saves download time for non-relevant images when creating RA docs.
+    17.07.2024: Added GraphsToExcludeList parameter. Allows for exclusion of specific graph downloads. Default is None. Can be set to exclude specific graph downloads but keep document info.
 - To Do
  -> Function this sucker - Inject between section headers
     # Add Page Break
@@ -74,6 +77,10 @@ Param(
     [Parameter(Mandatory = $false)]
     [ValidateSet("BootInfo","LoginEnterpriseResults","HostResources","ClusterResources","LoginTimes","Applications","VsiEuxMeasurements","RDA","IndividualRuns","NutanixFiles","CitrixNetScaler","None")]
     [Array]$ExcludedComponentList = ("IndividualRuns","NutanixFiles","CitrixNetScaler"), # Items to exclude
+
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("BootInfo","LoginEnterpriseResults","HostResources","ClusterResources","LoginTimes","Applications","VsiEuxMeasurements","RDA","IndividualRuns","NutanixFiles","CitrixNetScaler","None")]
+    [Array]$GraphsToExcludeList = ("None"), # Graph downloads to exclude
 
     [Parameter(Mandatory = $false)]
     [string]$ImageReferenceCSV,
@@ -1288,19 +1295,20 @@ $LoginTimeResults = Get-PayloadResults -TestDetails $LoginTimeDetails -Order $Lo
 # Section - Download Icons
 # -----------------------------------------------------------------------------------------------------------------------
 #region Download Icons
-Write-Screen -Message "Downloading Icons"
+if (-not $RapidRA) {
+    Write-Screen -Message "Downloading Icons"
 
-# Loop through the icons and download the images
-foreach($icon in $icons){
-    ## Test it first
-    $IconOut = (Join-Path -Path $imagePath -ChildPath "$($icon).png")
-    if (Test-Path  -Path $IconOut) {
-        Write-Screen -Message "Icon File $($IconOut) already exists. Not downloading. Delete the file if you want to re-download it"
+    # Loop through the icons and download the images
+    foreach($icon in $icons){
+        ## Test it first
+        $IconOut = (Join-Path -Path $imagePath -ChildPath "$($icon).png")
+        if (Test-Path  -Path $IconOut) {
+            Write-Screen -Message "Icon File $($IconOut) already exists. Not downloading. Delete the file if you want to re-download it"
+        }
+        else {
+            Get-UriFile -Uri ($iconsSource + "$($icon).png") -OutFile $IconOut
+        }
     }
-    else {
-        Get-UriFile -Uri ($iconsSource + "$($icon).png") -OutFile $IconOut
-    }
-    #Get-UriFile -Uri ($iconsSource + "$($icon).png") -OutFile (Join-Path -Path $imagePath -ChildPath "$($icon).png")
 }
 #endregion Download Icons
 
@@ -1316,7 +1324,7 @@ foreach($icon in $icons){
 if ($RapidRA) {
     Write-Screen -Message "Downloading Rapid RA Graphs Only"
     # Build the PanelID Array 
-    $Panels = @('16', '13', '9', '14', '120', '53', '187', '188', '58')
+    $Panels = @('16', '13', '9', '14', '120', '53', '187', '188', '204')
     $endtime = "1672538820000"
     Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
 }
@@ -1329,12 +1337,16 @@ if ($RapidRA) {
 # Execute if Option Enabled
 if (-not $RapidRA) {
     if ($BootInfo) {
-        Write-Screen -Message "Downloading Boot Info Graphs"
-        # Build the PanelID Array 
-        $Panels = @('85', '84', '86', '94', '92', '96', '89', '95', '93', '97', '157')   
-        [int]$maxboottime = (($testDetailResults.boottime | measure -Maximum).maximum + 150) * 1000
-        $endtime = 1672534800000 + $maxboottime
-        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        if ($GraphsToExcludeList -notcontains "BootInfo") {
+            Write-Screen -Message "Downloading Boot Info Graphs"
+            # Build the PanelID Array 
+            $Panels = @('85', '84', '86', '94', '92', '96', '89', '95', '93', '97', '157')   
+            [int]$maxboottime = (($testDetailResults.boottime | Measure-Object -Maximum).maximum + 150) * 1000
+            $endtime = 1672534800000 + $maxboottime
+            Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        } else {
+            Write-Screen -Message "Boot Info graphs excluded from download by parameter"
+        }
     }
     else {
         Write-Screen -Message "Boot Info Download Skipped"
@@ -1349,11 +1361,15 @@ if (-not $RapidRA) {
 # Execute if Option Enabled
 if (-not $RapidRA) {
     if ($LoginEnterpriseResults) {
-        Write-Screen -Message "Downloading Login Enterprise Graphs"
-        # Build the PanelID Array 
-        $Panels = @('2', '5', '8', '4', '7', '6', '99', '100', '10', '101')  
-        $endtime = "1672538820000"
-        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        if ($GraphsToExcludeList -notcontains "LoginEnterprise") {
+            Write-Screen -Message "Downloading Login Enterprise Graphs"
+            # Build the PanelID Array 
+            $Panels = @('2', '5', '8', '4', '7', '6', '99', '100', '10', '101')  
+            $endtime = "1672538820000"
+            Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        } else {
+            Write-Screen -Message "Login Enterprise graphs excluded from download by parameter"
+        }
     }
     else {
         Write-Screen -Message "Login Enterprise Results Download Skipped"
@@ -1368,15 +1384,19 @@ if (-not $RapidRA) {
 # Execute if Option Enabled
 if (-not $RapidRA) {
     if ($HostResources) {
-        Write-Screen -Message "Downloading Host Resources Graphs"
-        # Build the PanelID Array 
-        $Panels = @('13', '83', '14', '9')  
-        $endtime = "1672538820000"
-        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
-        # Get Steady State Data
-        $Panels = @('14')  
-        $endtime = "1672538820000"
-        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath -SteadyState
+        if ($GraphsToExcludeList -notcontains "HostResources") {
+            Write-Screen -Message "Downloading Host Resources Graphs"
+            # Build the PanelID Array 
+            $Panels = @('13', '83', '14', '9')  
+            $endtime = "1672538820000"
+            Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+            # Get Steady State Data
+            $Panels = @('14')  
+            $endtime = "1672538820000"
+            Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath -SteadyState
+        } else {
+            Write-Screen -Message "Host Resources graphs excluded from download by parameter"
+        }
     }
     else {
         Write-Screen -Message "Host Resources Download Skipped"
@@ -1391,11 +1411,15 @@ if (-not $RapidRA) {
 # Execute if Option Enabled
 if (-not $RapidRA) {
     if ($ClusterResources) {
-        Write-Screen -Message "Downloading Cluster Resources Graphs"
-        # Build the PanelID Array 
-        $Panels = @('53', '120', '54', '57', '58', '187', '188', '190', '191', '192', '193')  
-        $endtime = "1672538820000"
-        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        if ($GraphsToExcludeList -notcontains "ClusterResources") {
+            Write-Screen -Message "Downloading Cluster Resources Graphs"
+            # Build the PanelID Array 
+            $Panels = @('53', '120', '54', '57', '58', '187', '188', '190', '191', '192', '193', '204')  
+            $endtime = "1672538820000"
+            Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        } else {
+            Write-Screen -Message "Cluster Resources graphs excluded from download by parameter"
+        }
     }
     else {
         Write-Screen -Message "Cluster Resources Download Skipped"
@@ -1410,11 +1434,15 @@ if (-not $RapidRA) {
 # Execute if Option Enabled
 if (-not $RapidRA) {
     if ($LoginTimes) {
-        Write-Screen -Message "Downloading Login Times Graphs"
-        # Build the PanelID Array 
-        $Panels = @('61', '98', '16', '28', '27', '29')  
-        $endtime = "1672538820000"
-        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        if ($GraphsToExcludeList -notcontains "LoginTimes") {
+            Write-Screen -Message "Downloading Login Times Graphs"
+            # Build the PanelID Array 
+            $Panels = @('61', '98', '16', '28', '27', '29')  
+            $endtime = "1672538820000"
+            Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        } else {
+            Write-Screen -Message "Login Times graphs excluded from download by parameter"
+        }
     }
     else {
         Write-Screen -Message "Login Times Download Skipped" 
@@ -1429,11 +1457,15 @@ if (-not $RapidRA) {
 # Execute if Option Enabled
 if (-not $RapidRA) {
     if ($RDA) {
-        Write-Screen -Message "Downloading Remote Display Analytics Graphs"
-        # Build the PanelID Array 
-        $Panels = @('110', '111', '112', '115', '113', '116', '117', '114')  
-        $endtime = "1672538820000"
-        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        if ($GraphsToExcludeList -notcontains "RDA") {
+            Write-Screen -Message "Downloading Remote Display Analytics Graphs"
+            # Build the PanelID Array 
+            $Panels = @('110', '111', '112', '115', '113', '116', '117', '114')  
+            $endtime = "1672538820000"
+            Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        } else {
+            Write-Screen -Message "Remote Display Analytics graphs excluded from download by parameter"
+        }
     }
     else {
         Write-Screen -Message "Remote Display Analytics Download Skipped"   
@@ -1448,11 +1480,15 @@ if (-not $RapidRA) {
 # Execute if Option Enabled
 if (-not $RapidRA) {
     if ($IndividualRuns) {
-        Write-Screen -Message "Downloading Individual Runs Graphs"
-        # Build the PanelID Array 
-        $Panels = @('66', '67', '68', '70', '69', '119', '156', '194', '195', '196', '197')  
-        $endtime = "1672538820000"
-        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        if ($GraphsToExcludeList -notcontains "IndividualRuns") {
+            Write-Screen -Message "Downloading Individual Runs Graphs"
+            # Build the PanelID Array 
+            $Panels = @('66', '67', '68', '70', '69', '119', '156', '194', '195', '196', '197')  
+            $endtime = "1672538820000"
+            Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        } else {
+            Write-Screen -Message "Individual Runs graphs excluded from download by parameter"
+        }
     }
     else {
         Write-Screen -Message "Individual Runs Download Skipped"  
@@ -1467,11 +1503,15 @@ if (-not $RapidRA) {
 # Execute if Option Enabled
 if (-not $RapidRA) {
     if ($Applications) {
-        Write-Screen -Message "Downloading Applications Graphs"
-        # Build the PanelID Array 
-        $Panels = @('31', '32', '33', '34', '37', '38', '39', '40', '36', '42', '44', '43', '35', '41', '102')  
-        $endtime = "1672538820000"
-        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        if ($GraphsToExcludeList -notcontains "Applications") {
+            Write-Screen -Message "Downloading Applications Graphs"
+            # Build the PanelID Array 
+            $Panels = @('31', '32', '33', '34', '37', '38', '39', '40', '36', '42', '44', '43', '35', '41', '102')  
+            $endtime = "1672538820000"
+            Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        } else {
+            Write-Screen -Message "Applications graphs excluded from download by parameter"
+        }
     }
     else {
         Write-Screen -Message "Applications Download Skipped"  
@@ -1486,11 +1526,15 @@ if (-not $RapidRA) {
 # Execute if Option Enabled
 if (-not $RapidRA) {
     if ($VsiEuxMeasurements) {
-        Write-Screen -Message "Downloading VSI EUX Measurements Graphs"
-        # Build the PanelID Array 
-        $Panels = @('15', '30', '45', '46', '47', '48', '49', '50')  
-        $endtime = "1672538820000"
-        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        if ($GraphsToExcludeList -notcontains "VsiEuxMeasurements") {
+            Write-Screen -Message "Downloading VSI EUX Measurements Graphs"
+            # Build the PanelID Array 
+            $Panels = @('15', '30', '45', '46', '47', '48', '49', '50')  
+            $endtime = "1672538820000"
+            Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        } else {
+            Write-Screen -Message "VSI EUX Measurements graphs excluded from download by parameter"
+        }
     }
     else {
         Write-Screen -Message "VSI EUX Measurements Download Skipped"  
@@ -1505,11 +1549,21 @@ if (-not $RapidRA) {
 # Execute if Option Enabled
 if (-not $RapidRA) {
     if ($NutanixFiles) {
-        Write-Screen -Message "Downloading Nutanix Files Graphs"
-        # Build the PanelID Array 
-        $Panels = @('71', '77', '78', '79', '127', '128', '129', '130', '131', '132', '133', '134', '135', '136', '137', '138', '139', '140', '141', '142', '143', '144', '145', '146', '147', '148', '149', '150', '151', '152', '153', '154', '159', '161' ,'160', '162', '163', '164', '166', '165')  
-        $endtime = "1672538820000"
-        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        if ($GraphsToExcludeList -notcontains "NutanixFiles") { 
+            Write-Screen -Message "Downloading Nutanix Files Graphs"
+            # Build the PanelID Array 
+            $Panels = @('71', '77', '78', '79', '131', '132', '133', '134', '135', '136', '137', '138', '139', '140', '141', '142', '149', '159', '161' ,'160', '162', '163', '164', '166', '165')  
+            $endtime = "1672538820000"
+            Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+            if ($IndividualRuns) {
+                Write-Screen -Message "Downloading Individual Nutanix Files Runs Graphs"
+                # Build the PanelID Array 
+                $Panels = @('127', '143', '144', '145', '128', '149', '150', '151', '152', '129', '146', '147', '148', '130', '153', '154')
+                Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+            }
+        } else {
+            Write-Screen -Message "Nutanix Files graphs excluded from download by parameter"
+        }
     }
     else {
         Write-Screen -Message "Nutanix Files Download Skipped"
@@ -1524,11 +1578,15 @@ if (-not $RapidRA) {
 # Execute if Option Enabled
 if (-not $RapidRA) {
     if ($CitrixNetScaler) {
-        Write-Screen -Message "Downloading Citrix NetScaler Graphs"
-        # Build the PanelID Array 
-        $Panels = @('80', '81', '82', '104', '105', '103', '106')
-        $endtime = "1672538820000"
-        Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        if ($GraphsToExcludeList -notcontains "CitrixNetScaler") {
+            Write-Screen -Message "Downloading Citrix NetScaler Graphs"
+            # Build the PanelID Array 
+            $Panels = @('80', '81', '82', '104', '105', '103', '106')
+            $endtime = "1672538820000"
+            Get-Graphs -Panels $Panels -EndTime $endtime -SourceUri $SourceUri -imagePath $imagePath
+        } else {
+            Write-Screen -Message "Citrix NetScaler graphs excluded from download by parameter"
+        }
     }
     else {
         Write-Screen -Message "Citrix NetScaler Download Skipped"   
