@@ -35,6 +35,7 @@ The configuration file to parse and validate
         $Validated_RefreshOsDiskAfterLogoff = @("ALWAYS","NEVER")
         $Validated_User_Assignments = @("DEDICATED","FLOATING")
         $Validated_Provisioning_Modes = @("AllMachinesUpFront","OnDemand","Manual")
+        $Validated_Omnissa_Provisioning_Modes = @("Manual")
         #Test Section Valid Settings
         $Validated_Bucket_Names = @("LoginDocuments", "LoginRegression", "AzurePerfData")
     }
@@ -120,7 +121,7 @@ The configuration file to parse and validate
         #endregion Target Section Validation - General
         
         #region Target Section Validation - Citrix
-        if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
+        if (($Type -eq "CitrixVAD") -or ($Type -eq "CitrixDaaS")) {
             #Target.FunctionalLevel
             if ($configFileData.Target.FunctionalLevel -notin $Validated_Functional_Levels) {
                 Write-Log -Message "Citrix Functional Level Type $($configFileData.Target.FunctionalLevel) is not a valid type. Please check config file" -Level Error
@@ -157,26 +158,28 @@ The configuration file to parse and validate
             }
         }
 
-        # Check for API specific hosting requirements
-        if ($configFileData.Target.OrchestrationMethod -eq "API") {
-            # Target.HostingConnectionRootName
-            if ($configFileData.Target.psobject.Properties.Name -notcontains "HostingConnectionRootName") {
-                Write-Log -Message "You are missing the Target.HostingConnectionRootName object in your JSON file. This is required for Citrix Hosting Jobs via API" -Level Error
-                $ErrorCount ++
+        if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
+            # Check for API specific hosting requirements
+            if ($configFileData.Target.OrchestrationMethod -eq "API") {
+                # Target.HostingConnectionRootName
+                if ($configFileData.Target.psobject.Properties.Name -notcontains "HostingConnectionRootName") {
+                    Write-Log -Message "You are missing the Target.HostingConnectionRootName object in your JSON file. This is required for Citrix Hosting Jobs via API" -Level Error
+                    $ErrorCount ++
+                }
             }
-        }
 
-        # Check for API specific hosting requirements with ESXi
-        if ($configFileData.Target.OrchestrationMethod -eq "API" -and $configFileData.Target.HypervisorType -eq "ESXi") {
-            # Target.vSphereDataCenter
-            if ($configFileData.Target.psobject.Properties.Name -notcontains "vSphereDataCenter") {
-                Write-Log -Message "You are missing the Target.vSphereDataCenter object in your JSON file. This is required for Citrix Hosting Jobs via API when using ESXi" -Level Error
-                $ErrorCount ++
-            }
-            # Target.vSphereCluster
-            if ($configFileData.Target.psobject.Properties.Name -notcontains "vSphereCluster") {
-                Write-Log -Message "You are missing the Target.vSphereCluster object in your JSON file. This is required for Citrix Hosting Jobs via API when using ESXi" -Level Error
-                $ErrorCount ++
+            # Check for API specific hosting requirements with ESXi
+            if ($configFileData.Target.OrchestrationMethod -eq "API" -and $configFileData.Target.HypervisorType -eq "ESXi") {
+                # Target.vSphereDataCenter
+                if ($configFileData.Target.psobject.Properties.Name -notcontains "vSphereDataCenter") {
+                    Write-Log -Message "You are missing the Target.vSphereDataCenter object in your JSON file. This is required for Citrix Hosting Jobs via API when using ESXi" -Level Error
+                    $ErrorCount ++
+                }
+                # Target.vSphereCluster
+                if ($configFileData.Target.psobject.Properties.Name -notcontains "vSphereCluster") {
+                    Write-Log -Message "You are missing the Target.vSphereCluster object in your JSON file. This is required for Citrix Hosting Jobs via API when using ESXi" -Level Error
+                    $ErrorCount ++
+                }
             }
         }
         
@@ -244,6 +247,41 @@ The configuration file to parse and validate
             }
         }
         #endregion Target Section Validation - Horizon
+
+        #region Target Section Validation - Omnissa
+        if ($Type -eq "Omnissa") {
+            #Target.OmnissaConnectionServer
+            if ($ConfigFileData.Target.psobject.Properties.Name -notcontains "OmnissaConnectionServer") {
+                Write-Log -Message "You are missing the Target.OmnissaConnectionServer object in your JSON file. This is required for Omnissa Tests" -Level Error
+                $ErrorCount ++
+            }
+            #Target.OmnissaApiUserName
+            if ($ConfigFileData.Target.psobject.Properties.Name -notcontains "OmnissaApiUserName") {
+                Write-Log -Message "You are missing the Target.OmnissaApiUserName object in your JSON file. This is required for Omnissa Tests" -Level Error
+                $ErrorCount ++
+            }
+            #Target.OmnissaApiPassword
+            if ($ConfigFileData.Target.psobject.Properties.Name -notcontains "OmnissaApiPassword") {
+                Write-Log -Message "You are missing the Target.OmnissaApiPassword object in your JSON file. This is required for Omnissa Tests" -Level Error
+                $ErrorCount ++
+            }
+            #Target.OmnissaApiDomain
+            if ($ConfigFileData.Target.psobject.Properties.Name -notcontains "OmnissaApiDomain") {
+                Write-Log -Message "You are missing the Target.OmnissaApiDomain object in your JSON file. This is required for Omnissa Tests" -Level Error
+                $ErrorCount ++
+            }
+            #Target.OmnissaProvisioningMode
+            if ($ConfigFileData.Target.psobject.Properties.Name -notcontains "OmnissaProvisioningMode") {
+                Write-Log -Message "You are missing the Target.OmnissaProvisioningMode object in your JSON file. This is required for Omnissa Tests" -Level Error
+                $ErrorCount ++
+            }
+            # Provisioning Mode Validation
+            if ($configFileData.Target.OmnissaProvisioningMode -notin $Validated_Omnissa_Provisioning_Modes) {
+                Write-Log -Message "Omnissa Provisioning Mode Type $($configFileData.Target.OmnissaProvisioningMode) is not a valid type. Please check config file" -Level Error
+                $ErrorCount ++
+            }
+        }
+        #endregion Target Section Validation - Omnissa
 
         #region Test Section
 
