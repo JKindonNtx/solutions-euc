@@ -51,7 +51,7 @@ function Remove-Influx-Test-Data {
         [Parameter(Mandatory = $true)][string]$RequestUri,
         [Parameter(Mandatory = $true)][string]$Method,
         [Parameter(Mandatory = $true)][string]$Payload,
-        [Parameter(Mandatory = $true)][string]$Headers
+        [Parameter(Mandatory = $true)][hashtable]$Headers
     )
 
     begin {}
@@ -101,7 +101,7 @@ catch {
 #endregion Nutanix Module Import
 
 #region param validate
-if ([string]::IsNullOrEmpty($ConfigFile) -and [string]::IsNullOrEmpty($influxDBUrl) -or [string]::IsNullOrEmpty($Token) -or [string]::IsNullOrEmpty($Org)) {
+if ([string]::IsNullOrEmpty($ConfigFile) -and ([string]::IsNullOrEmpty($influxDBUrl) -or [string]::IsNullOrEmpty($Token) -or [string]::IsNullOrEmpty($Org))) {
     Write-Log -Message "You must specify either a configuration file, or the appropriate Influx Params" -Level Warn
     Break
 }
@@ -185,9 +185,9 @@ Write-Log -Message "InfluxDB URL is:              $($influxDBUrl)" -Level Valida
 Write-Log -Message "Org is:                       $($Org)" -Level Validation
 Write-Log -Message "Token is:                     $($Token)" -Level Validation
 if (-not ([String]::IsNullOrEmpty($Run))) {
-    Write-Log -Message "Run is:                     $($Run)" -Level Validation
+    Write-Log -Message "Run is:                       $($Run)" -Level Validation
 }
-Write-Log -Message "Logon Metrics only is:         $($LogonMetricsOnly)" -Level Validation
+Write-Log -Message "Logon Metrics only is:        $($LogonMetricsOnly)" -Level Validation
 #endregion Param Output
 
 #region delete test data
