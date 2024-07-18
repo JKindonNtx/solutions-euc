@@ -44,6 +44,9 @@ Param(
 
 #region functions
 function Remove-Influx-Test-Data {
+
+    [CmdletBinding()]
+
     param (
         [Parameter(Mandatory = $true)][string]$RequestUri,
         [Parameter(Mandatory = $true)][string]$Method,
