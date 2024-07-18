@@ -28,7 +28,7 @@ None
 # ============================================================================
 Param(
     [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $false)][string]$ConfigFile,
-    [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $true)][string]$Bucket,
+    [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $true)][ValidateSet("LoginDocuments", "LoginRegression", "Tests", "AzurePerfData")][string]$Bucket,
     [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $true)][string]$Test,
     [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $false)][string]$influxDBUrl,
     [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $false)][string]$Org,
