@@ -11,22 +11,14 @@ Optional. Used if not specifying a ConfigFile. The URL of the Influx DB. "http:/
 Optional. Used if not specifying a ConfigFile. The Auth Token for InfluxDB
 .PARAMETER Org
 Optional. Used if not specifying a ConfigFile. The Org for the Data. "Nutanix"
-.PARAMETER Buckets
-Mandatory. An array of Buckets the Test Data resides in.
-.PARAMETER Tests
-Mandatory. An array of Test Names to be removed
+.PARAMETER Bucket
+Mandatory.  The bucket to remove the data from. "LoginDocuments", "LoginRegression", "Tests" or "AzurePerfData"
+.PARAMETER Test
+Mandatory. The test to remove the data for.
 .PARAMETER Run
 Optional. The run number of the test to remove.
 .NOTES
 None
-.EXAMPLE
-Remove-TestData-API.ps1 -Buckets "LoginDocuments","LoginRegression" -Tests "Test1","Test2","Test3" -ConfigFile c:\temp\config.json
-
-.EXAMPLE
-Remove-TestData-API.ps1 -Buckets "LoginDocuments","LoginRegression" -Tests "Test1","Test2","Test3" -InfluxDBUrl "http://10.57.64.25:8086" -Org "Nutanix" -Token "MY_TOKEN_HERE"
-
-.EXAMPLE
-Remove-TestData-API.ps1 -Buckets "LoginDocuments","LoginRegression" -Tests "Test1" -Run "1" -InfluxDBUrl "http://10.57.64.25:8086" -Org "Nutanix" -Token "MY_TOKEN_HERE"
 -----------------------------------------------------------------------------------------
 #>
 
@@ -36,8 +28,8 @@ Remove-TestData-API.ps1 -Buckets "LoginDocuments","LoginRegression" -Tests "Test
 # ============================================================================
 Param(
     [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $false)][string]$ConfigFile,
-    [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $true)][array]$Buckets,
-    [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $true)][array]$Tests,
+    [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $true)][string]$Bucket,
+    [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $true)][string]$Test,
     [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $false)][string]$influxDBUrl,
     [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $false)][string]$Org,
     [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $false)][string]$Token,
@@ -47,13 +39,43 @@ Param(
 )
 #endregion Params
 
+#region functions
+function Remove-Influx-Test-Data {
+    param (
+        [Parameter(Mandatory = $true)][string]$RequestUri,
+        [Parameter(Mandatory = $true)][string]$Method,
+        [Parameter(Mandatory = $true)][string]$Payload,
+        [Parameter(Mandatory = $true)][string]$Headers
+    )
+
+    begin {}
+
+    process {
+        try {
+            $delete_test = Invoke-WebRequest -Uri $RequestUri -Method $Method -Body $Payload -Headers $Headers -ErrorAction Stop
+            if ($delete_test.StatusCode -eq "204") {
+                Write-Log -Message "Test data deleted or not found" -Level Info
+            }
+            else {
+                Write-Log -Message "$($delete_test.StatusCode) with $($delete_test.StatusDescription)" -Level Warn
+            }
+        }
+        catch {
+            Write-Log -Message $_ -Level Warn
+        }
+    }
+
+    end {}
+
+}
+#endregion functions
+
 #region Variables
 # ============================================================================
 # Variables
 # ============================================================================
 
 If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $ScriptRoot = $PSScriptRoot }
-$Valid_Buckets = @("LoginDocuments","LoginRegression","Tests")
 
 #endregion Variables
 
@@ -80,10 +102,6 @@ if ([string]::IsNullOrEmpty($ConfigFile) -and [string]::IsNullOrEmpty($influxDBU
 if ($ConfigFile) {
     Write-Log -Message "Configuration File $($ConfigFile) has been selected and will override any other parameter configuration associated with Influx configuration" -Level Info
 }
-if (($Tests | Measure-Object).Count -gt 1 -and (-not ([string]::IsNullOrEmpty($Run)))) {
-    Write-Log -Message "You cannot specify a Run ID with more than one test defined. Please specify a single test and associated Run ID" -Level Warn
-    Break
-}
 #endregion param validate
 
 #Region Execute
@@ -91,10 +109,8 @@ if (($Tests | Measure-Object).Count -gt 1 -and (-not ([string]::IsNullOrEmpty($R
 # Execute
 # ============================================================================
 
-#region Validate Bucket ###////KINDON //DAVE can you check this logic here - Do we need to cater for it in an iterative approach like I Have, we have a list of tests, and a list of buckets - 
-# it's going to loop through and if the bucket isn't found or doesn't have test data, it will just loop through
+#region Validate Bucket
 #----------------------------------------------------------------------------------------------------------------------------
-<#
 if($Bucket -eq "LoginDocuments"){
     $MainBucket = $Bucket
     $BootBucket = "BootBucket"
@@ -103,15 +119,14 @@ if($Bucket -eq "LoginDocuments"){
         $MainBucket = $Bucket
         $BootBucket = "BootBucketRegression"
     } else {
-        if($Bucket -eq "Tests"){
+        if($Bucket -eq "Tests" -or $Bucket -eq "AzurePerfData"){
             $MainBucket = $Bucket
         } else {
-            Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: Bucket not currently supported. Exit script" #I've moved this to the loop logic
+            Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: Bucket not currently supported. Exit script"
             Exit 1
         }
     }
 }
-#>
 
 #endregion Validate Bucket
 
@@ -143,13 +158,23 @@ if ($ConfigFile) {
     $Token = $config.InfluxToken
 }
 
+
 #endregion Config File
+
+#-------------------------------------------
+# Filter out the URL to just the base URL Required for API Calls - we reset this later
+#-------------------------------------------
+$regex = '^(https?://[^/]+)'
+if ($influxDBUrl -match $regex) {
+    $InfluxDBUrl = $matches[1]
+}
+
 
 #region Param Output 
 #----------------------------------------------------------------------------------------------------------------------------
 Write-Log -Message "Configuration File is:        $($ConfigFile)" -Level Validation
-Write-Log -Message "Test List is:                 $($Tests)" -Level Validation
-Write-Log -Message "Bucket List is:               $($Buckets)" -Level Validation
+Write-Log -Message "Test is:                      $($Test)" -Level Validation
+Write-Log -Message "Bucket is:                    $($Bucket)" -Level Validation
 Write-Log -Message "InfluxDB URL is:              $($influxDBUrl)" -Level Validation
 Write-Log -Message "Org is:                       $($Org)" -Level Validation
 Write-Log -Message "Token is:                     $($Token)" -Level Validation
@@ -159,63 +184,147 @@ if (-not ([String]::IsNullOrEmpty($Run))) {
 #endregion Param Output
 
 #region delete test data
+#-------------------------------------------
+# Set the Request Headers
+#-------------------------------------------
 $Headers = @{
     "Content-Type"  = "application/json";
     "Authorization" = "Token $Token";
 }
+$Method = "Post"
 
-$TotalTests = ($Tests | Measure-Object).Count
-    $CurrentTest = 1
-    foreach ($Test in $Tests) {
-        Write-Log -Message "Processing Test $($CurrentTest) of $($TotalTests): $($Test)" -Level Info
-        foreach ($Bucket in $Buckets) {
-            if ($Bucket -notin $Valid_Buckets) {
-                Write-Log -Message "Bucket $($Bucket) is not supported. Skipping" -Level Warn
-                Continue
-            }
-            $Method = "Post"
+#Process the test Removal
+if(!([string]::IsNullOrEmpty($Run))){
+    Write-Log -Message "Processing Delete $($Test) Run Number $($Run)" -Level Info
+    if ($LogonMetricsOnly) {
+        Write-Log -Message "Please wait while the Logon data is removed (this may take some time)" -Level Info
+        $Values_to_delete = @('total_login_time','connection','user_profile','group_policies')
+        foreach ($Value in $Values_to_delete) {
+            Write-Log -Message "Processing delete of $($Value) for Run $($Run)" -Level Info
+            #-------------------------------------------
+            # Build the API Payload
+            #-------------------------------------------
             $RequestUri = "$($influxDBUrl)/api/v2/delete?org=$($Org)&bucket=$($Bucket)"
-            if (-not ($Run)) {
-                #delete the whole test
-                $PayloadContent = [PSCustomObject]@{
-                    predicate = "_measurement=""$Test"""
-                    start = "$Start"
-                    stop = "$Stop"
-                }
-                $Payload = (ConvertTo-Json $PayloadContent)
+            $PayloadContent = [PSCustomObject]@{
+                predicate = "_measurement=""$Test"" AND Run=""$Run"" AND id=""$Value"""
+                start = "$Start"
+                stop = "$Stop"
             }
-            else {
-                #delete the run
-                $PayloadContent = [PSCustomObject]@{
-                    predicate = "_measurement=""$Test"" and Run=""$Run"""
-                    start = "$Start"
-                    stop = "$Stop"
-                }
-                $Payload = (ConvertTo-Json $PayloadContent)
-            }
-        
-            try {
-                if (-not ($Run)) {
-                    Write-Log -Message "Deleting data from Influx DB $($influxDBUrl) in org $($Org) for test: $($Test) in bucket $($Bucket). Be patient" -Level Info
-                }
-                else {
-                    Write-Log -Message "Deleting data from Influx DB $($influxDBUrl) in org $($Org) for test: $($Test) in bucket $($Bucket) with run $($Run). Be patient" -Level Info
-                }
-                
-                $delete_test = Invoke-WebRequest -Uri $RequestUri -Method $Method -Body $Payload -Headers $Headers
-                if ($delete_test.StatusCode -eq "204") {
-                    Write-Log -Message "Test data deleted or not found" -Level Info
-                }
-                else {
-                    Write-Log -Message "$($delete_test)" -Level Info
-                }
-            }
-            catch {
-                Write-Log -Message $_ -Level Error
-            }
+            $Payload = (ConvertTo-Json $PayloadContent)
+            #-------------------------------------------
+            # Execute the deletion
+            #-------------------------------------------
+            Remove-Influx-Test-Data -RequestUri $RequestUri -Method $Method -Payload $Payload -Headers $Headers
+            #$null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($MainBucket)" -Test "$($Test)" -Run "$($Run)" -Token "$($config.InfluxToken)" -LogonMetricsOnly
         }
-        $CurrentTest ++
+
+    } else {
+        Write-Log -Message "Please wait while the data is removed (this may take some time)" -Level Info
+        #-------------------------------------------
+        # Build the API Payload - Delete the specified run
+        #-------------------------------------------
+        $RequestUri = "$($influxDBUrl)/api/v2/delete?org=$($Org)&bucket=$($Bucket)"
+        $PayloadContent = [PSCustomObject]@{
+            predicate = "_measurement=""$Test"" AND Run=""$Run"""
+            start = "$Start"
+            stop = "$Stop"
+        }
+        $Payload = (ConvertTo-Json $PayloadContent)
+        #-------------------------------------------
+        # Execute the deletion
+        #-------------------------------------------
+        Remove-Influx-Test-Data -RequestUri $RequestUri -Method $Method -Payload $Payload -Headers $Headers
+        #$null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($MainBucket)" -Test "$($Test)" -Run "$($Run)" -Token "$($config.InfluxToken)"
+        
+        Write-Log -Message "Processing Boot Information Delete $($Test) Run Number $($Run)" -Level Info
+        if(!($MainBucket -eq "Tests")){
+            Write-Log -Message "Please wait while the data is removed (this may take some time)" -Level Info
+            #-------------------------------------------
+            # Build the API Payload - Delete the specified run - Boot Bucket
+            #-------------------------------------------
+            $RequestUri = "$($influxDBUrl)/api/v2/delete?org=$($Org)&bucket=$($BootBucket)"
+            $PayloadContent = [PSCustomObject]@{
+                predicate = "_measurement=""$Test"" AND Run=""$Run"""
+                start = "$Start"
+                stop = "$Stop"
+            }
+            $Payload = (ConvertTo-Json $PayloadContent)
+            #-------------------------------------------
+            # Execute the deletion
+            #-------------------------------------------
+            Remove-Influx-Test-Data -RequestUri $RequestUri -Method $Method -Payload $Payload -Headers $Headers
+            #$null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($BootBucket)" -Test "$($Test)" -Run "$($Run)" -Token "$($config.InfluxToken)"
+
+            Write-Log -Message "$($Test) Run Number $($Run) Deleted" -Level Info
+        }
     }
+    
+} else {
+    Write-Log -Message "Processing Delete $($Test) All Runs" -Level Info
+    if ($LogonMetricsOnly) {
+        Write-Log -Message "Please wait while the Logon data is removed (this may take some time)" -Level Info
+        $Values_to_delete = @('total_login_time','connection','user_profile','group_policies')
+        foreach ($Value in $Values_to_delete) {
+            Write-Log -Message "Processing delete of $($Value) for Run $($Run)" -Level Info
+            #-------------------------------------------
+            # Build the API Payload
+            #-------------------------------------------
+            $RequestUri = "$($influxDBUrl)/api/v2/delete?org=$($Org)&bucket=$($Bucket)"
+            $PayloadContent = [PSCustomObject]@{
+                predicate = "_measurement=""$Test"" AND id=""$Value"""
+                start = "$Start"
+                stop = "$Stop"
+            }
+            $Payload = (ConvertTo-Json $PayloadContent)
+            #-------------------------------------------
+            # Execute the deletion
+            #-------------------------------------------
+            Remove-Influx-Test-Data -RequestUri $RequestUri -Method $Method -Payload $Payload -Headers $Headers
+            #$null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($MainBucket)" -Test "$($Test)" -Token "$($config.InfluxToken)" -LogonMetricsOnly
+        }
+
+    } else {
+        Write-Log -Message "Please wait while the data is removed (this may take some time)" -Level Info
+        
+        #-------------------------------------------
+        # Build the API Payload - Delete the whole test
+        #-------------------------------------------
+        $RequestUri = "$($influxDBUrl)/api/v2/delete?org=$($Org)&bucket=$($Bucket)"
+        $PayloadContent = [PSCustomObject]@{
+            predicate = "_measurement=""$Test"""
+            start = "$Start"
+            stop = "$Stop"
+        }
+        $Payload = (ConvertTo-Json $PayloadContent)
+        #-------------------------------------------
+        # Execute the deletion
+        #-------------------------------------------
+        Remove-Influx-Test-Data -RequestUri $RequestUri -Method $Method -Payload $Payload -Headers $Headers
+        #$null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($MainBucket)" -Test "$($Test)" -Token "$($config.InfluxToken)"
+        
+        Write-Log -Message "Processing Boot Information Delete $($Test) All Runs" -Level Info
+        if(!($MainBucket -eq "Tests")){
+            Write-Log -Message "Please wait while the data is removed (this may take some time)" -Level Info
+            #-------------------------------------------
+            # Build the API Payload - Delete the whole test - Boot Bucket
+            #-------------------------------------------
+            $RequestUri = "$($influxDBUrl)/api/v2/delete?org=$($Org)&bucket=$($BootBucket)"
+            $PayloadContent = [PSCustomObject]@{
+                predicate = "_measurement=""$Test"""
+                start = "$Start"
+                stop = "$Stop"
+            }
+            $Payload = (ConvertTo-Json $PayloadContent)
+            #-------------------------------------------
+            # Execute the deletion
+            #-------------------------------------------
+            Remove-Influx-Test-Data -RequestUri $RequestUri -Method $Method -Payload $Payload -Headers $Headers
+            #$null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($BootBucket)" -Test "$($Test)" -Token "$($config.InfluxToken)"
+
+            Write-Log -Message "$($Test) Deleted" -Level Info
+        }
+    }
+}
 
 #endregion delete test data
 
@@ -223,3 +332,45 @@ $TotalTests = ($Tests | Measure-Object).Count
 
 Write-Log -Message "Script Finished" -Level Info
 Exit 0
+
+
+
+
+#-------------------------------------------
+#Value testing area - Kindon
+#-------------------------------------------
+#$Source_JSON_XML_InfluxDBUrl = "http://ws-idb1.wsperf.nutanix.com:8086/api/v2/write?org=Nutanix&precision=s"
+
+#$regex = '^(https?://[^/]+)'
+#if ($Source_JSON_XML_InfluxDBUrl -match $regex) {
+#    $InfluxDBUrl = $matches[1]
+#}
+
+$Token = "8PsWoQV6QTmg98hk-dmVW61RbFs5SPOcVJII56Kp6Qi2E0Svyz6kHOAA8euFO6mzH_cgPODezlRe6qXlLLWgng=="
+$influxDBUrl = "http://10.57.64.25:8086"
+$Org = "Nutanix"
+$Bucket = "LoginDocuments"
+$Start = "2022-12-30T00:00:00.000000000Z"
+$Stop = "2023-01-14T00:00:00.000000000Z"
+$Test = "7bbf85_8n_A6.5.5.1_ESXi_128V_1200U_KW"
+$Run = "2"
+$BootBucket = "BootBucket"
+
+$Method = "Post"
+$RequestUri = "$($influxDBUrl)/api/v2/delete?org=$($Org)&bucket=$($Bucket)"
+$PayloadContent = [PSCustomObject]@{
+    predicate = "_measurement=""$Test"" AND Run=""$Run"""
+    start = "$Start"
+    stop = "$Stop"
+}
+$Payload = (ConvertTo-Json $PayloadContent)
+$Payload
+
+$delete_test = Invoke-WebRequest -Uri $RequestUri -Method $Method -Body $Payload -Headers $Headers
+
+$RequestUri = "$($influxDBUrl)/api/v2/delete?org=$($Org)&bucket=$($BootBucket)"
+$delete_test = Invoke-WebRequest -Uri $RequestUri -Method $Method -Body $Payload -Headers $Headers
+
+#-------------------------------------------
+#Value testing area - Kindon
+#-------------------------------------------
