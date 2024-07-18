@@ -17,6 +17,8 @@ Mandatory.  The bucket to remove the data from. "LoginDocuments", "LoginRegressi
 Mandatory. The test to remove the data for.
 .PARAMETER Run
 Optional. The run number of the test to remove.
+.PARAMETER LogonMetricsOnly
+Optional. If specified, only the logon metrics will be removed.
 .NOTES
 None
 -----------------------------------------------------------------------------------------
@@ -35,7 +37,8 @@ Param(
     [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $false)][string]$Token,
     [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $false)][string]$start = "2022-12-30T00:00:00.000000000Z",
     [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $false)][string]$stop = "2023-01-14T00:00:00.000000000Z",
-    [Parameter(ValuefromPipelineByPropertyName = $true,mandatory = $false)][string]$Run
+    [Parameter(ValuefromPipelineByPropertyName = $true,mandatory = $false)][string]$Run,
+    [Parameter(ValuefromPipelineByPropertyName = $true,mandatory = $false)][switch]$LogonMetricsOnly
 )
 #endregion Params
 
@@ -179,8 +182,9 @@ Write-Log -Message "InfluxDB URL is:              $($influxDBUrl)" -Level Valida
 Write-Log -Message "Org is:                       $($Org)" -Level Validation
 Write-Log -Message "Token is:                     $($Token)" -Level Validation
 if (-not ([String]::IsNullOrEmpty($Run))) {
-    Write-Log -Message "Run is:                     $($Token)" -Level Validation
+    Write-Log -Message "Run is:                     $($Run)" -Level Validation
 }
+Write-Log -Message "Logon Metrics only is:         $($LogonMetricsOnly)" -Level Validation
 #endregion Param Output
 
 #region delete test data
