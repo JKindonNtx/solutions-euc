@@ -86,7 +86,7 @@ _Table: Virtual Desktop Cluster Specifications_
 | Number of CPUs per node | 2 |
 | Number of cores per CPU | 24 |
 | Memory per node | 1.5 TB |
-| Disk config per node | 4 × 1.5 TB NVME |
+| Disk config per node | 4 × 1.5 TB NVMe |
 | Network | 2 × 25 GbE |
 
 _Table: Nutanix Software Specifications_
@@ -154,7 +154,7 @@ _Table: Nutanix Files Configuration_
 | Parameter | Setting |
 | --- | --- |
 | Platform | VMware ESXi |
-| Version | 5.1 | 
+| Version | 5.0.0.1 | 
 | FSVM Count | 3 |
 | FSVM Size | 4 vCPU, 16 GiB Memory | 
 | Share Type | Distributed |

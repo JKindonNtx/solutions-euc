@@ -28,7 +28,7 @@ Time-sliced clusters
 
 ## Citrix Virtual Apps and Desktops on VMware vSphere with Nutanix Cloud Platform
 
-The Citrix user communicates with the main architectural components of the Citrix Virtual Apps and Desktops on Nutanix solution, including the infrastructure, Citrix Delivery Controllers, Citrix MCS workloads, and Citrix Provisioning workloads, through the Citrix NetScaler Gateway to Citrix StoreFront. Workloads are hosted on VMware vSphere running on Nutanix NX-3155-G9 nodes.
+The Citrix user communicates with the main architectural components of the Citrix Virtual Apps and Desktops on Nutanix solution, including the infrastructure, Citrix Delivery Controllers, Citrix MCS workloads, and Citrix Provisioning workloads, through the Citrix NetScaler Gateway to Citrix StoreFront. In this Reference Architecture, the workloads are hosted on VMware vSphere running on Nutanix NX-3155-G9 nodes.
 
 ![Communication path between Citrix Virtual Apps and Desktops and Nutanix components](../images/communication-path.png "Citrix Virtual Apps and Desktops Communication Path and Components")
 
@@ -70,7 +70,7 @@ _Table: Windows Server 2022 Configuration Details_
 | --- | :---: |
 | Windows Server 2022 configuration | 6 vCPU and 42 GB of memory |
 | VMs per node | 16 |
-| Users per VM | 9.4 |
+| Average users per VM | 9.4 |
 | VMs in a 8-node cluster (baseline testing) | 128 |
 | User sessions in a 8-node cluster (baseline testing) | 1,200 |
 | VMs in a 16-node cluster with n + 1 resilience | 240 |
@@ -106,7 +106,7 @@ _Table: Nutanix Files Configuration Overview_
 
 | Item | Value |
 | --- | :---: |
-| Files Version | 5.1 |
+| Files Version | 5.0.0.1 |
 | Files deployment location | Workload cluster |
 | FSVM Count | 3 |
 | FSVM Spec | 4 vCPU and 16 GB Memory |

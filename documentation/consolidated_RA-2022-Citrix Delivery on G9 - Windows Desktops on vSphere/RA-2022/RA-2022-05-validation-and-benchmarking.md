@@ -136,7 +136,7 @@ _Table: Windows 11 Template Image Configuration (Provisioning)_
 | CPU | 3 vCPU |
 | Memory | 6 GB |
 | NICs | 1 |
-| Virtual network adapter | VMXNET 3 |
+| Virtual network adapter | VMXNET3 |
 | Virtual SCSI controller 0 | LSI Logic SAS |
 | Virtual disk | 60 GB (Cache) |
 | Virtual CD/DVD drive 1 | Client |
@@ -171,7 +171,7 @@ _Table: Nutanix Files Configuration_
 | Parameter | Setting |
 | --- | --- |
 | Platform | VMware ESXi |
-| Version | 5.1 | 
+| Version | 5.0.0.1 | 
 | FSVM Count | 3 |
 | FSVM Size | 4 vCPU, 16 GiB Memory | 
 | Share Type | Distributed |
