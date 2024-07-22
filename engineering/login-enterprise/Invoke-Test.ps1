@@ -38,7 +38,7 @@ Optional. Forces the recreation of the Horizon desktop pool.
 
 | Variable Prefix | Description |
 | :--- | :--- |
-| $VSI_* | Used to specify VSI specfic variables - for test configurations etc at the LE layer. Pulled from the $Config Object |
+| $VSI_* | Used to specify VSI specific variables - for test configurations etc. at the LE layer. Pulled from the $Config Object |
 | $ImageSpec_* | Used for image specific variables. Set at the beginning of each run. Pulled from the $Config.Target.ImagesToTest Array |
 
 #----------
