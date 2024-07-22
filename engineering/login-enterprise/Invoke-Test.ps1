@@ -500,7 +500,7 @@ if (-not $AzureMode.IsPresent) {
         # A purely AHV Test
         if ($Config.Target.OrchestrationMethod -eq "Snapin") {
             #Legacy PowerShell Approach
-            $cleansed_snapshot_name = $VSI_Target_ParentVM -replace ".template","" 
+            $cleansed_snapshot_name = $Config.Target.ImagesToTest.ParentVM -replace ".template","" 
             $params = @{
                 SnapshotName   = $cleansed_snapshot_name 
                 HypervisorType = $NTNXInfra.Testinfra.HypervisorType 
@@ -512,7 +512,7 @@ if (-not $AzureMode.IsPresent) {
         elseif ($Config.Target.OrchestrationMethod  -eq "API") {
 
             #Need to set the XDHyp Path for Snapshot Validation
-            $snapshot_path = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($VSI_Target_ParentVM)"
+            $snapshot_path = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.ImagesToTest.ParentVM)"
 
             if ($Type -eq "CitrixVAD") {
                 $params = @{
@@ -548,7 +548,7 @@ if (-not $AzureMode.IsPresent) {
         if ($Config.Target.OrchestrationMethod  -eq "Snapin") {
             # A Citrix on ESXi test
             $params = @{
-                VM                = $VSI_Target_ParentVM
+                VM                = $Config.Target.ImagesToTest.ParentVM
                 HostingConnection = $Config.Target.HypervisorConnection 
                 HypervisorType    = $NTNXInfra.Testinfra.HypervisorType 
                 Type              = $Type 
@@ -560,7 +560,7 @@ if (-not $AzureMode.IsPresent) {
         }
         elseif ($Config.Target.OrchestrationMethod  -eq "API") {
             #Need to set the XDHyp Path for Snapshot Validation
-            $snapshot_path = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.vSphereDataCenter).datacenter\$($Config.Target.vSphere_Cluster).cluster\$($VSI_Target_ParentVM)"
+            $snapshot_path = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.vSphereDataCenter).datacenter\$($Config.Target.vSphere_Cluster).cluster\$($Config.Target.ImagesToTest.ParentVM)"
 
             if ($Type -eq "CitrixVAD") {
                 $params = @{

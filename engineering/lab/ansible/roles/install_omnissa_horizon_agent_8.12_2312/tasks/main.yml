@@ -1,5 +1,5 @@
 ---
-# Install VMware Horizon Agent client
+# Install Omnissa Horizon Agent for manual pool on vSphere
 - name: Create Log Folder
   win_file:
     path: C:\\Logs
@@ -8,7 +8,7 @@
 - name: Install Horizon Agent client
   win_package:
     path: "{{ sourcefiles_path }}\\Apps\\Omnissa\\Horizon 8.12 - 2312\\VMware-Horizon-Agent-x86_64-2312-8.12.0-23142606.exe"
-    arguments: /s /v"/qn REBOOT=ReallySuppress VDM_VC_MANAGED_AGENT=0 VDM_SKIP_BROKER_REGISTRATION=1 RDP_CHOICE=1 ADDLOCAL=Core,BlastUDP,NGVC,VmwVaudio,USB,RTAV,PerfTracker,HelpDesk"
+    arguments: /s /v"/qn REBOOT=ReallySuppress VDM_VC_MANAGED_AGENT=1 RDP_CHOICE=1 ADDLOCAL=Core,BlastUDP,NGVC,VmwVaudio,USB,RTAV,PerfTracker,HelpDesk"
     state: present
     expected_return_code: [0, 3010]
     product_id: '{9C724D00-B477-4065-B690-B424C1F2CB9E}'
