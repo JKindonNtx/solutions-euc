@@ -41,6 +41,7 @@ function Enable-OmnissaPool {
         # Placeholder for automated Omnissa Pool types
     }
 
+    $ForceRunNumberForAffinity = 1
     if (($HypervisorType) -eq "AHV" -And ($Affinity) -and (-not $ForceAlignVMToHost)) {
         Write-Log "Hypervisortype = $HypervisorType and Single Node Affinity is set to $Affinity"
         $params = @{
@@ -48,7 +49,7 @@ function Enable-OmnissaPool {
             CVMsshpassword = $CVMSSHPassword
             VMnameprefix   = $VMnameprefix
             hosts          = $hosts
-            Run            = $Run
+            Run            = $ForceRunNumberForAffinity
         }
         $AffinityProcessed = Set-AffinitySingleNode @params
         $Params = $null
