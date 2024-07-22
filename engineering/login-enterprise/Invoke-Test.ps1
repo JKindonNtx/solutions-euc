@@ -235,6 +235,7 @@ else {
 #region variable setting
 #----------------------------------------------------------------------------------------------------------------------------
 Set-VSIConfigurationVariables -ConfigurationFile $ConfigFile
+#endregion variable setting
 
 #region Config File
 #----------------------------------------------------------------------------------------------------------------------------
@@ -322,8 +323,6 @@ if (-not $AzureMode.IsPresent) {
 }
 
 #endregion Get Nutanix Infra
-
-#endregion variable setting
 
 #region Citrix Snapin Import
 #----------------------------------------------------------------------------------------------------------------------------
