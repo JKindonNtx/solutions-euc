@@ -28,7 +28,7 @@ Time-sliced clusters
 
 ## Citrix Virtual Apps and Desktops on VMware vSphere with Nutanix Cloud Platform
 
-The Citrix user communicates with the main architectural components of the Citrix Virtual Apps and Desktops on Nutanix solution, including the infrastructure, Citrix Delivery Controllers, Citrix MCS workloads, and Citrix Provisioning workloads, through the Citrix NetScaler Gateway to Citrix StoreFront. In this Reference Architecture, the workloads are hosted on VMware vSphere running on Nutanix NX-3155-G9 nodes.
+The following figure shows the main architectural components of the Citrix Virtual Apps and Desktops on Nutanix solution and the communication path between services. The user accesses resources published to them from the Delivery Controllers via Citrix StoreFront, which can either be load-balanced or gateway-proxied by a Netscaler. Workloads that the user accesses can be provisioned by Citrix MCS or Citrix Provisioning. In this Reference Architecture, the workloads are hosted on VMware vSphere running on Nutanix NX-3155-G9 nodes.
 
 ![Communication path between Citrix Virtual Apps and Desktops and Nutanix components](../images/communication-path.png "Citrix Virtual Apps and Desktops Communication Path and Components")
 

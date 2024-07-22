@@ -18,8 +18,7 @@ _Table: Platform Design Decisions: Nutanix Common_
 | Nutanix | Cluster size | As many as 16 nodes | Isolated fault domains (best practice) |
 | Nutanix | Storage pools | 1 storage pool per cluster | Standard practice; intelligent tiering handles data locality |
 | Nutanix | Containers | 1 container for VMs | Standard practice |
-| Nutanix | Features and enhancements | Increase CVM memory to 24–32+ GB. Turn on deduplication and compression for persistent desktops. Turn on compression only for nonpersistent desktops. We set the CVM to `32 GB` for the reference architecture. | Best practice |
-<!--SH: It's actually set to 48GB, because of all-NVMe --> 
+| Nutanix | Features and enhancements | Increase CVM memory to 24–32+ GB. Turn on deduplication and compression for persistent desktops. Turn on compression only for nonpersistent desktops. We set the CVM to 48 GB for the reference architecture. | Best practice due to NVMe |
 | Nutanix Files | Deployment Location | Workload Cluster | SMB File Services for Citrix Profile Management Containers hosted locally to the workloads |
 | Nutanix Files | FSVM configuration | 3 x FSVM, 4 vCPU, 16 GiB memory per FSVM | Recommended size for FSVM configuration for this workload |
 | Nutanix Files | FSVM placement | DRS placed per VMWare vCenter recommendations | No preference on FSVM location on a workload cluster when load is evenly spread |
