@@ -12,7 +12,6 @@ _Table: Platform Design Decisions: Nutanix Common_
 | General | Scale unit | Nodes, blocks, or pods | Granular scale to precisely meet capacity demands; scale in n × node increments |
 | VMware vSphere | Software Versions | VMware ESXi 7.0.3 and VMware vCenter Server 7.0.3.01200 | - | 
 | VMware vSphere | Cluster size | Up to 16 vSphere hosts (minimum of 3 hosts) | Isolated fault domains (best practice) |
-| VMware vSphere | Clusters per vCenter | `Up to 2 × 24-host or 4 × 12-host clusters` | Task parallelization |
 | VMware vSphere | Datastores | 1 Nutanix storage datastore per pod (Citrix Virtual Apps and Desktops Desktop VMs, VM clones, and so on) | Nutanix handles I/O distribution and localization; n-Controller model |
 | VMware vSphere | Infrastructure services | Small deployments: Shared cluster; Large deployments: Dedicated cluster | Dedicated infrastructure cluster for larger deployments (best practice) |
 | Nutanix | Cluster size | As many as 16 nodes | Isolated fault domains (best practice) |
@@ -22,9 +21,6 @@ _Table: Platform Design Decisions: Nutanix Common_
 | Nutanix Files | Deployment Location | Workload Cluster | SMB File Services for Citrix Profile Management Containers hosted locally to the workloads |
 | Nutanix Files | FSVM configuration | 3 x FSVM, 4 vCPU, 16 GiB memory per FSVM | Recommended size for FSVM configuration for this workload |
 | Nutanix Files | FSVM placement | DRS placed per VMWare vCenter recommendations | No preference on FSVM location on a workload cluster when load is evenly spread |
-
-<!--JK: Sven, the Cluster for vCenter Guidance above, is this relevant??-->
-<!--SH: I'm not sure where this is coming from. Let discuss Monday-->
 
 The following components are specific to Citrix Virtual Apps and Desktops.
 
