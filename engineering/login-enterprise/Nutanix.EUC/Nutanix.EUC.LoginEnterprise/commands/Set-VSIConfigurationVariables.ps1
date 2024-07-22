@@ -26,6 +26,7 @@ function Set-VSIConfigurationVariables {
         Write-Log "Parsing Image Configuration" -level Info
         foreach ($var in $ImageConfiguration.PSObject.Properties) {
             Set-Variable -Name "VSI_Target_$($var.Name)" -Value $var.Value -Scope Global
+            Set-Variable -Name "ImageSpec_$($var.Name)" -Value $var.Value -Scope Global
         }
     }
 

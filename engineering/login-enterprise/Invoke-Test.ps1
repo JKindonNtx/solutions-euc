@@ -28,6 +28,20 @@ Optional. Forces the recreation of the Horizon desktop pool.
 .PARAMETER AzureMode
 .Optional. Ignores Nutanix Considerations.
 .NOTES
+#---------- 
+# Variables and Config object Map
+
+| Config Object | Description |
+| :--- | :--- |
+| $Config | The JSON object that holds the test configuration. Use this as the primary source of static information. This is imported from our test configurations and cleansed. |
+| $NTNXInfra | The JSON object that holds the Nutanix Infrastructure details. Pulls data directly from Nutanix and updates items set to $null in the original $Config object |
+
+| Variable Prefix | Description |
+| :--- | :--- |
+| $VSI_* | Used to specify VSI specfic variables - for test configurations etc at the LE layer. Pulled from the $Config Object |
+| $ImageSpec_* | Used for image specific variables. Set at the beginning of each run. Pulled from the $Config.Target.ImagesToTest Array |
+
+#----------
 #>
 
 #region Params
@@ -222,52 +236,6 @@ else {
 #----------------------------------------------------------------------------------------------------------------------------
 Set-VSIConfigurationVariables -ConfigurationFile $ConfigFile
 
-if ($VSI_Test_SkipLEMetricsDownload -eq $true -and $VSI_Test_Uploadresults -eq $true) {
-    #You can't skip a download and enable an upload
-    Write-Log -Message "You cannot skip LE metric download (SkipLEMetricsDownload) and enable Influx upload (Uploadresults). This is not a valid test configuration." -Level Error
-    Exit 1
-}
-if ($VSI_Test_Uploadresults -eq $false) { 
-    #You can't skip a download and enable an upload
-    Write-Log -Message "You are executing a test with no Influx Data upload (Uploadresults: false). There will be no grafana or influx reporting for this test." -Level Info
-    $answer = read-host "Test details correct for test? yes or no?"
-    if ($answer -ne "yes" -and $answer -ne "y") { 
-        Write-Log -Message "Input not confirmed. Exit" -Level Info
-        Exit 0
-    }
-    else {
-        Write-Log -Message "Input confirmed" -Level Info
-    }
-}
-
-#Define the LE appliance detail
-if ($VSI_Test_LEAppliance -eq "MANDATORY_TO_DEFINE" -and (!$LEAppliance)) {
-    # Neither Option is OK due to ValidateSet on the LEAppliance Param
-    Write-Log -Message "You must define an LE appliance either in the $($ConfigFile) file or via the Script Parameter" -Level Error
-    Exit 1
-} 
-elseif ($VSI_Test_LEAppliance -eq "MANDATORY_TO_DEFINE" -and $LEAppliance) {
-    #Set LEAppliance based on Param
-    $LEAppliance = $LEAppliance
-} 
-else {
-    #Use the valid value from the Config JSON
-    $LEAppliance = $VSI_Test_LEAppliance
-}
-
-if ($null -ne $LEAppliance) {
-    Set-VSIConfigurationVariablesLEGlobal -ConfigurationFile $LEConfigFile -LEAppliance $LEAppliance
-}
-else {
-    Write-Log -Message "Missing LE Appliance Detail. Please check config file." -Level Warn
-    Exit 1
-}
-
-# Fix trailing slash issue
-$VSI_LoginEnterprise_ApplianceURL = $VSI_LoginEnterprise_ApplianceURL.TrimEnd("/")
-
-Connect-LEAppliance -Url $VSI_LoginEnterprise_ApplianceURL -Token $VSI_LoginEnterprise_ApplianceToken
-
 #region Config File
 #----------------------------------------------------------------------------------------------------------------------------
 Write-Log -Message "Importing config file: $($ConfigFile)" -Level Info
@@ -290,6 +258,59 @@ catch {
     Exit 1
 }
 #endregion Config File
+
+#region LE Appliance
+
+#Define the LE appliance detail
+if ($Config.Test.LEAppliance -eq "MANDATORY_TO_DEFINE" -and (!$LEAppliance)) {
+    # Neither Option is OK due to ValidateSet on the LEAppliance Param
+    Write-Log -Message "You must define an LE appliance either in the $($ConfigFile) file or via the Script Parameter" -Level Error
+    Exit 1
+} 
+elseif ($Config.Test.LEAppliance -eq "MANDATORY_TO_DEFINE" -and $LEAppliance) {
+    #Set LEAppliance based on Param
+    $LEAppliance = $LEAppliance
+} 
+else {
+    #Use the valid value from the Config JSON
+    $LEAppliance = $Config.Test.LEAppliance
+}
+
+if ($null -ne $LEAppliance) {
+    Set-VSIConfigurationVariablesLEGlobal -ConfigurationFile $LEConfigFile -LEAppliance $LEAppliance
+}
+else {
+    Write-Log -Message "Missing LE Appliance Detail. Please check config file." -Level Warn
+    Exit 1
+}
+
+# Fix trailing slash issue
+$VSI_LoginEnterprise_ApplianceURL = $VSI_LoginEnterprise_ApplianceURL.TrimEnd("/")
+
+Connect-LEAppliance -Url $VSI_LoginEnterprise_ApplianceURL -Token $VSI_LoginEnterprise_ApplianceToken
+
+#endregion LE Appliance
+
+#region data download and upload validation
+
+if ($Config.Test.SkipLEMetricsDownload -eq $true -and $Config.Test.Uploadresults -eq $true) {
+    #You can't skip a download and enable an upload
+    Write-Log -Message "You cannot skip LE metric download (SkipLEMetricsDownload) and enable Influx upload (Uploadresults). This is not a valid test configuration." -Level Error
+    Exit 1
+}
+if ($Config.Test.Uploadresults -eq $false) { 
+    #You can't skip a download and enable an upload
+    Write-Log -Message "You are executing a test with no Influx Data upload (Uploadresults: false). There will be no grafana or influx reporting for this test." -Level Info
+    $answer = read-host "Test details correct for test? yes or no?"
+    if ($answer -ne "yes" -and $answer -ne "y") { 
+        Write-Log -Message "Input not confirmed. Exit" -Level Info
+        Exit 0
+    }
+    else {
+        Write-Log -Message "Input confirmed" -Level Info
+    }
+}
+#endregion data download and upload validation
 
 #region Get Nutanix Infra
 #----------------------------------------------------------------------------------------------------------------------------
@@ -338,14 +359,14 @@ if (($Type -eq "CitrixVAD") -or ($Type -eq "CitrixDaaS")) {
 #----------------------------------------------------------------------------------------------------------------------------
 
 ## Allow the script to override JSON values via parameter
-if ($SkipADUsers.IsPresent) { $SkipADUsers = $true } else { $SkipADUsers = $VSI_Test_SkipADUsers }
-if ($SkipLEUsers.IsPresent) { $SkipLEUsers = $true } else { $SkipLEUsers = $VSI_Test_SkipLEUsers }
-if ($SkipLaunchers.IsPresent) { $SkipLaunchers = $true } else { $SkipLaunchers = $VSI_Test_SkipLaunchers }
-if ($SkipPDFExport.IsPresent) { $SkipPDFExport = $true } else { $SkipPDFExport = $VSI_Test_SkipPDFExport }
-if ($SkipWaitForIdleVMs.IsPresent) { $SkipWaitForIdleVMs = $true } else { $SkipWaitForIdleVMs = $VSI_Test_SkipWaitForIdleVMs }
+if ($SkipADUsers.IsPresent) { $SkipADUsers = $true } else { $SkipADUsers = $Config.Test.SkipADUsers }
+if ($SkipLEUsers.IsPresent) { $SkipLEUsers = $true } else { $SkipLEUsers = $Config.Test.SkipLEUsers }
+if ($SkipLaunchers.IsPresent) { $SkipLaunchers = $true } else { $SkipLaunchers = $Config.Test.SkipLaunchers }
+if ($SkipPDFExport.IsPresent) { $SkipPDFExport = $true } else { $SkipPDFExport = $Config.Test.SkipPDFExport }
+if ($SkipWaitForIdleVMs.IsPresent) { $SkipWaitForIdleVMs = $true } else { $SkipWaitForIdleVMs = $Config.Test.SkipWaitForIdleVMs }
 
-$VSI_Target_RampupInMinutes = $VSI_Test_Target_RampupInMinutes
-$InfluxTestDashBucket = $VSI_Test_InfluxTestDashBucket
+#$VSI_Target_RampupInMinutes = $Config.Test.Target_RampupInMinutes #Might not be needed now
+$InfluxTestDashBucket = $Config.Test.InfluxTestDashBucket # Used for neatness later on.
 
 if ($Type -eq "CitrixVAD" -or "CitrixDaaS"){
     if ($Config.Target.OrchestrationMethod -eq "Snapin"){
@@ -382,15 +403,15 @@ if (($Mandatory_Undedfined_Config_Entries | Measure-Object).Count -gt 0) {
 }
 
 if ($Type -eq "RDP") {
-    if ([string]::IsNullOrEmpty[$VSI_Target_RDP_Hosts]) {
+    if ([string]::IsNullOrEmpty[$Config.Target.RDP_Hosts]) {
         Write-Log -Message "Test type is RDP. You must define the RDP Hosts in the JSON File" -Level Warn
         Exit 1
     }
     else {
-        Write-Log -Message "There are $(($VSI_Target_RDP_Hosts | Measure-Object).Count) RDP Hosts defined for test configuration" -Level Info
+        Write-Log -Message "There are $(($Config.Target.RDP_Hosts | Measure-Object).Count) RDP Hosts defined for test configuration" -Level Info
     }
 
-    if ([string]::IsNullOrEmpty[$VSI_Domain_LDAPUsername] -or [string]::IsNullOrEmpty[$VSI_Domain_LDAPPassword]) {
+    if ([string]::IsNullOrEmpty[$Config.Domain.LDAPUsername] -or [string]::IsNullOrEmpty[$Config.Domain.LDAPPassword]) {
         Write-Log -Message "Test type is RDP. You must define an LDAP Username and Password to be able to execute tasks against the remote Hosts." -Level Warn
         Exit 1
     }
@@ -399,15 +420,15 @@ if ($Type -eq "RDP") {
 
 #region Nutanix Files Pre Flight Checks
 #----------------------------------------------------------------------------------------------------------------------------
-if ($VSI_Target_Files -ne "") {
+if ($Config.Target.Files -ne "") {
     Write-Log -Message "Validating Nutanix Files Authentication" -Level Info
     
     Invoke-NutanixFilesAuthCheck
 
-    if ($null -ne $VSI_Test_Nutanix_Files_Shares -and $VSI_Test_Delete_Files_Data -eq $true) {
+    if ($null -ne $Config.Test.Nutanix_Files_Shares -and $Config.Test.Delete_Files_Data -eq $true) {
         ##TODO Need to validate this
         Write-Log -Message "Processing Nutanix Files Data Removal Validation" -Level Info
-        Remove-NutanixFilesData -Shares $VSI_Test_Nutanix_Files_Shares -Mode Validate
+        Remove-NutanixFilesData -Shares $Config.Test.Nutanix_Files_Shares -Mode Validate
     }
 }
 #endregion Nutanix Files Pre Flight Checks
@@ -500,44 +521,48 @@ if (-not $AzureMode.IsPresent) {
         # A purely AHV Test
         if ($Config.Target.OrchestrationMethod -eq "Snapin") {
             #Legacy PowerShell Approach
-            $cleansed_snapshot_name = $VSI_Target_ParentVM -replace ".template","" 
-            $params = @{
-                SnapshotName   = $cleansed_snapshot_name 
-                HypervisorType = $NTNXInfra.Testinfra.HypervisorType 
-                Type           = $Type
+            foreach ($ParentVM in $Config.Target.ImagesToTest.ParentVM) {
+                $cleansed_snapshot_name = $ParentVM -replace ".template","" 
+                $params = @{
+                    SnapshotName   = $cleansed_snapshot_name 
+                    HypervisorType = $NTNXInfra.Testinfra.HypervisorType 
+                    Type           = $Type
+                }
+                Get-NutanixSnapshot @params
+                $params = $null
             }
-            Get-NutanixSnapshot @params
-            $params = $null
         }
         elseif ($Config.Target.OrchestrationMethod  -eq "API") {
 
             #Need to set the XDHyp Path for Snapshot Validation
-            $snapshot_path = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($VSI_Target_ParentVM)"
+            foreach ($ParentVM in $Config.Target.ImagesToTest.ParentVM) {
+                $snapshot_path = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($ParentVM)"
 
-            if ($Type -eq "CitrixVAD") {
-                $params = @{
-                    DDC                    = $Config.Target.DDC
-                    HypervisorConnection   = $config.Target.HostingConnectionRootName
-                    Snapshot               = $snapshot_path
-                    EncodedAdminCredential = $EncodedAdminCredential 
-                    DomainAdminCredential  = $DomainAdminCredential
+                if ($Type -eq "CitrixVAD") {
+                    $params = @{
+                        DDC                    = $Config.Target.DDC
+                        HypervisorConnection   = $config.Target.HostingConnectionRootName
+                        Snapshot               = $snapshot_path
+                        EncodedAdminCredential = $EncodedAdminCredential 
+                        DomainAdminCredential  = $DomainAdminCredential
+                    }
+                    Get-CVADImageSnapshotAPI @params
+                    $params = $null
                 }
-                Get-CVADImageSnapshotAPI @params
-                $params = $null
-            }
-            elseif ($Type -eq "CitrixDaaS"){
-                $params = @{
-                    CloudUrl              = $CloudUrl 
-                    HypervisorConnection  = $config.Target.HostingConnectionRootName 
-                    Snapshot              = $snapshot_path
-                    ClientID              = $Config.CitrixDaaS.ClientID 
-                    ClientSecret          = $Config.CitrixDaaS.ClientSecret 
-                    CustomerID            = $Config.CitrixDaaS.CustomerID 
-                    DomainAdminCredential = $DomainAdminCredential
+                elseif ($Type -eq "CitrixDaaS"){
+                    $params = @{
+                        CloudUrl              = $CloudUrl 
+                        HypervisorConnection  = $Config.Target.HostingConnectionRootName 
+                        Snapshot              = $snapshot_path
+                        ClientID              = $Config.CitrixDaaS.ClientID 
+                        ClientSecret          = $Config.CitrixDaaS.ClientSecret 
+                        CustomerID            = $Config.CitrixDaaS.CustomerID 
+                        DomainAdminCredential = $DomainAdminCredential
+                    }
+                    Get-DaaSImageSnapshotAPI @params
+                    $params = $null
                 }
-                Get-DaaSImageSnapshotAPI @params
-                $params = $null
-            }
+            } 
         }
     }
     elseif (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $Config.Target.CloneType -eq "PVS" -and $NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
@@ -547,44 +572,48 @@ if (-not $AzureMode.IsPresent) {
     if (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $Config.Target.CloneType -eq "MCS" -and $NTNXInfra.Testinfra.HypervisorType -eq "ESXi") {
         if ($Config.Target.OrchestrationMethod  -eq "Snapin") {
             # A Citrix on ESXi test
-            $params = @{
-                VM                = $VSI_Target_ParentVM
-                HostingConnection = $Config.Target.HypervisorConnection 
-                HypervisorType    = $NTNXInfra.Testinfra.HypervisorType 
-                Type              = $Type 
-                DDC               = $Config.Target.DDC 
-                SnapshotName      = $Config.Target.ImagesToTest.ParentVM
+            foreach ($ParentVM in $Config.Target.ImagesToTest.ParentVM) {
+                $params = @{
+                    VM                = $ParentVM
+                    HostingConnection = $Config.Target.HypervisorConnection 
+                    HypervisorType    = $NTNXInfra.Testinfra.HypervisorType 
+                    Type              = $Type 
+                    DDC               = $Config.Target.DDC 
+                    SnapshotName      = $ParentVM
+                }
+                Get-NutanixSnapshot @params
+                $params = $null
             }
-            Get-NutanixSnapshot @params
-            $params = $null
         }
         elseif ($Config.Target.OrchestrationMethod  -eq "API") {
             #Need to set the XDHyp Path for Snapshot Validation
-            $snapshot_path = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.vSphereDataCenter).datacenter\$($Config.Target.vSphere_Cluster).cluster\$($VSI_Target_ParentVM)"
+            foreach ($ParentVM in $Config.Target.ImagesToTest.ParentVM) {
+                $snapshot_path = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.vSphereDataCenter).datacenter\$($Config.Target.vSphere_Cluster).cluster\$($ParentVM)"
 
-            if ($Type -eq "CitrixVAD") {
-                $params = @{
-                    DDC                    = $Config.Target.DDC
-                    HypervisorConnection   = $config.Target.HostingConnectionRootName
-                    Snapshot               = $snapshot_path
-                    EncodedAdminCredential = $EncodedAdminCredential 
-                    DomainAdminCredential  = $DomainAdminCredential
+                if ($Type -eq "CitrixVAD") {
+                    $params = @{
+                        DDC                    = $Config.Target.DDC
+                        HypervisorConnection   = $config.Target.HostingConnectionRootName
+                        Snapshot               = $snapshot_path
+                        EncodedAdminCredential = $EncodedAdminCredential 
+                        DomainAdminCredential  = $DomainAdminCredential
+                    }
+                    Get-CVADImageSnapshotAPI @params
+                    $params = $null
                 }
-                Get-CVADImageSnapshotAPI @params
-                $params = $null
-            }
-            elseif ($Type -eq "CitrixDaaS"){
-                $params = @{
-                    CloudUrl              = $CloudUrl 
-                    HypervisorConnection  = $config.Target.HostingConnectionRootName
-                    Snapshot              = $snapshot_path
-                    ClientID              = $Config.CitrixDaaS.ClientID 
-                    ClientSecret          = $Config.CitrixDaaS.ClientSecret 
-                    CustomerID            = $Config.CitrixDaaS.CustomerID 
-                    DomainAdminCredential = $DomainAdminCredential
+                elseif ($Type -eq "CitrixDaaS"){
+                    $params = @{
+                        CloudUrl              = $CloudUrl 
+                        HypervisorConnection  = $config.Target.HostingConnectionRootName
+                        Snapshot              = $snapshot_path
+                        ClientID              = $Config.CitrixDaaS.ClientID 
+                        ClientSecret          = $Config.CitrixDaaS.ClientSecret 
+                        CustomerID            = $Config.CitrixDaaS.CustomerID 
+                        DomainAdminCredential = $DomainAdminCredential
+                    }
+                    Get-DaaSImageSnapshotAPI @params
+                    $params = $null
                 }
-                Get-DaaSImageSnapshotAPI @params
-                $params = $null
             }
         }
     }
@@ -594,21 +623,23 @@ if (-not $AzureMode.IsPresent) {
 
     if ($Type -eq "Horizon") {
         # A Horizon test
-        if ($Config.Target.ImagesToTest.ParentVM -match '^([^\\]+)\.') { $cleansed_vm_name = $matches[1] }
-        if ($Config.Target.ImagesToTest.ParentVM -match '\\([^\\]+)\.snapshot$') { $cleansed_snapshot_name = $matches[1] }
-        $params = @{
-            VM             = $cleansed_vm_name 
-            SnapshotName   = $cleansed_snapshot_name 
-            HypervisorType = $NTNXInfra.Testinfra.HypervisorType 
-            Type           = $Type
+        foreach ($ParentVM in $Config.Target.ImagesToTest.ParentVM) {
+            if ($ParentVM -match '^([^\\]+)\.') { $cleansed_vm_name = $matches[1] }
+            if ($ParentVM -match '\\([^\\]+)\.snapshot$') { $cleansed_snapshot_name = $matches[1] }
+            $params = @{
+                VM             = $cleansed_vm_name 
+                SnapshotName   = $cleansed_snapshot_name 
+                HypervisorType = $NTNXInfra.Testinfra.HypervisorType 
+                Type           = $Type
+            }
+            Get-NutanixSnapshot @params
+            $params = $null
         }
-        Get-NutanixSnapshot @params
-        $params = $null
     }
     
     If ($Type -eq "Omnissa") {
         # This is a placeholder for Omnissa Specific Tests
-        if ($NTNXInfra.Target.OmnissaProvisioningMode -eq "Manual") {
+        if ($Config.Target.OmnissaProvisioningMode -eq "Manual") {
             Write-Log -Message "This is a Omnissa Manual Pool test. No snapshot validation required." -Level Info
         } else {
             # Placeholder to validate VM Template for Omnissa Automated Pool
@@ -652,34 +683,35 @@ if ($ValidateOnly.IsPresent) {
 #endregion Validation
 
 #region Start Infrastructure Monitoring
-if ($VSI_Test_StartInfrastructureMonitoring -eq $true -and $VSI_Test_ServersToMonitor) {
+if ($Config.Test.StartInfrastructureMonitoring -eq $true -and $Config.Test.ServersToMonitor) {
     #// JK - I think we will have an issue with container based configurations here - need to fix the same as RDP DelProf Approach
     Write-Log -Message "Starting Infrastructure Monitoring" -Level Info
-    Start-ServerMonitoring -ServersToMonitor $VSI_Test_ServersToMonitor -Mode StartMonitoring -ServiceName "Telegraf"
+    Start-ServerMonitoring -ServersToMonitor $Config.Test.ServersToMonitor -Mode StartMonitoring -ServiceName "Telegraf"
 }
 #endregion Start Infrastructure Monitoring
 
 #region Execute Test
 #----------------------------------------------------------------------------------------------------------------------------
-#Set the multiplier for the Workloadtype. This adjusts the required MHz per user setting.
-ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
+ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
+    #Outputs an ImageSpec_* Variable for each Item in the ImagesToTest Array
     $null = Set-VSIConfigurationVariables -ImageConfiguration $ImageToTest
 
     #region Define Workload Profiles
     #----------------------------------------------------------------------------------------------------------------------------
-    if ($VSI_Target_Workload -eq "Task Worker") {
+    #Set the multiplier for the Workloadtype. This adjusts the required MHz per user setting.
+    if ($Config.Target.Workload -eq "Task Worker") {
         $LEWorkload = "TW"
         $WLmultiplier = 0.8
     }
-    if ($VSI_Target_Workload -eq "Knowledge Worker") {
+    if ($Config.Target.Workload -eq "Knowledge Worker") {
         $LEWorkload = "KW"
         $WLmultiplier = 1.1
     }
-    if ($VSI_Target_Workload -eq "GPU Worker") {
+    if ($Config.Target.Workload -eq "GPU Worker") {
         $LEWorkload = "GPU"
         $WLmultiplier = 1.0
     }
-    Write-Log -Message "LE Worker Profile is: $($VSI_Target_Workload) and the Workload is set to: $($LEWorkload)" -Level Info
+    Write-Log -Message "LE Worker Profile is: $($Config.Target.Workload) and the Workload is set to: $($LEWorkload)" -Level Info
     #endregion Define Workload Profiles
 
     #region Setup testname
@@ -688,10 +720,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     $NTNXid = (New-Guid).Guid.SubString(1, 6)
     if (-not $AzureMode.IsPresent) {
         # This is not an Azure configuration
-        $NTNXTestname = "$($NTNXid)_$($VSI_Target_NodeCount)n_A$($NTNXInfra.Testinfra.AOSversion)_$($NTNXInfra.Testinfra.HypervisorType)_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
+        $NTNXTestname = "$($NTNXid)_$($Config.Target.NodeCount)n_A$($NTNXInfra.Testinfra.AOSversion)_$($NTNXInfra.Testinfra.HypervisorType)_$($ImageSpec_NumberOfVMS)V_$($ImageSpec_NumberOfSessions)U_$LEWorkload"
     }    
     else {
-        $NTNXTestname = "$($NTNXid)_Azure_$($VSI_Target_NumberOfVMS)V_$($VSI_Target_NumberOfSessions)U_$LEWorkload"
+        $NTNXTestname = "$($NTNXid)_Azure_$($ImageSpec_NumberOfVMS)V_$($ImageSpec_NumberOfSessions)U_$LEWorkload"
     }
     Write-Log -Message "Testname configured: $($NTNXTestname)" -Level Info
     #endregion Setup testname
@@ -699,17 +731,17 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     #region Setup Test Dashboard Data
     #----------------------------------------------------------------------------------------------------------------------------
     $CurrentTotalPhase = 1
-    $TotalPhases = (([int]$NTNXInfra.Target.ImageIterations * $RunPhases) + $PreRunPhases)
+    $TotalPhases = (([int]$Config.Target.ImageIterations * $RunPhases) + $PreRunPhases)
 
     # Build Test Dashboard Objects
 
-    for ($i = 0; $i -le $VSI_Target_ImageIterations; $i++) {
+    for ($i = 0; $i -le $Config.Target.ImageIterations; $i++) {
         if ($i -eq 0) { $Phases = $TotalPhases } else { $Phases = $RunPhases }
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Planned" 
             CurrentPhase   = "0" 
@@ -737,7 +769,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         ConfigFile     = $NTNXInfra
         TestName       = $NTNXTestname 
         RunNumber      = "0" 
-        InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+        InfluxUri      = $Config.TestInfra.InfluxDBurl 
         InfluxBucket   = $InfluxTestDashBucket 
         Status         = "Running" 
         CurrentPhase   = $CurrentTotalPhase 
@@ -751,7 +783,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
     if (-not $AzureMode.IsPresent) {
         # This is not an Azure configuration
-        if ($VSI_Target_NodeCount -eq "1") {
+        if ($Config.Target.NodeCount -eq "1") {
             $NTNXInfra.Testinfra.SetAffinity = $true
         }
         else {
@@ -768,10 +800,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     Write-Log -Message "Updating Slack" -Level Info
     if (-not $AzureMode.IsPresent) {
         # This is not an Azure configuration
-        $SlackMessage = "New Login Enterprise test started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName). Testname: $($NTNXTestname)."
+        $SlackMessage = "New Login Enterprise test started by $($Config.Target.CVM_admin) on Cluster $($NTNXInfra.TestInfra.ClusterName). Testname: $($NTNXTestname)."
     }     
     else {
-        $SlackMessage = "New Login Enterprise test started by $VSI_Target_CVM_admin on Azure VM. Testname: $($NTNXTestname)."
+        $SlackMessage = "New Login Enterprise test started by $($Config.Target.CVM_admin) on Azure VM. Testname: $($NTNXTestname)."
     }
     Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
     #endregion Slack update
@@ -787,7 +819,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -850,7 +882,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -864,12 +896,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         # Horizon
         $params = @{
-            Server          = $VSI_Target_ConnectionServer 
-            User            = $VSI_Target_ConnectionServerUser 
-            Password        = $VSI_Target_ConnectionServerUserPassword 
-            vCenterServer   = $VSI_Target_vCenterServer 
-            vCenterUserName = $VSI_Target_vCenterUsername 
-            vCenterPassword = $VSI_Target_vCenterPassword
+            Server          = $Config.Target.ConnectionServer 
+            User            = $Config.Target.ConnectionServerUser 
+            Password        = $Config.Target.ConnectionServerUserPassword 
+            vCenterServer   = $Config.Target.vCenterServer 
+            vCenterUserName = $Config.Target.vCenterUsername 
+            vCenterPassword = $Config.Target.vCenterPassword
         }
         Connect-VSIHVConnectionServer @params
         $Params = $Null
@@ -885,7 +917,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -897,14 +929,14 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        foreach ($RDP_Host in $VSI_Target_RDP_Hosts) {
+        foreach ($RDP_Host in $Config.Target.RDP_Hosts) {
             try {
                 Write-Log -Message "Validating RDP Connectivity to $($RDP_Host)" -Level Info
                 if ($IsWindows){
-                    $Test_Host_Connection = Test-NetConnection -ComputerName ($RDP_Host + "." + $VSI_Target_DomainName) -port 3389 -ErrorAction Stop
+                    $Test_Host_Connection = Test-NetConnection -ComputerName ($RDP_Host + "." + $Config.Target.DomainName) -port 3389 -ErrorAction Stop
                 }
                 elseif ($IsLinux){
-                    $Test_Host_Connection = Test-Connection -ComputerName ($RDP_Host + "." + $VSI_Target_DomainName) -TcpPort 3389 -ErrorAction Stop
+                    $Test_Host_Connection = Test-Connection -ComputerName ($RDP_Host + "." + $Config.Target.DomainName) -TcpPort 3389 -ErrorAction Stop
                 }
                 
                 Write-Log -Message "Successfully connected to $($RDP_Host)" -Level Info
@@ -927,7 +959,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -951,7 +983,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         ConfigFile     = $NTNXInfra
         TestName       = $NTNXTestname 
         RunNumber      = "0" 
-        InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+        InfluxUri      = $Config.TestInfra.InfluxDBurl 
         InfluxBucket   = $InfluxTestDashBucket 
         Status         = "Running" 
         CurrentPhase   = $CurrentTotalPhase 
@@ -977,7 +1009,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         ConfigFile     = $NTNXInfra
         TestName       = $NTNXTestname 
         RunNumber      = "0" 
-        InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+        InfluxUri      = $Config.TestInfra.InfluxDBurl 
         InfluxBucket   = $InfluxTestDashBucket 
         Status         = "Running" 
         CurrentPhase   = $CurrentTotalPhase 
@@ -992,7 +1024,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     if (!($SkipLEUsers)) {
         # Create the accounts and accountgroup in LE
         Write-Log -Message "Creating Accounts and Groups in LE" -Level Info
-        $LEaccounts = New-LEAccounts -Username $VSI_Users_BaseName -Password $VSI_Users_Password -Domain $VSI_Users_NetBios -NumberOfDigits $VSI_Users_NumberOfDigits -NumberOfAccounts $VSI_Target_NumberOfSessions
+        $LEaccounts = New-LEAccounts -Username $VSI_Users_BaseName -Password $VSI_Users_Password -Domain $VSI_Users_NetBios -NumberOfDigits $VSI_Users_NumberOfDigits -NumberOfAccounts $ImageSpec_NumberOfSessions
         New-LEAccountGroup -Name $VSI_Users_GroupName -Description "Created by automation toolkit" -MemberIds $LEaccounts | Out-Null
     }
     #endregion LE Users
@@ -1006,7 +1038,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         ConfigFile     = $NTNXInfra
         TestName       = $NTNXTestname 
         RunNumber      = "0" 
-        InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+        InfluxUri      = $Config.TestInfra.InfluxDBurl 
         InfluxBucket   = $InfluxTestDashBucket 
         Status         = "Running" 
         CurrentPhase   = $CurrentTotalPhase 
@@ -1024,10 +1056,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if ([string]::isNullOrEmpty($VSI_Domain_LDAPUsername)) {
             $params = @{
                 BaseName       = $VSI_Users_BaseName
-                Amount         = $VSI_Target_NumberOfSessions
+                Amount         = $ImageSpec_NumberOfSessions #$VSI_Target_NumberOfSessions
                 Password       = $VSI_Users_Password
                 NumberOfDigits = $VSI_Users_NumberOfDigits
-                DomainLDAPPath = $VSI_Domain_LDAPPath
+                DomainLDAPPath = $Config.Domain.LDAPPath
                 OU             = $VSI_Users_OU
                 ApplianceURL   = $VSI_LoginEnterprise_ApplianceURL
             }
@@ -1037,13 +1069,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             # Alternative for when invoking the toolkit from a machine that's not part of the domain/ user that does not have the appropriate rights to create users
             $params = @{
                 BaseName       = $VSI_Users_Basename
-                Amount         = $VSI_Target_NumberOfSessions
+                Amount         = $ImageSpec_NumberOfSessions #$VSI_Target_NumberOfSessions
                 Password       = $VSI_Users_Password
                 NumberOfDigits = $VSI_Users_NumberOfDigits
-                DomainLDAPPath = $VSI_Domain_LDAPPath
+                DomainLDAPPath = $Config.Domain.LDAPPath
                 OU             = $VSI_Users_OU
-                LDAPUsername   = $VSI_Domain_LDAPUsername
-                LDAPPassword   = $VSI_Domain_LDAPPassword
+                LDAPUsername   = $Config.Domain.LDAPUsername
+                LDAPPassword   = $Config.Domain.LDAPPassword
                 ApplianceURL   = $VSI_LoginEnterprise_ApplianceURL
             }
             New-VSIADUsers @params
@@ -1057,14 +1089,14 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     if ($Type -eq "Horizon") {
         if ($Force.IsPresent) {
             Write-Log -Message "Removing Horizon Desktop Pool due to force switch" -Level Info
-            Remove-VSIHVDesktopPool -Name $VSI_Target_DesktopPoolName
+            Remove-VSIHVDesktopPool -Name $Config.Target.DesktopPoolName
         }
     }
     #endregion Force Desktop Pool recreation
 
     #region Iterate through runs
     #----------------------------------------------------------------------------------------------------------------------------
-    for ($i = 1; $i -le $VSI_Target_ImageIterations; $i++) {
+    for ($i = 1; $i -le $Config.Target.ImageIterations; $i++) {
 
         $CurrentRunPhase = 1
         
@@ -1072,9 +1104,9 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #----------------------------------------------------------------------------------------------------------------------------
         if (-not $AzureMode.IsPresent) {
             # This is not an Azure configuration
-            $SlackMessage = "Testname: $($NTNXTestname) Run$i is started by $VSI_Target_CVM_admin on Cluster $($NTNXInfra.TestInfra.ClusterName)."
+            $SlackMessage = "Testname: $($NTNXTestname) Run$i is started by $($Config.Target.CVM_admin) on Cluster $($NTNXInfra.TestInfra.ClusterName)."
         } else {
-            $SlackMessage = "Testname: $($NTNXTestname) Run$i is started by $VSI_Target_CVM_admin on Azure"
+            $SlackMessage = "Testname: $($NTNXTestname) Run$i is started by $($Config.Target.CVM_admin) on Azure"
         }
         Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
 
@@ -1095,7 +1127,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
@@ -1110,7 +1142,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -1124,15 +1156,16 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         if (-not $AzureMode.IsPresent) { 
             # This is not an Azure configuration
-            $ContainerId = Get-NTNXStorageUUID -Storage $VSI_Target_CVM_storage
-            $Hostuuid = Get-NTNXHostUUID -NTNXHost $VSI_Target_NTNXHost
-            $IPMI_ip = Get-NTNXHostIPMI -NTNXHost $VSI_Target_NTNXHost
+            $ContainerId = Get-NTNXStorageUUID -Storage $Config.Target.CVM_storage
+            $Hostuuid = Get-NTNXHostUUID -NTNXHost $Config.Target.NTNXHost
+            $IPMI_ip = Get-NTNXHostIPMI -NTNXHost $Config.Target.NTNXHost
         }
 
-        if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
+        if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
             # Getting details from Nutanix Files Cluster hosting Files
-            $Hostuuid_files_cluster = Get-NTNXHostUUID -NTNXHost $VSI_Target_Files_Cluster_Host -TargetCVM $VSI_Target_Files_Cluster_CVM -TargetCVMAdmin $VSI_Target_Files_Cluster_CVM_admin -TargetCVMPassword $VSI_Target_Files_Cluster_CVM_password
-            $IPMI_ip_files_cluster = Get-NTNXHostIPMI -NTNXHost $VSI_Target_Files_Cluster_Host -TargetCVM $VSI_Target_Files_Cluster_CVM -TargetCVMAdmin $VSI_Target_Files_Cluster_CVM_admin -TargetCVMPassword $VSI_Target_Files_Cluster_CVM_password
+            $Hostuuid_files_cluster = Get-NTNXHostUUID -NTNXHost $Config.Target.Files_Cluster_Host -TargetCVM $Config.Target.Files_Cluster_CVM -TargetCVMAdmin $VSI_Target_Files_Cluster_CVM_admin -TargetCVMPassword $VSI_Target_Files_Cluster_CVM_password
+            $IPMI_ip_files_cluster = Get-NTNXHostIPMI -NTNXHost $Config.Target.Files_Cluster_Host -TargetCVM $Config.Target.Files_Cluster_CVM -TargetCVMAdmin $VSI_Target_Files_Cluster_CVM_admin -TargetCVMPassword $VSI_Target_Files_Cluster_CVM_password
+            # The above $VSI_ variables get parsed and reset at some point - they are set as variables in the config file
         }
         
         #endregion Get Nutanix Info
@@ -1157,7 +1190,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
@@ -1172,7 +1205,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -1188,21 +1221,21 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
             if ($Config.Target.OrchestrationMethod -eq "Snapin") {
                 #Legacy Snapin Approach
-                $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $VSI_Target_HypervisorConnection + "\" + $VSI_Target_HypervisorNetwork + ".network" }
-                $ParentVM = "XDHyp:\HostingUnits\$VSI_Target_HypervisorConnection\$VSI_Target_ParentVM"
+                $networkMap = @{ "0" = "XDHyp:\HostingUnits\" + $Config.Target.HypervisorConnection + "\" + $Config.Target.HypervisorNetwork + ".network" }
+                $ParentVM = "XDHyp:\HostingUnits\$($Config.Target.HypervisorConnection)\$ImageSpec_ParentVM" 
             }
             elseif ($Config.Target.OrchestrationMethod -eq "API") {
                 #API Approach
                 #$networkMap = "XDHyp:\HostingUnits\$($VSI_Target_HypervisorConnection + "_")$VSI_Target_HypervisorNetwork\$VSI_Target_HypervisorNetwork.network" #// JK no idea how this worked in prior testing, this network map needs to be looked at.
                 
                 if ($NTNXInfra.TestInfra.HypervisorType -eq "AHV") {
-                    $ParentVM = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($VSI_Target_ParentVM)"
+                    $ParentVM = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($ImageSpec_ParentVM)"
                     #Network = XDHyp:\Connections\DRMHX665KB-A\VLAN164.network
                     $networkMap = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.HypervisorNetwork).network"
                     $VSI_Target_HypervisorConnection = $Config.Target.HostingConnectionRootName
                 }
                 elseif ($NTNXInfra.TestInfra.HypervisorType -eq "ESXi") {
-                    $ParentVM = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.vSphereDataCenter).datacenter\$($Config.Target.vSphere_Cluster).cluster\$($VSI_Target_ParentVM)"
+                    $ParentVM = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.vSphereDataCenter).datacenter\$($Config.Target.vSphere_Cluster).cluster\$($ImageSpec_ParentVM)"
                     #Network = XDHyp:\Connections\Shared-vCenter\EUC-Solutions.datacenter\DRMNX9KB-A.cluster\dvs_VLAN164.network
                     $networkMap = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.vSphereDataCenter).datacenter\$($Config.Target.vSphere_Cluster).cluster\$($Config.Target.HypervisorNetwork).network"
                     $VSI_Target_HypervisorConnection = $Config.Target.HostingConnectionRootName
@@ -1214,21 +1247,21 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 HypervisorConnection = $VSI_Target_HypervisorConnection #//JK will this work - need to re-test this
                 HypervisorType       = $NTNXInfra.Testinfra.HypervisorType
                 Networkmap           = $networkMap
-                CpuCount             = $VSI_Target_NumCPUs
-                CoresCount           = $VSI_Target_NumCores
-                MemoryGB             = $VSI_Target_MemoryGB
+                CpuCount             = $ImageSpec_NumCPUs #$VSI_Target_NumCPUs
+                CoresCount           = $ImageSpec_NumCores #$VSI_Target_NumCores
+                MemoryGB             = $ImageSpec_MemoryGB #$VSI_Target_MemoryGB
                 ContainerID          = $ContainerId
-                NamingPattern        = $VSI_Target_NamingPattern
-                OU                   = $VSI_Target_ADContainer
-                DomainName           = $VSI_Target_DomainName
-                SessionsSupport      = $VSI_Target_SessionsSupport
-                DesktopPoolName      = $VSI_Target_DesktopPoolName
-                ZoneName             = $VSI_Target_ZoneName
+                NamingPattern        = $Config.Target.NamingPattern #$VSI_Target_NamingPattern
+                OU                   = $Config.Target.ADContainer #$VSI_Target_ADContainer
+                DomainName           = $Config.Target.DomainName #$VSI_Target_DomainName
+                SessionsSupport      = $Config.Target.SessionsSupport #$VSI_Target_SessionsSupport
+                DesktopPoolName      = $Config.Target.DesktopPoolName #$VSI_Target_DesktopPoolName
+                ZoneName             = $Config.Target.ZoneName #$VSI_Target_ZoneName
                 Force                = $Force.IsPresent
                 EntitledGroup        = $VSI_Users_BaseName
-                SkipImagePrep        = $VSI_Target_SkipImagePrep
-                FunctionalLevel      = $VSI_Target_FunctionalLevel
-                CloneType            = $VSI_Target_CloneType
+                SkipImagePrep        = $Config.Target.SkipImagePrep #$VSI_Target_SkipImagePrep
+                FunctionalLevel      = $Config.Target.FunctionalLevel #$VSI_Target_FunctionalLevel
+                CloneType            = $Config.Target.CloneType #$VSI_Target_CloneType
             }
 
             if ($Config.Target.OrchestrationMethod -eq "Snapin") {
@@ -1281,32 +1314,32 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if ($Type -eq "Horizon") {
             #Need to check with Sven here - which config do we use Horizon-NTNX.ps1 or NorizonView.Ps1?
             $params = @{
-                Name                      = $VSI_Target_DesktopPoolName
-                ParentVM                  = $VSI_Target_ParentVM
+                Name                      = $Config.Target.DesktopPoolName #$VSI_Target_DesktopPoolName
+                ParentVM                  = $ImageSpec_ParentVM #$VSI_Target_ParentVM
                 VMSnapshot                = $VSI_Target_Snapshot
-                VMFolder                  = $VSI_Target_VMFolder
-                HostOrCluster             = $VSI_Target_Cluster
-                ResourcePool              = $VSI_Target_ResourcePool
-                ReplicaDatastore          = $VSI_Target_ReplicaDatastore
-                InstantCloneDatastores    = $VSI_Target_InstantCloneDatastores
-                NamingPattern             = $VSI_Target_NamingPattern
-                NetBiosName               = $VSI_Target_DomainName
-                ADContainer               = $VSI_Target_ADContainer
-                EntitledGroups            = $VSI_Target_Entitlements
-                vTPM                      = $VSI_Target_vTPM
-                Protocol                  = $VSI_Target_SessionCfg
-                RefreshOsDiskAfterLogoff  = $VSI_Target_RefreshOSDiskAfterLogoff
-                UserAssignment            = $VSI_Target_UserAssignment
-                PoolType                  = $VSI_Target_CloneType
-                UseViewStorageAccelerator = $VSI_Target_UseViewStorageAccelerator
-                enableGRIDvGPUs           = $VSI_Target_enableGRIDvGPUs
+                VMFolder                  = $Config.Target.VMFolder #$VSI_Target_VMFolder
+                HostOrCluster             = $Config.Target.Cluster #$VSI_Target_Cluster
+                ResourcePool              = $Config.Target.ResourcePool #$VSI_Target_ResourcePool
+                ReplicaDatastore          = $Config.Target.ReplicaDatastore #$VSI_Target_ReplicaDatastore
+                InstantCloneDatastores    = $Config.Target.InstantCloneDatastores #$VSI_Target_InstantCloneDatastores
+                NamingPattern             = $Config.Target.NamingPattern #$VSI_Target_NamingPattern
+                NetBiosName               = $Config.Target.DomainName #$VSI_Target_DomainName
+                ADContainer               = $Config.Target.ADContainer #$VSI_Target_ADContainer
+                EntitledGroups            = $Config.Target.Entitlements #$VSI_Target_Entitlements
+                vTPM                      = $ImageSpec_vTPM #$VSI_Target_vTPM
+                Protocol                  = $Config.Target.SessionCfg #$VSI_Target_SessionCfg
+                RefreshOsDiskAfterLogoff  = $Config.Target.RefreshOsDiskAfterLogoff #$VSI_Target_RefreshOSDiskAfterLogoff
+                UserAssignment            = $Config.Target.UserAssignment #$VSI_Target_UserAssignment
+                PoolType                  = $Config.Target.CloneType #$VSI_Target_CloneType
+                UseViewStorageAccelerator = $Config.Target.UseViewStorageAccelerator #$VSI_Target_UseViewStorageAccelerator
+                enableGRIDvGPUs           = $Config.Target.enableGRIDvGPUs #$VSI_Target_enableGRIDvGPUs
             }
             Set-VSIHVDesktopPool @params
             $Params = $null
         }
 
         if ($Type -eq "RDP") {
-            if ($VSI_Target_RDP_DelProf -eq $true) {
+            if ($Config.Target.RDP_DelProf -eq $true) {
                 # Delete the profiles between each run
                 $ClearProfiles = $true
             }
@@ -1316,14 +1349,14 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             }
 
             $params = @{
-                Hosts         = $VSI_Target_RDP_Hosts
-                DomainName    = $VSI_Target_DomainName 
+                Hosts         = $Config.Target.RDP_Hosts #$VSI_Target_RDP_Hosts
+                DomainName    = $Config.Target.DomainName #$VSI_Target_DomainName 
                 MaxIterations = 4 
                 SleepTime     = 30 
                 RebootHosts   = $true
                 ClearProfiles = $ClearProfiles
-                UserName      = $VSI_Domain_LDAPUsername 
-                Password      = $VSI_Domain_LDAPPassword
+                UserName      = $Config.Domain.LDAPUsername #$VSI_Domain_LDAPUsername 
+                Password      = $Config.Domain.LDAPPassword #$VSI_Domain_LDAPPassword
             }
 
             $CleanHosts = Reset-RDPHosts @params
@@ -1381,7 +1414,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
@@ -1396,7 +1429,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -1413,7 +1446,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $params = @{
                 OutputFolder                 = $OutputFolder 
                 DurationInMinutes            = "Boot" 
-                RampupInMinutes              = $VSI_Target_RampupInMinutes 
+                RampupInMinutes              = $Config.Test.Target_RampupInMinutes #$VSI_Target_RampupInMinutes 
                 Hostuuid                     = $Hostuuid 
                 IPMI_ip                      = $IPMI_ip 
                 Path                         = $Scriptroot
@@ -1428,25 +1461,25 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             if ($config.Target.OrchestrationMethod -eq "Snapin") {
                 #Legacy Snapin Approach
                 $params = @{
-                    DesktopPoolName            = $VSI_Target_DesktopPoolName
-                    NumberofVMs                = $VSI_Target_NumberOfVMS
-                    PowerOnVMs                 = $VSI_Target_PowerOnVMs
-                    DDC                        = $VSI_Target_DDC
+                    DesktopPoolName            = $Config.Target.DesktopPoolName #$VSI_Target_DesktopPoolName
+                    NumberofVMs                = $ImageSpec_NumberOfVMS #$VSI_Target_NumberOfVMS
+                    PowerOnVMs                 = $ImageSpec_PowerOnVMs #$VSI_Target_PowerOnVMs
+                    DDC                        = $Config.Target.DDC #$VSI_Target_DDC
                     HypervisorType             = $NTNXInfra.Testinfra.HypervisorType
                     Affinity                   = $NTNXInfra.Testinfra.SetAffinity
-                    ClusterIP                  = $NTNXInfra.Target.CVM
-                    CVMSSHPassword             = $NTNXInfra.Target.CVMsshpassword
-                    VMnameprefix               = $NTNXInfra.Target.NamingPattern
-                    CloneType                  = $VSI_Target_CloneType
+                    ClusterIP                  = $Config.Target.CVM #$NTNXInfra.Target.CVM
+                    CVMSSHPassword             = $Config.Target.CVMsshpassword #$NTNXInfra.Target.CVMsshpassword
+                    VMnameprefix               = $Config.Target.NamingPattern #$NTNXInfra.Target.NamingPattern
+                    CloneType                  = $Config.Target.CloneType #$VSI_Target_CloneType
                     Hosts                      = $NTNXInfra.Testinfra.Hostip
                     Type                       = $Type
-                    ForceAlignVMToHost         = $NTNXInfra.Target.ForceAlignVMToHost
-                    EnforceHostMaintenanceMode = $NTNXInfra.Target.EnforceHostMaintenanceMode
-                    TargetCVMAdmin             = $VSI_Target_CVM_admin
-                    TargetCVMPassword          = $VSI_Target_CVM_password
+                    ForceAlignVMToHost         = $Config.Target.ForceAlignVMToHost #$NTNXInfra.Target.ForceAlignVMToHost
+                    EnforceHostMaintenanceMode = $Config.Target.EnforceHostMaintenanceMode #$NTNXInfra.Target.EnforceHostMaintenanceMode
+                    TargetCVMAdmin             = $Config.Target.CVM_admin #$VSI_Target_CVM_admin
+                    TargetCVMPassword          = $Config.Target.CVM_password #$VSI_Target_CVM_password
                     Run                        = $i 
-                    MaxRecordCount             = $VSI_Target_MaxRecordCount
-                    HostCount                  = $VSI_Target_NodeCount
+                    MaxRecordCount             = $Config.Target.MaxRecordCount #$VSI_Target_MaxRecordCount
+                    HostCount                  = $Config.Target.NodeCount #$VSI_Target_NodeCount
                 }
 
                 if ($NTNXInfra.Target.HypervisorType -eq "AHV") {
@@ -1470,27 +1503,27 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             elseif ($config.Target.OrchestrationMethod -eq "API") {
                 #API Approach
                 $params = @{
-                    DesktopPoolName            = $VSI_Target_DesktopPoolName
-                    NumberofVMs                = $VSI_Target_NumberOfVMS
-                    PowerOnVMs                 = $VSI_Target_PowerOnVMs
-                    DDC                        = $VSI_Target_DDC
+                    DesktopPoolName            = $Config.Target.DesktopPoolName #$VSI_Target_DesktopPoolName
+                    NumberofVMs                = $ImageSpec_NumberOfVMS #$VSI_Target_NumberOfVMS
+                    PowerOnVMs                 = $ImageSpec_PowerOnVMs #$VSI_Target_PowerOnVMs
+                    DDC                        = $Config.Target.DDC #$VSI_Target_DDC
                     HypervisorType             = $NTNXInfra.Testinfra.HypervisorType
                     Affinity                   = $NTNXInfra.Testinfra.SetAffinity
-                    ClusterIP                  = $NTNXInfra.Target.CVM
-                    CVMSSHPassword             = $NTNXInfra.Target.CVMsshpassword
-                    VMnameprefix               = $NTNXInfra.Target.NamingPattern
-                    DomainName                 = $VSI_Target_DomainName
-                    OU                         = $VSI_Target_ADContainer
-                    CloneType                  = $VSI_Target_CloneType
+                    ClusterIP                  = $Config.Target.CVM
+                    CVMSSHPassword             = $Config.Target.CVMsshpassword
+                    VMnameprefix               = $Config.Target.NamingPattern
+                    DomainName                 = $Config.Target.DomainName #$VSI_Target_DomainName
+                    OU                         = $Config.Target.ADContainer #$VSI_Target_ADContainer
+                    CloneType                  = $Config.Target.CloneType #$VSI_Target_CloneType
                     Hosts                      = $NTNXInfra.Testinfra.Hostip
                     Type                       = $Type
-                    ForceAlignVMToHost         = $NTNXInfra.Target.ForceAlignVMToHost
-                    EnforceHostMaintenanceMode = $NTNXInfra.Target.EnforceHostMaintenanceMode
-                    TargetCVMAdmin             = $VSI_Target_CVM_admin
-                    TargetCVMPassword          = $VSI_Target_CVM_password
+                    ForceAlignVMToHost         = $Config.Target.ForceAlignVMToHost
+                    EnforceHostMaintenanceMode = $Config.Target.EnforceHostMaintenanceMode
+                    TargetCVMAdmin             = $Config.Target.CVM_admin #$VSI_Target_CVM_admin
+                    TargetCVMPassword          = $Config.Target.CVM_password #$VSI_Target_CVM_password
                     Run                        = $i
-                    MaxRecordCount             = $VSI_Target_MaxRecordCount
-                    HostCount                  = $VSI_Target_NodeCount
+                    MaxRecordCount             = $Config.Target.MaxRecordCount #$VSI_Target_MaxRecordCount
+                    HostCount                  = $Config.Target.NodeCount #$VSI_Target_NodeCount
                     EncodedAdminCredential     = $EncodedAdminCredential
                     DomainAdminCredential      = $DomainAdminCredential
                 }
@@ -1508,34 +1541,34 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         if ($Type -eq "Horizon") {
             if ($VSI_Target_PoolType -eq "RDSH") {
-                $Boot = Enable-VSIHVDesktopPool -Name $VSI_Target_DesktopPoolName -VMAmount $VSI_Target_NumberOfVMs -Increment $VSI_Target_VMPoolIncrement -RDSH
+                $Boot = Enable-VSIHVDesktopPool -Name $Config.Target.DesktopPoolName -VMAmount $ImageSpec_NumberOfVMS -Increment $Config.Target.VMPoolIncrement -RDSH
             }
-            elseif ($VSI_Target_ProvisioningMode -eq "AllMachinesUpFront") {
-                $Boot = Enable-VSIHVDesktopPool -Name $VSI_Target_DesktopPoolName -VMAmount $VSI_Target_NumberOfVMs -Increment $VSI_Target_VMPoolIncrement -AllMachinesUpFront
+            elseif ($Config.Target.ProvisioningMode -eq "AllMachinesUpFront") {
+                $Boot = Enable-VSIHVDesktopPool -Name $Config.Target.DesktopPoolName -VMAmount $ImageSpec_NumberOfVMS -Increment $Config.Target.VMPoolIncrement -AllMachinesUpFront
             }
             else {
-                $Boot = Enable-VSIHVDesktopPool -Name $VSI_Target_DesktopPoolName -VMAmount $VSI_Target_NumberOfVMs -NumberOfSpareVMs $VSI_Target_NumberOfSpareVMs
+                $Boot = Enable-VSIHVDesktopPool -Name $Config.Target.DesktopPoolName -VMAmount $ImageSpec_NumberOfVMS -NumberOfSpareVMs $Config.Target.NumberOfSpareVMs
             }
         }
 
         if ($Type -eq "Omnissa") {
             $params = @{
-                ApiEndpoint         = $VSI_Target_OmnissaConnectionServer
-                UserName            = $VSI_Target_OmnissaApiUserName
-                Password            = $VSI_Target_OmnissaApiPassword
-                Domain              = $VSI_Target_OmnissaApiDomain
-                CloneType           = $VSI_Target_OmnissaProvisioningMode
-                PoolName            = $VSI_Target_DesktopPoolName
-                TargetCVM           = $NTNXInfra.Target.CVM
-                TargetCVMAdmin      = $VSI_Target_CVM_admin
-                TargetCVMPassword   = $VSI_Target_CVM_password
-                Affinity            = $NTNXInfra.Testinfra.SetAffinity
-                HypervisorType      = $VSI_Target_HypervisorType
-                ForceAlignVMToHost  = $NTNXInfra.Target.ForceAlignVMToHost
-                VMnameprefix        = $NTNXInfra.Target.NamingPattern
+                ApiEndpoint         = $Config.Target.OmnissaConnectionServer
+                UserName            = $Config.Target.OmnissaApiUserName
+                Password            = $Config.Target.OmnissaApiPassword
+                Domain              = $Config.Target.OmnissaApiDomain
+                CloneType           = $Config.Target.OmnissaProvisioningMode
+                PoolName            = $Config.Target.DesktopPoolName #$VSI_Target_DesktopPoolName
+                TargetCVM           = $Config.Target.CVM
+                TargetCVMAdmin      = $Config.Target.CVM_admin #$VSI_Target_CVM_admin
+                TargetCVMPassword   = $Config.Target.CVM_password #$VSI_Target_CVM_password
+                Affinity            = $Config.Testinfra.SetAffinity
+                HypervisorType      = $Config.Target.HypervisorType #$VSI_Target_HypervisorType
+                ForceAlignVMToHost  = $Config.Target.ForceAlignVMToHost
+                VMnameprefix        = $Config.Target.NamingPattern
                 Hosts               = $NTNXInfra.Testinfra.Hostip
                 Run                 = $i
-                CVMSSHPassword      = $NTNXInfra.Target.CVMsshpassword
+                CVMSSHPassword      = $Config.Target.CVMsshpassword
             }
             $Boot = Enable-OmnissaPool @params
         }
@@ -1552,7 +1585,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
             if ($Config.Target.OrchestrationMethod -eq "SnapIn") {
                 #Legacy Snapin Approach
-                $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $VSI_Target_DesktopPoolName -MaxRecordCount $MaxRecordCount
+                $BrokerVMs = Get-BrokerMachine -AdminAddress $Config.Target.DDC -DesktopGroupName $Config.Target.DesktopPoolName -MaxRecordCount $Config.Target.MaxRecordCount
             }
             elseif ($config.Target.OrchestrationMethod -eq "API") {
                 if ($Type -eq "CitrixVAD") {
@@ -1588,7 +1621,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
 
         if ($Type -eq "RDP") {
-            $MasterImageDNS = ($VSI_target_RDP_hosts | Select-Object -First 1) + "." + $VSI_Target_DomainName
+            $MasterImageDNS = ($Config.Target.RDP_Hosts | Select-Object -First 1) + "." + $Config.Target.DomainName
         }
 
         if ($Type -eq "Omnissa") {
@@ -1618,7 +1651,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
@@ -1633,7 +1666,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -1648,8 +1681,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         try {
             Write-Log -Message "Getting Image Tattoo" -Level Info
             if ($IsLinux) {
-                $user = $VSI_Domain_LDAPUsername
-                $pass = ConvertTo-SecureString $VSI_Domain_LDAPPassword -AsPlainText -Force
+                $user = $Config.Domain.LDAPUsername #$VSI_Domain_LDAPUsername
+                $pass = ConvertTo-SecureString $Config.Domain.LDAPPassword -AsPlainText -Force
                 $credential = New-Object System.Management.Automation.PSCredential($user, $pass)
 
                 $Tattoo = Invoke-Command -Computer $MasterImageDNS { Get-ItemProperty HKLM:\Software\BuildTattoo } -Credential $credential -Authentication Negotiate -ErrorAction Stop
@@ -1712,7 +1745,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
@@ -1727,7 +1760,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -1739,10 +1772,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        if ($($VSI_Target_SessionCfg.ToLower()) -eq "ica") {
+        if ($($Config.Target.SessionCfg.ToLower()) -eq "ica") {
             $SessionsperLauncher = 20
         }
-        elseif ($($VSI_Target_SessionCfg.ToLower()) -eq "rdp") {
+        elseif ($($Config.Target.SessionCfg.ToLower()) -eq "rdp") {
             $SessionsperLauncher = 20
         }
         else {
@@ -1750,9 +1783,9 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
 
         if (-not ($SkipLaunchers)) {
-            $NumberOfLaunchers = [System.Math]::Ceiling($VSI_Target_NumberOfSessions / $SessionsperLauncher)
+            $NumberOfLaunchers = [System.Math]::Ceiling($ImageSpec_NumberOfSessions / $SessionsperLauncher)
             # Wait for all launchers to be registered in LE
-            Wait-LELaunchers -Amount $NumberOfLaunchers -NamingPattern $VSI_Launchers_NamingPattern -RebootLaunchers $config.Test.RebootLaunchers
+            Wait-LELaunchers -Amount $NumberOfLaunchers -NamingPattern $VSI_Launchers_NamingPattern -RebootLaunchers $Config.Test.RebootLaunchers
             # Create/update launchergroup with the launchers
             Set-LELauncherGroup -LauncherGroupName $VSI_Launchers_GroupName -NamingPattern $VSI_Launchers_NamingPattern
         }
@@ -1766,7 +1799,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
@@ -1781,7 +1814,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -1795,15 +1828,15 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
             $Params = @{
-                TestName           = $VSI_Test_Name
-                SessionAmount      = $VSI_Target_NumberOfSessions
-                RampupInMinutes    = $VSI_Target_RampupInMinutes
-                DurationInMinutes  = $VSI_Target_DurationInMinutes
+                TestName           = $Config.Test.Name #$VSI_Test_Name
+                SessionAmount      = $ImageSpec_NumberOfSessions #$VSI_Target_NumberOfSessions
+                RampupInMinutes    = $Config.Test.Target_RampupInMinutes #$VSI_Target_RampupInMinutes
+                DurationInMinutes  = $ImageSpec_DurationInMinutes #$VSI_Target_DurationInMinutes
                 LauncherGroupName  = $VSI_Launchers_GroupName
                 AccountGroupName   = $VSI_Users_GroupName
                 SessionMetricGroup = $VSI_Target_SessionMetricGroupName
                 ConnectorName      = "Citrix Storefront"
-                ConnectorParams    = @{serverURL = $VSI_Target_StorefrontURL; resource = $VSI_Target_DesktopPoolName }
+                ConnectorParams    = @{serverURL = $Config.Target.StorefrontURL; resource = $Config.Target.DesktopPoolName }
                 Workload           = $VSI_Target_Workload
             }
             $testId = Set-LELoadTestv7 @Params
@@ -1813,11 +1846,11 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if ($Type -eq "RDP") {
             # create the host list Array for the test configuration
             $HostList = @()
-            foreach ($RDP_Host in $VSI_Target_RDP_Hosts) {
+            foreach ($RDP_Host in $Config.Target.RDP_Hosts) {
                 $Custom_RDP_Host = New-Object -TypeName PSObject -Property @{
                     endpoint = $(
-                        if ($RDP_Host -notlike "*.$VSI_Target_DomainName") {
-                            $RDP_Host + "." + $VSI_Target_DomainName
+                        if ($RDP_Host -notlike "*.$($Config.Target.DomainName)") {
+                            $RDP_Host + "." + $Config.Target.DomainName
                         }
                         else {
                             $RDP_Host
@@ -1829,15 +1862,15 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             }
 
             $Params = @{
-                TestName           = $VSI_Test_Name 
-                SessionAmount      = $VSI_Target_NumberOfSessions
-                RampupInMinutes    = $VSI_Target_RampupInMinutes
-                DurationInMinutes  = $VSI_Target_DurationInMinutes
+                TestName           = $Config.Test.Name #$VSI_Test_Name 
+                SessionAmount      = $ImageSpec_NumberOfSessions #$VSI_Target_NumberOfSessions
+                RampupInMinutes    = $Config.Test.Target_RampupInMinutes #$VSI_Target_RampupInMinutes
+                DurationInMinutes  = $ImageSpec_DurationInMinutes#$VSI_Target_DurationInMinutes
                 LauncherGroupName  = $VSI_Launchers_GroupName
                 AccountGroupName   = $VSI_Users_GroupName
                 SessionMetricGroup = $VSI_Target_SessionMetricGroupName
                 ConnectorName      = "Microsoft RDS"
-                ConnectorParams    = @{hostList = $HostList; suppressCertWarn = $true; displayResolution = ""; resource = $VSI_Target_DesktopPoolName}
+                ConnectorParams    = @{hostList = $HostList; suppressCertWarn = $true; displayResolution = ""; resource = $Config.Target.DesktopPoolName}
                 Workload           = $VSI_Target_Workload
             }
             $testId = Set-LELoadTestv7 @Params
@@ -1847,10 +1880,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if ($Type -eq "Omnissa") {
 
             $Params = @{
-                TestName           = $VSI_Test_Name 
-                SessionAmount      = $VSI_Target_NumberOfSessions
-                RampupInMinutes    = $VSI_Target_RampupInMinutes
-                DurationInMinutes  = $VSI_Target_DurationInMinutes
+                TestName           = $Config.Test.Name #$VSI_Test_Name 
+                SessionAmount      = $ImageSpec_NumberOfSessions #$VSI_Target_NumberOfSessions
+                RampupInMinutes    = $Config.Test.Target_RampupInMinutes #$VSI_Target_RampupInMinutes
+                DurationInMinutes  = $ImageSpec_DurationInMinutes #$VSI_Target_DurationInMinutes
                 LauncherGroupName  = $VSI_Launchers_GroupName
                 AccountGroupName   = $VSI_Users_GroupName
                 SessionMetricGroup = $VSI_Target_SessionMetricGroupName
@@ -1930,11 +1963,11 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
-            CurrentMessage = "Waiting $($VSI_Target_MinutesToWaitAfterIdleVMs) Minutes Before Test" 
+            CurrentMessage = "Waiting $($Config.Target.MinutesToWaitAfterIdleVMs) Minutes Before Test" 
             TotalPhase     = "$($RunPhases)"
         }
         $null = Set-TestData @params
@@ -1945,7 +1978,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -1978,8 +2011,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
         #endregion Restart ESXi HostD Service if set
 
-        Write-Log -Message "Waiting for $VSI_Target_MinutesToWaitAfterIdleVMs minutes before starting test" -Level Info
-        Start-sleep -Seconds $($VSI_Target_MinutesToWaitAfterIdleVMs * 60)
+        Write-Log -Message "Waiting for $($Config.Target.MinutesToWaitAfterIdleVMs) minutes before starting test" -Level Info
+        Start-sleep -Seconds $($Config.Target.MinutesToWaitAfterIdleVMs * 60)
         #endregion VM Idle state
 
         #region Nutanix Curator Stop
@@ -1996,7 +2029,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
@@ -2011,7 +2044,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -2026,12 +2059,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if (-not $AzureMode.IsPresent) { 
             # This is not an Azure configuration
             Write-Log -Message "Stopping Nutanix Curator Service" -Level Info
-            Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "stop"
+            Set-NTNXcurator -ClusterIP $Config.Target.CVM -CVMSSHPassword $Config.Target.CVMsshpassword -Action "stop"
         }
 
-        if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
-            Write-Log -Message "Stopping Nutanix Curator Service on the Nutanix Files Cluster $($VSI_Target_Files_Cluster_CVM)" -Level Info
-            Set-NTNXcurator -ClusterIP $VSI_Target_Files_Cluster_CVM -CVMSSHPassword $VSI_Target_Files_Cluster_CVMsshpassword -Action "stop"
+        if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
+            Write-Log -Message "Stopping Nutanix Curator Service on the Nutanix Files Cluster $($Config.Target.Files_Cluster_CVM)" -Level Info
+            Set-NTNXcurator -ClusterIP $Config.Target.Files_Cluster_CVM -CVMSSHPassword $Config.Target.Files_Cluster_CVMsshpassword -Action "stop"
         }
 
         #endregion Nutanix Curator Stop
@@ -2044,7 +2077,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
@@ -2059,7 +2092,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -2072,7 +2105,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Update Test Dashboard
 
         Write-Log -Message "Starting Test $($testId)" -Level Info
-        Start-LETest -testId $testId -Comment "$FolderName-$VSI_Target_Comment"
+        Start-LETest -testId $testId -Comment "$FolderName-$ImageSpec_Comment "
         $TestRun = Get-LETestRuns -testId $testId | Select-Object -Last 1
         #endregion Start the test
 
@@ -2092,7 +2125,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
@@ -2107,7 +2140,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -2123,8 +2156,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             # This is not an Azure configuration
             $Params = @{
                 OutputFolder                 = $OutputFolder 
-                DurationInMinutes            = $VSI_Target_DurationInMinutes 
-                RampupInMinutes              = $VSI_Target_RampupInMinutes 
+                DurationInMinutes            = $ImageSpec_DurationInMinutes #$VSI_Target_DurationInMinutes 
+                RampupInMinutes              = $Config.Test.Target_RampupInMinutes #$VSI_Target_RampupInMinutes 
                 Hostuuid                     = $Hostuuid 
                 IPMI_ip                      = $IPMI_ip 
                 Path                         = $Scriptroot 
@@ -2135,17 +2168,17 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
 
         #start Monitoring the Files Cluster Hosting Files
-        if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
+        if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
             $Params = @{
                 OutputFolder                 = ($OutputFolder + "\" + "Files_Cluster")
-                DurationInMinutes            = $VSI_Target_DurationInMinutes 
-                RampupInMinutes              = $VSI_Target_RampupInMinutes 
+                DurationInMinutes            = $ImageSpec_DurationInMinutes #$VSI_Target_DurationInMinutes 
+                RampupInMinutes              = $Config.Test.Target_RampupInMinutes #$VSI_Target_RampupInMinutes 
                 Hostuuid                     = $Hostuuid_files_cluster 
                 IPMI_ip                      = $IPMI_ip_files_cluster 
                 Path                         = $Scriptroot 
-                TargetCVM                    = $VSI_Target_Files_Cluster_CVM # override the default CVM Value
-                TargetCVMAdmin               = $VSI_Target_Files_Cluster_CVM_admin # override the default CVM Admin Account Value
-                TargetCVMPassword            = $VSI_Target_Files_Cluster_CVM_password # override the default CVM Password Value
+                TargetCVM                    = $Config.Target.Files_Cluster_CVM #$VSI_Target_Files_Cluster_CVM # override the default CVM Value
+                TargetCVMAdmin               = $Config.Target.Files_Cluster_CVM_admin #$VSI_Target_Files_Cluster_CVM_admin # override the default CVM Admin Account Value
+                TargetCVMPassword            = $Config.Target.Files_Cluster_CVM_password #$VSI_Target_Files_Cluster_CVM_password # override the default CVM Password Value
                 AsJob                        = $true
             }
             $monitoringJob_files = Start-VSINTNXMonitoring @params
@@ -2153,13 +2186,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
 
         #region Update Test Dashboard
-        if ($VSI_Target_Files -ne "") { $Message = "Starting Nutanix Files Monitor Run $($i)" } else { $Message = "Skipping Nutanix Files Monitoring" }
+        if ($Config.Target.Files -ne "") { $Message = "Starting Nutanix Files Monitor Run $($i)" } else { $Message = "Skipping Nutanix Files Monitoring" }
         Write-Log -Message "$($Message)" -Level Info
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
@@ -2174,7 +2207,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -2186,11 +2219,11 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        if ($VSI_Target_Files -ne "") {
+        if ($Config.Target.Files -ne "") {
             $Params = @{
                 OutputFolder                 = $OutputFolder 
-                DurationInMinutes            = $VSI_Target_DurationInMinutes 
-                RampupInMinutes              = $VSI_Target_RampupInMinutes 
+                DurationInMinutes            = $ImageSpec_DurationInMinutes #$VSI_Target_DurationInMinutes 
+                RampupInMinutes              = $Config.Test.Target_RampupInMinutes #$VSI_Target_RampupInMinutes 
                 Path                         = $Scriptroot 
                 AsJob                        = $true
             }
@@ -2199,13 +2232,13 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
 
         #region Update Test Dashboard
-        if ($VSI_Target_NetScaler -ne "") { $Message = "Starting Citrix NetScaler Monitor Run $($i)" } else { $Message = "Skipping Citrix NetScaler Monitoring" }
+        if ($Config.Target.NetScaler -ne "") { $Message = "Starting Citrix NetScaler Monitor Run $($i)" } else { $Message = "Skipping Citrix NetScaler Monitoring" }
         Write-Log -Message "$($Message)" -Level Info
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
@@ -2220,7 +2253,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -2235,8 +2268,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if ($VSI_Target_NetScaler -ne "") {
             $Params = @{
                 OutputFolder      = $OutputFolder 
-                DurationInMinutes = $VSI_Target_DurationInMinutes 
-                RampupInMinutes   = $VSI_Target_RampupInMinutes 
+                DurationInMinutes = $ImageSpec_DurationInMinutes #$VSI_Target_DurationInMinutes 
+                RampupInMinutes   = $Config.Test.Target_RampupInMinutes #$VSI_Target_RampupInMinutes
                 Path              = $Scriptroot 
                 AsJob             = $true
             }
@@ -2253,7 +2286,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
@@ -2268,7 +2301,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -2284,7 +2317,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
@@ -2303,15 +2336,15 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $monitoringJob | Wait-Job
             $monitoringJob | Remove-Job
         }
-        if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
+        if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
             $monitoringJob_files | Wait-Job
             $monitoringJob_files | Remove-Job
         }
-        if ($VSI_Target_Files -ne "") {
+        if ($Config.Target.Files -ne "") {
             $monitoringFilesJob | Wait-Job
             $monitoringFilesJob | Remove-Job
         }
-        if ($VSI_Target_NetScaler -ne "") {
+        if ($Config.Target.NetScaler -ne "") {
             $monitoringNSJob | Wait-Job
             $monitoringNSJob | Remove-Job
         }
@@ -2332,7 +2365,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
@@ -2347,7 +2380,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -2362,25 +2395,25 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         if (-not $AzureMode.IsPresent) { 
             # This is not an Azure configuration
             Write-Log -Message "Starting Nutanix Curator Service" -Level Info
-            Set-NTNXcurator -ClusterIP $NTNXInfra.Target.CVM -CVMSSHPassword $NTNXInfra.Target.CVMsshpassword -Action "start"
+            Set-NTNXcurator -ClusterIP $Config.Target.CVM -CVMSSHPassword $Config.Target.CVMsshpassword -Action "start"
         }
 
-        if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
-            Write-Log -Message "Starting Nutanix Curator Service on the Nutanix Files Cluster $($VSI_Target_Files_Cluster_CVM)" -Level Info
-            Set-NTNXcurator -ClusterIP $VSI_Target_Files_Cluster_CVM -CVMSSHPassword $VSI_Target_Files_Cluster_CVMsshpassword -Action "start"
+        if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
+            Write-Log -Message "Starting Nutanix Curator Service on the Nutanix Files Cluster $($Config.Target.Files_Cluster_CVM)" -Level Info
+            Set-NTNXcurator -ClusterIP $Config.Target.Files_Cluster_CVM -CVMSSHPassword $Config.Target.Files_Cluster_CVMsshpassword -Action "start"
         }
         #endregion Nutanix Curator Start
 
         #region Write config to OutputFolder and Download LE Metrics
         #----------------------------------------------------------------------------------------------------------------------------
 
-        if ($VSI_Test_SkipLEMetricsDownload -eq $true) { $Message = "Skipping Exporting Test Data from Login Enterprise" } else { $Message = "Exporting Test Data from Login Enterprise" } 
+        if ($Config.Test.SkipLEMetricsDownload -eq $true) { $Message = "Skipping Exporting Test Data from Login Enterprise" } else { $Message = "Exporting Test Data from Login Enterprise" } 
         #region Update Test Dashboard
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
@@ -2396,7 +2429,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -2410,17 +2443,17 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         if (-not $AzureMode.IsPresent) { 
             # This is not an Azure configuration
-            $NTNXInfra.Testinfra.VMCPUCount = [Int]$VSI_Target_NumCPUs * [Int]$VSI_Target_NumCores
+            $NTNXInfra.Testinfra.VMCPUCount = [Int]$ImageSpec_NumCPUs * [Int]$ImageSpec_NumCores
         }
 
         $NTNXInfra.Testinfra.Testname = $FolderName
         $NTNXInfra | ConvertTo-Json -Depth 20 | Set-Content -Path $OutputFolder\Testconfig.json -Force
 
-        if ($VSI_Test_SkipLEMetricsDownload -eq $true){ 
+        if ($Config.Test.SkipLEMetricsDownload -eq $true){ 
             Write-Log -Message "Skipping download of LE Metrics" -Level Info
         } else {
             Write-Log -Message "Exporting LE Measurements to output folder" -Level Info
-            Export-LEMeasurements -Folder $OutputFolder -TestRun $TestRun -DurationInMinutes $VSI_Target_DurationInMinutes
+            Export-LEMeasurements -Folder $OutputFolder -TestRun $TestRun -DurationInMinutes $ImageSpec_DurationInMinutes
         }
         #endregion Write config to OutputFolder and Download LE Metrics
 
@@ -2442,12 +2475,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #----------------------------------------------------------------------------------------------------------------------------
 
         #region Update Test Dashboard
-        if ($VSI_Target_Files -ne "") { $Message = "Starting Nutanix Files Data Clean" } else { $Message = "Skipping Nutanix Files Data Clean" }
+        if ($Config.Target.Files -ne "") { $Message = "Starting Nutanix Files Data Clean" } else { $Message = "Skipping Nutanix Files Data Clean" }
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
@@ -2462,7 +2495,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -2475,10 +2508,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #endregion Update Test Dashboard
 
         if ($VSI_Target_Files -ne "") {
-            if ($null -ne $VSI_Test_Nutanix_Files_Shares -and $VSI_Test_Delete_Files_Data -eq $true) { #Need to update the above messaging to reflect these detetion rules
+            if ($null -ne $Config.Test.Nutanix_Files_Shares -and $Config.Test.Delete_Files_Data -eq $true) { #Need to update the above messaging to reflect these detetion rules
                 Write-Log -Message "Processing Nutanix Files Data Removal" -Level Info
                 # TODO: Need to Validate this configuation
-                Remove-NutanixFilesData -Shares $VSI_Test_Nutanix_Files_Shares -Mode Execute
+                Remove-NutanixFilesData -Shares $Config.Test.Nutanix_Files_Shares -Mode Execute
             }
         }
         #endregion Cleanup Nutanix Files Data
@@ -2487,12 +2520,12 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         #----------------------------------------------------------------------------------------------------------------------------
 
         #region Update Test Dashboard
-        if ($NTNXInfra.Test.UploadResults) { $Message = "Uploading Data to InfluxDB" } else { $Message = "Skipping InfluxDB Data Upload" }
+        if ($Config.Test.Uploadresults) { $Message = "Uploading Data to InfluxDB" } else { $Message = "Skipping InfluxDB Data Upload" }
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentRunPhase 
@@ -2507,7 +2540,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -2519,7 +2552,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        if ($NTNXInfra.Test.UploadResults) {
+        if ($Config.Test.UploadResults) {
             Write-Log -Message "Uploading Test Run Data to Influx" -Level Info
             
             $TestDetail = $NTNXInfra.TestInfra.TestName -Split '_Run'
@@ -2532,7 +2565,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 $Started = $($NTNXInfra.TestInfra.Bootstart)
 
                 # Build the Boot Bucket Name
-                If ($($NTNXInfra.Test.BucketName) -eq "LoginDocuments") {
+                If ($($Config.Test.BucketName) -eq "LoginDocuments") {
                     $BucketName = "BootBucket"
                 }
                 Else {
@@ -2543,7 +2576,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 foreach ($File in $Files) {
                     if (($File.Name -like "host raw*") -or ($File.Name -like "cluster raw*")) {
                         Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
-                        if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
+                        if (Start-InfluxUpload -influxDbUrl $Config.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $Config.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
                             Write-Log -Message "Finished uploading Boot File $($File.Name) to Influx" -Level Info
                         }
                         else {
@@ -2560,14 +2593,14 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             $Files = Get-ChildItem "$($OutputFolder)\*.csv"
             $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv"
             $Started = $vsiresult.started
-            $BucketName = $($NTNXInfra.Test.BucketName)
+            $BucketName = $($Config.Test.BucketName)
             # Loop through the test run data files and process each one
             foreach ($File in $Files) {
                 if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*") -or ($File.Name -like "VM Perf Metrics*")) {
                     Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
                     #Set Azure VM Value - If this is an Azure VM, we will be sending different tags in to Influx. If not, then it's business as usual.
                     if ($NTNXInfra.AzureGuestDetails.IsAzureVM -eq $true) { $IsAzureVM = $true } else { $IsAzureVM = $false }
-                    if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName -IsAzureVM $IsAzureVM) {
+                    if (Start-InfluxUpload -influxDbUrl $Config.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $Config.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName -IsAzureVM $IsAzureVM) {
                         Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
                     }
                     else {
@@ -2579,8 +2612,8 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 }
             }
             #region Upload Files Hosting Data to Influx
-            if ($VSI_Target_Monitor_Files_Cluster_Performance -eq $true) {
-                Write-Log -Message "Uploading Files Cluster $($VSI_Target_Files_Cluster_CVM) Metrics to Influx" -Level Info
+            if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
+                Write-Log -Message "Uploading Files Cluster $($Config.Target.Files_Cluster_CVM) Metrics to Influx" -Level Info
             
                 #alter the file names so we have uniqe influx data
                 $Original_Files = Get-ChildItem "$($OutputFolder)\Files_Cluster\*.csv"
@@ -2599,7 +2632,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                     # We only care about cluster raw data here
                     if (($File.Name -like "cluster raw*")) {
                         Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
-                        if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
+                        if (Start-InfluxUpload -influxDbUrl $Config.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $Config.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
                             Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
                         }
                         else {
@@ -2619,7 +2652,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #endregion Upload Data to Influx
 
-        if ($VSI_Test_SkipLEMetricsDownload -eq $true){ 
+        if ($Config.Test.SkipLEMetricsDownload -eq $true){ 
             Write-Log -Message "Skipped download of LE Metrics so no analysis occuring" -Level Info
         } 
         else {
@@ -2629,7 +2662,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 
         #region Slack update
         #----------------------------------------------------------------------------------------------------------------------------
-        if ($VSI_Test_SkipLEMetricsDownload -eq $true){
+        if ($Config.Test.SkipLEMetricsDownload -eq $true){
             if (-not $AzureMode.IsPresent) { 
                 # This is not an Azure configuration
                 $SlackMessage = "Testname: $($NTNXTestname) Run $i is finished on Cluster $($NTNXInfra.TestInfra.ClusterName)."
@@ -2649,7 +2682,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
         }
         Update-VSISlack -Message $SlackMessage -Slack $($NTNXInfra.Testinfra.Slack)
 
-        if ($VSI_Test_SkipLEMetricsDownload -ne $true){
+        if ($Config.Test.SkipLEMetricsDownload -ne $true){
             if ( -not $AzureMode.IsPresent) {
                 # This is not an Azure configuration
                 $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -RunNumber $i -TestName $NTNXTestname -TestResult $Testresult
@@ -2657,10 +2690,10 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 if (Test-Path -path $Filename) {
                     $Params = @{
                         ImageURL     = $FileName 
-                        SlackToken   = $NTNXInfra.Testinfra.SlackToken 
-                        SlackChannel = $NTNXInfra.Testinfra.SlackChannel 
-                        SlackTitle   = "$($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)" 
-                        SlackComment = "CPU and EUX score of $($NTNXInfra.Target.ImagesToTest[0].Comment)_Run$($i)"
+                        SlackToken   = $Config.Testinfra.SlackToken 
+                        SlackChannel = $Config.Testinfra.SlackChannel 
+                        SlackTitle   = "$($Config.Target.ImagesToTest[0].Comment)_Run$($i)" 
+                        SlackComment = "CPU and EUX score of $($Config.Target.ImagesToTest[0].Comment)_Run$($i)"
                     }
                     Update-VSISlackImage @params
                     $Params = $null
@@ -2680,7 +2713,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "$($i)" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Completed" 
             CurrentPhase   = $CurrentRunPhase 
@@ -2695,7 +2728,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
             RunNumber      = "0" 
-            InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+            InfluxUri      = $Config.TestInfra.InfluxDBurl 
             InfluxBucket   = $InfluxTestDashBucket 
             Status         = "Running" 
             CurrentPhase   = $CurrentTotalPhase 
@@ -2716,9 +2749,9 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     if (-not $AzureMode.IsPresent) { 
         if ($NTNXInfra.Target.HypervisorType -eq "AHV") {
             $params = @{
-                ClusterIP = $NTNXInfra.Target.CVM
-                CVMsshpassword = $NTNXInfra.Target.CVMsshpassword
-                VMnameprefix = $NTNXInfra.Target.NamingPattern
+                ClusterIP = $Config.Target.CVM
+                CVMsshpassword = $Config.Target.CVMsshpassword
+                VMnameprefix = $Config.Target.NamingPattern
             }
             $ClearAffinityFromVMS = Set-AffinityClear @Params
             if ([string]::IsNullOrEmpty($ClearAffinityFromVMS)) {
@@ -2751,16 +2784,16 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
     Update-VSISlackresults -TestName $NTNXTestname -Path $ScriptRoot
     $OutputFolder = "$($ScriptRoot)\testresults\$($NTNXTestname)"
 
-    if ($VSI_Test_SkipLEMetricsDownload -ne $true){ 
+    if ($Config.Test.SkipLEMetricsDownload -ne $true){ 
         $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -TestName $NTNXTestname -TestResult $Testresult
     
         if (Test-Path -path $Filename) {
             $Params = @{
                 ImageURL     = $FileName 
-                SlackToken   = $NTNXInfra.Testinfra.SlackToken 
-                SlackChannel = $NTNXInfra.Testinfra.SlackChannel 
-                SlackTitle   = "$($NTNXInfra.Target.ImagesToTest[0].Comment)" 
-                SlackComment = "CPU and EUX scores of $($NTNXInfra.Target.ImagesToTest[0].Comment) - All Runs"
+                SlackToken   = $Config.Testinfra.SlackToken 
+                SlackChannel = $Config.Testinfra.SlackChannel 
+                SlackTitle   = "$($Config.Target.ImagesToTest[0].Comment)" 
+                SlackComment = "CPU and EUX scores of $($Config.Target.ImagesToTest[0].Comment) - All Runs"
             }
             Update-VSISlackImage @params
             $Params = $Null
@@ -2774,9 +2807,9 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
 #endregion Execute Test
 
 #region Stop Infrastructure Monitoring
-if ($VSI_Test_StartInfrastructureMonitoring -eq $true -and $VSI_Test_ServersToMonitor) {
+if ($Config.Test.StartInfrastructureMonitoring -eq $true -and $Config.Test.ServersToMonitor) {
     Write-Log -Message "Stopping Infrastructure Monitoring" -Level Info
-    Start-ServerMonitoring -ServersToMonitor $VSI_Test_ServersToMonitor -Mode StopMonitoring -ServiceName "Telegraf"
+    Start-ServerMonitoring -ServersToMonitor $Config.Test.ServersToMonitor -Mode StopMonitoring -ServiceName "Telegraf"
 }
 #endregion Stop Infrastructure Monitoring
 
@@ -2807,7 +2840,7 @@ $params = @{
     ConfigFile     = $NTNXInfra
     TestName       = $NTNXTestname 
     RunNumber      = "0" 
-    InfluxUri      = $NTNXInfra.TestInfra.InfluxDBurl 
+    InfluxUri      = $Config.TestInfra.InfluxDBurl 
     InfluxBucket   = $InfluxTestDashBucket 
     Status         = "Completed" 
     CurrentPhase   = $CurrentTotalPhase 
