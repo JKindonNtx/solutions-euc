@@ -10,7 +10,7 @@ function Get-NutanixSnapshot {
         [Parameter(Mandatory = $false)][String]$DDC
     )
 
-    Write-Log -Message "Validating Snapshot $($SnapshotName) exists on Target Cluster $($VSI_Target_CVM)" -Level Info
+    Write-Log -Message "Validating Snapshot $($SnapshotName) exists on Target Cluster $($Config.Target.CVM)" -Level Info
 
     if ($HypervisorType -eq "AHV") {
         #Validate at the AHV Level
@@ -35,7 +35,7 @@ function Get-NutanixSnapshot {
     if ($Type -eq "Horizon" -and $HypervisorType -eq "ESXi") {
         #Validate at the VC level
         try {
-            $temp_vsphere_connection = Connect-VIServer -Server $VSI_Target_vCenterServer -User $VSI_Target_vCenterUsername -Password $VSI_Target_vCenterPassword -Force -ErrorAction Stop
+            $temp_vsphere_connection = Connect-VIServer -Server $Config.Target.vCenterServer -User $Config.Target.vCenterUsername -Password $Config.Target.vCenterPassword -Force -ErrorAction Stop
             $snap_validated = Get-Snapshot -VM $VM -Name $SnapshotName -Server $temp_vsphere_connection -ErrorAction Stop
         }
         catch {

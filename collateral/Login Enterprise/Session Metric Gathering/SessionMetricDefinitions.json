@@ -381,5 +381,173 @@
 		"name": "System: Processor Queue Length",
 		"description": "System: Processor Queue Length",
         "tag": "systemUtilization"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Citrix PVS",
+            "counterName": "File Bytes",
+            "displayName": "File Bytes",
+            "unit": "Units"
+        },
+        "name": "PVS Target: File Bytes",
+		"description": "PVS Target: File Bytes",
+        "tag": "pvs_target"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Citrix PVS",
+            "counterName": "File Reads/sec",
+            "displayName": "File Reads/sec",
+            "unit": "Units / Sec"
+        },
+        "name": "PVS Target: File Reads/sec",
+		"description": "PVS Target: File Reads/sec",
+        "tag": "pvs_target"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Citrix PVS",
+            "counterName": "File Writes/sec",
+            "displayName": "File Writes/sec",
+            "unit": "Units / Sec"
+        },
+        "name": "PVS Target: File Writes/sec",
+		"description": "PVS Target: File Writes/sec",
+        "tag": "pvs_target"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Citrix PVS",
+            "counterName": "File Read Bytes/sec",
+            "displayName": "File Read Bytes/sec",
+            "unit": "Units / Sec"
+        },
+        "name": "PVS Target: File Read Bytes/sec",
+		"description": "PVS Target: File Read Bytes/sec",
+        "tag": "pvs_target"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Citrix PVS",
+            "counterName": "File Write Bytes/sec",
+            "displayName": "File Write Bytes/sec",
+            "unit": "Units / Sec"
+        },
+        "name": "PVS Target: File Write Bytes/sec",
+		"description": "PVS Target: File Write Bytes/sec",
+        "tag": "pvs_target"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Citrix PVS",
+            "counterName": "RAM Cache Bytes",
+            "displayName": "RAM Cache Bytesc",
+            "unit": "Units"
+        },
+        "name": "PVS Target: RAM Cache Bytes",
+		"description": "PVS Target: RAM Cache Bytes",
+        "tag": "pvs_target"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Citrix PVS",
+            "counterName": "RAM Reads/sec",
+            "displayName": "RAM Reads/sec",
+            "unit": "Units / Sec"
+        },
+        "name": "PVS Target: RAM Reads/sec",
+		"description": "PVS Target: RAM Reads/sec",
+        "tag": "pvs_target"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Citrix PVS",
+            "counterName": "RAM Writes/sec",
+            "displayName": "RAM Writes/sec",
+            "unit": "Units / Sec"
+        },
+        "name": "PVS Target: RAM Writes/sec",
+		"description": "PVS Target: RAM Writes/sec",
+        "tag": "pvs_target"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Citrix PVS",
+            "counterName": "RAM Read Bytes/sec",
+            "displayName": "RAM Read Bytes/sec",
+            "unit": "Units / Sec"
+        },
+        "name": "PVS Target: RAM Read Bytes/sec",
+		"description": "PVS Target: RAM Read Bytes/sec",
+        "tag": "pvs_target"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Citrix PVS",
+            "counterName": "RAM Write Bytes/sec",
+            "displayName": "RAM Write Bytes/sec",
+            "unit": "Units / Sec"
+        },
+        "name": "PVS Target: RAM Write Bytes/sec",
+		"description": "PVS Target: RAM Write Bytes/sec",
+        "tag": "pvs_target"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Citrix PVS",
+            "counterName": "Parent Reads/sec",
+            "displayName": "Parent Reads/sec",
+            "unit": "Units / Sec"
+        },
+        "name": "PVS Target: Parent Reads/sec",
+		"description": "PVS Target: Parent Reads/sec",
+        "tag": "pvs_target"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Citrix PVS",
+            "counterName": "Parent Read Bytes/sec",
+            "displayName": "Parent Read Bytes/sec",
+            "unit": "Units / Sec"
+        },
+        "name": "PVS Target: Parent Read Bytes/sec",
+		"description": "PVS Target: Parent Read Bytes/sec",
+        "tag": "pvs_target"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Citrix PVS Network",
+            "counterName": "UDP Retry",
+            "displayName": "UDP Retry",
+            "unit": "Units"
+        },
+        "name": "PVS Target: UDP Retry",
+		"description": "PVS Target: UDP Retry",
+        "tag": "pvs_target"
+    },
+    {
+        "Type": "PerformanceCounter",
+        "measurement": {
+            "counterCategory": "Citrix PVS Network",
+            "counterName": "Server Reconnect",
+            "displayName": "Server Reconnect",
+            "unit": "Units"
+        },
+        "name": "PVS Target: Server Reconnect",
+		"description": "PVS Target: Server Reconnect",
+        "tag": "pvs_target"
     }
 ]

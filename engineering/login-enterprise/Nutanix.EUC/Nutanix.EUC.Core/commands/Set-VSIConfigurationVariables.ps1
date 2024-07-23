@@ -43,6 +43,7 @@ function Set-VSIConfigurationVariablesDAVE {
         Write-Log -Message "Processing Image Configuration" -Level Validation
         foreach ($var in $ImageConfiguration.PSObject.Properties) {
             Set-Variable -Name "VSI_Target_$($var.Name)" -Value $var.Value -Scope Global
+            Set-Variable -Name "ImageSpec_$($var.Name)" -Value $var.Value -Scope Global
         }
     }
     

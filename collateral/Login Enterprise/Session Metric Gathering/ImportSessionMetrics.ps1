@@ -4,6 +4,11 @@ param (
     [string]$token
 )
 
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    Write-Host "Script requires powershell 7 or later"
+    Exit 0
+}
+
 $global:FQDN = $fqdn
 $global:TOKEN = $token
 $global:HEADER = @{
@@ -70,11 +75,12 @@ function Import-VSISessionMetric {
     
     # set parameters
     $Parameters = @{
-        Uri         = 'https://' + $global:Fqdn + $global:metricDefinitionEndpoint
-        Headers     = $global:HEADER
-        Method      = 'POST'
-        body        = $metricDefinition
-        ContentType = 'application/json'
+        Uri                  = 'https://' + $global:Fqdn + $global:metricDefinitionEndpoint
+        Headers              = $global:HEADER
+        Method               = 'POST'
+        body                 = $metricDefinition
+        ContentType          = 'application/json'
+        SkipCertificateCheck = $true
     }
     $Response = Invoke-RestMethod @Parameters
     $Response.id
