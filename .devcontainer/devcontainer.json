@@ -36,7 +36,10 @@
 				"4ops.packer",
 				"richie5um2.vscode-statusbar-json-path",
 				"redhat.ansible",
-				"mutantdino.resourcemonitor"
+				"mutantdino.resourcemonitor",
+				"ms-vscode.powershell",
+				"GitHub.copilot-chat",
+				"GitHub.copilot"
 			]
 		}
 	},

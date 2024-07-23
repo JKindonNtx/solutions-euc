@@ -541,7 +541,6 @@ if (-not $AzureMode.IsPresent) {
             }
         }
         elseif ($Config.Target.OrchestrationMethod  -eq "API") {
-
             #Need to set the XDHyp Path for Snapshot Validation
             foreach ($ParentVM in $Config.Target.ImagesToTest.ParentVM) {
                 $snapshot_path = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($ParentVM)"
@@ -597,6 +596,7 @@ if (-not $AzureMode.IsPresent) {
             #Need to set the XDHyp Path for Snapshot Validation
             foreach ($ParentVM in $Config.Target.ImagesToTest.ParentVM) {
                 $snapshot_path = "XDHyp:\Connections\$($Config.Target.HostingConnectionRootName)\$($Config.Target.vSphereDataCenter).datacenter\$($Config.Target.vSphere_Cluster).cluster\$($ParentVM)"
+
 
                 if ($Type -eq "CitrixVAD") {
                     $params = @{
