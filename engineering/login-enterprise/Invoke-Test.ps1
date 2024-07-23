@@ -91,7 +91,7 @@ Param(
 #endregion Params
 
 ##Testing
-#$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-Citrix2402-ESXi-WS2022-NVD-Files.jsonc"
+#$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Reference Test Configs\jk-esxi-nvd-ra-2024\Config-Citrix2402-ESXi-WS2022-NVD-Files.jsonc"
 #$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-LoginEnterpriseGlobal.jsonc"
 #$Type = "CitrixVAD"
 ##Testing
@@ -479,7 +479,16 @@ if ($Type -eq "CitrixVAD" -or "CitrixDaaS"){
 
 #region Citrix Site Access Pre Flight Checks
 if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
-    if ($Config.Target.OrchestrationMethod -eq "Snapin") {}
+    if ($Config.Target.OrchestrationMethod -eq "Snapin") {
+        Write-Log -Message "Handling Citrix Credentials and Validating Citrix On Prem Site" -Level Info
+        $params = @{
+            DDC                    = $Config.Target.DDC 
+            HostingConnection      = $Config.Target.HypervisorConnection
+            Zone                   = $Config.Target.ZoneName 
+        }
+        $cvad_environment_details = Get-CVADSiteDetail @params
+        $params = $null
+    }
     elseif ($Config.Target.OrchestrationMethod  -eq "API") {
         if ($Type -eq "CitrixVAD") {
             # pull relevant validation detail into $cvad_environment_details
