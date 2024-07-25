@@ -176,7 +176,7 @@ function Set-VMWareHostAlignment {
 
         if ($CanProcessAlignment -eq $true) {
             #region learn about Citrix VMs
-            if ($null -eq $DDC) {
+            if ($DDC -eq "Omnissa") {
                 $MachineList = [System.Collections.ArrayList]@()
                 foreach($VM in $OmnissaMachineList){
                     $VmFqdn = $VM.dns_name
@@ -210,7 +210,7 @@ function Set-VMWareHostAlignment {
             $MachineList_Host_8 = $null
 
             Write-Log -Message "Sorting machines into batches for Affintity" -Level Info
-            if ($null -eq $DDC) {
+            if ($DDC -eq "Omnissa") {
                 $MachineList_Host_1 = ($MachineList | Select-Object -First $MachineCountPerHost)
                 if ($HostCount -gt 1) { $MachineList_Host_2 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip $MachineCountPerHost) }
                 if ($HostCount -gt 2) { $MachineList_Host_3 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 2)) }

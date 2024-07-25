@@ -100,8 +100,9 @@ function Enable-OmnissaPool {
     if (($HypervisorType) -eq "ESXi" -and ($ForceAlignVMToHost)) {
         Write-Log "Hypervisortype = $HypervisorType and VM to Host Alignment is set to $($ForceAlignVMToHost)"
         $params = @{
+            DDC              = "Omnissa"
             MachineCount     = $PoolMachineCount.Count
-            HostCount        = $HostCount
+            HostCount        = $NodeCount
             VCenter          = $VmwareVCenter
             User             = $VMwareUser
             Password         = $VMwarePassword
