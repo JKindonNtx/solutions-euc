@@ -13,7 +13,7 @@ function Set-NTNXHostAlignment {
         [Parameter(Mandatory = $false)][string]$DesktopGroupName,
         [Parameter(Mandatory = $true)][string]$Run,
         [Parameter(Mandatory = $false)][int32]$MaxRecordCount,
-        [Parameter(Mandatory = $true)][bool]$EnforceHostMaintenanceMode
+        [Parameter(Mandatory = $true)][bool]$EnforceHostMaintenanceMode,
         [Parameter(Mandatory = $false)]$OmnissaMachineList
     )
 
