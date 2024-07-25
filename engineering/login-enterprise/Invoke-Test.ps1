@@ -1187,7 +1187,6 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         #region Update Test Dashboard
         if (-not $AzureMode.IsPresent) { 
             # This is not an Azure configuration
-            if (($Type -eq "Omnissa") -and ($NTNXInfra.Target.OmnissaProvisioningMode -eq "Manual")) {
             if (($Type -eq "Omnissa") -and ($config.Target.OmnissaProvisioningMode -eq "Manual")) {
                 $Message = "Skipping Creating $($Type) Manual Desktop Pool" 
             } else {
@@ -1384,7 +1383,6 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         }
 
         if ($Type -eq "Omnissa") {
-            if ($NTNXInfra.Target.OmnissaProvisioningMode -eq "Manual") {
             if ($config.Target.OmnissaProvisioningMode -eq "Manual") {
                 # Placeholder for integrating Set-OmnissaManualPool function to potentially create the manual pool as part of the test run
                 # Would rely on either running in a container for Ansible
@@ -1566,24 +1564,6 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
 
         if ($Type -eq "Omnissa") {
             $params = @{
-<<<<<<< Updated upstream
-                ApiEndpoint         = $Config.Target.OmnissaConnectionServer
-                UserName            = $Config.Target.OmnissaApiUserName
-                Password            = $Config.Target.OmnissaApiPassword
-                Domain              = $Config.Target.OmnissaApiDomain
-                CloneType           = $Config.Target.OmnissaProvisioningMode
-                PoolName            = $Config.Target.DesktopPoolName #$VSI_Target_DesktopPoolName
-                TargetCVM           = $Config.Target.CVM
-                TargetCVMAdmin      = $Config.Target.CVM_admin #$VSI_Target_CVM_admin
-                TargetCVMPassword   = $Config.Target.CVM_password #$VSI_Target_CVM_password
-                Affinity            = $Config.Testinfra.SetAffinity
-                HypervisorType      = $Config.Target.HypervisorType #$VSI_Target_HypervisorType
-                ForceAlignVMToHost  = $Config.Target.ForceAlignVMToHost
-                VMnameprefix        = $Config.Target.NamingPattern
-                Hosts               = $NTNXInfra.Testinfra.Hostip
-                Run                 = $i
-                CVMSSHPassword      = $Config.Target.CVMsshpassword
-=======
                 ApiEndpoint         = $VSI_Target_OmnissaConnectionServer
                 UserName            = $VSI_Target_OmnissaApiUserName
                 Password            = $VSI_Target_OmnissaApiPassword
@@ -1605,7 +1585,6 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                 VMwareUser          = $config.vSphere.User
                 VMwarePassword      = $config.vSphere.Password
                 NodeCount           = $config.Target.NodeCount
->>>>>>> Stashed changes
             }
             $Boot = Enable-OmnissaPool @params
         }
