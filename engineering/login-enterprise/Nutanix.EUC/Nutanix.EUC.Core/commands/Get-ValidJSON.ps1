@@ -37,7 +37,7 @@ The configuration file to parse and validate
         $Validated_Provisioning_Modes = @("AllMachinesUpFront","OnDemand","Manual")
         $Validated_Omnissa_Provisioning_Modes = @("Manual")
         #Test Section Valid Settings
-        $Validated_Bucket_Names = @("LoginDocuments", "LoginRegression", "AzurePerfData")
+        $Validated_Bucket_Names = @("LoginDocuments", "LoginRegression", "AzurePerfData", "PVSPerfData")
     }
 
     process{
