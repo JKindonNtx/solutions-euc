@@ -535,6 +535,7 @@ if (-not $AzureMode.IsPresent) {
                     SnapshotName   = $cleansed_snapshot_name 
                     HypervisorType = $NTNXInfra.Testinfra.HypervisorType 
                     Type           = $Type
+                    Config         = $Config
                 }
                 Get-NutanixSnapshot @params
                 $params = $null
@@ -587,6 +588,7 @@ if (-not $AzureMode.IsPresent) {
                     Type              = $Type 
                     DDC               = $Config.Target.DDC 
                     SnapshotName      = $ParentVM
+                    Config            = $Config
                 }
                 Get-NutanixSnapshot @params
                 $params = $null
@@ -639,6 +641,7 @@ if (-not $AzureMode.IsPresent) {
                 SnapshotName   = $cleansed_snapshot_name 
                 HypervisorType = $NTNXInfra.Testinfra.HypervisorType 
                 Type           = $Type
+                Config         = $Config
             }
             Get-NutanixSnapshot @params
             $params = $null

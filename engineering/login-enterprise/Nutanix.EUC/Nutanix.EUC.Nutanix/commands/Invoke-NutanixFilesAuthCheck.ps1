@@ -1,9 +1,9 @@
 function Invoke-NutanixFilesAuthCheck {
 
     $Method = "GET"
-    $URL = "https://$($Config.Target.Files):9440/api/files/v4.0.a2/config/file-server"
+    $URL = "https://$($VSI_Target_Files):9440/api/files/v4.0.a2/config/file-server"
     $header = @{
-        Authorization     = "Basic " + [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($($Config.Target.Files_api) + ":" + $($Config.Target.Files_password)))
+        Authorization     = "Basic " + [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($($VSI_Target_Files_api) + ":" + $($VSI_Target_Files_Password)))
         "Accept-Encoding" = "gzip"
         "Accept"          = "application/json"
     }

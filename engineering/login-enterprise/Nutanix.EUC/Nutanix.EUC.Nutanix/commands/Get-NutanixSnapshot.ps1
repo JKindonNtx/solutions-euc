@@ -7,7 +7,8 @@ function Get-NutanixSnapshot {
         [Parameter(Mandatory = $false)][String]$HypervisorType,
         [Parameter(Mandatory = $false)][String]$HostingConnection,
         [Parameter(Mandatory = $false)][String]$Type,
-        [Parameter(Mandatory = $false)][String]$DDC
+        [Parameter(Mandatory = $false)][String]$DDC,
+        [Parameter(Mandatory = $false)]$Config
     )
 
     Write-Log -Message "Validating Snapshot $($SnapshotName) exists on Target Cluster $($Config.Target.CVM)" -Level Info
