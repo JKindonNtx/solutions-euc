@@ -10,6 +10,7 @@ function Set-LELoadTestv7 {
         $LauncherGroupName,
         $AccountGroupName,
         $SessionMetricGroup,
+        $SessionMetricAmount,
         $ConnectorName,
         $ConnectorParams,
         $Workload
@@ -23,8 +24,14 @@ function Set-LELoadTestv7 {
 
     if ($VSI_Target_SessionMetricsEnabled) {
         $SessionMetricGroupKey = (Get-LESessionMetricGroups | Where-Object { $_.Name -eq "$($SessionMetricGroup)" } | Select-Object -ExpandProperty key)
+        if ($null -eq $SessionMetricAmount) {
+            $SessionMetricsScheduleRate = $SessionAmount
+        } Else {
+            $SessionMetricsScheduleRate = [Math]::Round($sessionAmount / $SessionMetricAmount, 0, [MidpointRounding]::AwayFromZero)
+        }
     } Else {
         $SessionMetricGroupKey = ""
+        $SessionMetricsScheduleRate = $SessionAmount
     }
 
     Switch ($ConnectorName) {
@@ -54,7 +61,7 @@ function Set-LELoadTestv7 {
                 name                      = $TestName
                 euxEnabled                = $VSI_Target_EUXEnabled
                 sessionMetricsEnabled     = $VSI_Target_SessionMetricsEnabled
-                sessionMetricScheduleRate = $SessionAmount
+                sessionMetricScheduleRate = $SessionMetricsScheduleRate
                 sessionMetricGroupKey     = $SessionMetricGroupKey
                 description               = $ConnectorParams["resource"]
                 environmentUpdate         = @{
@@ -142,7 +149,7 @@ function Set-LELoadTestv7 {
                 name                    = $TestName
                 euxEnabled              = $VSI_Target_EUXEnabled
                 sessionMetricsEnabled   = $VSI_Target_SessionMetricsEnabled
-                sessionMetricScheduleRate = $SessionAmount
+                sessionMetricScheduleRate = $SessionMetricsScheduleRate
                 sessionMetricGroupKey   = $SessionMetricGroupKey
                 description             = $ConnectorParams["resource"]
                 connectionResourcesUpdate   = @{
@@ -187,7 +194,7 @@ function Set-LELoadTestv7 {
                 name                      = $TestName
                 euxEnabled                = $VSI_Target_EUXEnabled
                 sessionMetricsEnabled     = $VSI_Target_SessionMetricsEnabled
-                sessionMetricScheduleRate = $SessionAmount
+                sessionMetricScheduleRate = $SessionMetricsScheduleRate
                 sessionMetricGroupKey     = $SessionMetricGroupKey
                 description               = $ConnectorParams["resource"]
                 connectionResourcesUpdate = @{

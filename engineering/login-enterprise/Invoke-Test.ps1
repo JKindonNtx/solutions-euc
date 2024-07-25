@@ -1781,6 +1781,7 @@ ForEach ($ImageToTest in $VSI_Target_ImagesToTest) {
                 LauncherGroupName  = $VSI_Launchers_GroupName
                 AccountGroupName   = $VSI_Users_GroupName
                 SessionMetricGroup = $VSI_Target_SessionMetricGroupName
+                SessionMetricAmount = $VSI_Target_SessionMetricAmount
                 ConnectorName      = "Citrix Storefront"
                 ConnectorParams    = @{serverURL = $VSI_Target_StorefrontURL; resource = $VSI_Target_DesktopPoolName }
                 Workload           = $VSI_Target_Workload
