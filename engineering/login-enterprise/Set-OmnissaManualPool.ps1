@@ -104,10 +104,10 @@ $var_Omnissa_Base_Vm_Name = $config.Omnissa.BaseVmName
 $var_Number_Of_Vms = $config.Omnissa.NumberOfVMs
 $Slack = $config.Various.Slack
 $var_Ansible_Path = $config.Various.AnsiblePath
-$VmwareVCenter = $config.VMware.ip
-$VMwareUser = $config.VMware.user
-$VMwarePassword = $config.VMware.password
-$VMwareClusterName = $config.VMware.ClusterName
+$VmwareVCenter = $config.VMware.vCenterServer
+$VMwareUser = $config.VMware.vCenterUsername
+$VMwarePassword = $config.VMware.vCenterPassword
+$VMwareClusterName = $config.VMware.vCenterPassword
 $CustomizationSpec = $config.VMware.CustomizationSpec
 #endregion Set Variables
 
