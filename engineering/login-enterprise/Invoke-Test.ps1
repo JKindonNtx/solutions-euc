@@ -1844,16 +1844,17 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
 
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
             $Params = @{
-                TestName           = $Config.Test.Name #$VSI_Test_Name
-                SessionAmount      = $ImageSpec_NumberOfSessions #$VSI_Target_NumberOfSessions
-                RampupInMinutes    = $Config.Test.Target_RampupInMinutes #$VSI_Target_RampupInMinutes
-                DurationInMinutes  = $ImageSpec_DurationInMinutes #$VSI_Target_DurationInMinutes
-                LauncherGroupName  = $VSI_Launchers_GroupName
-                AccountGroupName   = $VSI_Users_GroupName
-                SessionMetricGroup = $VSI_Target_SessionMetricGroupName
-                ConnectorName      = "Citrix Storefront"
-                ConnectorParams    = @{serverURL = $Config.Target.StorefrontURL; resource = $Config.Target.DesktopPoolName }
-                Workload           = $VSI_Target_Workload
+                TestName            = $Config.Test.Name #$VSI_Test_Name
+                SessionAmount       = $ImageSpec_NumberOfSessions #$VSI_Target_NumberOfSessions
+                RampupInMinutes     = $Config.Test.Target_RampupInMinutes #$VSI_Target_RampupInMinutes
+                DurationInMinutes   = $ImageSpec_DurationInMinutes #$VSI_Target_DurationInMinutes
+                LauncherGroupName   = $VSI_Launchers_GroupName
+                AccountGroupName    = $VSI_Users_GroupName
+                SessionMetricGroup  = $VSI_Target_SessionMetricGroupName
+                SessionMetricAmount = $VSI_Target_SessionMetricAmount
+                ConnectorName       = "Citrix Storefront"
+                ConnectorParams     = @{serverURL = $Config.Target.StorefrontURL; resource = $Config.Target.DesktopPoolName }
+                Workload            = $VSI_Target_Workload
             }
             $testId = Set-LELoadTestv7 @Params
             $params = $null

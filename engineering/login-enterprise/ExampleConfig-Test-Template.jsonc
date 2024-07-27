@@ -164,6 +164,7 @@
                 "Comment": "Windows 10 Profile FSLogix - All On", // A short comment about this test. Will be added to the Login Enterprise database.
                 "EUXEnabled": true, // A true or false value to enable EUX measurements in the Login Enterprise Test
                 "SessionMetricsEnabled": false, // A true or false value to enable SessionMetrics in the Login Enterprise Test
+                "SessionMetricAmount": 1, // How many sessions to collect session metrics
                 "SessionMetricGroupName": "Nutanix"
             }
         ],

@@ -10,6 +10,7 @@ function Set-LELoadTestv7 {
         $LauncherGroupName,
         $AccountGroupName,
         $SessionMetricGroup,
+        $SessionMetricAmount,
         $ConnectorName,
         $ConnectorParams,
         $Workload
@@ -23,8 +24,14 @@ function Set-LELoadTestv7 {
 
     if ($VSI_Target_SessionMetricsEnabled) {
         $SessionMetricGroupKey = (Get-LESessionMetricGroups | Where-Object { $_.Name -eq "$($SessionMetricGroup)" } | Select-Object -ExpandProperty key)
+        if ($null -eq $SessionMetricAmount) {
+            $SessionMetricsScheduleRate = $SessionAmount
+        } Else {
+            $SessionMetricsScheduleRate = [Math]::Round($sessionAmount / $SessionMetricAmount, 0, [MidpointRounding]::AwayFromZero)
+        }
     } Else {
         $SessionMetricGroupKey = ""
+        $SessionMetricsScheduleRate = $SessionAmount
     }
 
     Switch ($ConnectorName) {
@@ -54,7 +61,7 @@ function Set-LELoadTestv7 {
                 name                      = $TestName
                 euxEnabled                = $VSI_Target_EUXEnabled
                 sessionMetricsEnabled     = $VSI_Target_SessionMetricsEnabled
-                sessionMetricScheduleRate = $SessionAmount
+                sessionMetricScheduleRate = $SessionMetricsScheduleRate
                 sessionMetricGroupKey     = $SessionMetricGroupKey
                 description               = $ConnectorParams["resource"]
                 environmentUpdate         = @{
@@ -135,17 +142,17 @@ function Set-LELoadTestv7 {
             } | ConvertTo-Json
 
             $UpdateTestBody = @{
-                type                    = "LoadTest"
-                numberOfSessions        = $SessionAmount
-                rampUpDurationInMinutes = $RampupInMinutes
-                testDurationInMinutes   = $DurationInMinutes
-                name                    = $TestName
-                euxEnabled              = $VSI_Target_EUXEnabled
-                sessionMetricsEnabled   = $VSI_Target_SessionMetricsEnabled
-                sessionMetricScheduleRate = $SessionAmount
-                sessionMetricGroupKey   = $SessionMetricGroupKey
-                description             = $ConnectorParams["resource"]
-                connectionResourcesUpdate   = @{
+                type                      = "LoadTest"
+                numberOfSessions          = $SessionAmount
+                rampUpDurationInMinutes   = $RampupInMinutes
+                testDurationInMinutes     = $DurationInMinutes
+                name                      = $TestName
+                euxEnabled                = $VSI_Target_EUXEnabled
+                sessionMetricsEnabled     = $VSI_Target_SessionMetricsEnabled
+                sessionMetricScheduleRate = $SessionMetricsScheduleRate
+                sessionMetricGroupKey     = $SessionMetricGroupKey
+                description               = $ConnectorParams["resource"]
+                connectionResourcesUpdate = @{
                     connector      = @{
                         type      = "Storefront"
                         serverUrl = $ConnectorParams["serverUrl"]
@@ -154,7 +161,7 @@ function Set-LELoadTestv7 {
                     accountGroups  = @((Get-LEAccountGroups | Where-Object { $_.Name -eq $AccountGroupName } | Select-Object -ExpandProperty groupId))
                     launcherGroups = @((Get-LELauncherGroups | Where-Object { $_.Name -eq $LauncherGroupName } | Select-Object -ExpandProperty id))
                 }
-                steps                   = @(
+                steps                     = @(
                     @{
                         type               = "AppGroupReference"
                         applicationGroupId = @((Get-LEApplicationGroups | Where-Object { $_.Name -Like "$($Workload)*" } | Select-Object -ExpandProperty id))
@@ -187,7 +194,7 @@ function Set-LELoadTestv7 {
                 name                      = $TestName
                 euxEnabled                = $VSI_Target_EUXEnabled
                 sessionMetricsEnabled     = $VSI_Target_SessionMetricsEnabled
-                sessionMetricScheduleRate = $SessionAmount
+                sessionMetricScheduleRate = $SessionMetricsScheduleRate
                 sessionMetricGroupKey     = $SessionMetricGroupKey
                 description               = $ConnectorParams["resource"]
                 connectionResourcesUpdate = @{
