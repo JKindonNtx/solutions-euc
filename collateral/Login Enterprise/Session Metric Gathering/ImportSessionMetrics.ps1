@@ -33,7 +33,13 @@ public class SSLHandler
     $table = @()
     foreach ($definition in $json) {
         $requestBody = $definition | ConvertTo-Json
-        $id = Import-VSISessionMetric -metricDefinition $requestBody
+        try {
+            $id = Import-VSISessionMetric -metricDefinition $requestBody -ErrorAction Stop
+        }
+        catch {
+            Write-Host "Failed to import metric definition: $(($requestBody | ConvertFrom-JSON).name). Check if User session metric definition already exists."
+            Continue
+        }
         
         if ($id) {
             if ($definition.type -eq "WmiQuery") {
