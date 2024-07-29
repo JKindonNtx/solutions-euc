@@ -3,6 +3,10 @@
 - name: Disable Windows Updates
   ansible.windows.win_powershell:
     script: |
+      ## Disable Windows Update download
+      New-Item -path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' -Name 'NoAutoUpdate' -value 1 -Force
+      ## Set Reserve Manager (for sysprep purposes)
+      Set-Itemproperty -path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\ReserveManager' -Name 'ActiveScenario' -value 0 -Force
       ## Disable auto startup for Windows Update
       Set-Itemproperty -path 'HKLM:\SYSTEM\CurrentControlSet\Services\UsoSvc' -Name 'Start' -value 4
       Set-Itemproperty -path 'HKLM:\SYSTEM\CurrentControlSet\Services\WaaSMedicSvc' -Name 'Start' -value 4
@@ -16,3 +20,6 @@
       ## Kill Scheduled Tasks
       Unregister-ScheduledTask -TaskName "PerformRemediation" -Confirm:$false
       Unregister-ScheduledTask -TaskName "Scheduled Start" -Confirm:$false
+    
+- name: Reboot after disabling Windows Updates
+  ansible.windows.win_reboot:

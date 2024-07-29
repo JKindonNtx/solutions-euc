@@ -3,17 +3,18 @@ function Set-NTNXHostAlignment {
     [CmdletBinding()]
 
     param (
-        [Parameter(Mandatory = $true)][string]$DDC,
+        [Parameter(Mandatory = $false)][string]$DDC,
         [Parameter(Mandatory = $true)][int32]$MachineCount,
         [Parameter(Mandatory = $true)][int32]$HostCount,
         [Parameter(Mandatory = $true)][string]$ClusterIP,
         [Parameter(Mandatory = $true)][string]$CVMsshpassword,
         [Parameter(Mandatory = $true)][string]$TargetCVMAdmin,
         [Parameter(Mandatory = $true)][string]$TargetCVMPassword,
-        [Parameter(Mandatory = $true)][string]$DesktopGroupName,
+        [Parameter(Mandatory = $false)][string]$DesktopGroupName,
         [Parameter(Mandatory = $true)][string]$Run,
-        [Parameter(Mandatory = $true)][int32]$MaxRecordCount,
-        [Parameter(Mandatory = $true)][bool]$EnforceHostMaintenanceMode
+        [Parameter(Mandatory = $false)][int32]$MaxRecordCount,
+        [Parameter(Mandatory = $true)][bool]$EnforceHostMaintenanceMode,
+        [Parameter(Mandatory = $false)]$OmnissaMachineList
     )
 
     if ($Run -eq 1) {
@@ -149,13 +150,25 @@ function Set-NTNXHostAlignment {
         if ($CanProcessAlignment -eq $true) {
             #region learn about Citrix VMs
         
-            Write-Log -Message "Retrieving list of machines from Delivery Group" -Level Info
-            $MachineList = Get-CitrixBrokerMachineList -DDC $DDC -DesktopGroupName $DesktopGroupName -MaxRecordCount $MaxRecordCount
-            if ($MachineList) {
-                Write-Log -Message "Retrieved $(($MachineList | Measure-Object).Count) Machines from Citrix" -Level Info
+            if ($null -eq $DDC) {
+                $MachineList = [System.Collections.ArrayList]@()
+                foreach($VM in $OmnissaMachineList){
+                    $VmFqdn = $VM.dns_name
+                    $VmSplit = $VmFqdn.Split(".")
+                    $VmNetbiosName = $VmSplit[0]
+                    $MachineList.Add($VmNetbiosName)
+                }
+                Write-Log -Message "Retrieved $(($OmnissaMachineList | Measure-Object).Count) Machines from Omnissa" -Level Info
             } else {
-                Write-Log -Message "No Machines Retrieved" -Level Warn
-                Exit 1
+                Write-Log -Message "Retrieving list of machines from Delivery Group" -Level Info
+                $MachineList = Get-CitrixBrokerMachineList -DDC $DDC -DesktopGroupName $DesktopGroupName -MaxRecordCount $MaxRecordCount
+                $MachineList = $MachineList | Sort-Object HostedMachineName
+                if ($MachineList) {
+                    Write-Log -Message "Retrieved $(($MachineList | Measure-Object).Count) Machines from Citrix" -Level Info
+                } else {
+                    Write-Log -Message "No Machines Retrieved" -Level Warn
+                    Exit 1
+                }
             }
             #endregion learn about Citrix VMs
 
@@ -170,14 +183,25 @@ function Set-NTNXHostAlignment {
             $MachineList_Host_8 = $null
 
             Write-Log -Message "Sorting machines into batches for Affintity" -Level Info
-            $MachineList_Host_1 = ($MachineList | Select-Object -First $MachineCountPerHost).HostedMachineName
-            if ($HostCount -gt 1) { $MachineList_Host_2 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip $MachineCountPerHost).HostedMachineName }
-            if ($HostCount -gt 2) { $MachineList_Host_3 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 2)).HostedMachineName }
-            if ($HostCount -gt 3) { $MachineList_Host_4 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 3)).HostedMachineName }
-            if ($HostCount -gt 4) { $MachineList_Host_5 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 4)).HostedMachineName }
-            if ($HostCount -gt 5) { $MachineList_Host_6 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 5)).HostedMachineName }
-            if ($HostCount -gt 6) { $MachineList_Host_7 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 6)).HostedMachineName }
-            if ($HostCount -gt 7) { $MachineList_Host_8 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 7)).HostedMachineName }
+            if ($null -eq $DDC) {
+                $MachineList_Host_1 = ($MachineList | Select-Object -First $MachineCountPerHost)
+                if ($HostCount -gt 1) { $MachineList_Host_2 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip $MachineCountPerHost) }
+                if ($HostCount -gt 2) { $MachineList_Host_3 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 2)) }
+                if ($HostCount -gt 3) { $MachineList_Host_4 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 3)) }
+                if ($HostCount -gt 4) { $MachineList_Host_5 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 4)) }
+                if ($HostCount -gt 5) { $MachineList_Host_6 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 5)) }
+                if ($HostCount -gt 6) { $MachineList_Host_7 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 6)) }
+                if ($HostCount -gt 7) { $MachineList_Host_8 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 7)) }
+            } else {
+                $MachineList_Host_1 = ($MachineList | Select-Object -First $MachineCountPerHost).HostedMachineName
+                if ($HostCount -gt 1) { $MachineList_Host_2 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip $MachineCountPerHost).HostedMachineName }
+                if ($HostCount -gt 2) { $MachineList_Host_3 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 2)).HostedMachineName }
+                if ($HostCount -gt 3) { $MachineList_Host_4 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 3)).HostedMachineName }
+                if ($HostCount -gt 4) { $MachineList_Host_5 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 4)).HostedMachineName }
+                if ($HostCount -gt 5) { $MachineList_Host_6 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 5)).HostedMachineName }
+                if ($HostCount -gt 6) { $MachineList_Host_7 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 6)).HostedMachineName }
+                if ($HostCount -gt 7) { $MachineList_Host_8 = ($MachineList | Select-Object -First $MachineCountPerHost -Skip ($MachineCountPerHost * 7)).HostedMachineName }
+            }
             
             #endregion sort VM distribution
 

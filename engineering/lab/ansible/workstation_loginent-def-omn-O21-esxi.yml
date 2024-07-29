@@ -1,0 +1,13 @@
+---
+- name: Install Windows Desktop Operating System with Office 2021 x64 - Login Enterprise - Omnissa on vSphere
+  hosts: all
+  roles:
+  - run_ms_deployment_scripts
+  - install_ms_net_framework_3.5
+  - install_ms_visual_c_2013u5
+  - install_adobe_reader_dc
+  - install_ms_office_2021_x64
+  - install_ms_edge_122
+  - run_ms_file_types
+  - win_disable_win_updates
+  - run_software_inventory_corp_it

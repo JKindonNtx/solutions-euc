@@ -14,6 +14,13 @@
         "DomainDNSName": "wsperf.nutanix.com", // Domain DNS Namespace
         "TargetOU": "OU=Omnissa,OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com" // The OU to deploy the desktops in
     },
+    "VMware": {
+        "vCenterServer": "10.10.10.10", // ip to the vCenter Server
+        "vCenterUsername": "user", // vCenter Server Username
+        "vCenterPassword": "password", // vCenter Server Password
+        "vCenterCluster": "ClusterName", // Name of the Cluster
+        "CustomizationSpec": "CustomizationSpec" // Customization Specification Name
+    },
     "Omnissa": {
         "ConnectionServer": "https://connectionserver.domain.com", // FQDN to the connection server including https://
         "ConnectionServerUserName": "UserName", // Connection Server UserName

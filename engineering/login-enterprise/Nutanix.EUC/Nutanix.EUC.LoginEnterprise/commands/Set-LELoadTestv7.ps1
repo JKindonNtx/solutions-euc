@@ -142,17 +142,17 @@ function Set-LELoadTestv7 {
             } | ConvertTo-Json
 
             $UpdateTestBody = @{
-                type                    = "LoadTest"
-                numberOfSessions        = $SessionAmount
-                rampUpDurationInMinutes = $RampupInMinutes
-                testDurationInMinutes   = $DurationInMinutes
-                name                    = $TestName
-                euxEnabled              = $VSI_Target_EUXEnabled
-                sessionMetricsEnabled   = $VSI_Target_SessionMetricsEnabled
+                type                      = "LoadTest"
+                numberOfSessions          = $SessionAmount
+                rampUpDurationInMinutes   = $RampupInMinutes
+                testDurationInMinutes     = $DurationInMinutes
+                name                      = $TestName
+                euxEnabled                = $VSI_Target_EUXEnabled
+                sessionMetricsEnabled     = $VSI_Target_SessionMetricsEnabled
                 sessionMetricScheduleRate = $SessionMetricsScheduleRate
-                sessionMetricGroupKey   = $SessionMetricGroupKey
-                description             = $ConnectorParams["resource"]
-                connectionResourcesUpdate   = @{
+                sessionMetricGroupKey     = $SessionMetricGroupKey
+                description               = $ConnectorParams["resource"]
+                connectionResourcesUpdate = @{
                     connector      = @{
                         type      = "Storefront"
                         serverUrl = $ConnectorParams["serverUrl"]
@@ -161,7 +161,7 @@ function Set-LELoadTestv7 {
                     accountGroups  = @((Get-LEAccountGroups | Where-Object { $_.Name -eq $AccountGroupName } | Select-Object -ExpandProperty groupId))
                     launcherGroups = @((Get-LELauncherGroups | Where-Object { $_.Name -eq $LauncherGroupName } | Select-Object -ExpandProperty id))
                 }
-                steps                   = @(
+                steps                     = @(
                     @{
                         type               = "AppGroupReference"
                         applicationGroupId = @((Get-LEApplicationGroups | Where-Object { $_.Name -Like "$($Workload)*" } | Select-Object -ExpandProperty id))

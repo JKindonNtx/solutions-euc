@@ -1,21 +1,18 @@
-function Set-OmnissaVMsAhv {
+function Set-OmnissaVMsESXi {
 
     [CmdletBinding()]
 
     Param (
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$VMwareClusterName,
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$VMwareVCenterIP,
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$VMwareUserName,
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$VMwarePassword,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$BaseVM,
-        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$TargetCVM,
-        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$TargetCVMAdmin,
-        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$TargetCVMPassword,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][Int]$NumberOfVMs,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$NamingConvention,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$StartIndex,
-        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$Domain,
-        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$HostName,
-        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$AdminUserName,
-        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$AdminPassword,
-        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$OU,
-        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$RootPath
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$RootPath,
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$CustomizationSpec
 
     )
 
@@ -26,17 +23,36 @@ function Set-OmnissaVMsAhv {
         Exit 1
     }
 
+    if (-not (Get-Module -Name "VMware.PowerCLI" -ListAvailable)) {
+        Write-Log -Message "Installing VMware PowerCLI" -Level Info
+        try {
+            Install-Module VMware.PowerCLI -AllowClobber -Force -ErrorAction Stop
+        }
+        catch {
+            Write-Log -Message "Failed to install VMware PowerCLI" -Level Error
+            #Exit 1
+        }
+    }
+    Write-Log -Message "Connecting to vSphere" -Level Info
+    $Connection = Connect-VIServer -Server $VMwareVCenterIP -Protocol https -User $VMwareUserName -Password $VMwarePassword -Force
+    if($connection){
+        $Cluster = Get-Cluster -Name $VMwareClusterName
+    } else {
+        Write-Log -Message "Failed to connect to vSphere" -Level Error
+        #Exit 1
+    }
+        
     Write-Log -Message "Getting Omnissa Base VM UUID" -Level Info
-    $var_Omnissa_Base_Vm_Uuid = (Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq $BaseVM }).uuid
+    $var_Omnissa_Base_Vm = Get-VM | where-object { $_.Name -eq $BaseVM }
 
-    if ($null -eq $var_Omnissa_Base_Vm_Uuid){
+    if ($null -eq $var_Omnissa_Base_Vm){
 
         Write-Log -Message "Omnissa Base VM $($BaseVM) Not Found" -Level Error
-        Exit 1
+        #Exit 1
 
     } else {
 
-        Write-Log -Message "Base VM UUID: $($var_Omnissa_Base_Vm_Uuid)" -Level Info
+        Write-Log -Message "Base VM: $($var_Omnissa_Base_Vm)" -Level Info
         Write-Log -Message "Starting Build of $($NumberOfVMs) VMs" -Level Info
 
         $var_Number_Padding = ([regex]::Matches($NamingConvention, "#" )).count
@@ -52,47 +68,30 @@ function Set-OmnissaVMsAhv {
             $var_Prefix_Int++
             $StartIndex = [string]$var_Prefix_Int
 
-            $var_Unattend = Get-UnattendFile -DomainJoin $true -Domain $Domain -HostName $var_Machine_Name -AdminUserName $AdminUserName -AdminPassword $AdminPassword -OU $OU
-
-            $Payload = "{ `
-            ""spec_list"": [ `
-                { `
-                    ""name"": """ + $var_Machine_Name + """ `
-                } `
-            ], `
-                ""vm_customization_config"": { `
-                ""userdata"": """ + $var_Unattend + """ `
-                } `
-            }"
-
             Write-Log -Update -Message "Deploying Machine $($i) of $($NumberOfVMs)." -Level Info
-            $var_result = Set-NTNXVmClone -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword -VmUuid $var_Omnissa_Base_Vm_Uuid -Body $Payload
-
-            $VMtaskID = $var_result.task_uuid
-            Write-Log -Update -Message "Waiting for $($i) of $($NumberOfVMs) to complete." -Level Info
-            Do {
-                $VMtaskinfo = Invoke-PublicApiMethodNTNX -Method "GET" -Path "tasks/$($VMtaskID)" -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
-                $VMtaskstatus = $VMtaskinfo.percentage_complete
-                If ( $VMtaskstatus -ne 100) {
-                    Start-Sleep -seconds 1
-                }
-            }
-            Until ($VMtaskstatus -eq 100)
+            $ResourcePool = (Get-ResourcePool | Where-Object { $_.Name -eq "Resources" }).Name
+            $task = New-VM -Name $var_Machine_Name -VM $var_Omnissa_Base_Vm.Name -ResourcePool $ResourcePool -OSCustomizationSpec $CustomizationSpec
             $machineNames.Add($var_Machine_Name)
         }
+
+        Do {
+            Write-Log -Update -Message "Waiting for machines to finish deploying" -Level Info
+            $TaskCount = (get-task | where-object { ($_.State -like "Running") } | measure-object).count
+            Start-Sleep -seconds 5
+        }
+        Until ($TaskCount -eq 0)
 
         $i = 1
         foreach ($var_VM in $machineNames) {
             Write-Log -Update -Message "Turning On Machine $($i) of $($NumberOfVMs)." -Level Info
-            $CurrentVM = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq "$($var_VM)" }
-            $var_Power_Result = Set-VmPower -VmUuid $CurrentVM.uuid -PowerState "ON" -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
+            Start-VM -VM $var_VM -confirm:$false
             $i++
         }
 
         $machineCount = $machineNames | Measure-Object
         Do {
             Write-Log -Update -Message "Waiting for machines to power on" -Level Info
-            $VMsOn = (Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { ($_.name -like "$($var_Naming_Convention_Base)*") -and ($_.power_state -eq "on") } | measure-object).Count
+            $VMsOn = (get-vm | where-object { ($_.Name -like "$($var_Naming_Convention_Base)*") -and ($_.PowerState -eq "PoweredOn") } | measure-object).count
             Start-Sleep -seconds 5
         }
         Until ($VMsOn -eq $machineCount.Count)
@@ -102,10 +101,9 @@ function Set-OmnissaVMsAhv {
             $var_Valid_Ips = $false
             Write-Log -Update -Message "Still waiting for valid IPs on all the VMs - Please wait" -Level Info
             foreach ($var_VM in $machineNames) {
-                $CurrentVM = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq "$($var_VM)" }
-                $var_VM_Details = Get-OmnissaVMsIP -VmUuid $CurrentVM.uuid -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
+                $var_VM_Details = Get-VM -Name $var_VM | Select Name,VMHost, @{N="IPAddress";E={@($_.guest.IPAddress -join '|')}}
                 try {
-                    $var_VM_IP = $var_VM_Details.vm_nics[0].ip_address
+                    $var_VM_IP = $var_VM_Details.IPAddress
                     if([string]::IsNullOrEmpty($var_VM_IP) -Or $var_VM_IP.StartsWith("169.254")) {
                         $var_Valid_Ips = $false
                     } else {
@@ -125,10 +123,13 @@ function Set-OmnissaVMsAhv {
             $var_Valid_WinRM = $false
             Write-Log -Update -Message "Still waiting for all VMs to have a valid WinRM Connection - Please wait" -Level Info
             foreach ($var_VM in $machineNames) {
-                $CurrentVM = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq "$($var_VM)" }
-                $var_VM_Details = Get-OmnissaVMsIP -VmUuid $CurrentVM.uuid -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
+                $var_VM_Details = Get-VM -Name $var_VM | Select Name,VMHost, @{N="IPAddress";E={@($_.guest.IPAddress -join '|')}}
                 try {
-                    $var_VM_IP = $var_VM_Details.vm_nics[0].ip_address
+                    $var_VM_IP = $var_VM_Details.IPAddress
+                    if ($var_VM_IP.Contains("|")) { 
+                        $Data = $var_VM_IP.Split("|")
+                        $var_VM_IP = $Data[0]
+                    }
                     if([string]::IsNullOrEmpty($var_VM_IP) -Or $var_VM_IP.StartsWith("169.254")) {
                         $var_Valid_WinRM = $false
                     } else {
@@ -153,15 +154,18 @@ function Set-OmnissaVMsAhv {
         } While ($var_Valid_WinRM -eq $false)
         Write-Log -Message "WinRM Validated - Continuing" -Level Info
 
-        Write-Log -Message "Pausing 1 minute to let VMs settle down" -Level Info
-        Start-Sleep -Seconds 60
+        Write-Log -Message "Pausing 5 minutes to let VMs settle down" -Level Info
+        Start-Sleep -Seconds 300
 
         Write-Log -Message "Building Ansible Inventory List" -Level Info
         $var_Inventory_List = ""
         foreach ($var_VM in $machineNames) {
-            $CurrentVM = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq "$($var_VM)" }
-            $var_VM_Details = Get-OmnissaVMsIP -VmUuid $CurrentVM.uuid -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
-            $var_VM_IP = $var_VM_Details.vm_nics[0].ip_address
+            $var_VM_Details = Get-VM -Name $var_VM | Select Name,VMHost, @{N="IPAddress";E={@($_.guest.IPAddress -join '|')}}
+            $var_VM_IP = $var_VM_Details.IPAddress
+            if ($var_VM_IP.Contains("|")) { 
+                $Data = $var_VM_IP.Split("|")
+                $var_VM_IP = $Data[0]
+            }
             $var_Inventory_List += "$($var_VM_IP),"
         }
         $var_Inventory_List_Cleaned = $var_Inventory_List.Substring(0,$var_Inventory_List.Length - 1)
@@ -176,3 +180,4 @@ function Set-OmnissaVMsAhv {
 
     }
 }
+
