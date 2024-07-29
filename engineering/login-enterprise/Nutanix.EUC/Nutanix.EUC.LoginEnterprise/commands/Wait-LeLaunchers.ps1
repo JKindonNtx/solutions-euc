@@ -37,7 +37,7 @@ function Wait-LELaunchers {
         $TimeSpan = New-TimeSpan -Start $StartStamp -End (Get-Date)
         
         if ($TimeSpan.TotalMinutes -ge $TimeOutMinutes) {
-            Write-Log -Message "Only $Launcher/$Amount launchers registered with LE within $TimoutMinutes minutes" -Level Error
+            Write-Log -Message "Only $LaunchersOnline/$Amount launchers registered with LE within $TimoutMinutes minutes" -Level Error
             Exit 1
         }
     }
