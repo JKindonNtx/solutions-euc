@@ -44,7 +44,7 @@
         "DomainName": "wsperf.nutanix.com", // This used for multiple functions
         "DesktopPoolName": "LE-W10-FSLogix", // Poolname is used to create the desktop pool with Citrix or assign it with Omnissa. For RAS use the resource ID #1 etc. Not used for RDP testing in Azure
         // -----------------------------------------------------------------------------------
-        // Optional_Test_Block_Citrix - Can be DELETED if not setting up a Citrix Config
+        // Optional_Test_Block_Citrix
         // -----------------------------------------------------------------------------------
         "OrchestrationMethod": "Snapin", //How you want to to drive the Citrix Environment. API or Snapin (PowerShell)
         "DDC": "WS-CDC3.wsperf.nutanix.com", // Citrix Delivery controller. TestType: Citrix
@@ -66,7 +66,7 @@
         ],
         "RDP_DelProf": true, //Enable reset of le account profiles between runs
         // -----------------------------------------------------------------------------------
-        // Optional_Test_Block_Horizon - Can be DELETED if not setting up a Horizon Config
+        // Optional_Test_Block_Horizon 
         // -----------------------------------------------------------------------------------
         "ConnectionServer": "connection.domain.com",
         "ConnectionServerUser": "username@domain.com",
@@ -90,7 +90,7 @@
         "VMPoolIncrement": 0, // How many VM's are provisioned at a time, 0 = Horizon controls the provisioning amount according to it's settings, only valid when using allmachinesupfront provisioning
         "NumberOfSpareVMs": 1, // When ProvisioningMode is OnDemand, this controls the Spare (Powered On) Machines
         // -----------------------------------------------------------------------------------
-        // Optional_Test_Block_Omnissa - Can be DELETED if not setting up a Omnissa Config
+        // Optional_Test_Block_Omnissa
         // -----------------------------------------------------------------------------------
         "OmnissaConnectionServer": "https://connection server", // The Horizon Connection Server
         "OmnissaApiUserName": "Username with rights to add Desktop Pools", // Username for API Access to Horizon
@@ -118,7 +118,7 @@
         "ForceAlignVMToHost" : true, // If set to true, all vms will be evenly pinned to hosts using affinity for AHV.
         "EnforceHostMaintenanceMode" : false, // If set to true, combined with the ForceAlignVMToHost setting, hosts that are not a part of the test run will be put in maintenance mode
         // -----------------------------------------------------------------------------------
-        // Optional_Nutanix_Files_Block
+        // Optional_Nutanix_Files_Block - Leave "Files" value Blank to ignore Files testing. 
         // -----------------------------------------------------------------------------------
         "Files": "ws-profile.wsperf.nutanix.com", // Specify Nutanix Files url if you want to capture files stats. Leave empty if not used.
         "Files_api": "MANDATORY_TO_DEFINE", // Specify the Nutanix Files API user, make sure to create this user.
@@ -133,7 +133,7 @@
         "Files_Cluster_CVM_password": "${Target.CVM_password}", // The Admin account password. Defaults to the same value as the workload cluster.
         "Files_Cluster_CVMsshpassword":  "${Target.CVMsshpassword}", // Used to start/stop curator on the Files Cluster. Defaults to the same value as the workload cluster.
         // -----------------------------------------------------------------------------------
-        // Optional_NetScaler_Block
+        // Optional_NetScaler_Block - Leave "NetScaler" value Blank to ignore NetScaler testing. 
         // -----------------------------------------------------------------------------------
         "NetScaler": "MANDATORY_TO_DEFINE", // The Citrix NetScaler NSIP
         "NetScaler_Password": "MANDATORY_TO_DEFINE", // The NSROOT password for the Citrix NetScaler

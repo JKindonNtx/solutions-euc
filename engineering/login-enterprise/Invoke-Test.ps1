@@ -489,7 +489,7 @@ if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
         $cvad_environment_details = Get-CVADSiteDetail @params
         $params = $null
     }
-    elseif ($Config.Target.OrchestrationMethod  -eq "API") {
+    elseif ($Config.Target.OrchestrationMethod -eq "API") {
         if ($Type -eq "CitrixVAD") {
             # pull relevant validation detail into $cvad_environment_details
             Write-Log -Message "Handling Citrix Credentials and Validating Citrix On Prem Site" -Level Info
@@ -2582,7 +2582,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                 $Started = $($NTNXInfra.TestInfra.Bootstart)
 
                 # Build the Boot Bucket Name
-                If ($($Config.Test.BucketName) -eq "LoginDocuments") {
+                If ($($Config.Test.BucketName) -eq "LoginDocuments" -or $($Config.Test.BucketName) -eq "PVSPerfData") {
                     $BucketName = "BootBucket"
                 }
                 Else {

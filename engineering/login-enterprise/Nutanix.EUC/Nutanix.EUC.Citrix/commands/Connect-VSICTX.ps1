@@ -36,7 +36,7 @@ function Connect-VSICTX {
 
     if ($null -ne $DDC) {
         try {
-            Write-Log -Message "Handling Citrix Credentials and Validating Citrix On Prem Site" -Level Info
+            Write-Log -Message "Handling Citrix Credential Validation" -Level Info
             Set-XDCredentials -ProfileType OnPrem -StoreAs ctxonprem -ErrorAction Stop
             $CitrixAuth = Get-XDAuthentication -ProfileName ctxonprem -ErrorAction Stop
             Get-BrokerSite -AdminAddress $DDC -ErrorAction Stop | Out-Null
@@ -52,7 +52,7 @@ function Connect-VSICTX {
 
     #if ($null -ne $ClientID) {
     if (!(test-path variable:\ClientID)) {
-        Write-Log -Message "Handling Citrix Credentials and Validating Citrix Cloud DaaS" -Level Info
+        Write-Log -Message "Handling Citrix Credential Validation for Citrix Cloud DaaS" -Level Info
         $tokenUrl = 'https://api-us.cloud.com/cctrustoauth2/root/tokens/clients'
     
         # Obtain bearer token from authorization server

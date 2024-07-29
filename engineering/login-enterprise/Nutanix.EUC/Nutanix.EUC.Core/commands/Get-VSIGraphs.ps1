@@ -27,7 +27,7 @@ function Get-VSIGraphs {
         break
     }
     # Check on Bucketname and build Uri accordingly
-    if (!(($BucketName -eq "LoginDocuments") -or ($BucketName -eq "LoginRegression"))) {
+    if (!(($BucketName -eq "LoginDocuments") -or ($BucketName -eq "LoginRegression") -or ($BucketName -eq "PVSPerfData"))) {
         Write-Log -Message "Invalid Bucket: $($BucketName)" -Level Warn
         break
     }
@@ -38,7 +38,7 @@ function Get-VSIGraphs {
     $DocName = ($TestConfig.Test.DocumentName).Replace(" ", "_")
 
     if (!($null -eq $RunNumber)) {
-        if($BucketName -eq "LoginDocuments"){
+        if($BucketName -eq "LoginDocuments" -or $BucketName -eq "PVSPerfData"){
             if ($TestConfig.Testinfra.SingleNodeTest -eq "true") {
                 # Single Node
                 $PanelID = "83"
@@ -62,7 +62,7 @@ function Get-VSIGraphs {
         $Run = "&var-Run=$($TestName)_Run$($RunNumber)"
 
         # Build Uri for download
-        if ($BucketName -eq "LoginDocuments") {
+        if ($BucketName -eq "LoginDocuments" -or $BucketName -eq "PVSPerfData") {
             $Uri = "$($TestConfig.Testinfra.GrafanaUriDocs)&var-Bucketname=$($BucketName)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
         } elseif ($BucketName -eq "LoginRegression" ) {
             $CPUTypeSpace = $($TestConfig.TestInfra.CPUType).Replace(" ", "_")
@@ -100,7 +100,7 @@ function Get-VSIGraphs {
     else {
         # Graph for Test
         # Graph for Single Run
-        if($BucketName -eq "LoginDocuments"){
+        if($BucketName -eq "LoginDocuments" -or $BucketName -eq "PVSPerfData"){
             if ($TestConfig.Testinfra.SingleNodeTest -eq "true") {
                 # Single Node
                 $PanelID = "67" 
@@ -128,7 +128,7 @@ function Get-VSIGraphs {
         }
 
         # Build Uri for download
-        if ($BucketName -eq "LoginDocuments") {
+        if ($BucketName -eq "LoginDocuments" -or $BucketName -eq "PVSPerfData") {
             $Uri = "$($TestConfig.Testinfra.GrafanaUriDocs)&var-Bucketname=$($BucketName)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
         } elseif ($BucketName -eq "LoginRegression" ) {
             $CPUTypeSpace = $($TestConfig.TestInfra.CPUType).Replace(" ", "_")
