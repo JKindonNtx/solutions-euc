@@ -107,7 +107,7 @@ $var_Ansible_Path = $config.Various.AnsiblePath
 $VmwareVCenter = $config.VMware.vCenterServer
 $VMwareUser = $config.VMware.vCenterUsername
 $VMwarePassword = $config.VMware.vCenterPassword
-$VMwareClusterName = $config.VMware.vCenterPassword
+$VMwareClusterName = $config.VMware.vCenterCluster
 $CustomizationSpec = $config.VMware.CustomizationSpec
 #endregion Set Variables
 
