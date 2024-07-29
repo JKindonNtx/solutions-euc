@@ -9,7 +9,7 @@ ansible_connection: winrm
 ansible_winrm_server_cert_validation: ignore
 ansible_winrm_connection_timeout: 300
 ansible_port: 5985
-horizon_connection_server: ws-hor1.wsperf.nutanix.com
+horizon_connection_server: ws-hor2.wsperf.nutanix.com
 horizon_user: wsperf\administrator
 horizon_password: nutanix/4u
 install_dir: C:\deployment\

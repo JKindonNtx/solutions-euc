@@ -19,7 +19,9 @@ Param(
     [string]$ConfigFile = "C:\Users\Dave\Documents\Github\solutions-euc\engineering\login-enterprise\ExampleConfig-Omnissa.jsonc",
     [Parameter(Mandatory = $true)]
     [ValidateSet("Create", "Delete")]
-    [string]$Action
+    [string]$Action,
+    [ValidateSet("AHV", "ESXi")]
+    [string]$DeploymentType
 )
 #endregion Params
 
@@ -102,6 +104,11 @@ $var_Omnissa_Base_Vm_Name = $config.Omnissa.BaseVmName
 $var_Number_Of_Vms = $config.Omnissa.NumberOfVMs
 $Slack = $config.Various.Slack
 $var_Ansible_Path = $config.Various.AnsiblePath
+$VmwareVCenter = $config.VMware.vCenterServer
+$VMwareUser = $config.VMware.vCenterUsername
+$VMwarePassword = $config.VMware.vCenterPassword
+$VMwareClusterName = $config.VMware.vCenterPassword
+$CustomizationSpec = $config.VMware.CustomizationSpec
 #endregion Set Variables
 
 #region Build New VMs
@@ -169,33 +176,53 @@ if ($Action -eq "Create") {
 
     if ($DeployVMs -eq $true) {
         Write-Log -Message "VM Deployment Starting" -Level Info
-        $var_Deployed_VMs = Set-OmnissaVMsAhv -BaseVM $var_Omnissa_Base_Vm_Name -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword -NumberOfVMs $var_Number_Of_Vms -NamingConvention $var_Naming_Convention -StartIndex $var_Start_Index -Domain $var_Domain -AdminUserName $var_AD_Admin -AdminPassword $var_Admin_Password -OU $var_OU -RootPath $var_Ansible_Path
+        if($DeploymentType -eq "AHV"){
+            $var_Deployed_VMs = Set-OmnissaVMsAhv -BaseVM $var_Omnissa_Base_Vm_Name -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword -NumberOfVMs $var_Number_Of_Vms -NamingConvention $var_Naming_Convention -StartIndex $var_Start_Index -Domain $var_Domain -AdminUserName $var_AD_Admin -AdminPassword $var_Admin_Password -OU $var_OU -RootPath $var_Ansible_Path
+        } else {
+            if($DeploymentType -eq "ESXi"){
+                $var_Deployed_VMs = Set-OmnissaVMsESXi -VMwareClusterName $VMwareClusterName -VMwareVCenterIP $VmwareVCenter -VMwareUserName $VMwareUser -VMwarePassword $VMwarePassword -BaseVM $var_Omnissa_Base_Vm_Name -NumberOfVMs $var_Number_Of_Vms -NamingConvention $var_Naming_Convention -StartIndex $var_Start_Index -RootPath $var_Ansible_Path -CustomizationSpec $CustomizationSpec
+            }
+        }
+        
     } else {
         Write-Log -Message "VM Deployment Skipped" -Level Info
     }
 
-    $DeployedMachinesInPool = Get-OmnissaMachines -ApiEndpoint $var_Api_Endpoint -UserName $var_UserName -Password $var_Password -Domain $var_Domain -Naming $Filter
+    $DeployedMachinesInPool = Get-OmnissaMachinesESXi -ApiEndpoint $var_Api_Endpoint -UserName $var_UserName -Password $var_Password -Domain $var_Domain -Naming $Filter
     $DeployedMachinesSorted = $DeployedMachinesInPool | Sort-Object name
     $DeployedMachineCount = $DeployedMachinesSorted | Measure-Object
 
-    $i = 1
-    foreach ($VM in $DeployedMachinesSorted) {
-        Write-Log -Update -Message "Turning Off Machine $($i) of $($DeployedMachineCount.Count)." -Level Info
-        $VmFqdn = $VM.name
-        $VmSplit = $VmFqdn.Split(".")
-        $VmNetbiosName = $VmSplit[0]
-        $CurrentVM = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq "$($VmNetbiosName)" }
-        $var_Power_Result = Set-VmPower -VmUuid $CurrentVM.uuid -PowerState "OFF" -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
-        $i++
-    }
+    if($DeployedMachineCount.Count -gt 0){
+        $i = 1
+        foreach ($VM in $DeployedMachinesSorted) {
+            Write-Log -Update -Message "Turning Off Machine $($i) of $($DeployedMachineCount.Count)." -Level Info
+            if($DeploymentType -eq "AHV"){
+                $VmFqdn = $VM.name
+                $VmSplit = $VmFqdn.Split(".")
+                $VmNetbiosName = $VmSplit[0]
+                $CurrentVM = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq "$($VmNetbiosName)" }
+                $var_Power_Result = Set-VmPower -VmUuid $CurrentVM.uuid -PowerState "OFF" -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
+            } else {
+                if($DeploymentType -eq "ESXi"){
+                    $VmFqdn = $VM.dns_name
+                    $VmSplit = $VmFqdn.Split(".")
+                    $VmNetbiosName = $VmSplit[0]
+                    $Shutdown = Stop-VM -VM $VmNetbiosName -confirm:$false
+                }
+            }
+            $i++
+        }
 
-
-    Do {
-        Write-Log -Update -Message "Waiting for machines to power off" -Level Info
-        $VMsOn = (Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { ($_.name -like "$($Filter)*") -and ($_.power_state -eq "on") } | measure-object).Count
-        Start-Sleep -seconds 1
+        if($DeploymentType -eq "AHV"){
+            Do {
+                Write-Log -Update -Message "Waiting for machines to power off" -Level Info
+                $VMsOn = (Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { ($_.name -like "$($Filter)*") -and ($_.power_state -eq "on") } | measure-object).Count
+                Start-Sleep -seconds 1
+            }
+            Until ($VMsOn -eq 0)
+        }
     }
-    Until ($VMsOn -eq 0)
+    
     #endregion Build New VMs
 
     #region Create Omnissa Pool
@@ -230,21 +257,37 @@ if ($Action -eq "Create") {
     #region Create Snapshot
     $i = 1
     foreach ($VM in $DeployedMachinesSorted) {
-        $VmFqdn = $VM.name
-        $VmSplit = $VmFqdn.Split(".")
-        $VmNetbiosName = $VmSplit[0]
-        $CurrentVM = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq "$($VmNetbiosName)" }
-        $Payload = "{ `
-                ""snapshot_specs"":[ `
-                    {""snapshot_name"":""Omnissa_Default"", `
-                    ""vm_uuid"":""" + $CurrentVM.uuid + """ `
-                }] `
-            }"
-        $CurrentSnap = Get-NTNXVmSnapshot -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword -VMUUID $CurrentVM.uuid
-        $Number = $CurrentSnap.entities | measure-object
+        if($DeploymentType -eq "AHV"){
+            $VmFqdn = $VM.name
+            $VmSplit = $VmFqdn.Split(".")
+            $VmNetbiosName = $VmSplit[0]
+            $CurrentVM = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq "$($VmNetbiosName)" }
+            $Payload = "{ `
+                    ""snapshot_specs"":[ `
+                        {""snapshot_name"":""Omnissa_Default"", `
+                        ""vm_uuid"":""" + $CurrentVM.uuid + """ `
+                    }] `
+                }"
+            $CurrentSnap = Get-NTNXVmSnapshot -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword -VMUUID $CurrentVM.uuid
+            $Number = $CurrentSnap.entities | measure-object
+        } else {
+            if($DeploymentType -eq "ESXi"){
+                $VmFqdn = $VM.dns_name
+                $VmSplit = $VmFqdn.Split(".")
+                $VmNetbiosName = $VmSplit[0]
+                $CurrentSnap = get-snapshot $VmNetbiosName
+                $Number = $CurrentSnap.entities | measure-object
+            }
+        }
         if($Number.Count -eq 0){
             Write-Log -Update -Message "Creating Snapshot (Omnissa_Default.shapshot) $($i) of $($DeployedMachineCount.Count)." -Level Info
-            $Snap = Set-NTNXVmSnapshot -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword -VMUUID $CurrentVM.uuid -Body $Payload
+            if($DeploymentType -eq "AHV"){
+                $Snap = Set-NTNXVmSnapshot -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword -VMUUID $CurrentVM.uuid -Body $Payload
+            } else {
+                if($DeploymentType -eq "ESXi"){
+                    $Snap = get-vm $VmNetbiosName | new-snapshot -Name "Omnissa_Default"
+                }
+            }
         } else {
             Write-Log -Update -Message "Skipping Snapshot $($i) of $($DeployedMachineCount.Count)." -Level Info
         }
@@ -258,20 +301,31 @@ if ($Action -eq "Create") {
     $i = 1
     foreach ($VM in $PoolMachines) {
         Write-Log -Update -Message "Turning On Machine $($i) of $($PoolMachineCount.Count)." -Level Info
-        $VmFqdn = $VM.name
-        $VmSplit = $VmFqdn.Split(".")
-        $VmNetbiosName = $VmSplit[0]
-        $CurrentVM = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq "$($VmNetbiosName)" }
-        $var_Power_Result = Set-VmPower -VmUuid $CurrentVM.uuid -PowerState "ON" -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
+        
+        if($DeploymentType -eq "AHV"){
+            $VmFqdn = $VM.name
+            $VmSplit = $VmFqdn.Split(".")
+            $VmNetbiosName = $VmSplit[0]
+            $CurrentVM = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -eq "$($VmNetbiosName)" }
+            $var_Power_Result = Set-VmPower -VmUuid $CurrentVM.uuid -PowerState "ON" -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
+        } else {
+            if($DeploymentType -eq "ESXi"){
+                $VmFqdn = $VM.dns_name
+                $VmSplit = $VmFqdn.Split(".")
+                $VmNetbiosName = $VmSplit[0]
+                $Start = Start-VM -VM $VmNetbiosName -confirm:$false
+            }
+        }
         $i++
     }
-
-    Do {
-        Write-Log -Update -Message "Waiting for machines to power on" -Level Info
-        $VMsOn = (Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { ($_.name -like "$($Filter)*") -and ($_.power_state -eq "on") } | measure-object).Count
-        Start-Sleep -seconds 1
+    if($DeploymentType -eq "AHV"){
+        Do {
+            Write-Log -Update -Message "Waiting for machines to power on" -Level Info
+            $VMsOn = (Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { ($_.name -like "$($Filter)*") -and ($_.power_state -eq "on") } | measure-object).Count
+            Start-Sleep -seconds 1
+        }
+        Until ($VMsOn -eq $PoolMachineCount.Count)
     }
-    Until ($VMsOn -eq $PoolMachineCount.Count)
     #endregion Power On
 } else {
 
@@ -321,7 +375,13 @@ if ($Action -eq "Create") {
         }
     }
 
-    [array]$CurrentVMs = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -like "$($Filter)*" }
+    if($DeploymentType -eq "AHV"){
+        [array]$CurrentVMs = Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { $_.name -like "$($Filter)*" }
+    } else {
+        if($DeploymentType -eq "ESXi"){
+            [array]$CurrentVMs = Get-VM | Where-Object { $_.Name -like "$($Filter)*"}
+        }
+    }
     $CurrentVMCount = $CurrentVms | measure-object
 
     if ($CurrentVMCount.Count -eq 0) {
@@ -330,22 +390,35 @@ if ($Action -eq "Create") {
         $i = 1
         foreach ($VM in $CurrentVMs) {
             Write-Log -Update -Message "Turning Off Machine $($i) of $($CurrentVMCount.Count)." -Level Info
-            $var_Power_Result = Set-VmPower -VmUuid $VM.uuid -PowerState "OFF" -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
+            if($DeploymentType -eq "AHV"){
+                $var_Power_Result = Set-VmPower -VmUuid $VM.uuid -PowerState "OFF" -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
+            } else {
+                if($DeploymentType -eq "ESXi"){
+                    $Stop = Stop-VM -VM $VM.name -confirm:$false
+                }
+            }
             $i++
         }
-
-
-        Do {
-            Write-Log -Update -Message "Waiting for machines to power off" -Level Info
-            $VMsOn = (Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { ($_.name -like "$($Filter)*") -and ($_.power_state -eq "on") } | measure-object).Count
-            Start-Sleep -seconds 1
+        if($DeploymentType -eq "AHV"){
+            Do {
+                Write-Log -Update -Message "Waiting for machines to power off" -Level Info
+                $VMsOn = (Get-NTNXVMS -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword | where-object { ($_.name -like "$($Filter)*") -and ($_.power_state -eq "on") } | measure-object).Count
+                Start-Sleep -seconds 1
+            }
+            Until ($VMsOn -eq 0)
         }
-        Until ($VMsOn -eq 0)
 
         $i = 1
         foreach ($VM in $CurrentVMs) {
             Write-Log -Update -Message "Deleting Machine $($i) of $($CurrentVMCount.Count)." -Level Info
-            $var_Delete = Delete-NutanixVM -VmUuid $VM.uuid -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
+            if($DeploymentType -eq "AHV"){
+                $var_Delete = Delete-NutanixVM -VmUuid $VM.uuid -TargetCVM $TargetCVM -TargetCVMAdmin $TargetCVMAdmin -TargetCVMPassword $TargetCVMPassword
+            } else {
+                if($DeploymentType -eq "ESXi"){
+                    $var_Delete = Remove-VM $VM.name -DeletePermanently -confirm:$false
+                }
+            }
+            
             $i++
         }
     }

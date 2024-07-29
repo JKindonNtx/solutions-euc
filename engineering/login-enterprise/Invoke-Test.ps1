@@ -1187,7 +1187,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         #region Update Test Dashboard
         if (-not $AzureMode.IsPresent) { 
             # This is not an Azure configuration
-            if (($Type -eq "Omnissa") -and ($NTNXInfra.Target.OmnissaProvisioningMode -eq "Manual")) {
+            if (($Type -eq "Omnissa") -and ($config.Target.OmnissaProvisioningMode -eq "Manual")) {
                 $Message = "Skipping Creating $($Type) Manual Desktop Pool" 
             } else {
                 $Message = "Creating $($Type) Desktop Pool" 
@@ -1383,7 +1383,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         }
 
         if ($Type -eq "Omnissa") {
-            if ($NTNXInfra.Target.OmnissaProvisioningMode -eq "Manual") {
+            if ($config.Target.OmnissaProvisioningMode -eq "Manual") {
                 # Placeholder for integrating Set-OmnissaManualPool function to potentially create the manual pool as part of the test run
                 # Would rely on either running in a container for Ansible
                 $Message = "Skipping Creating $($Type) Manual Desktop Pool" 
@@ -1564,22 +1564,27 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
 
         if ($Type -eq "Omnissa") {
             $params = @{
-                ApiEndpoint         = $Config.Target.OmnissaConnectionServer
-                UserName            = $Config.Target.OmnissaApiUserName
-                Password            = $Config.Target.OmnissaApiPassword
-                Domain              = $Config.Target.OmnissaApiDomain
-                CloneType           = $Config.Target.OmnissaProvisioningMode
-                PoolName            = $Config.Target.DesktopPoolName #$VSI_Target_DesktopPoolName
-                TargetCVM           = $Config.Target.CVM
-                TargetCVMAdmin      = $Config.Target.CVM_admin #$VSI_Target_CVM_admin
-                TargetCVMPassword   = $Config.Target.CVM_password #$VSI_Target_CVM_password
-                Affinity            = $Config.Testinfra.SetAffinity
-                HypervisorType      = $Config.Target.HypervisorType #$VSI_Target_HypervisorType
-                ForceAlignVMToHost  = $Config.Target.ForceAlignVMToHost
-                VMnameprefix        = $Config.Target.NamingPattern
-                Hosts               = $NTNXInfra.Testinfra.Hostip
+                ApiEndpoint         = $VSI_Target_OmnissaConnectionServer
+                UserName            = $VSI_Target_OmnissaApiUserName
+                Password            = $VSI_Target_OmnissaApiPassword
+                Domain              = $VSI_Target_OmnissaApiDomain
+                CloneType           = $VSI_Target_OmnissaProvisioningMode
+                PoolName            = $VSI_Target_DesktopPoolName
+                TargetCVM           = $config.Target.CVM
+                TargetCVMAdmin      = $VSI_Target_CVM_admin
+                TargetCVMPassword   = $VSI_Target_CVM_password
+                Affinity            = $config.Testinfra.SetAffinity
+                HypervisorType      = $VSI_Target_HypervisorType
+                ForceAlignVMToHost  = $config.Target.ForceAlignVMToHost
+                VMnameprefix        = $config.Target.NamingPattern
+                Hosts               = $config.Testinfra.Hostip
                 Run                 = $i
-                CVMSSHPassword      = $Config.Target.CVMsshpassword
+                CVMSSHPassword      = $config.Target.CVMsshpassword
+                OU                  = $config.Target.ADContainer
+                VmwareVCenter       = $config.vSphere.VCenter
+                VMwareUser          = $config.vSphere.User
+                VMwarePassword      = $config.vSphere.Password
+                NodeCount           = $config.Target.NodeCount
             }
             $Boot = Enable-OmnissaPool @params
         }
@@ -1839,16 +1844,17 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
 
         if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
             $Params = @{
-                TestName           = $Config.Test.Name #$VSI_Test_Name
-                SessionAmount      = $ImageSpec_NumberOfSessions #$VSI_Target_NumberOfSessions
-                RampupInMinutes    = $Config.Test.Target_RampupInMinutes #$VSI_Target_RampupInMinutes
-                DurationInMinutes  = $ImageSpec_DurationInMinutes #$VSI_Target_DurationInMinutes
-                LauncherGroupName  = $VSI_Launchers_GroupName
-                AccountGroupName   = $VSI_Users_GroupName
-                SessionMetricGroup = $VSI_Target_SessionMetricGroupName
-                ConnectorName      = "Citrix Storefront"
-                ConnectorParams    = @{serverURL = $Config.Target.StorefrontURL; resource = $Config.Target.DesktopPoolName }
-                Workload           = $VSI_Target_Workload
+                TestName            = $Config.Test.Name #$VSI_Test_Name
+                SessionAmount       = $ImageSpec_NumberOfSessions #$VSI_Target_NumberOfSessions
+                RampupInMinutes     = $Config.Test.Target_RampupInMinutes #$VSI_Target_RampupInMinutes
+                DurationInMinutes   = $ImageSpec_DurationInMinutes #$VSI_Target_DurationInMinutes
+                LauncherGroupName   = $VSI_Launchers_GroupName
+                AccountGroupName    = $VSI_Users_GroupName
+                SessionMetricGroup  = $VSI_Target_SessionMetricGroupName
+                SessionMetricAmount = $VSI_Target_SessionMetricAmount
+                ConnectorName       = "Citrix Storefront"
+                ConnectorParams     = @{serverURL = $Config.Target.StorefrontURL; resource = $Config.Target.DesktopPoolName }
+                Workload            = $VSI_Target_Workload
             }
             $testId = Set-LELoadTestv7 @Params
             $params = $null
