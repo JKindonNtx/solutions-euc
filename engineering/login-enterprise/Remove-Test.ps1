@@ -53,7 +53,7 @@ If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $
 
 #region Validate Bucket
 #----------------------------------------------------------------------------------------------------------------------------
-if($Bucket -eq "LoginDocuments"){
+if($Bucket -eq "LoginDocuments" -or $Bucket -eq "PVSPerfData"){
     $MainBucket = $Bucket
     $BootBucket = "BootBucket"
 } else {

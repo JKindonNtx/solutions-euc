@@ -31,6 +31,7 @@ PanelId,ImageName
 187,cluster_resources_controller_read_iops.png
 188,cluster_resources_controller_write_iops.png
 58,cluster_resources_controller_latency.png
+204,cluster_resources_controller_latency_total.png
 190,cluster_disk_iops_total.png
 193,cluster_disk_iops_total_all.png
 191,cluster_disk_iops_read.png

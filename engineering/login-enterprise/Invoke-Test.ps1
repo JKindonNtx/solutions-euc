@@ -1801,7 +1801,12 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         if (-not ($SkipLaunchers)) {
             $NumberOfLaunchers = [System.Math]::Ceiling($ImageSpec_NumberOfSessions / $SessionsperLauncher)
             # Wait for all launchers to be registered in LE
-            Wait-LELaunchers -Amount $NumberOfLaunchers -NamingPattern $VSI_Launchers_NamingPattern -RebootLaunchers $Config.Test.RebootLaunchers
+
+            Wait-LELaunchers -Amount $NumberOfLaunchers -NamingPattern $VSI_Launchers_NamingPattern -RebootLaunchers $config.Test.RebootLaunchers # Looking to get the minimum number of required launchers, not the total number of launchers
+            if ($config.Test.RebootLaunchers -eq $true) {
+                Write-Log -Message "Waiting 60 seconds for additional Launchers to be ready" -Level Info
+                Start-Sleep -Seconds 60
+            }
             # Create/update launchergroup with the launchers
             Set-LELauncherGroup -LauncherGroupName $VSI_Launchers_GroupName -NamingPattern $VSI_Launchers_NamingPattern
         }
