@@ -453,7 +453,7 @@
             "counterCategory": "Citrix PVS",
             "counterName": "RAM Cache Bytes",
             "counterInstance": "_Total",
-            "displayName": "RAM Cache Bytesc",
+            "displayName": "RAM Cache Bytes",
             "unit": "Units"
         },
         "name": "PVS Target: RAM Cache Bytes _Total",
