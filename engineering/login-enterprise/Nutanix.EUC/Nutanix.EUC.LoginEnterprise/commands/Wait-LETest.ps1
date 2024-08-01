@@ -28,7 +28,7 @@ function Wait-LETest {
             } 
             $state = (Get-LETest -testId $testid -include "none").state
         }
-        Write-Log -Message " " -Level Info
+        Write-Log -Message "`r" -Level Info
         Write-Log -Message "Test finished" -Level Info
     } 
 }

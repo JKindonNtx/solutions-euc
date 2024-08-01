@@ -85,7 +85,7 @@ Function Enable-CVADDesktopPoolAPI {
     }
 
     Write-Log -Message "Retrieved $($delivery_group_machines.Count) machines from Delivery Group $($DesktopPoolName)" -Level Info
-    Write-Log -Message " " -Level Info
+    Write-Log -Message "`r" -Level Info
 
     #endregion Get List of Machines in Delivery Group
 
@@ -186,7 +186,7 @@ Function Enable-CVADDesktopPoolAPI {
             }
             Start-Sleep 10
         }
-        Write-Log -Message " " -Level Info
+        Write-Log -Message "`r" -Level Info
         Write-Log -Message "All VMs are down." -Level Info
     }
     else {
@@ -821,7 +821,7 @@ Function Enable-CVADDesktopPoolAPI {
         Write-Log -Update -Message "$RegisteredVMCount/$PowerOnVMs/$NumberOfVMs (Registered/PowerOnVMs/Total)" -Level Info
         if ($RegisteredVMCount -eq $PowerOnVMs) {
             #Once this is matched, we are good to go, loop until the registration count is the same as the number of VMs required
-            Write-Log -Message " " -Level Info
+            Write-Log -Message "`r" -Level Info
             Break
         } 
         else {
@@ -994,7 +994,7 @@ Function Enable-CVADDesktopPoolAPI {
                         
                         #$RegisteredVMCount = ($BrokerVMS | Where-Object { $_.RegistrationState -eq "Registered" } | Measure-Object).Count
                         Write-Log -Update -Message "$RegisteredVMCount/$PowerOnVMs/$NumberOfVMs (Registered/PowerOnVMs/Total)" -Level Info
-                        Write-Log -Message " " -Level Info
+                        Write-Log -Message "`r" -Level Info
 
                         #Find the machines that are Powered On but unregistered, these are not in a happy place
                         $UnregisteredMachines = $BrokerVMs | Where-Object { $_.RegistrationState -eq "Unregistered" -and $_.PowerState -eq "on" }
@@ -1028,7 +1028,7 @@ Function Enable-CVADDesktopPoolAPI {
                     }
                     else {
                         Write-Log -Update -Message "$RegisteredVMCount/$PowerOnVMs/$NumberOfVMs (Registered/PowerOnVMs/Total)" -Level Info
-                        Write-Log -Message " " -Level Info
+                        Write-Log -Message "`r" -Level Info
                     }
                 }
             }
