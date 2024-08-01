@@ -2475,7 +2475,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             Write-Log -Message "Skipping download of LE Metrics" -Level Info
         } else {
             Write-Log -Message "Exporting LE Measurements to output folder" -Level Info
-            Export-LEMeasurements -Folder $OutputFolder -TestRun $TestRun -DurationInMinutes $ImageSpec_DurationInMinutes
+            Export-LEMeasurements -Folder $OutputFolder -TestRun $TestRun -DurationInMinutes $ImageSpec_DurationInMinutes -SessionMetricsEnabled $ImageSpec_SessionMetricsEnabled
         }
         #endregion Write config to OutputFolder and Download LE Metrics
 
