@@ -21,7 +21,8 @@ function Export-LEMeasurements {
     $SessionMeasurements = Get-LEMeasurements -testRunId $testRun.Id -include "sessionMeasurements"
     # stop the timer for gathering session metrics
     $SessionMeasurementsGatheringStopWatch.stop()
-    Write-Log -Message "[DATA EXPORT] Took $($SessionMeasurementsGatheringStopWatch.Elapsed.TotalSeconds) seconds to pull $($SessionMeasurements.Count) metrics from Login Enterprise" -Level Info
+    $ElapsedTime = [math]::Round($SessionMeasurementsGatheringStopWatch.Elapsed.TotalSeconds, 2)
+    Write-Log -Message "[DATA EXPORT] Took $($ElapsedTime) seconds to pull $($SessionMeasurements.Count) metrics from Login Enterprise" -Level Info
 
     # Create the LoginTimesCollection Array List
     $LoginTimesCollection = [System.Collections.ArrayList] @()
@@ -36,11 +37,7 @@ function Export-LEMeasurements {
         $null = $LoginTimesCollection.Add($LoginTime)
     }
 
-    # start a timer for exporting data to CSV
-    $ExportStopWatch = [System.Diagnostics.Stopwatch]::StartNew()
     $LoginTimesCollection | Export-Csv -Path "$($Folder)\Raw Login Times.csv" -NoTypeInformation
-    $ExportStopWatch.Stop()
-    Write-Log -Message "[DATA EXPORT] Took $($ExportStopWatch.Elapsed.TotalSeconds) seconds to export Login Times to CSV" -Level Info
 
     #endregion Session Measurements and Logon Times
 
@@ -83,8 +80,9 @@ function Export-LEMeasurements {
             }
             # stop the timer for gathering session metrics
             $SessionMetricGatheringStopWatch.Stop()
-            Write-Log -Message " " -Level Info
-            Write-Log -Message "[DATA EXPORT] Took $($SessionMetricGatheringStopWatch.Elapsed.TotalSeconds) seconds to pull $($SessionMetricMeasurements.Count) metrics from Login Enterprise" -Level Info
+            $ElapsedTime = [math]::Round($SessionMetricGatheringStopWatch.Elapsed.TotalSeconds, 2)
+            Write-Log -Message "`r" -Level Info
+            Write-Log -Message "[DATA EXPORT] Took $($ElapsedTime) seconds to pull $($SessionMetricMeasurements.Count) metrics from Login Enterprise" -Level Info
 
             Write-Log -Message "[DATA EXPORT] Identifying userSessions to hostName details from Login Enterprise" -Level Info
             #Create the Session HostName Map Array List
@@ -145,8 +143,9 @@ function Export-LEMeasurements {
 
             # stop the timer for procesing Session Metrics with HostName
             $ItemProcessingStopWatch.Stop()
-            Write-Log -Message " " -Level Info
-            Write-Log -Message "[DATA EXPORT] Took $($ItemProcessingStopWatch.Elapsed.TotalMinutes) Minutes to alter $($SessionMetricMeasurementsWithHost.Count) records with HostName" -Level Info
+            $ElapsedTime = [math]::Round($ItemProcessingStopWatch.Elapsed.TotalMinutes, 2)
+            Write-Log -Message "`r" -Level Info
+            Write-Log -Message "[DATA EXPORT] Took $($ElapsedTime) Minutes to alter $($SessionMetricMeasurementsWithHost.Count) records with HostName" -Level Info
 
             # Set the Data set ready for export
             if ($SessionMetricMeasurements.Count -eq $SessionMetricMeasurementsWithHost.Count) {
@@ -159,12 +158,7 @@ function Export-LEMeasurements {
             # Rest the SessionMetricMeasurements to the SessionMetricMeasurementsWithHost ready for export
             $SessionMetricMeasurements = $SessionMetricMeasurementsWithHost
 
-            # start a timer for exporting data to CSV
-            $ExportStopWatch = [System.Diagnostics.Stopwatch]::StartNew()
             $SessionMetricMeasurements | Export-Csv -Path "$($Folder)\VM Perf Metrics.csv" -NoTypeInformation
-            $ExportStopWatch.Stop()
-
-            Write-Log -Message "[DATA EXPORT] Took $($ExportStopWatch.Elapsed.TotalSeconds) seconds to export session metrics to CSV" -Level Info
         }
     }   
     #endregion LE Session Metrics
@@ -209,14 +203,11 @@ function Export-LEMeasurements {
     }
 
     $AppMeasurementsGatheringStopWatch.Stop()
-    Write-Log -Message " " -Level Info
-    Write-Log -Message "[DATA EXPORT] Took $($AppMeasurementsGatheringStopWatch.Elapsed.TotalSeconds) seconds to pull $($AppMeasurements.Count) metrics from Login Enterprise" -Level Info
+    $ElapsedTime = [math]::Round($AppMeasurementsGatheringStopWatch.Elapsed.TotalSeconds, 2)
+    Write-Log -Message "`r" -Level Info
+    Write-Log -Message "[DATA EXPORT] Took $($ElapsedTime) seconds to pull $($AppMeasurements.Count) metrics from Login Enterprise" -Level Info
 
-    # start a timer for exporting data to CSV
-    $ExportStopWatch = [System.Diagnostics.Stopwatch]::StartNew()
     $AppMeasurements | Export-Csv -Path "$($Folder)\Raw AppMeasurements.csv" -NoTypeInformation
-    $ExportStopWatch.Stop()
-    Write-Log -Message "[DATA EXPORT] Took $($ExportStopWatch.Elapsed.TotalSeconds) seconds to export application measurements to CSV" -Level Info
     #endregion Applications and Application Measurements
 
     #region VSI Results
@@ -280,7 +271,8 @@ function Export-LEMeasurements {
         $EUXMeasurements = Get-LERawEUX -testRunId $testRun.Id
         # stop the timer for gathering EUX metrics
         $EUXMeasurementsGatheringStopWatch.stop()
-        Write-Log -Message "[DATA EXPORT] Took $($EUXMeasurementsGatheringStopWatch.Elapsed.TotalSeconds) Seconds to pull $($EUXMeasurements.Count) metrics from Login Enterprise" -Level Info
+        $ElapsedTime = [math]::Round($EUXMeasurementsGatheringStopWatch.Elapsed.TotalSeconds, 2)
+        Write-Log -Message "[DATA EXPORT] Took $($ElapsedTime) Seconds to pull $($EUXMeasurements.Count) metrics from Login Enterprise" -Level Info
 
         # Create the TimerCollection Array List
         $TimerCollection = [System.Collections.ArrayList] @()
@@ -300,11 +292,7 @@ function Export-LEMeasurements {
             }
         }
 
-        # start a timer for exporting data to CSV
-        $ExportStopWatch = [System.Diagnostics.Stopwatch]::StartNew()
         $TimerCollection | Export-Csv -Path "$($Folder)\Raw Timer Results.csv" -NoTypeInformation
-        $ExportStopWatch.Stop()
-        Write-Log -Message "[DATA EXPORT] Took $($ExportStopWatch.Elapsed.TotalSeconds) seconds to export Timer results to CSV" -Level Info
 
         Write-Log -Message "[DATA EXPORT] Pulling Login Enterprise test run results" -Level Info
 
@@ -314,7 +302,8 @@ function Export-LEMeasurements {
         $EUXMeasurements = Get-LEtestrunResults -testRunId $testRun.Id -path "/eux-results"
         # stop the timer for gathering $EUXMeasurements test run results
         $EUXMeasurementsStopWatch.stop()
-        Write-Log -Message "[DATA EXPORT] Took $($EUXMeasurementsStopWatch.Elapsed.TotalSeconds) seconds to pull $($EUXMeasurements.Count) metrics from Login Enterprise" -Level Info
+        $ElapsedTime = [math]::Round($EUXMeasurementsStopWatch.Elapsed.TotalSeconds, 2)
+        Write-Log -Message "[DATA EXPORT] Took $($ElapsedTime) seconds to pull $($EUXMeasurements.Count) metrics from Login Enterprise" -Level Info
 
         # Create the EUXCollection Array List
         $EUXCollection = [System.Collections.ArrayList] @()
@@ -326,11 +315,8 @@ function Export-LEMeasurements {
             $null = $EUXCollection.Add($EUXscore)
         }
 
-        # start a timer for exporting data to CSV
-        $ExportStopWatch = [System.Diagnostics.Stopwatch]::StartNew()
+
         $EUXCollection | Export-Csv -Path "$($Folder)\EUX-score.csv" -NoTypeInformation
-        $ExportStopWatch.Stop()
-        Write-Log -Message "[DATA EXPORT] Took $($ExportStopWatch.Elapsed.TotalSeconds) seconds to export EUX Scores to CSV" -Level Info
 
         ## EUX timer results
         Write-Log -Message "[DATA EXPORT] Pulling Login Enterprise EUX Timer Result Measurements" -Level Info
@@ -341,7 +327,8 @@ function Export-LEMeasurements {
         $EUXtimerMeasurements = Get-LEtestrunResults -testRunId $testRun.Id -path "/eux-timer-results?euxTimer=diskMyDocs&euxTimer=diskMyDocsLatency&euxTimer=diskAppData&euxTimer=diskAppDataLatency&euxTimer=cpuSpeed&euxTimer=highCompression&euxTimer=fastCompression&euxTimer=appSpeed&euxTimer=appSpeedUserInput"
         # Stop the timer for gathering EUX timer results
         $EUXtimerMeasurementsStopWatch.stop()
-        Write-Log -Message "[DATA EXPORT] Took $($EUXtimerMeasurementsStopWatch.Elapsed.TotalSeconds) seconds to pull $($EUXtimerMeasurements.Count) metrics from Login Enterprise" -Level Info
+        $ElapsedTime = [math]::Round($EUXtimerMeasurementsStopWatch.Elapsed.TotalSeconds, 2)
+        Write-Log -Message "[DATA EXPORT] Took $($ElapsedTime) seconds to pull $($EUXtimerMeasurements.Count) metrics from Login Enterprise" -Level Info
 
         # Create the EUXtimerCollection Array List
         $EUXtimerCollection = [System.Collections.ArrayList] @()
@@ -355,11 +342,7 @@ function Export-LEMeasurements {
             $null = $EUXtimerCollection.Add($EUXtimerscore)
         }
 
-        $ExportStopWatch = [System.Diagnostics.Stopwatch]::StartNew()
         $EUXtimerCollection | Export-Csv -Path "$($Folder)\EUX-timer-score.csv" -NoTypeInformation
-        $ExportStopWatch.Stop()
-        Write-Log -Message "[DATA EXPORT] Took $($ExportStopWatch.Elapsed.TotalSeconds) seconds to export EUX Timer scores to CSV" -Level Info
-
     }
     else {
         Write-Log -Message "[DATA EXPORT] Processing Login Enterprise test run results" -Level Info
@@ -375,11 +358,7 @@ function Export-LEMeasurements {
             $EUXscore | Add-Member -MemberType NoteProperty -Name "EUXScore" -Value "0"
             $null = $EUXCollection.Add($EUXscore)
         }
-        # start a timer for exporting data to CSV
-        $ExportStopWatch = [System.Diagnostics.Stopwatch]::StartNew()
         $EUXCollection | Export-Csv -Path "$($Folder)\EUX-score.csv" -NoTypeInformation
-        $ExportStopWatch.Stop()
-        Write-Log -Message "[DATA EXPORT] Took $($ExportStopWatch.Elapsed.TotalSeconds) seconds to export EUX scores to CSV" -Level Info
     }
 
     #endregion EUX Measurements

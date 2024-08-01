@@ -2482,7 +2482,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         #region Check for RDA File and if exists then move it to the output folder
         #----------------------------------------------------------------------------------------------------------------------------
         if (Test-Path -Path $RDASource) {
-            Write-Log -Message "Exporting RDA Data to output folder" -Level Info
+            Write-Log -Message "[DATA EXPORT] Exporting RDA Data to output folder" -Level Info
             if ($Type -eq "Omnissa") {
                 $csvData = get-content $RDASource | ConvertFrom-String -Delimiter "," -PropertyNames Timestamp, currentCPU, currentRAM, totalCPU, encoderid, videoCodecid, VideoCodecUseid, currentBandwithoutput, currentLatency, currentavailableBandwidth, currentFps, NetworkLoss, totalBandwidthusage, averageBandwidthUsage, GPUusage, GPUmemoryusage, GPUmemoryInUse, GPUvideoEncoderusage, GPUvideoDecoderusage, GPUtotalUsage, GPUVideoEncoderSessions, GPUVideoEncoderAverageFPS, GPUVideoEncoderLatency | Select -Skip 1
             } else {
