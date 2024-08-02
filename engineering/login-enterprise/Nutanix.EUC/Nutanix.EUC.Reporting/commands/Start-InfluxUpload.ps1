@@ -43,7 +43,6 @@ function Start-InfluxUpload {
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][string]$ResultsPath,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][string]$Token,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$File,
-        [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$Started,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)]$BucketName,
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$false)][System.Boolean]$IsAzureVM
     )
@@ -68,12 +67,12 @@ function Start-InfluxUpload {
             $Run = $MeasurementDetail[1]
 
             # Calculate the Fixed Start Date
-            $StartDate = [DateTime] "01/01/2023 1:00 AM"
-            #$UnixStartedDate = Get-Date -Date $StartDate -UFormat %s  ###(JamesK - Removed)
-            $UnixStartedDate = [math]::Round((New-TimeSpan -Start (Get-Date "1970-01-01") -End (Get-Date -Date $StartDate)).TotalSeconds)
-            #$NewStartDate = $UnixStartedDate.Split(".") ###(JamesK - Removed)
-            #$FormattedStartDate = $NewStartDate[0] ###(JamesK - Removed)
-            $FormattedStartDate = $UnixStartedDate
+            # $StartDate = [DateTime] "01/01/2023 1:00 AM" ###(SvenH - Removed)
+            # $UnixStartedDate = Get-Date -Date $StartDate -UFormat %s  ###(JamesK - Removed)
+            # $UnixStartedDate = [math]::Round((New-TimeSpan -Start (Get-Date "1970-01-01") -End (Get-Date -Date $StartDate)).TotalSeconds) ###(SvenH - Removed)
+            # $NewStartDate = $UnixStartedDate.Split(".") ###(JamesK - Removed)
+            # $FormattedStartDate = $NewStartDate[0] ###(JamesK - Removed)
+            # $FormattedStartDate = $UnixStartedDate ###(SvenH - Removed)
 
             # Build Web Header
             $WebHeaders = @{
@@ -103,12 +102,12 @@ function Start-InfluxUpload {
             }
 
             # Build Unix Start Date based on new Started Date
-            #$UnixStarted = Get-Date -Date $Started -UFormat %s ###(JamesK - Removed)
-            $UnixStarted = [math]::Round((New-TimeSpan -Start (Get-Date "1970-01-01") -End (Get-Date -Date $Started)).TotalSeconds)
-            #$NewStarted = $UnixStarted.Split(".") ###(JamesK - Removed)
-            #$FormattedStarted = $NewStarted[0] ###(JamesK - Removed)
-            $FormattedStarted = $UnixStarted
-            $DeltaTime = $FormattedStarted - $FormattedStartDate
+            # $UnixStarted = Get-Date -Date $Started -UFormat %s ###(JamesK - Removed)
+            # $UnixStarted = [math]::Round((New-TimeSpan -Start (Get-Date "1970-01-01") -End (Get-Date -Date $Started)).TotalSeconds) ###(SvenH - Removed)
+            # $NewStarted = $UnixStarted.Split(".") ###(JamesK - Removed)
+            # $FormattedStarted = $NewStarted[0] ###(JamesK - Removed)
+            # $FormattedStarted = $UnixStarted ###(SvenH - Removed)
+            # $DeltaTime = $FormattedStarted - $FormattedStartDate ###(SvenH - Removed)
             
             # Build Influx Upload Uri
             $influxDbUrl = $influxDbUrl + "&bucket=$($BucketName)"
@@ -326,11 +325,12 @@ function Start-InfluxUpload {
 
                     # Get the timestamp for the line and calculate the delta Start Time
                     $CSVDate = $($line.Timestamp)
-                    #$UnixDate = Get-Date -Date $CSVDate -UFormat %s ###(JamesK - Removed)
-                    $UnixDate = [math]::Round((New-TimeSpan -Start (Get-Date "1970-01-01") -End (Get-Date -Date $CSVDate)).TotalSeconds)
-                    #$NewDate = $UnixDate.Split(".") ###(JamesK - Removed)
-                    #$FormattedDate = $newdate[0] - $DeltaTime  ###(JamesK - Removed)
-                    $FormattedDate = $UnixDate - $DeltaTime
+                    # $UnixDate = Get-Date -Date $CSVDate -UFormat %s ###(JamesK - Removed)
+                    # $UnixDate = [math]::Round((New-TimeSpan -Start (Get-Date "1970-01-01") -End (Get-Date -Date $CSVDate)).TotalSeconds) ###(SvenH - Removed)
+                    $FormattedDate = [math]::Round((New-TimeSpan -Start (Get-Date "1970-01-01") -End ((Get-Date -Date $CSVDate).ToUniversalTime())).TotalSeconds)
+                    # $NewDate = $UnixDate.Split(".") ###(JamesK - Removed)
+                    # $FormattedDate = $newdate[0] - $DeltaTime  ###(JamesK - Removed)
+                    # $FormattedDate = $UnixDate - $DeltaTime ###(SvenH - Removed)
 
                     # Build the body
                     $Body = "$measurementName,$tag $fields $FormattedDate"
