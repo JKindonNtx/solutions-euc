@@ -100,8 +100,9 @@ function Export-LEMeasurements {
 
             # stop the timer for gathering vmHost details
             $SessionHostNameMapStopWatch.Stop()
+            $ElapsedTime = [math]::Round($SessionHostNameMapStopWatch.Elapsed.TotalSeconds, 2)
 
-            Write-Log -Message "[DATA EXPORT] Took $($SessionHostNameMapStopWatch.Elapsed.TotalSeconds) seconds to identify userSessions to HostName from Login Enterprise" -Level Info
+            Write-Log -Message "[DATA EXPORT] Took $($ElapsedTime) seconds to identify userSessions to HostName from Login Enterprise" -Level Info
             
             if ($null -eq $SessionHostNameMap) {
                 Write-Log -Message "[DATA EXPORT] No records were found in the session HostName Map" -Level Warn
