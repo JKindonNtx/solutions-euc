@@ -12,7 +12,7 @@ function Start-LETest {
     } | ConvertTo-Json
         
     try {
-        Invoke-PublicApiMethod -Method "PUT" -Path "v6/tests/$testId/start" -Body $Body -ErrorAction Stop
+        $TestStart = Invoke-PublicApiMethod -Method "PUT" -Path "v6/tests/$testId/start" -Body $Body -ErrorAction Stop
     }
     catch {
         Write-Error -Message $_ -Level Error
