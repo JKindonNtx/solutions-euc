@@ -110,6 +110,9 @@ If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $
 # Execute
 # ============================================================================
 
+# Set a global variable to track the last message output to the console in an attempt to keep console output clean with write-log function.
+$global:LastMessageEndedWithNewLine = $false 
+
 #region Nutanix Module Import
 #----------------------------------------------------------------------------------------------------------------------------
 $var_ModuleName = "Nutanix.EUC"

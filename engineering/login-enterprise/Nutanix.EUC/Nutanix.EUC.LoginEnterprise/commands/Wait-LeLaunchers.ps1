@@ -41,5 +41,5 @@ function Wait-LELaunchers {
             Exit 1
         }
     }
-    Write-Log -Message "`r" -Level Info
+    Write-Log -Message " " -Level Info
 }

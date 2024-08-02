@@ -81,7 +81,7 @@ function Export-LEMeasurements {
             # stop the timer for gathering session metrics
             $SessionMetricGatheringStopWatch.Stop()
             $ElapsedTime = [math]::Round($SessionMetricGatheringStopWatch.Elapsed.TotalSeconds, 2)
-            Write-Log -Message "`r" -Level Info
+            #Write-Log -Message " " -Level Info
             Write-Log -Message "[DATA EXPORT] Took $($ElapsedTime) seconds to pull $($SessionMetricMeasurements.Count) metrics from Login Enterprise" -Level Info
 
             Write-Log -Message "[DATA EXPORT] Identifying userSessions to hostName details from Login Enterprise" -Level Info
@@ -145,7 +145,7 @@ function Export-LEMeasurements {
             # stop the timer for procesing Session Metrics with HostName
             $ItemProcessingStopWatch.Stop()
             $ElapsedTime = [math]::Round($ItemProcessingStopWatch.Elapsed.TotalMinutes, 2)
-            Write-Log -Message "`r" -Level Info
+            #Write-Log -Message " " -Level Info
             Write-Log -Message "[DATA EXPORT] Took $($ElapsedTime) Minutes to alter $($SessionMetricMeasurementsWithHost.Count) records with HostName" -Level Info
 
             # Set the Data set ready for export
@@ -205,7 +205,7 @@ function Export-LEMeasurements {
 
     $AppMeasurementsGatheringStopWatch.Stop()
     $ElapsedTime = [math]::Round($AppMeasurementsGatheringStopWatch.Elapsed.TotalSeconds, 2)
-    Write-Log -Message "`r" -Level Info
+    #Write-Log -Message " " -Level Info
     Write-Log -Message "[DATA EXPORT] Took $($ElapsedTime) seconds to pull $($AppMeasurements.Count) metrics from Login Enterprise" -Level Info
 
     $AppMeasurements | Export-Csv -Path "$($Folder)\Raw AppMeasurements.csv" -NoTypeInformation
