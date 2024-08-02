@@ -34,6 +34,11 @@ Writes an Info Output to the console
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][ValidateSet("Error", "Warn", "Info", "Validation")][String]$Level = "Info"
     )
 
+    #check for global variable and if not found, assume false
+    if (-not (Test-Path -Path Variable:global:LastMessageEndedWithNewLine)) {
+        $global:LastMessageEndedWithNewLine = $true
+    }
+
     # Write message to error, warning, or Info
     switch ($Level) {
         'Error' {
