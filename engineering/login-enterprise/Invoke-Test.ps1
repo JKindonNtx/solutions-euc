@@ -2358,20 +2358,20 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         #----------------------------------------------------------------------------------------------------------------------------
         if (-not $AzureMode.IsPresent) { 
             # This is not an Azure configuration
-            $monitoringJob | Wait-Job
-            $monitoringJob | Remove-Job
+            $monitoringJob | Wait-Job | Out-Null
+            $monitoringJob | Remove-Job | Out-Null
         }
         if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
-            $monitoringJob_files | Wait-Job
-            $monitoringJob_files | Remove-Job
+            $monitoringJob_files | Wait-Job | Out-Null
+            $monitoringJob_files | Remove-Job | Out-Null
         }
         if ($Config.Target.Files -ne "") {
-            $monitoringFilesJob | Wait-Job
-            $monitoringFilesJob | Remove-Job
+            $monitoringFilesJob | Wait-Job | Out-Null
+            $monitoringFilesJob | Remove-Job | Out-Null
         }
         if ($Config.Target.NetScaler -ne "") {
-            $monitoringNSJob | Wait-Job
-            $monitoringNSJob | Remove-Job
+            $monitoringNSJob | Wait-Job | Out-Null
+            $monitoringNSJob | Remove-Job | Out-Null
         }
         #endregion Cleanup monitoring job
 
