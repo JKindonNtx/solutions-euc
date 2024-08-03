@@ -204,9 +204,12 @@ Function Enable-VSICTXDesktopPool {
     $RegisteredVMCount = ($BrokerVMS | Where-Object { $_.RegistrationState -eq "Registered" } | Measure-Object).Count
     $Start = Get-Date
     Write-Log -Message "Waiting for $PowerOnVMs VMs to be registered" -Level Info
+    # Set a dummy timespan variable. This will be overwritten in the loop later
+    $TS = New-TimeSpan
     while ($true) {
-        if ($TS.TotalMinutes -gt 15) {
+        if ($TS.TotalMinutes -gt 15 -and ($RegisteredVMCount -ne $PowerOnVMs)) {
             Write-Log -Message "$RegisteredVMCount/$PowerOnVMs/$NumberOfVMs (Registered/PowerOnVMs/Total). Sleeping for 120 seconds" -Level Info
+            Start-Sleep -Seconds 120
         } else {
             Write-Log -Update -Message "$RegisteredVMCount/$PowerOnVMs/$NumberOfVMs (Registered/PowerOnVMs/Total)" -Level Info
         }
