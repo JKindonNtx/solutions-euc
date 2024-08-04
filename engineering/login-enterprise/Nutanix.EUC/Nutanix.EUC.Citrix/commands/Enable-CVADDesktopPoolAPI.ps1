@@ -85,7 +85,6 @@ Function Enable-CVADDesktopPoolAPI {
     }
 
     Write-Log -Message "Retrieved $($delivery_group_machines.Count) machines from Delivery Group $($DesktopPoolName)" -Level Info
-    Write-Log -Message " " -Level Info
 
     #endregion Get List of Machines in Delivery Group
 
@@ -186,7 +185,6 @@ Function Enable-CVADDesktopPoolAPI {
             }
             Start-Sleep 10
         }
-        Write-Log -Message " " -Level Info
         Write-Log -Message "All VMs are down." -Level Info
     }
     else {
@@ -817,11 +815,18 @@ Function Enable-CVADDesktopPoolAPI {
     #----------------------------------------------------------------------------------------------------------------------------
     $Global:Headers = Get-CVADAuthDetailsAPI -DDC $DDC -EncodedAdminCredential $EncodedAdminCredential -DomainAdminCredential $DomainAdminCredential
 
+    # Set a dummy timespan variable. This will be overwritten in the loop later
+    $TS = New-TimeSpan
+
     while ($true) {
-        Write-Log -Update -Message "$RegisteredVMCount/$PowerOnVMs/$NumberOfVMs (Registered/PowerOnVMs/Total)" -Level Info
+        if ($TS.TotalMinutes -gt 15 -and ($RegisteredVMCount -ne $PowerOnVMs)) {
+            Write-Log -Message "$RegisteredVMCount/$PowerOnVMs/$NumberOfVMs (Registered/PowerOnVMs/Total). Sleeping for 120 seconds" -Level Info
+            Start-Sleep -Seconds 120
+        } else {
+            Write-Log -Update -Message "$RegisteredVMCount/$PowerOnVMs/$NumberOfVMs (Registered/PowerOnVMs/Total)" -Level Info
+        }
         if ($RegisteredVMCount -eq $PowerOnVMs) {
             #Once this is matched, we are good to go, loop until the registration count is the same as the number of VMs required
-            Write-Log -Message " " -Level Info
             Break
         } 
         else {
@@ -955,6 +960,46 @@ Function Enable-CVADDesktopPoolAPI {
                 # Now that we have the machines, find which ones are off. They should not be.
                 $PowerOnStuckVMs = $PoweredOnVMs | Where-Object {$_.PowerState -eq "Off"}
 
+                # Check for VMs in unknown power state - these might be paused and need to be powered off, and then back on.
+                $PowerStateUnknownVMs = $delivery_group_machines | Where-Object {$_.PowerState -eq "Unknown"}
+
+                if ($PowerStateUnknownVMs.Count -gt 0) {
+                    Write-Log -Message "There are $($PowerStateUnknownVMs.Count) machines in an unknown power state" -Level Info
+                    foreach ($machine_to_target in $PowerStateUnknownVMs) {
+
+                        #----------------------------------------------------------------------------------------------------------------------------
+                        # Set API call detail
+                        #----------------------------------------------------------------------------------------------------------------------------
+                        $Method = "Post"
+                        $RequestUri = "https://$DDC/cvad/manage/Machines/$($machine_to_target.Id)/`$shutdown?force=true&detailResponseRequired=false&async=true"
+                        #----------------------------------------------------------------------------------------------------------------------------
+                        Write-Log -Message "Stopping machine $($machine_to_target.Name) with Id $($machine_to_target.Id)" -Level Info
+                        try {
+                            $machine_stopped = Invoke-RestMethod -Uri $RequestUri -Method $Method -Headers $Headers -UseBasicParsing -SkipCertificateCheck -ErrorAction Stop
+                        }
+                        catch {
+                            Write-Log -Message $_ -Level Error
+                            Exit 1
+                        }
+    
+                        #----------------------------------------------------------------------------------------------------------------------------
+                        # Set API call detail
+                        #----------------------------------------------------------------------------------------------------------------------------
+                        $Method = "Post"
+                        $RequestUri = "https://$DDC/cvad/manage/Machines/$($machine_to_target.Id)/`$start?detailResponseRequired=false&async=true"
+                        #----------------------------------------------------------------------------------------------------------------------------
+                        Write-Log -Message "Powering On machine $($machine_to_target.Name) with Id $($machine_to_target.Id)" -Level Info
+                        try {
+                            $machine_started = Invoke-RestMethod -Uri $RequestUri -Method $Method -Headers $Headers -UseBasicParsing -SkipCertificateCheck -ErrorAction Stop
+                        }
+                        catch {
+                            Write-Log -Message $_ -Level Error
+                            Break #Replace with Exit 1
+                        }
+                    }
+                    Start-Sleep 15
+                }
+
                 # get an updated registered VM Count
                 $RegisteredVMCount = ($BrokerVMS | Where-Object { $_.RegistrationState -eq "Registered" } | Measure-Object).Count
                 
@@ -984,8 +1029,8 @@ Function Enable-CVADDesktopPoolAPI {
                         }
                     }
                     # Now sleep for 2 minutes to wait for them to power one and do their thing. No need to spam for updates
-                    Write-Log -Message "Sleeping for 120 seconds" -Level Info
-                    Start-Sleep -Seconds 120
+                    #Write-Log -Message "Sleeping for 120 seconds" -Level Info
+                    #Start-Sleep -Seconds 120
                 }
                 else {
                     # This is not great. We now have machines that are powered on (based on their being none in the PowerOnStuckVMs array) but not registered.
@@ -994,7 +1039,6 @@ Function Enable-CVADDesktopPoolAPI {
                         
                         #$RegisteredVMCount = ($BrokerVMS | Where-Object { $_.RegistrationState -eq "Registered" } | Measure-Object).Count
                         Write-Log -Update -Message "$RegisteredVMCount/$PowerOnVMs/$NumberOfVMs (Registered/PowerOnVMs/Total)" -Level Info
-                        Write-Log -Message " " -Level Info
 
                         #Find the machines that are Powered On but unregistered, these are not in a happy place
                         $UnregisteredMachines = $BrokerVMs | Where-Object { $_.RegistrationState -eq "Unregistered" -and $_.PowerState -eq "on" }
@@ -1028,7 +1072,6 @@ Function Enable-CVADDesktopPoolAPI {
                     }
                     else {
                         Write-Log -Update -Message "$RegisteredVMCount/$PowerOnVMs/$NumberOfVMs (Registered/PowerOnVMs/Total)" -Level Info
-                        Write-Log -Message " " -Level Info
                     }
                 }
             }

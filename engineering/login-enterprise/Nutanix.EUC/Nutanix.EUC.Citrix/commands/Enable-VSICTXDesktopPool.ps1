@@ -75,7 +75,6 @@ Function Enable-VSICTXDesktopPool {
             }
             Start-Sleep 10
         }
-        Write-Log -Message " " -Level Info
         Write-Log -Message "All VMs are down." -Level Info
     } else {
         Write-Log -Message "All VMs are already down." -Level Info
@@ -114,7 +113,6 @@ Function Enable-VSICTXDesktopPool {
             Start-Sleep 3
             $provtask = Get-ProvTask -AdminAddress $DDC -TaskId $provTaskId
         }
-        Write-Log -Message " " -Level Info
         $ProvSchemeUid = (Get-ProvScheme -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName).ProvisioningSchemeUid.Guid
         $Uid = (Get-BrokerCatalog -AdminAddress $DDC -Name $DesktopPoolName).Uid
         $ProvVMS = Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeUid $ProvSchemeUid -MaxRecordCount $MaxRecordCount | Where-Object { $_.Tag -ne "Brokered" }
@@ -130,7 +128,6 @@ Function Enable-VSICTXDesktopPool {
             Lock-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -Tag "Brokered" -VMID @($VM.VMId) -ErrorAction Stop
             New-BrokerMachine -AdminAddress $DDC -Cataloguid $Uid -MachineName $VM.ADAccountSid -ErrorAction Stop | Add-BrokerMachine -DesktopGroup $DesktopPoolName -ErrorAction Stop
         }
-        Write-Log -Message " " -Level Info
         Write-Log -Message "Sleeping 30 seconds after provisioning" -level Info
         Start-Sleep -Seconds 30
     }
