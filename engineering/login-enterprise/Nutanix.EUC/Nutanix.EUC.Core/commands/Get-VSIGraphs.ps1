@@ -145,7 +145,7 @@ function Get-VSIGraphs {
 
         Write-Log -Message "Downloading $($OutFile) from Grafana" -Level Info
         try {
-            $ImageDownload = Invoke-WebRequest -Uri $Uri -outfile $OutFile -ErrorAction Stop
+            $ImageDownload = Invoke-WebRequest -Uri $Uri -outfile $OutFile -ErrorAction Stop | Out-Null
         }
         catch {
             Write-Log -Message "Download of Image failed. Retrying. Grafana could be busy" -Level Warn
@@ -156,7 +156,7 @@ function Get-VSIGraphs {
                 $count++
                 Write-Log -Message "Retry Iteration $($count) of $($ImageDownloadRetryCount)" -Level Info
                 try {
-                    $ImageDownload = Invoke-WebRequest -Uri $Uri -outfile $OutFile -ErrorAction Stop
+                    $ImageDownload = Invoke-WebRequest -Uri $Uri -outfile $OutFile -ErrorAction Stop | Out-Null
                 }
                 catch {
                     Write-Log -Message "Download of Image failed. Retries left: $($ImageDownloadRetryCount - $count)" -Level Warn
