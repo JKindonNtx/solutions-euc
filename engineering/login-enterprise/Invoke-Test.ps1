@@ -2587,7 +2587,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             if (-not $AzureMode.IsPresent) { 
                 # This is not an Azure configuration
                 $Files = Get-ChildItem "$($OutputFolder)\Boot\*.csv"
-                $Started = $($NTNXInfra.TestInfra.Bootstart)
+                # $Started = $($NTNXInfra.TestInfra.Bootstart) ##Removed by SvenH
 
                 # Build the Boot Bucket Name
                 If ($($Config.Test.BucketName) -eq "LoginDocuments" -or $($Config.Test.BucketName) -eq "PVSPerfData") {
@@ -2601,7 +2601,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                 foreach ($File in $Files) {
                     if (($File.Name -like "host raw*") -or ($File.Name -like "cluster raw*")) {
                         Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
-                        if (Start-InfluxUpload -influxDbUrl $Config.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $Config.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
+                        if (Start-InfluxUpload -influxDbUrl $Config.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $Config.Testinfra.InfluxToken -File $File -BucketName $BucketName) {
                             Write-Log -Message "Finished uploading Boot File $($File.Name) to Influx" -Level Info
                         }
                         else {
@@ -2616,8 +2616,8 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
 
             # Get the test run files and start time
             $Files = Get-ChildItem "$($OutputFolder)\*.csv"
-            $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv"
-            $Started = $vsiresult.started
+            # $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv" ##Removed by SvenH
+            # $Started = $vsiresult.started ##Removed by SvenH
             $BucketName = $($Config.Test.BucketName)
             # Loop through the test run data files and process each one
             foreach ($File in $Files) {
@@ -2625,7 +2625,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                     Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
                     #Set Azure VM Value - If this is an Azure VM, we will be sending different tags in to Influx. If not, then it's business as usual.
                     if ($NTNXInfra.AzureGuestDetails.IsAzureVM -eq $true) { $IsAzureVM = $true } else { $IsAzureVM = $false }
-                    if (Start-InfluxUpload -influxDbUrl $Config.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $Config.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName -IsAzureVM $IsAzureVM) {
+                    if (Start-InfluxUpload -influxDbUrl $Config.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $Config.Testinfra.InfluxToken -File $File -BucketName $BucketName -IsAzureVM $IsAzureVM) {
                         Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
                     }
                     else {
@@ -2657,7 +2657,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                     # We only care about cluster raw data here
                     if (($File.Name -like "cluster raw*")) {
                         Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
-                        if (Start-InfluxUpload -influxDbUrl $Config.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $Config.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
+                        if (Start-InfluxUpload -influxDbUrl $Config.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $Config.Testinfra.InfluxToken -File $File -BucketName $BucketName) {
                             Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
                         }
                         else {

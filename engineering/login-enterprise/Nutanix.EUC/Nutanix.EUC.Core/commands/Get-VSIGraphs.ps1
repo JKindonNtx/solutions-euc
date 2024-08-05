@@ -63,7 +63,7 @@ function Get-VSIGraphs {
 
         # Build Uri for download
         if ($BucketName -eq "LoginDocuments") {
-            $Uri = "$($TestConfig.Testinfra.GrafanaUriDocs)&var-Bucketname=$($BucketName)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
+            $Uri = "$($TestConfig.Testinfra.GrafanaUriDocs)&var-Bucketname=$($BucketName)&var-StartYear=$($Year)&var-EndYear=$($Year)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1704067200000&to=1704071220000&panelId=$($PanelID)&width=1600&height=800&tz=UTC"
         } elseif ($BucketName -eq "LoginRegression" ) {
             $CPUTypeSpace = $($TestConfig.TestInfra.CPUType).Replace(" ", "_")
             $CPUType = [uri]::EscapeDataString($CPUTypeSpace)
@@ -130,7 +130,7 @@ function Get-VSIGraphs {
 
         # Build Uri for download
         if ($BucketName -eq "LoginDocuments") {
-            $Uri = "$($TestConfig.Testinfra.GrafanaUriDocs)&var-Bucketname=$($BucketName)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
+            $Uri = "$($TestConfig.Testinfra.GrafanaUriDocs)&var-Bucketname=$($BucketName)&var-StartYear=$($Year)&var-EndYear=$($Year)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1704067200000&to=1704071220000&panelId=$($PanelID)&width=1600&height=800&tz=UTC"
         } elseif ($BucketName -eq "LoginRegression" ) {
             $CPUTypeSpace = $($TestConfig.TestInfra.CPUType).Replace(" ", "_")
             $CPUType = [uri]::EscapeDataString($CPUTypeSpace)
