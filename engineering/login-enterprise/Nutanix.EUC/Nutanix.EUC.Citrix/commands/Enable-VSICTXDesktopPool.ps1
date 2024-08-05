@@ -75,7 +75,6 @@ Function Enable-VSICTXDesktopPool {
             }
             Start-Sleep 10
         }
-        Write-Log -Message " " -Level Info
         Write-Log -Message "All VMs are down." -Level Info
     } else {
         Write-Log -Message "All VMs are already down." -Level Info
@@ -114,7 +113,6 @@ Function Enable-VSICTXDesktopPool {
             Start-Sleep 3
             $provtask = Get-ProvTask -AdminAddress $DDC -TaskId $provTaskId
         }
-        Write-Log -Message " " -Level Info
         $ProvSchemeUid = (Get-ProvScheme -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName).ProvisioningSchemeUid.Guid
         $Uid = (Get-BrokerCatalog -AdminAddress $DDC -Name $DesktopPoolName).Uid
         $ProvVMS = Get-ProvVM -AdminAddress $DDC -ProvisioningSchemeUid $ProvSchemeUid -MaxRecordCount $MaxRecordCount | Where-Object { $_.Tag -ne "Brokered" }
@@ -130,7 +128,6 @@ Function Enable-VSICTXDesktopPool {
             Lock-ProvVM -AdminAddress $DDC -ProvisioningSchemeName $DesktopPoolName -Tag "Brokered" -VMID @($VM.VMId) -ErrorAction Stop
             New-BrokerMachine -AdminAddress $DDC -Cataloguid $Uid -MachineName $VM.ADAccountSid -ErrorAction Stop | Add-BrokerMachine -DesktopGroup $DesktopPoolName -ErrorAction Stop
         }
-        Write-Log -Message " " -Level Info
         Write-Log -Message "Sleeping 30 seconds after provisioning" -level Info
         Start-Sleep -Seconds 30
     }
@@ -204,10 +201,18 @@ Function Enable-VSICTXDesktopPool {
     $RegisteredVMCount = ($BrokerVMS | Where-Object { $_.RegistrationState -eq "Registered" } | Measure-Object).Count
     $Start = Get-Date
     Write-Log -Message "Waiting for $PowerOnVMs VMs to be registered" -Level Info
+    # Set a dummy timespan variable. This will be overwritten in the loop later
+    $TS = New-TimeSpan
     while ($true) {
-        Write-Log -Update -Message "$RegisteredVMCount/$PowerOnVMs/$NumberOfVMs (Registered/PowerOnVMs/Total)" -Level Info
+        if ($TS.TotalMinutes -gt 15 -and ($RegisteredVMCount -ne $PowerOnVMs)) {
+            Write-Log -Message "$RegisteredVMCount/$PowerOnVMs/$NumberOfVMs (Registered/PowerOnVMs/Total). Sleeping for 120 seconds" -Level Info
+            Start-Sleep -Seconds 120
+        } else {
+            Write-Log -Update -Message "$RegisteredVMCount/$PowerOnVMs/$NumberOfVMs (Registered/PowerOnVMs/Total)" -Level Info
+        }
+        #Write-Log -Update -Message "$RegisteredVMCount/$PowerOnVMs/$NumberOfVMs (Registered/PowerOnVMs/Total)" -Level Info
         if ($RegisteredVMCount -eq $PowerOnVMs) {
-            Write-Log -Message " " -Level Info
+            Write-Log -Message "All $($RegisteredVMCount) machines registered " -Level Info
             Break
         } else {          
             $BrokerVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $MaxRecordCount
@@ -216,8 +221,18 @@ Function Enable-VSICTXDesktopPool {
             if ($TS.TotalMinutes -gt 15) {
                 $PoweredOnVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $MaxRecordCount -SortBy MachineName | Select-Object -First $PowerOnVMs
                 $PowerOnStuckVMs = $PoweredOnVMs | Where-Object {$_.PowerState -eq "Off"} | New-BrokerHostingPowerAction -Action TurnOn
-                Write-Log -Message "Sleeping for 120 seconds" -Level Info
-                Start-Sleep -Seconds 120
+
+                # Check for VMs in unknown power state - these might be paused and need to be powered off, and then back on.
+                $PowerStateUnknownVMs = Get-BrokerMachine -AdminAddress $DDC -DesktopGroupName $DesktopPoolName -MaxRecordCount $MaxRecordCount -SortBy MachineName | Where-Object {$_.PowerState -eq "Unknown"}
+                if (($PowerStateUnknownVMs | Measure-Object).count -gt 0) {
+                    Write-Log -Message "Powering on $($PowerStateUnknownVMs.Count) machines in unknown power state (might be paused)" -Level Info
+                    $SetPowerOnVMs = $PowerStateUnknownVMs | New-BrokerHostingPowerAction -Action TurnOff
+                    Start-Sleep 15
+                    $SetPowerOnVMs = $PowerStateUnknownVMs | New-BrokerHostingPowerAction -Action TurnOn
+                }
+
+                #Write-Log -Message "Sleeping for 120 seconds" -Level Info
+                #Start-Sleep -Seconds 120
             }
             if ($TS.TotalMinutes -gt $VMRegistrationTimeOutMinutes) {
                 Write-Log -Message "VMs failed to register within $VMRegistrationTimeOutMinutes minutes" -Level Error

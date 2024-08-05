@@ -110,6 +110,9 @@ If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $
 # Execute
 # ============================================================================
 
+# Set a global variable to track the last message output to the console in an attempt to keep console output clean with write-log function.
+$global:LastMessageEndedWithNewLine = $false 
+
 #region Nutanix Module Import
 #----------------------------------------------------------------------------------------------------------------------------
 $var_ModuleName = "Nutanix.EUC"
@@ -2355,20 +2358,20 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         #----------------------------------------------------------------------------------------------------------------------------
         if (-not $AzureMode.IsPresent) { 
             # This is not an Azure configuration
-            $monitoringJob | Wait-Job
-            $monitoringJob | Remove-Job
+            $monitoringJob | Wait-Job | Out-Null
+            $monitoringJob | Remove-Job | Out-Null
         }
         if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
-            $monitoringJob_files | Wait-Job
-            $monitoringJob_files | Remove-Job
+            $monitoringJob_files | Wait-Job | Out-Null
+            $monitoringJob_files | Remove-Job | Out-Null
         }
         if ($Config.Target.Files -ne "") {
-            $monitoringFilesJob | Wait-Job
-            $monitoringFilesJob | Remove-Job
+            $monitoringFilesJob | Wait-Job | Out-Null
+            $monitoringFilesJob | Remove-Job | Out-Null
         }
         if ($Config.Target.NetScaler -ne "") {
-            $monitoringNSJob | Wait-Job
-            $monitoringNSJob | Remove-Job
+            $monitoringNSJob | Wait-Job | Out-Null
+            $monitoringNSJob | Remove-Job | Out-Null
         }
         #endregion Cleanup monitoring job
 
@@ -2475,14 +2478,14 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             Write-Log -Message "Skipping download of LE Metrics" -Level Info
         } else {
             Write-Log -Message "Exporting LE Measurements to output folder" -Level Info
-            Export-LEMeasurements -Folder $OutputFolder -TestRun $TestRun -DurationInMinutes $ImageSpec_DurationInMinutes
+            Export-LEMeasurements -Folder $OutputFolder -TestRun $TestRun -DurationInMinutes $ImageSpec_DurationInMinutes -SessionMetricsEnabled $ImageSpec_SessionMetricsEnabled
         }
         #endregion Write config to OutputFolder and Download LE Metrics
 
         #region Check for RDA File and if exists then move it to the output folder
         #----------------------------------------------------------------------------------------------------------------------------
         if (Test-Path -Path $RDASource) {
-            Write-Log -Message "Exporting RDA Data to output folder" -Level Info
+            Write-Log -Message "[DATA EXPORT] Exporting RDA Data to output folder" -Level Info
             if ($Type -eq "Omnissa") {
                 $csvData = get-content $RDASource | ConvertFrom-String -Delimiter "," -PropertyNames Timestamp, currentCPU, currentRAM, totalCPU, encoderid, videoCodecid, VideoCodecUseid, currentBandwithoutput, currentLatency, currentavailableBandwidth, currentFps, NetworkLoss, totalBandwidthusage, averageBandwidthUsage, GPUusage, GPUmemoryusage, GPUmemoryInUse, GPUvideoEncoderusage, GPUvideoDecoderusage, GPUtotalUsage, GPUVideoEncoderSessions, GPUVideoEncoderAverageFPS, GPUVideoEncoderLatency | Select -Skip 1
             } else {

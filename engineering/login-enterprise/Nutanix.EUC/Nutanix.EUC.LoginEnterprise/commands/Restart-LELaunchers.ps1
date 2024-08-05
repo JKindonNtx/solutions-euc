@@ -6,6 +6,9 @@ function Restart-LELaunchers {
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][array]$Launchers
     )
 
+    $LauncherCount = ($Launchers | Measure-Object).Count
+    Write-Log -Message "Restarting $($LauncherCount) launchers" -Level Info
+
     foreach ($launcher in $launchers) { 
         
         $try = 10
@@ -13,7 +16,7 @@ function Restart-LELaunchers {
         do {
             try {
                 $i = $i + 1
-                Write-Log -Message "Rebooting: $($launcher.machineName)." -Level Info
+                #Write-Log -Message "Rebooting: $($launcher.machineName)." -Level Info
                 Restart-Computer -ComputerName $($launcher.machineName) -Force -ErrorAction Stop
                 $rebootLauncher = $true
             }

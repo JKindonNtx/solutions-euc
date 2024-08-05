@@ -127,7 +127,6 @@ function Set-VSIHVDesktopPool {
                     Write-Log -Update -Message "Progress:  $($Poolstatus.PendingImageProgress)" -Level Info
                     Start-Sleep -Seconds 10
                 }
-                Write-Log -Message " " -Level Info 
             }
             "RDSH" {
 
@@ -155,7 +154,6 @@ function Set-VSIHVDesktopPool {
                     Write-Log -Update -Message "Progress:  $($FarmStatus.PendingImageProgress)" -Level Info
                     Start-Sleep -Seconds 10
                 }
-                Write-Log -Message " " -Level Info 
 
                 New-HVPool -Rds `
                     -PoolName $Name `

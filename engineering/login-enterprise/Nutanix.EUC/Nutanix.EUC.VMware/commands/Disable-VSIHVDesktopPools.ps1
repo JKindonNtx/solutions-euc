@@ -52,7 +52,6 @@ function Disable-VSIHVDesktopPools {
                         Start-Sleep -Seconds 60
                     }
                 }
-                Write-Log -Message " " -Level Info
             }
         }
         

@@ -34,34 +34,65 @@ Writes an Info Output to the console
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][ValidateSet("Error", "Warn", "Info", "Validation")][String]$Level = "Info"
     )
 
+    #check for global variable and if not found, assume false
+    if (-not (Test-Path -Path Variable:global:LastMessageEndedWithNewLine)) {
+        $global:LastMessageEndedWithNewLine = $true
+    }
+
     # Write message to error, warning, or Info
     switch ($Level) {
         'Error' {
             if ($Update.IsPresent) {
-                Write-Host "`r$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message" -NoNewline
+                Write-Host "`r$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message " -NoNewline
+                $global:LastMessageEndedWithNewLine = $false
             }
             else {
-                Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message"
+                if ($global:LastMessageEndedWithNewLine -eq $false) {
+                    Write-Host "`n$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message"
+                    $global:LastMessageEndedWithNewLine = $true
+                } else {
+                    Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message"
+                }
+                #Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message"
+                #$global:LastMessageEndedWithNewLine = $true
             }
         }
         'Warn' {
             if ($Update.IsPresent) {
                 Write-Host "`r$([char]0x1b)[33m[$([char]0x1b)[33m$(Get-Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message" -NoNewline
+                $global:LastMessageEndedWithNewLine = $false
             }
             else {
-                Write-Host "$([char]0x1b)[33m[$([char]0x1b)[33m$(Get-Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message"
+                if ($global:LastMessageEndedWithNewLine -eq $false) {
+                    Write-Host "`n$([char]0x1b)[33m[$([char]0x1b)[33m$(Get-Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message"
+                    $global:LastMessageEndedWithNewLine = $true
+                }
+                else {
+                    Write-Host "$([char]0x1b)[33m[$([char]0x1b)[33m$(Get-Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message"
+                }
+                #Write-Host "$([char]0x1b)[33m[$([char]0x1b)[33m$(Get-Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message"
+                #$global:LastMessageEndedWithNewLine = $true
             }
         }
         'Info' {
             if ($Update.IsPresent) {
                 Write-Host "`r$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message" -NoNewline
+                $global:LastMessageEndedWithNewLine = $false
             }
             else {
-                Write-Host "$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message"
+                if ($global:LastMessageEndedWithNewLine -eq $false) {
+                    Write-Host "`n$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message"
+                    $global:LastMessageEndedWithNewLine = $true
+                } else {
+                    Write-Host "$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message"
+                }
+                #Write-Host "$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message"
+                #$global:LastMessageEndedWithNewLine = $true
             }
         }
         'Validation' {
             Write-Host "$([char]0x1b)[96mVALIDATION: $Message"
+            $global:LastMessageEndedWithNewLine = $true
         }
     }
 }

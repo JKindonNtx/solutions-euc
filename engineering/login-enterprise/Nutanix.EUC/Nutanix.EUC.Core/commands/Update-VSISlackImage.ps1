@@ -34,8 +34,8 @@ function Update-VSISlackImage {
 
     if (!(get-module | where-object { $_.Name -eq "PSSlack" })) {
         try {
-            install-module PSSlack -Scope CurrentUser -allowclobber -Confirm:$false -Force -ErrorAction Stop
-            import-module PSSlack -ErrorAction Stop
+            install-module PSSlack -Scope CurrentUser -allowclobber -Confirm:$false -Force -ErrorAction Stop | Out-Null
+            import-module PSSlack -ErrorAction Stop | Out-Null
         }
         catch {
             Write-Log -Message $_ -Level Error
