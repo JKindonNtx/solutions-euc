@@ -324,6 +324,7 @@ if ($Config.Test.Uploadresults -eq $false) {
 if (-not $AzureMode.IsPresent) {
     # This is not an Azure configuration
     $NTNXInfra = Get-NTNXinfo -Config $config
+    $HostCVMIPs = Get-NTNXCVMIPs -Config $config
 } else {
     $NTNXInfra = $config
 }
@@ -1415,6 +1416,13 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         }
 
         #endregion Configure Folder Details for output
+
+        #region Start Observer Monitoring
+        if ($Config.Test.StartObserverMonitoring -eq $true) {
+            Write-Log -Message "Starting Observer Monitoring" -Level Info
+            Start-CVMObserver -clustername $Config.TestInfra.ClusterName -CVMIPs $HostCVMIPs -prometheusip $Config.TestInfra.prometheusip -CVMsshUser "nutanix" -CVMsshpassword $Config.Target.CVMsshpassword -OutputFolder $OutputFolder
+        }
+        #endregion Start Observer Monitoring
 
         #region Start monitoring Boot phase
         #----------------------------------------------------------------------------------------------------------------------------
