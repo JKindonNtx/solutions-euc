@@ -86,7 +86,7 @@ catch {
 
 #region Get Nutanix Infra
 #----------------------------------------------------------------------------------------------------------------------------
-$NTNXInfra = Get-NTNXinfo -Config $config
+$NTNXInfra = $config
 #endregion Get Nutanix Infra
 
 #region Upload Data to InfluxDB
@@ -101,8 +101,8 @@ if (-not $AzureMode.IsPresent) {
     if ($LogonMetricsOnly) {
         # Get the test run files and start time
         $Files = Get-ChildItem "$($OutputFolder)\*.csv"
-        $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv"
-        $Started = $vsiresult.started
+        # $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv" ###Removed by SvenH
+        # $Started = $vsiresult.started ###Removed by SvenH
         $BucketName = $($NTNXInfra.Test.BucketName)
 
         # Loop through the test run data files and process each one
@@ -113,7 +113,7 @@ if (-not $AzureMode.IsPresent) {
                 #Set Azure VM Value - If this is an Azure VM, we will be sending different tags in to Influx. If not, then it's business as usual.
                 if ($NTNXInfra.AzureGuestDetails.IsAzureVM -eq $true) { $IsAzureVM = $true } else { $IsAzureVM = $false }
                 
-                if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName -IsAzureVM $IsAzureVM) {
+                if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -BucketName $BucketName -IsAzureVM $IsAzureVM) {
                     Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
                 }
                 else {
@@ -134,11 +134,11 @@ if (-not $AzureMode.IsPresent) {
 if (-not $AzureMode.IsPresent) {
     #This is not an Azure Run
     $Files = Get-ChildItem "$($OutputFolder)\Boot\*.csv"
-    $Started = $($NTNXInfra.TestInfra.Bootstart)
+    # $Started = $($NTNXInfra.TestInfra.Bootstart) ###Removed by SvenH
 
     # Build the Boot Bucket Name
-    If ($($NTNXInfra.Test.BucketName) -eq "LoginDocuments") {
-        $BucketName = "BootBucket"
+    If ($($NTNXInfra.Test.BucketName) -eq "LoginDocumentsA") {
+        $BucketName = "BootBucketA"
     }
     Else {
         $BucketName = "BootBucketRegression"
@@ -148,7 +148,7 @@ if (-not $AzureMode.IsPresent) {
     foreach ($File in $Files) {
         if (($File.Name -like "host raw*") -or ($File.Name -like "cluster raw*")) {
             Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
-            if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
+            if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -BucketName $BucketName) {
                 Write-Log -Message "Finished uploading Boot File $($File.Name) to Influx" -Level Info
             }
             else {
@@ -162,8 +162,8 @@ if (-not $AzureMode.IsPresent) {
 }
 # Get the test run files and start time
 $Files = Get-ChildItem "$($OutputFolder)\*.csv"
-$vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv"
-$Started = $vsiresult.started
+# $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv" ###Removed by SvenH
+# $Started = $vsiresult.started ###Removed by SvenH
 $BucketName = $($NTNXInfra.Test.BucketName)
 
 # Loop through the test run data files and process each one
@@ -173,8 +173,7 @@ foreach ($File in $Files) {
         Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
         #Set Azure VM Value - If this is an Azure VM, we will be sending different tags in to Influx. If not, then it's business as usual.
         if ($NTNXInfra.AzureGuestDetails.IsAzureVM -eq $true) { $IsAzureVM = $true } else { $IsAzureVM = $false }
-        #if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
-        if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName -IsAzureVM $IsAzureVM) {
+        if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -BucketName $BucketName -IsAzureVM $IsAzureVM) {
             Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
         }
         else {
@@ -208,7 +207,7 @@ if (Test-Path -Path "$($OutputFolder)\Files_Cluster") {
         # We only care about cluster raw data here
         if (($File.Name -like "cluster raw*")) {
             Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
-            if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -Started $Started -BucketName $BucketName) {
+            if (Start-InfluxUpload -influxDbUrl $NTNXInfra.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $NTNXInfra.Testinfra.InfluxToken -File $File -BucketName $BucketName) {
                 Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
             }
             else {

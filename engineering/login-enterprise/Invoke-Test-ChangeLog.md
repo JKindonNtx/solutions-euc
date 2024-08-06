@@ -3,6 +3,12 @@
 | Date | Author | Detail | 
 | --- | --- | --- |
 
+| 02.08.2024 | Sven | Changes to support AlignTime function |
+#### Invoke=Test.ps1
+#### Start-InfluxUpload.ps1
+#### Invoke-TestUpload.ps1
+#### Remove-TestData-API.ps1
+
 | 08.12.2023 | Sven | Added broker version autofill |
 #### Invoke=Test.ps1
 Added line 507 (will add broker version for Citrix to the final config.json): 

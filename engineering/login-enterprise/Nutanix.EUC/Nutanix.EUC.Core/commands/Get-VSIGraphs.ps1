@@ -63,7 +63,7 @@ function Get-VSIGraphs {
 
         # Build Uri for download
         if ($BucketName -eq "LoginDocuments") {
-            $Uri = "$($TestConfig.Testinfra.GrafanaUriDocs)&var-Bucketname=$($BucketName)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
+            $Uri = "$($TestConfig.Testinfra.GrafanaUriDocs)&var-Bucketname=$($BucketName)&var-StartYear=$($Year)&var-EndYear=$($Year)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1704067200000&to=1704071220000&panelId=$($PanelID)&width=1600&height=800&tz=UTC"
         } elseif ($BucketName -eq "LoginRegression" ) {
             $CPUTypeSpace = $($TestConfig.TestInfra.CPUType).Replace(" ", "_")
             $CPUType = [uri]::EscapeDataString($CPUTypeSpace)
@@ -73,7 +73,7 @@ function Get-VSIGraphs {
             $VSIMax = $Testresult."vsiMax state"
             $Uri = "$($TestConfig.Testinfra.GrafanaUriRegression)&var-Bucketname=$($BucketName)&var-Bootbucket=BootBucketRegression&var-Nodes=$($TestConfig.Target.NodeCount)&var-CPUBrand=$($TestConfig.TestInfra.CPUBrand)&var-CPUType=$($CPUType)&var-AOSVersion=$($TestConfig.TestInfra.AOSVersion)&var-Hypervisor=$($TestConfig.TestInfra.HypervisorType)&var-HypervisorVersion=$($TestConfig.TestInfra.HypervisorVersion)&var-Broker=$($TestConfig.Target.DeliveryType)&var-SessionConfig=$($TestConfig.Target.SessionCfg)&var-SessionsSupport=$($TestConfig.Target.SessionsSupport)&var-TargetOS=$($TargetOS)&var-TargetOSVersion=$($TargetOSVersion)&var-Workload=$($WorkloadType)&var-VSIMaxLoad=$($VSIMax)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
             #write-host $uri
-            Write-Log -Message "$($uri)" -Level Info
+            #Write-Log -Message "$($uri)" -Level Info
         }
 
         Write-Log -Message "Downloading $($OutFile) from Grafana" -Level Info
@@ -130,7 +130,7 @@ function Get-VSIGraphs {
 
         # Build Uri for download
         if ($BucketName -eq "LoginDocuments") {
-            $Uri = "$($TestConfig.Testinfra.GrafanaUriDocs)&var-Bucketname=$($BucketName)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
+            $Uri = "$($TestConfig.Testinfra.GrafanaUriDocs)&var-Bucketname=$($BucketName)&var-StartYear=$($Year)&var-EndYear=$($Year)&var-Year=$($Year)&var-Month=$($Month)&var-DocumentName=$($DocName)&var-Comment=$($Comment)&var-Testname=$($TestName)$($Run)&var-Naming=Comment&from=1704067200000&to=1704071220000&panelId=$($PanelID)&width=1600&height=800&tz=UTC"
         } elseif ($BucketName -eq "LoginRegression" ) {
             $CPUTypeSpace = $($TestConfig.TestInfra.CPUType).Replace(" ", "_")
             $CPUType = [uri]::EscapeDataString($CPUTypeSpace)
@@ -140,7 +140,7 @@ function Get-VSIGraphs {
             $VSIMax = $Testresult."vsiMax state"
             $Uri = "$($TestConfig.Testinfra.GrafanaUriRegression)&var-Bucketname=$($BucketName)&var-Bootbucket=BootBucketRegression&var-Nodes=$($TestConfig.Target.NodeCount)&var-CPUBrand=$($TestConfig.TestInfra.CPUBrand)&var-CPUType=$($CPUType)&var-AOSVersion=$($TestConfig.TestInfra.AOSVersion)&var-Hypervisor=$($TestConfig.TestInfra.HypervisorType)&var-HypervisorVersion=$($TestConfig.TestInfra.HypervisorVersion)&var-Broker=$($TestConfig.Target.DeliveryType)&var-SessionConfig=$($TestConfig.Target.SessionCfg)&var-SessionsSupport=$($TestConfig.Target.SessionsSupport)&var-TargetOS=$($TargetOS)&var-TargetOSVersion=$($TargetOSVersion)&var-Workload=$($WorkloadType)&var-VSIMaxLoad=$($VSIMax)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
             #write-host $uri
-            Write-Log -Message "$($uri)" -Level Info
+            #Write-Log -Message "$($uri)" -Level Info
         }
 
         Write-Log -Message "Downloading $($OutFile) from Grafana" -Level Info
