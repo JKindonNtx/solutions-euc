@@ -73,7 +73,7 @@ function Get-VSIGraphs {
             $VSIMax = $Testresult."vsiMax state"
             $Uri = "$($TestConfig.Testinfra.GrafanaUriRegression)&var-Bucketname=$($BucketName)&var-Bootbucket=BootBucketRegression&var-Nodes=$($TestConfig.Target.NodeCount)&var-CPUBrand=$($TestConfig.TestInfra.CPUBrand)&var-CPUType=$($CPUType)&var-AOSVersion=$($TestConfig.TestInfra.AOSVersion)&var-Hypervisor=$($TestConfig.TestInfra.HypervisorType)&var-HypervisorVersion=$($TestConfig.TestInfra.HypervisorVersion)&var-Broker=$($TestConfig.Target.DeliveryType)&var-SessionConfig=$($TestConfig.Target.SessionCfg)&var-SessionsSupport=$($TestConfig.Target.SessionsSupport)&var-TargetOS=$($TargetOS)&var-TargetOSVersion=$($TargetOSVersion)&var-Workload=$($WorkloadType)&var-VSIMaxLoad=$($VSIMax)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
             #write-host $uri
-            Write-Log -Message "$($uri)" -Level Info
+            #Write-Log -Message "$($uri)" -Level Info
         }
 
         Write-Log -Message "Downloading $($OutFile) from Grafana" -Level Info
@@ -140,7 +140,7 @@ function Get-VSIGraphs {
             $VSIMax = $Testresult."vsiMax state"
             $Uri = "$($TestConfig.Testinfra.GrafanaUriRegression)&var-Bucketname=$($BucketName)&var-Bootbucket=BootBucketRegression&var-Nodes=$($TestConfig.Target.NodeCount)&var-CPUBrand=$($TestConfig.TestInfra.CPUBrand)&var-CPUType=$($CPUType)&var-AOSVersion=$($TestConfig.TestInfra.AOSVersion)&var-Hypervisor=$($TestConfig.TestInfra.HypervisorType)&var-HypervisorVersion=$($TestConfig.TestInfra.HypervisorVersion)&var-Broker=$($TestConfig.Target.DeliveryType)&var-SessionConfig=$($TestConfig.Target.SessionCfg)&var-SessionsSupport=$($TestConfig.Target.SessionsSupport)&var-TargetOS=$($TargetOS)&var-TargetOSVersion=$($TargetOSVersion)&var-Workload=$($WorkloadType)&var-VSIMaxLoad=$($VSIMax)$($Run)&var-Naming=Comment&from=1672534800000&to=1672538820000&panelId=$($PanelID)&width=1600&height=800&tz=Atlantic%2FCape_Verde"
             #write-host $uri
-            Write-Log -Message "$($uri)" -Level Info
+            #Write-Log -Message "$($uri)" -Level Info
         }
 
         Write-Log -Message "Downloading $($OutFile) from Grafana" -Level Info

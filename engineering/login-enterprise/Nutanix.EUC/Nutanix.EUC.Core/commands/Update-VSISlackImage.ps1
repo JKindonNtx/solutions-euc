@@ -43,6 +43,6 @@ function Update-VSISlackImage {
             
     }
 
-    Send-SlackFile -Channel $SlackChannel -path $ImageURL -Token $SlackToken -Title $SlackTitle -Comment $SlackComment
+    $UpdateSlackFile = Send-SlackFile -Channel $SlackChannel -path $ImageURL -Token $SlackToken -Title $SlackTitle -Comment $SlackComment
 
 }
