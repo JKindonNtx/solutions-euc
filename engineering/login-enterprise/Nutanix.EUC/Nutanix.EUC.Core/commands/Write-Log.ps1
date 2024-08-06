@@ -39,60 +39,94 @@ Writes an Info Output to the console
         $global:LastMessageEndedWithNewLine = $true
     }
 
+    # check for global log output variable and if not found, assume false. If false, we are not logging to a file at all.
+    if (-not (Test-Path -Path Variable:global:LogOutputTempFile)) {
+        $global:LogOutputTempFile = $false
+    } else {
+        $LogPath = $global:LogOutputTempFile
+        if (-not (Test-Path -path $LogPath)) {
+            $null = New-Item -ItemType File -Path $LogPath -Force
+        }
+    }
+ 
     # Write message to error, warning, or Info
     switch ($Level) {
         'Error' {
             if ($Update.IsPresent) {
-                Write-Host "`r$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message " -NoNewline
+                $Date = Get-Date
+                Write-Host "`r$([char]0x1b)[31m[$([char]0x1b)[31m$($Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message " -NoNewline
                 $global:LastMessageEndedWithNewLine = $false
             }
             else {
                 if ($global:LastMessageEndedWithNewLine -eq $false) {
-                    Write-Host "`n$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message"
+                    $Date = Get-Date
+                    Write-Host "`n$([char]0x1b)[31m[$([char]0x1b)[31m$($Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message"
                     $global:LastMessageEndedWithNewLine = $true
+                    if ($global:LogOutputTempFile) {
+                        "`n[$Date] ERROR: $Message" | Out-File -FilePath $LogPath -Append
+                    }
                 } else {
-                    Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message"
+                    $Date = Get-Date
+                    Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$($Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message"
+                    if ($global:LogOutputTempFile) {
+                        "[$Date] ERROR: $Message" | Out-File -FilePath $LogPath -Append
+                    }
                 }
-                #Write-Host "$([char]0x1b)[31m[$([char]0x1b)[31m$(Get-Date)$([char]0x1b)[31m]$([char]0x1b)[31m ERROR: $Message"
-                #$global:LastMessageEndedWithNewLine = $true
             }
         }
         'Warn' {
             if ($Update.IsPresent) {
-                Write-Host "`r$([char]0x1b)[33m[$([char]0x1b)[33m$(Get-Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message" -NoNewline
+                $Date = Get-Date
+                Write-Host "`r$([char]0x1b)[33m[$([char]0x1b)[33m$($Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message" -NoNewline
                 $global:LastMessageEndedWithNewLine = $false
             }
             else {
                 if ($global:LastMessageEndedWithNewLine -eq $false) {
-                    Write-Host "`n$([char]0x1b)[33m[$([char]0x1b)[33m$(Get-Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message"
+                    $Date = Get-Date
+                    Write-Host "`n$([char]0x1b)[33m[$([char]0x1b)[33m$($Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message"
                     $global:LastMessageEndedWithNewLine = $true
+                    if ($global:LogOutputTempFile) {
+                        "`n[$Date] WARNING: $Message" | Out-File -FilePath $LogPath -Append
+                    }
                 }
                 else {
-                    Write-Host "$([char]0x1b)[33m[$([char]0x1b)[33m$(Get-Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message"
+                    $Date = Get-Date
+                    Write-Host "$([char]0x1b)[33m[$([char]0x1b)[33m$($Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message"
+                    if ($global:LogOutputTempFile) {
+                        "[$Date] WARNING: $Message" | Out-File -FilePath $LogPath -Append
+                    }
                 }
-                #Write-Host "$([char]0x1b)[33m[$([char]0x1b)[33m$(Get-Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: $Message"
-                #$global:LastMessageEndedWithNewLine = $true
             }
         }
         'Info' {
             if ($Update.IsPresent) {
-                Write-Host "`r$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message" -NoNewline
+                $Date = Get-Date
+                Write-Host "`r$([char]0x1b)[96m[$([char]0x1b)[97m$($Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message" -NoNewline
                 $global:LastMessageEndedWithNewLine = $false
             }
             else {
                 if ($global:LastMessageEndedWithNewLine -eq $false) {
-                    Write-Host "`n$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message"
+                    $Date = Get-Date
+                    Write-Host "`n$([char]0x1b)[96m[$([char]0x1b)[97m$($Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message"
                     $global:LastMessageEndedWithNewLine = $true
+                    if ($global:LogOutputTempFile) {
+                        "`n[$Date] INFO: $Message" | Out-File -FilePath $LogPath -Append
+                    }
                 } else {
-                    Write-Host "$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message"
+                    $Date = Get-Date
+                    Write-Host "$([char]0x1b)[96m[$([char]0x1b)[97m$($Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message"
+                    if ($global:LogOutputTempFile) {
+                        "[$Date] INFO: $Message" | Out-File -FilePath $LogPath -Append
+                    }
                 }
-                #Write-Host "$([char]0x1b)[96m[$([char]0x1b)[97m$(Get-Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: $Message"
-                #$global:LastMessageEndedWithNewLine = $true
             }
         }
         'Validation' {
             Write-Host "$([char]0x1b)[96mVALIDATION: $Message"
             $global:LastMessageEndedWithNewLine = $true
+            if ($global:LogOutputTempFile) {
+                "VALIDATION: $Message" | Out-File -FilePath $LogPath -Append
+            }
         }
     }
 }

@@ -111,7 +111,10 @@ If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $
 # ============================================================================
 
 # Set a global variable to track the last message output to the console in an attempt to keep console output clean with write-log function.
-$global:LastMessageEndedWithNewLine = $false 
+$global:LastMessageEndedWithNewLine = $false
+# Set a gloval variable for the temp log file. This is used to log all output to a file via the Write-Log function. The file will be created if it does not exist and moved at the end of the test. It will be renamed if it does exist.
+$global:LogOutputTempFile = "$env:LOCALAPPDATA\SolutionsEngineering\TestLogs\Test.log"
+if (Test-Path $global:LogOutputTempFile) { Rename-Item -Path $global:LogOutputTempFile -NewName "$global:LogOutputTempFile.$((Get-Date).ToString('yyyyMMdd-HHmmss'))" -Force }
 
 #region Nutanix Module Import
 #----------------------------------------------------------------------------------------------------------------------------
@@ -2879,4 +2882,22 @@ $params = $null
 #endregion Execute
 
 Write-Log -Message "Script Finished" -Level Info
+
+#region logfile cleanup
+# Move the Temp Log file to the final location
+try {
+    $FinalLogPath = "$ScriptRoot\results\$($NTNXTestname)_Run1"
+    Move-Item -Path $LogOutputTempFile -Destination $FinalLogPath -Force -ErrorAction Stop
+    # Rename the file to reflect the final name
+    Rename-Item -Path "$FinalLogPath\$($LogOutputTempFile | Split-Path -leaf)" -NewName "$FinalLogPath\log_$($NTNXTestname).log" -Force -ErrorAction Stop
+    $Date = Get-Date
+    Write-Host "$([char]0x1b)[96m[$([char]0x1b)[97m$($Date)$([char]0x1b)[96m]$([char]0x1b)[97m INFO: LogFile saved to: $FinalLogPath\log_$($NTNXTestname).log"
+}
+catch {
+    Write-Host "$([char]0x1b)[33m[$([char]0x1b)[33m$($Date)$([char]0x1b)[33m]$([char]0x1b)[33m WARNING: Failed to move logfile to final location. Logfile is still in $($LogOutputTempFile)"
+}
+# Remove the temp file variable
+Remove-Variable -Name LogOutputTempFile -Scope global -ErrorAction SilentlyContinue
+#endregion logfile cleanup
+
 Exit 0
