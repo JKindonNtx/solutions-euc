@@ -22,6 +22,6 @@ function Get-NTNXCVMIPs {
         write-host $item.service_vmexternal_ip
     }
 
-    return $HostCVMips
+    $HostCVMips
 
 }

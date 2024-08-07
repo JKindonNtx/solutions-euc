@@ -15,6 +15,11 @@
             "NetBios": "${Domain.NetBios}", // Resolves to "EXAMPLE"
             "OU": "OU=Target,OU=Users,OU=LoginEnterprise",
             "NumberOfDigits": 4 // usernames will be basename + numberofdigits, e.g. testUser001 etc in this example
+        },
+        "Prometheus": {
+            "IP": "ip", // Prometheus IP for LE1
+            "sshuser": "nutanix", // Prometheus ssh user
+            "sshpassword": "password" // Prometheus ssh password
         }
     },
     "LE2": {
@@ -33,6 +38,11 @@
             "NetBios": "${Domain.NetBios}", // Resolves to "EXAMPLE"
             "OU": "OU=Target,OU=Users,OU=LoginEnterprise",
             "NumberOfDigits": 4 // usernames will be basename + numberofdigits, e.g. testUser001 etc in this example
+        },
+        "Prometheus": {
+            "IP": "ip", // Prometheus IP for LE1
+            "sshuser": "nutanix", // Prometheus ssh user
+            "sshpassword": "password" // Prometheus ssh password
         }
     },
     "LE3": {
@@ -51,6 +61,11 @@
             "NetBios": "${Domain.NetBios}", // Resolves to "EXAMPLE"
             "OU": "OU=Target,OU=Users,OU=LoginEnterprise",
             "NumberOfDigits": 4 // usernames will be basename + numberofdigits, e.g. testUser001 etc in this example
+        },
+        "Prometheus": {
+            "IP": "ip", // Prometheus IP for LE1
+            "sshuser": "nutanix", // Prometheus ssh user
+            "sshpassword": "password" // Prometheus ssh password
         }
     }
 }

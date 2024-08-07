@@ -708,6 +708,24 @@ if ($Config.Test.StartInfrastructureMonitoring -eq $true -and $Config.Test.Serve
 }
 #endregion Start Infrastructure Monitoring
 
+#region Start Observer Monitoring
+if ($Config.Test.StartObserverMonitoring -eq $true) {
+    Write-Log -Message "Starting Observer Monitoring" -Level Info
+    $params = @{
+        clustername           = $Config.TestInfra.ClusterName
+        CVMIPs                = $HostCVMIPs
+        CVMsshUser            = "nutanix"
+        CVMsshpassword        = $Config.Target.CVMsshpassword
+        prometheusip          = $VSI_Prometheus_IP
+        prometheussshuser     = $VSI_Prometheus_sshuser
+        prometheussshpassword = $VSI_Prometheus_sshpassword 
+        Status                = "Start"
+    }
+    $null = Set-CVMObserver @params
+    $params = $null
+}
+#endregion Start Observer Monitoring
+
 #region Execute Test
 #----------------------------------------------------------------------------------------------------------------------------
 ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
@@ -1416,13 +1434,6 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         }
 
         #endregion Configure Folder Details for output
-
-        #region Start Observer Monitoring
-        if ($Config.Test.StartObserverMonitoring -eq $true) {
-            Write-Log -Message "Starting Observer Monitoring" -Level Info
-            Start-CVMObserver -clustername $Config.TestInfra.ClusterName -CVMIPs $HostCVMIPs -prometheusip $Config.TestInfra.prometheusip -CVMsshUser "nutanix" -CVMsshpassword $Config.Target.CVMsshpassword -OutputFolder $OutputFolder
-        }
-        #endregion Start Observer Monitoring
 
         #region Start monitoring Boot phase
         #----------------------------------------------------------------------------------------------------------------------------
@@ -2848,6 +2859,20 @@ if ($Config.Test.StartInfrastructureMonitoring -eq $true -and $Config.Test.Serve
     Start-ServerMonitoring -ServersToMonitor $Config.Test.ServersToMonitor -Mode StopMonitoring -ServiceName "Telegraf"
 }
 #endregion Stop Infrastructure Monitoring
+
+#region Stop Observer Monitoring
+if ($Config.Test.StartObserverMonitoring -eq $true) {
+    Write-Log -Message "Stopping Observer Monitoring" -Level Info
+    $params = @{
+        prometheusip          = $VSI_Prometheus_IP
+        prometheussshuser     = $VSI_Prometheus_sshuser
+        prometheussshpassword = $VSI_Prometheus_sshpassword 
+        Status                = "Stop"
+    }
+    $null = Set-CVMObserver @params
+    $params = $null
+}
+#endregion Stop Observer Monitoring
 
 #region shutdown citrix machines after final run
 if (-not $AzureMode.IsPresent) { 
