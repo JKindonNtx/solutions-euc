@@ -15,11 +15,12 @@ function Get-NTNXCVMIPs {
     }
         
     $Hosts = $Hostdata.entities
-    $HostCVMips = @()
+
+    $HostCVMips = [System.Collections.ArrayList] @()
 
     foreach ($item in $Hosts) {
-        $HostCVMips += $item.service_vmexternal_ip
-        write-host $item.service_vmexternal_ip
+        $HostCVMips.Add($item.service_vmexternal_ip)
+        Write-Log -Message "Adding CVM IP: $($item.service_vmexternal_ip) to Array" -Level Info
     }
 
     $HostCVMips
