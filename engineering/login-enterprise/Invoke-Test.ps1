@@ -2587,13 +2587,14 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             $Run = $TestDetail[1]
 
             # Get the boot files and start time
-            if (-not $AzureMode.IsPresent) { 
+            if (-not $AzureMode.IsPresent) {
+                Write-Log -Message "[DATA UPLOAD] Processing Boot phase data uploads" -Level Info 
                 # This is not an Azure configuration
                 $Files = Get-ChildItem "$($OutputFolder)\Boot\*.csv"
                 # $Started = $($NTNXInfra.TestInfra.Bootstart) ##Removed by SvenH
 
                 # Build the Boot Bucket Name
-                If ($($Config.Test.BucketName) -eq "LoginDocuments" -or $($Config.Test.BucketName) -eq "PVSPerfData") {
+                If ($($Config.Test.BucketName) -eq "LoginDocuments") {
                     $BucketName = "BootBucket"
                 }
                 Else {
@@ -2603,20 +2604,27 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                 # Loop through the boot files and process each one
                 foreach ($File in $Files) {
                     if (($File.Name -like "host raw*") -or ($File.Name -like "cluster raw*")) {
-                        Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
+                        Write-Log -Message "[DATA UPLOAD] Uploading $($File.name) to Influx" -Level Info
+                        # start a time object to measure upload time
+                        $DataUploadStopWatch = [system.Diagnostics.Stopwatch]::StartNew()
                         if (Start-InfluxUpload -influxDbUrl $Config.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $Config.Testinfra.InfluxToken -File $File -BucketName $BucketName) {
-                            Write-Log -Message "Finished uploading Boot File $($File.Name) to Influx" -Level Info
+                            # Stop the timer
+                            $DataUploadStopWatch.Stop()
+                            $ElapsedTime = [math]::Round($DataUploadStopWatch.Elapsed.TotalSeconds, 2)
+                            Write-Log -Message "[DATA UPLOAD] Took $($ElapsedTime) seconds to finish uploading Boot file $($File.Name) to Influx" -Level Info
                         }
                         else {
-                            Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
+                            $DataUploadStopWatch.Stop()
+                            Write-Log -Message "[DATA UPLOAD] Error uploading $($File.name) to Influx" -Level Warn
                         }
                     }
                     else {
-                        Write-Log -Message "Skipped uploading Boot File $($File.Name) to Influx" -Level Info
+                        Write-Log -Message "[DATA UPLOAD] Skipped uploading Boot file $($File.Name) to Influx" -Level Info
                     }
                 }
             }
 
+            Write-Log -Message "[DATA UPLOAD] Processing full test data uploads" -Level Info 
             # Get the test run files and start time
             $Files = Get-ChildItem "$($OutputFolder)\*.csv"
             # $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv" ##Removed by SvenH
@@ -2625,23 +2633,27 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             # Loop through the test run data files and process each one
             foreach ($File in $Files) {
                 if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*") -or ($File.Name -like "VM Perf Metrics*")) {
-                    Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
+                    Write-Log -Message "[DATA UPLOAD] Uploading $($File.name) to Influx" -Level Info
                     #Set Azure VM Value - If this is an Azure VM, we will be sending different tags in to Influx. If not, then it's business as usual.
                     if ($NTNXInfra.AzureGuestDetails.IsAzureVM -eq $true) { $IsAzureVM = $true } else { $IsAzureVM = $false }
+                    $DataUploadStopWatch = [system.Diagnostics.Stopwatch]::StartNew()
                     if (Start-InfluxUpload -influxDbUrl $Config.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $Config.Testinfra.InfluxToken -File $File -BucketName $BucketName -IsAzureVM $IsAzureVM) {
-                        Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
+                        $DataUploadStopWatch.Stop()
+                        $ElapsedTime = [math]::Round($DataUploadStopWatch.Elapsed.TotalSeconds, 2)
+                        Write-Log -Message "[DATA UPLOAD] Took $($ElapsedTime) seconds to finish uploading file $($File.Name) to Influx" -Level Info
                     }
                     else {
-                        Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
+                        $DataUploadStopWatch.Stop()
+                        Write-Log -Message "[DATA UPLOAD] Error uploading $($File.name) to Influx" -Level Warn
                     }
                 }
                 else {
-                    Write-Log -Message "Skipped uploading File $($File.Name) to Influx" -Level Info
+                    Write-Log -Message "[DATA UPLOAD] Skipped uploading file $($File.Name) to Influx" -Level Info
                 }
             }
             #region Upload Files Hosting Data to Influx
             if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
-                Write-Log -Message "Uploading Files Cluster $($Config.Target.Files_Cluster_CVM) Metrics to Influx" -Level Info
+                Write-Log -Message "[DATA UPLOAD] Uploading Files Cluster $($Config.Target.Files_Cluster_CVM) Metrics to Influx" -Level Info
             
                 #alter the file names so we have uniqe influx data
                 $Original_Files = Get-ChildItem "$($OutputFolder)\Files_Cluster\*.csv"
@@ -2659,23 +2671,27 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                 foreach ($File in $Files) {
                     # We only care about cluster raw data here
                     if (($File.Name -like "cluster raw*")) {
-                        Write-Log -Message "Uploading $($File.name) to Influx" -Level Info
+                        Write-Log -Message "[DATA UPLOAD] Uploading $($File.name) to Influx" -Level Info
+                        $DataUploadStopWatch = [system.Diagnostics.Stopwatch]::StartNew()
                         if (Start-InfluxUpload -influxDbUrl $Config.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $Config.Testinfra.InfluxToken -File $File -BucketName $BucketName) {
-                            Write-Log -Message "Finished uploading File $($File.Name) to Influx" -Level Info
+                            $DataUploadStopWatch.Stop()
+                            $ElapsedTime = [math]::Round($DataUploadStopWatch.Elapsed.TotalSeconds, 2)
+                            Write-Log -Message "[DATA UPLOAD] Took $($ElapsedTime) seconds to finish uploading File $($File.Name) to Influx" -Level Info
                         }
                         else {
-                            Write-Log -Message "Error uploading $($File.name) to Influx" -Level Warn
+                            $DataUploadStopWatch.Stop()
+                            Write-Log -Message "[DATA UPLOAD] Error uploading $($File.name) to Influx" -Level Warn
                         }
                     }
                     else {
-                        Write-Log -Message "Skipped uploading File $($File.Name) to Influx" -Level Info
+                        Write-Log -Message "[DATA UPLOAD] Skipped uploading File $($File.Name) to Influx" -Level Info
                     }
                 }
             }
             #endregion Upload Files Hosting Data to Influx
         }
         else {
-            Write-Log -Message "Skipping uploading Test Run Data to Influx" -Level Info
+            Write-Log -Message "[DATA UPLOAD] Skipping uploading Test Run Data to Influx" -Level Info
         }
 
         #endregion Upload Data to Influx
@@ -2887,6 +2903,10 @@ Write-Log -Message "Script Finished" -Level Info
 # Move the Temp Log file to the final location
 try {
     $FinalLogPath = "$ScriptRoot\results\$($NTNXTestname)_Run1"
+    # Cleanup blank lines in file
+    $LogContent = Get-Content -path $LogOutputTempFile
+    $LogContent = $LogContent | Where-Object { $_ -ne "" } | Set-Content -Path $LogOutputTempFile -Force
+    # Move the file to the final location
     Move-Item -Path $LogOutputTempFile -Destination $FinalLogPath -Force -ErrorAction Stop
     # Rename the file to reflect the final name
     Rename-Item -Path "$FinalLogPath\$($LogOutputTempFile | Split-Path -leaf)" -NewName "$FinalLogPath\log_$($NTNXTestname).log" -Force -ErrorAction Stop
