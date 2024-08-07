@@ -30,7 +30,7 @@ None
 # ============================================================================
 Param(
     [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $false)][string]$ConfigFile,
-    [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $true)][ValidateSet("LoginDocuments", "LoginRegression", "Tests", "AzurePerfData", "PVSPerfData")][string]$Bucket,
+    [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $true)][ValidateSet("LoginDocuments", "LoginRegression", "Tests", "AzurePerfData")][string]$Bucket,
     [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $true)][string]$Test,
     [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $false)][string]$influxDBUrl,
     [Parameter(ValuefromPipelineByPropertyName = $true,Mandatory = $false)][string]$Org,
@@ -117,7 +117,7 @@ if ($ConfigFile) {
 
 #region Validate Bucket
 #----------------------------------------------------------------------------------------------------------------------------
-if($Bucket -eq "LoginDocuments" -or $Bucket -eq "PVSPerfData"){
+if($Bucket -eq "LoginDocuments"){
     $MainBucket = $Bucket
     $BootBucket = "BootBucket"
 } else {
