@@ -338,14 +338,39 @@ function Start-InfluxUpload {
                     $Body = $batch -join "`n"
 
                     try {
-                        $null = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $Body -ErrorAction Stop
+                        Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $Body -ErrorAction Stop
                     }
                     catch {
-                        $ErrorMessage = $_.Exception.Response.Content #| ConvertFrom-Json | Select-Object -ExpandProperty message
-                        Write-Log -Message "[DATA UPLOAD] Error Uploading Data: $ErrorMessage" -Level Warn
-                        Write-Log -Message "[DATA UPLOAD] 1 $($_.Exception)" -Level Warn
-                        Write-Log -Message "[DATA UPLOAD] 2 $($_.Exception.Response)" -Level Warn
-                        Write-Log -Message "[DATA UPLOAD] 3 $($_.Exception.Response.Content.Message)" -Level Warn
+                        $ErrorMessage = $_
+                        $UpdatedErrorMessage = $ErrorMessage | ConvertFrom-Json
+                        Write-Log -Message "[DATA UPLOAD] Error Uploading Data: $UpdatedErrorMessage" -Level Warn
+                        # Try 5 times to re upload the data and then write an error message to the log
+                        $RetryIntervalSeconds = 15 # how long to sleep between attempts
+                        $RetryCountTotal = 5 # how many times to retry
+                        $RetryCount = 0 # the current iteration of retries
+                        
+                        while ($RetryCount -lt $RetryCountTotal) {
+                            $RetryCount ++
+                            Write-Log -Message "[DATA UPLOAD] Upload Failure Retry. Attempt $($RetryCount) of $($RetryCountTotal). Sleeping $($RetryIntervalSeconds) seconds before trying again" -Level Warn
+                            Start-Sleep -Seconds $RetryIntervalSeconds
+                            try {
+                                Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $Body -ErrorAction Stop
+                                Write-Log -Message "[DATA UPLOAD] Upload Failure Retry Successful. Data Uploaded for batch $($CurrentBatch)" -Level Info
+                                $FailState = $false #we are no longer failing!
+                            }
+                            catch {
+                                $ErrorMessage = $_
+                                Write-Log -Message "[DATA UPLOAD] Error Uploading Data: $ErrorMessage" -Level Warn
+                                $FailState = $true # we are still failing
+                            }
+                            #Break out of the while loop if $failstate is $false
+                            if ($FailState -eq $false) {
+                                break # Exit this loop as we are ok to move on
+                            }
+                        }
+                        if ($FailState -eq $true) {
+                            Write-Log -Message "[DATA UPLOAD] Upload Failure Retry Limit Reached. Data Upload Failed for batch $($CurrentBatch) Consider uploading test again." -Level Error
+                        }
                     }
 
                     $CurrentBatch ++

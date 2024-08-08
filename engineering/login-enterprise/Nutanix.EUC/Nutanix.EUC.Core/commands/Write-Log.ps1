@@ -44,8 +44,10 @@ Writes an Info Output to the console
         $global:LogOutputTempFile = $false
     } else {
         $LogPath = $global:LogOutputTempFile
-        if (-not (Test-Path -path $LogPath)) {
-            $null = New-Item -ItemType File -Path $LogPath -Force
+        if ($LogPath -ne $false){
+            if (-not (Test-Path -path $LogPath)) {
+                $null = New-Item -ItemType File -Path $LogPath -Force    
+            }
         }
     }
  
