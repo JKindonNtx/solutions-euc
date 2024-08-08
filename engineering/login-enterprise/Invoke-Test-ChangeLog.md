@@ -3,6 +3,9 @@
 | Date | Author | Detail | 
 | --- | --- | --- |
 
+| 07.08.2024 | Sven | Changes to support AlignTime function |
+#### Added Observer option to monitor CVMs
+
 | 02.08.2024 | Sven | Changes to support AlignTime function |
 #### Invoke=Test.ps1
 #### Start-InfluxUpload.ps1

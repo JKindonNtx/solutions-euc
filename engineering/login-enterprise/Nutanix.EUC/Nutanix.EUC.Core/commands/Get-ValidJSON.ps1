@@ -297,6 +297,12 @@ The configuration file to parse and validate
             $ErrorCount ++
         }
 
+        #Test.StartObserverMonitoring
+        if ($configFileData.Test.psobject.Properties.Name -notcontains "StartObserverMonitoring"){
+            Write-Log -Message "You are missing the Test.StartObserverMonitoring object in your JSON file. This is required for enabling or disabling of Observer monitoring" -Level Error
+            $ErrorCount ++
+        }
+
         #endregion Test Section
 
         # Validate based on error count

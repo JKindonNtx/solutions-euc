@@ -298,6 +298,19 @@ Connect-LEAppliance -Url $VSI_LoginEnterprise_ApplianceURL -Token $VSI_LoginEnte
 
 #endregion LE Appliance
 
+#region Observer validation
+if (-not $AzureMode.IsPresent) {
+    # This is not an Azure configuration
+    if ($Config.Test.StartObserverMonitoring -eq $true) {
+        #Test to see if the variable exists or not
+        if ($null -eq $VSI_Prometheus_IP -or $null -eq $VSI_Prometheus_sshuser -or $null -eq $VSI_Prometheus_sshpassword) {
+            Write-Log -Message "You must define the Prometheus IP, SSH User and SSH Password to enable Observer Monitoring in the LoginEnterpriseGlobal.jsonc file" -Level Error
+            Exit 1
+        }
+    }
+}
+#endregion Observer validation
+
 #region data download and upload validation
 
 if ($Config.Test.SkipLEMetricsDownload -eq $true -and $Config.Test.Uploadresults -eq $true) {
@@ -324,6 +337,7 @@ if ($Config.Test.Uploadresults -eq $false) {
 if (-not $AzureMode.IsPresent) {
     # This is not an Azure configuration
     $NTNXInfra = Get-NTNXinfo -Config $config
+    $HostCVMIPs = Get-NTNXCVMIPs -Config $config
 } else {
     $NTNXInfra = $config
 }
@@ -706,6 +720,27 @@ if ($Config.Test.StartInfrastructureMonitoring -eq $true -and $Config.Test.Serve
     Start-ServerMonitoring -ServersToMonitor $Config.Test.ServersToMonitor -Mode StartMonitoring -ServiceName "Telegraf"
 }
 #endregion Start Infrastructure Monitoring
+
+#region Start Observer Monitoring
+if (-not $AzureMode.IsPresent) {
+    # This is not an Azure configuration
+    if ($Config.Test.StartObserverMonitoring -eq $true) {
+        Write-Log -Message "Starting Observer Monitoring" -Level Info
+        $params = @{
+            clustername           = $Config.TestInfra.ClusterName
+            CVMIPs                = $HostCVMIPs
+            CVMsshUser            = "nutanix"
+            CVMsshpassword        = $Config.Target.CVMsshpassword
+            prometheusip          = $VSI_Prometheus_IP
+            prometheussshuser     = $VSI_Prometheus_sshuser
+            prometheussshpassword = $VSI_Prometheus_sshpassword 
+            Status                = "Start"
+        }
+        $null = Set-CVMObserver @params
+        $params = $null
+    }
+}
+#endregion Start Observer Monitoring
 
 #region Execute Test
 #----------------------------------------------------------------------------------------------------------------------------
@@ -2856,6 +2891,23 @@ if ($Config.Test.StartInfrastructureMonitoring -eq $true -and $Config.Test.Serve
     Start-ServerMonitoring -ServersToMonitor $Config.Test.ServersToMonitor -Mode StopMonitoring -ServiceName "Telegraf"
 }
 #endregion Stop Infrastructure Monitoring
+
+#region Stop Observer Monitoring
+if (-not $AzureMode.IsPresent) {
+    # This is not an Azure configuration
+    if ($Config.Test.StartObserverMonitoring -eq $true) {
+        Write-Log -Message "Stopping Observer Monitoring" -Level Info
+        $params = @{
+            prometheusip          = $VSI_Prometheus_IP
+            prometheussshuser     = $VSI_Prometheus_sshuser
+            prometheussshpassword = $VSI_Prometheus_sshpassword 
+            Status                = "Stop"
+        }
+        $null = Set-CVMObserver @params
+        $params = $null
+    }
+}
+#endregion Stop Observer Monitoring
 
 #region shutdown citrix machines after final run
 if (-not $AzureMode.IsPresent) { 
