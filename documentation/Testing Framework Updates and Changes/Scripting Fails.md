@@ -5,7 +5,7 @@ TL/DR
 - We reduced data export and manipulation times from Login Enterprise from over 9 hours to around 27 minutes.
 - We reduced the data ingestion time from CSV to Influx from 70 minutes to 7 minutes.
 - We improved logging functionality so that we now have full logging to file for every test, and we have a load more verbose logging output across the data egress and ingress components.
-- We removed non-useful scripts and functions. Remove-TestData-API.psq now deletes full test sets in a few minutes, Invoke-TestUpload.ps1 also benefits from all code changes below.
+- We removed non-useful scripts and functions. Remove-TestData-API.ps1 now deletes full test sets in a few minutes, Invoke-TestUpload.ps1 also benefits from all code changes below.
 - SH - Dashboards
 - SH - Prometheus
 - SH - Align Time
