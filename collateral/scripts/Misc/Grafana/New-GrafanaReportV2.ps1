@@ -970,7 +970,8 @@ from(bucket:"$($FormattedBucket)")
 |> filter(fn: (r) => r["InfraTestName"] =~ /^$($FormattedTestRun)$/ )
 |> filter(fn: (r) => r._field == "EUXScore")
 |> group(columns: ["_measurement", "InfraTestName", newNaming])
-|> top(n: 5)
+|> sort(columns: ["_time"])
+|> limit(n: 6)
 |> mean()
 |> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
 |> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, VSIBase: r._value}))
@@ -1002,7 +1003,6 @@ $EUXBaseResults = Get-PayloadResults -TestDetails $EUXBaseDetails -Order $EUXBas
 # Build Body Steady State EUC Score
 # ---------------------------------------------
 $SSEUXBody = @"
-import "experimental"
 newNaming = if "$($FormattedNaming)" == "_measurement" then "" else "$($FormattedNaming)"
 from(bucket:"$($FormattedBucket)")
 |> range(start: ${FormattedStartYear}-01-01, stop: ${FormattedEndYear}-12-31)
@@ -1015,8 +1015,8 @@ from(bucket:"$($FormattedBucket)")
 |> filter(fn: (r) => r._field == "EUXScore")
 |> group(columns: ["_measurement", "InfraTestName", newNaming])
 |> aggregateWindow(every: 30s, fn: mean, createEmpty: false)
-|> experimental.alignTime(alignTo: 2024-01-01T00:00:00Z)
-|> range(start: 2024-01-01T00:50:00Z, stop: 2024-01-01T01:07:00Z)
+|> sort(columns: ["_time"], desc: true)
+|> limit(n: 40)
 |> mean()
 |> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
 |> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, sseux: r._value}))
@@ -1048,7 +1048,6 @@ $SSEUXResults = Get-PayloadResults -TestDetails $SSEUXDetails -Order $SSEUXOrder
 # Build Body Steady State average Host CPU
 # ---------------------------------------------
 $SSHostCPUBody = @"
-import "experimental"
 newNaming = if "$($FormattedNaming)" == "_measurement" then "" else "$($FormattedNaming)"
 from(bucket:"$($FormattedBucket)")
 |> range(start: ${FormattedStartYear}-01-01, stop: ${FormattedEndYear}-12-31)
@@ -1062,8 +1061,8 @@ from(bucket:"$($FormattedBucket)")
 |> filter(fn: (r) => r["_field"] == "hypervisor_cpu_usage_ppm")
 |> group(columns: ["_measurement", "InfraTestName", newNaming])
 |> aggregateWindow(every: 30s, fn: mean, createEmpty: false)
-|> experimental.alignTime(alignTo: 2024-01-01T00:00:00Z)
-|> range(start: 2024-01-01T00:50:00Z, stop: 2024-01-01T01:07:00Z)
+|> sort(columns: ["_time"], desc: true)
+|> limit(n: 40)
 |> mean()
 |> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
 |> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, "Host CPU": r._value}))
@@ -1094,7 +1093,6 @@ $SSHostCPUResults = Get-PayloadResults -TestDetails $SSHostCPUDetails -Order $SS
 # Build Body Steady State average Cluster CPU
 # ---------------------------------------------
 $SSClusterCPUBody = @"
-import "experimental"
 newNaming = if "$($FormattedNaming)" == "_measurement" then "" else "$($FormattedNaming)"
 from(bucket:"$($FormattedBucket)")
 |> range(start: ${FormattedStartYear}-01-01, stop: ${FormattedEndYear}-12-31)
@@ -1108,8 +1106,8 @@ from(bucket:"$($FormattedBucket)")
 |> filter(fn: (r) => r["_field"] == "hypervisor_cpu_usage_ppm")
 |> group(columns: ["_measurement", "InfraTestName", newNaming])
 |> aggregateWindow(every: 30s, fn: mean, createEmpty: false)
-|> experimental.alignTime(alignTo: 2024-01-01T00:00:00Z)
-|> range(start: 2024-01-01T00:50:00Z, stop: 2024-01-01T01:07:00Z)
+|> sort(columns: ["_time"], desc: true)
+|> limit(n: 40)
 |> mean()
 |> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
 |> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, "Cluster CPU": r._value}))
@@ -1179,7 +1177,6 @@ $RDADetailsResults = Get-PayloadResults -TestDetails $RDADetails -Order $RDADeta
 # Build Body Application score
 # ---------------------------------------------
 $LoginApplicationsBody = @"
-import "experimental"
 newNaming = if "$($FormattedNaming)" == "_measurement" then "" else "$($FormattedNaming)"
 from(bucket:"$($FormattedBucket)")
 |> range(start: ${FormattedStartYear}-01-01, stop: ${FormattedEndYear}-12-31)
@@ -1193,8 +1190,8 @@ from(bucket:"$($FormattedBucket)")
 |> filter(fn: (r) => r["_field"] == "result")
 |> group(columns: ["_measurement", "InfraTestName", newNaming, "applicationName", "measurementId"])
 |> aggregateWindow(every: 30s, fn: mean, createEmpty: false)
-|> experimental.alignTime(alignTo: 2024-01-01T00:00:00Z)
-|> range(start: 2024-01-01T00:00:00Z, stop: 2024-01-01T00:50:00Z)
+|> sort(columns: ["_time"])
+|> limit(n: 80)
 |> mean()
 |> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
 |> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, Value: r._value, AppName: r.applicationName, MeasurementId: r.measurementId}))
@@ -1226,7 +1223,6 @@ $LoginApplicationsResults = Get-PayloadResults -TestDetails $LoginApplicationsDe
 # Build Body Steady state Application score
 # ---------------------------------------------
 $SSApplicationsBody = @"
-import "experimental"
 newNaming = if "$($FormattedNaming)" == "_measurement" then "" else "$($FormattedNaming)"
 from(bucket:"$($FormattedBucket)")
 |> range(start: ${FormattedStartYear}-01-01, stop: ${FormattedEndYear}-12-31)
@@ -1240,8 +1236,8 @@ from(bucket:"$($FormattedBucket)")
 |> filter(fn: (r) => r["_field"] == "result")
 |> group(columns: ["_measurement", "InfraTestName", newNaming, "applicationName", "measurementId"])
 |> aggregateWindow(every: 30s, fn: mean, createEmpty: false)
-|> experimental.alignTime(alignTo: 2024-01-01T00:00:00Z)
-|> range(start: 2024-01-01T00:50:00Z, stop: 2024-01-01T01:07:00Z)
+|> sort(columns: ["_time"], desc: true)
+|> limit(n: 40)
 |> mean()
 |> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
 |> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, Value: r._value, AppName: r.applicationName, MeasurementId: r.measurementId}))
@@ -1273,7 +1269,6 @@ $SSApplicationsResults = Get-PayloadResults -TestDetails $SSApplicationsDetails 
 # Build Body Login Times
 # ---------------------------------------------
 $LoginTimeBody = @"
-import "experimental"
 newNaming = if "$($FormattedNaming)" == "_measurement" then "" else "$($FormattedNaming)"
 from(bucket:"$($FormattedBucket)")
 |> range(start: ${FormattedStartYear}-01-01, stop: ${FormattedEndYear}-12-31)
@@ -1287,8 +1282,6 @@ from(bucket:"$($FormattedBucket)")
 |> filter(fn: (r) => r["_field"] == "result")
 |> group(columns: ["_measurement", newNaming, "id"])
 |> aggregateWindow(every: 30s, fn: mean, createEmpty: false)
-|> experimental.alignTime(alignTo: 2024-01-01T00:00:00Z)
-|> range(start: 2024-01-01T00:00:00Z, stop: 2024-01-01T00:50:00Z)
 |> mean()
 |> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
 |> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, Value: r._value, LogonPhase: r.id}))
@@ -2437,7 +2430,7 @@ if ($Applications) {
     Add-TableHeaders -mdFullFile $mdFullFile -TableTitle $TableTitle -TableData ($SSApplicationsResults | select-object -Property Name | Get-Unique -AsString | Sort-Object -Property Name) -TableImage "<img src=../images/appsperf.png alt=$($Title)>"
 
     $SSApplicationsList = $SSApplicationsResults | select-object -Property AppName, MeasurementId -Unique | Sort-Object -Property AppName, MeasurementId
-
+# We need to skip Outlook in the steady state phase
     foreach ($Record in $SSApplicationsList) {
         $AppName = $record.appname
         $MeasurementId = $record.measurementid

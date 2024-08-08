@@ -5,10 +5,14 @@ TL/DR
 - We reduced data export and manipulation times from Login Enterprise from over 9 hours to around 27 minutes.
 - We reduced the data ingestion time from CSV to Influx from 70 minutes to 7 minutes.
 - We improved logging functionality so that we now have full logging to file for every test, and we have a load more verbose logging output across the data egress and ingress components.
-- We removed non-useful scripts and functions. Remove-TestData-API.ps1 now deletes full test sets in a few minutes, Invoke-TestUpload.ps1 also benefits from all code changes below.
-- SH - Dashboards
-- SH - Prometheus
-- SH - Align Time
+- Remove-TestData-API.ps1 now deletes full test sets in a few minutes, Invoke-TestUpload.ps1 also benefits from all code changes below.
+- We removed non-useful scripts and functions.
+- We changed our approach of editing the `_time` value for influx from always start at 1-1-2023-01:00:00 to use the actual (UTC) `_time` value. This allows us to correlate other metrics that we capture using the actual time stamp, like Telegraf and Prometheus.
+- Because of the change to store the actual `_time` values in Influx, we needed to modify all queries that are used to create graphs in Grafana to use `experimental.alignTime` function of Influx.
+- We also needed to modify the Grafana-Report script to use the new queries and dashboards. This is available as `New-GrafanaReportV2.ps1`.
+- On the `Testing Status` dashboard, where we monitor components like Citrix Delivery Controllers, PVS servers, and SQL server in real time, we added panels with `Host CPU`, `Cluster CPU`, `Total Login Time`, and `Connection Time`, which are coming from the `LoginDocuments` bucket. The `experimental.alignTime` is not used here, because we want to match it to the actual time to correlate it to the other information on the dashboard.
+- This brought us to the idea to pull in more performance data from the target cluster. We created a new function called `Set-CVMObserver` that takes in an array of CVM ip addresses, creates a prometheus.yml file, uploads it to a prometheus server (1 per LE appliance), and reloads the prometheus server. The metrics are coming from the Observer appliance from the Durham Performance Engineering team.
+- New filters and panels are added to the `Testing Status` dashboard, where you can select the appropriate Observer appliance and the cluster, and it will dynamically create the panels. 
 
 ## Optimization of data egress from Login Enterprise
 
@@ -353,7 +357,6 @@ for ($i = 0; $i -lt $numberOfBatches; $i++) {
     $CurrentBatch ++
 
 }
-
 ```
 
 The script now uses the following logic
@@ -366,3 +369,200 @@ The script now uses the following logic
 And the result? A reduction of upload time from 70 minutes down to just over 7 minutes.
 
 ![Batch Processing](image-2.png)
+
+## Using actual time when uploading
+We changed our approach of editing the `_time` value for influx from always start at 1-1-2023-01:00:00 to use the actual (UTC) `_time` value. This allows us to correlate other metrics that we capture using the actual time stamp, like Telegraf and Prometheus.
+Instead of calculating the delta time based on the actual start time of the test, and then add that delta to the fixed time, we now just have this in `Start-InfluxUpload.ps1`: 
+
+```
+$FormattedDate = [math]::Round((New-TimeSpan -Start (Get-Date "1970-01-01") -End ((Get-Date -Date $CSVDate).ToUniversalTime())).TotalSeconds)
+```
+
+We still need to reformat the `_time` value to unixtime.
+
+## Using experimental.alignTime in the LoginDocuments dashboard
+Next, we needed to modify all InfluxDB queries in the `LoginDocuments` Grafana dashboard. We still needed to be able to get the results that were uploaded with the modified `_time`, but we came up with the following solution for that.
+We added an extra variable to select the `Start Year`. If you want to see the results before August 5th 2024, you need to set this value to `2023`:
+
+![New variable Start Year](image-3.png)
+
+This is an example of a query using the `experimental.alignTime` function (with comments using `//`):
+
+```
+  import "experimental" // Import the experimental influx function
+  newNaming = if "${Naming}" == "_measurement" then "" else "${Naming}"
+  from(bucket: "${Bucketname}")
+  |> range(start: ${StartYear}-01-01, stop: ${EndYear}-12-31) // Set the range for the query to use the $StarYear and $Endyear value.
+  |> filter(fn: (r) => r["Year"] =~ /^${Year:regex}$/ )
+  |> filter(fn: (r) => r["Month"] =~ /^${Month:regex}$/ )
+  |> filter(fn: (r) => r["DocumentName"] =~ /^${DocumentName:regex}$/ )
+  |> filter(fn: (r) => r["Comment"] =~ /^${Comment:regex}$/ )
+  |> filter(fn: (r) => r["_measurement"] =~ /^${Testname:regex}$/ )
+  |> filter(fn: (r) => r["InfraTestName"] =~ /^${Run:regex}$/ )
+  |> filter(fn: (r) => r["DataType"] == "Host_Raw")
+  |> filter(fn: (r) => r["_field"] == "hypervisor_cpu_usage_ppm")
+  |> group(columns: ["_measurement", newNaming])
+  |> aggregateWindow(every: 30s, fn: mean, createEmpty: false) // Create evenly distributed values with averages of 30s interval.
+  |> experimental.alignTime(alignTo: v.timeRangeStart) // Align to the v.timeRangeStart. This is the starttime selected in Grafana.
+  |> map(fn: (r) => ({r with Name: string(v: r.${Naming})}))
+  |> map(fn: (r) => ({_time: r._time, Name: r.Name, measurement: r._measurement, "Host CPU": r._value}))
+  |> group(columns: ["Name", "measurement"])
+   |> sort(columns: ["Name", "measurement"])
+```
+
+It seems simple, but it took some time to get it right, because it wasn't playing nice with some of the charts.
+Because we align to the starttime of the Grafana dashboard, we decided to still have a fixed time of 1 hour and 8 min, and hide the time picker. Because all of our default tests have this duration.
+
+The application performance panels were a bit more challenging. Because the first metric of each application start at different times during a test, we had to calculate the time from the start of the test to the time of the first metric, and then add this to the v.timeRangeStart, otherwise all applications graphs would be aligned to the start of the graph.
+This is the query of one of the applications:
+
+```
+import "experimental"
+import "date" // We need this function to create a new time value
+newNaming = if "${Naming}" == "_measurement" then "" else "${Naming}"
+starttime = from(bucket: "${Bucketname}")
+  |> range(start: ${StartYear}-01-01, stop: ${EndYear}-12-31)
+  |> filter(fn: (r) => r["Year"] =~ /^${Year:regex}$/ )
+  |> filter(fn: (r) => r["Month"] =~ /^${Month:regex}$/ )
+  |> filter(fn: (r) => r["DocumentName"] =~ /^${DocumentName:regex}$/ )
+  |> filter(fn: (r) => r["Comment"] =~ /^${Comment:regex}$/ )
+  |> filter(fn: (r) => r["_measurement"] =~ /^${Testname:regex}$/ )
+  |> filter(fn: (r) => r["InfraTestName"] =~ /^${Run:regex}$/ )
+  |> filter(fn: (r) => r["DataType"] == "Host_Raw")  // We use the Host_Raw metrics to find the `_time` of the first metric o the test.
+  |> filter(fn: (r) => r["_field"] == "hypervisor_cpu_usage_ppm")
+  |> group(columns: ["_measurement", newNaming])
+  |> sort(columns: ["_time"], desc: false)
+  |> limit(n: 1)
+  |> findColumn(fn: (key) => true, column: "_time")
+teststarttime = time(v:starttime[0]) // We put it in a variable `teststarttime`
+firsttime = from(bucket: "${Bucketname}")
+  |> range(start: ${StartYear}-01-01, stop: ${EndYear}-12-31)
+  |> filter(fn: (r) => r["Year"] =~ /^${Year:regex}$/ )
+  |> filter(fn: (r) => r["Month"] =~ /^${Month:regex}$/ )
+  |> filter(fn: (r) => r["DocumentName"] =~ /^${DocumentName:regex}$/ )
+  |> filter(fn: (r) => r["Comment"] =~ /^${Comment:regex}$/ )
+  |> filter(fn: (r) => r["_measurement"] =~ /^${Testname:regex}$/ )
+  |> filter(fn: (r) => r["InfraTestName"] =~ /^${Run:regex}$/ )
+  |> filter(fn: (r) => r["DataType"] == "Raw_AppMeasurements")
+  |> filter(fn: (r) => r["applicationName"] == "(KW)_Microsoft_Word")
+  |> filter(fn: (r) => r["measurementId"] == "app_start_time")
+  |> filter(fn: (r) => r["_field"] == "result")
+  |> group(columns: ["_measurement", newNaming])
+   |> sort(columns: ["_time"], desc: false)
+  |> limit(n: 1)
+  |> findColumn(fn: (key) => true, column: "_time") // We look for the first `_time` value found for this application.
+firststarttime = time(v:firsttime[0])
+delta = (int(v: firststarttime) - int(v: teststarttime)) // Calculate the difference in time between the first app `_time` value and the start time.
+alignto = date.sub(d: duration(v: -delta), from: v.timeRangeStart) // create a variable to set the new Aligntime.
+from(bucket: "${Bucketname}")
+  |> range(start: ${StartYear}-01-01, stop: ${EndYear}-12-31)
+  |> filter(fn: (r) => r["Year"] =~ /^${Year:regex}$/ )
+  |> filter(fn: (r) => r["Month"] =~ /^${Month:regex}$/ )
+  |> filter(fn: (r) => r["DocumentName"] =~ /^${DocumentName:regex}$/ )
+  |> filter(fn: (r) => r["Comment"] =~ /^${Comment:regex}$/ )
+  |> filter(fn: (r) => r["_measurement"] =~ /^${Testname:regex}$/ )
+  |> filter(fn: (r) => r["InfraTestName"] =~ /^${Run:regex}$/ )
+  |> filter(fn: (r) => r["DataType"] == "Raw_AppMeasurements")
+  |> filter(fn: (r) => r["applicationName"] == "(KW)_Microsoft_Word")
+  |> filter(fn: (r) => r["measurementId"] == "app_start_time")
+  |> filter(fn: (r) => r["_field"] == "result")
+  |> group(columns: ["_measurement", newNaming])
+  |> aggregateWindow(every: 30s, fn: mean, createEmpty: false)
+  |> experimental.alignTime(alignTo: time(v: alignto))  // Align to the calculated new aligned time value.
+  |> map(fn: (r) => ({r with Name: string(v: r.${Naming})}))
+  |> map(fn: (r) => ({_time: r._time, Name: r.Name, measurement: r._measurement,  "Word start": r._value}))
+  |> group(columns: ["Name", "measurement"])
+  |> sort(columns: ["Name", "measurement"])
+  ```
+
+## Updated New-GrafanaReport script
+We also needed to modify the Grafana-Report script to use the new queries and dashboards. This is available as `New-GrafanaReportV2.ps1`.
+There a couple of changes to this report. First, all the queries needed to be adjusted to use this filter:
+`|> range(start: ${FormattedStartYear}-01-01, stop: ${FormattedEndYear}-12-31)`
+
+Next, the URI for downloading the images is adjusted to get the graphs from `LoginDocuments-v4`, added the new `$StartYear` variable, and a new time (`2024-01-01T00:00:00Z`) and timezone (UTC).
+
+We don't use the `alignTime` function to calculate the averages, because we don't create the graphs with these queries.
+
+To calculate the average during steady state, we `aggregateWindow` every 30s, then limit to the first 40 measurements, sorted by time in descending order:
+
+```
+$SSClusterCPUBody = @"
+newNaming = if "$($FormattedNaming)" == "_measurement" then "" else "$($FormattedNaming)"
+from(bucket:"$($FormattedBucket)")
+|> range(start: ${FormattedStartYear}-01-01, stop: ${FormattedEndYear}-12-31)
+|> filter(fn: (r) => r["Year"] =~ /^$($FormattedYear)$/ )
+|> filter(fn: (r) => r["Month"] =~ /^$($FormattedMonth)$/ )
+|> filter(fn: (r) => r["DocumentName"] =~ /^$($FormattedDocumentName)$/ )
+|> filter(fn: (r) => r["Comment"] =~ /^$($FormattedComment)$/ )
+|> filter(fn: (r) => r["_measurement"] =~ /^$($FormattedTestname)$/ )
+|> filter(fn: (r) => r["InfraTestName"] =~ /^$($FormattedTestRun)$/ )
+|> filter(fn: (r) => r["DataType"] == "Cluster_Raw")
+|> filter(fn: (r) => r["_field"] == "hypervisor_cpu_usage_ppm")
+|> group(columns: ["_measurement", "InfraTestName", newNaming])
+|> aggregateWindow(every: 30s, fn: mean, createEmpty: false)
+|> sort(columns: ["_time"], desc: true)
+|> limit(n: 40)
+|> mean()
+|> map(fn: (r) => ({r with Name: string(v: r.$($FormattedNaming))}))
+|> map(fn: (r) => ({Name: r.Name, measurement: r._measurement, "Cluster CPU": r._value}))
+"@
+```
+
+This also works for calculating the averages during steady state for the application response times, but not for the login phase, as each application start at a different time. For the applications, we limit to the first 80 measurements (40 minutes).
+  
+## LoginDocuments info on the Testing Status dashboard
+On the `Testing Status` dashboard, where we monitor components like Citrix Delivery Controllers, PVS servers, and SQL server in real time, we added panels with `Host CPU`, `Cluster CPU`, `Total Login Time`, and `Connection Time`, which are coming from the `LoginDocuments` bucket. The `experimental.alignTime` is not used here, because we want to match it to the actual time to correlate it to the other information on the dashboard.
+![aLogin Documents results in the Testing Status dashboard](image-4.png)
+
+## Capturing CVM metrics
+This brought us to the idea to pull in more performance data from the target cluster. We created a new function called `Set-CVMObserver` that takes in an array of CVM ip addresses, creates a prometheus.yml file, uploads it to a prometheus server (1 per LE appliance), and reloads the prometheus server. The metrics are coming from the Observer appliance from the Durham Performance Engineering team.
+First of all, we created one observer VM (primarily for prometheus) for each Login Enterprise appliance. We want to be able to enable and disable CVM monitoring per test (because of the overhead) and the way we can achieve this is by changing the content of the `prometheus.yml` file on the prometheus server. If we were using one observer VM for all LE appliances, we could overwrite each others monitor jobs. 
+The prometheus server info is read from `ConfigLoginEnterpriseGlobal.jsonc`:
+
+![Prometheus server info](image-5.png)
+
+Then we need to get the CVM ip addresses of the target cluster. These are used to generate the `prometheus.yml` file. This file contains multiple jobs per CVM to capture performance metrics. We get the CVM ip addresses using this code:
+`$HostCVMIPs = Get-NTNXCVMIPs -Config $config`
+
+The function `Set-CVMObserver` creates the file with content like this:
+```
+foreach ($ip in $CVMIPs) {
+    $config += @"
+  - job_name: Observer_$($clustername)_CVM_${ip}_links_dump_2009_stargate
+    metrics_path: /nutanix-observer/Observer_INPUT_PARSER/Observer_INPUT_PARSER.sh
+    scrape_interval: 20s
+    static_configs:
+      - targets: ['$($prometheusip):80']
+    params:
+            Observer_user_input_action: ['Nutanix_Observer_Collect_Metric']
+            Observer_user_input_command_target_type: ['CVM']
+            Observer_user_input_target_ip_address: ['$ip']
+            Observer_user_input_target_user_id: ['$($CVMsshUser)']
+            Observer_user_input_password: ['$($CVMsshpassword)']
+            Observer_user_input_command_type: ['links_dump']
+            Observer_user_input_command: ['http:0:2009']
+            Observer_user_input_target_cluster_name: ['$($clustername)']
+            Observer_user_input_remote_command_execution_type: ['sshpass']
+```
+
+There are currently 5 jobs per CVM configured, we can add more if we need to.
+The file is then copied to the prometheus server and the prometheus service is reloaded:
+```
+$password = ConvertTo-SecureString "$prometheussshpassword" -AsPlainText -Force
+$HostCredential = New-Object System.Management.Automation.PSCredential ($prometheussshuser, $password)
+$session = New-SSHSession -ComputerName $prometheusip -Credential $HostCredential -AcceptKey -KeepAliveInterval 5 -ErrorAction Stop
+Set-SCPItem -ComputerName $prometheusip -Credential $HostCredential -Path $OutputFile -Destination "/etc/prometheus/" -AcceptKey
+Invoke-RestMethod -Uri "http://$($prometheusip):9090/-/reload" -Method POST
+```
+
+The function takes in a `Start` or `Stop` variable. When stopped, a `prometheus.yml` file without jobs is uploaded to the server.
+
+## CVM metrics in the Testing Status dasboard
+Now comes the fun part. New filters are added to the `Testing Status` dashboard, where you can select the appropriate Observer appliance and the cluster (it will show all clusters it can find that were monitored during the selected timeframe for that Observer appliance):
+![Observer appliance variables](image-6.png)
+
+You can select multiple (or All) CVMs from that cluster, and then dynamically the panels will be created:
+![CVM monitoring](image-7.png)
+
+It's amazing, Mike!
