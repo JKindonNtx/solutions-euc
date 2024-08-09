@@ -738,6 +738,16 @@ if (-not $AzureMode.IsPresent) {
         }
         $null = Set-CVMObserver @params
         $params = $null
+    }  if ($Config.Test.StartObserverMonitoring -eq $false) {
+        Write-Log -Message "Make sure Observer Monitoring is stopped" -Level Info
+        $params = @{
+            prometheusip          = $VSI_Prometheus_IP
+            prometheussshuser     = $VSI_Prometheus_sshuser
+            prometheussshpassword = $VSI_Prometheus_sshpassword 
+            Status                = "Stop"
+        }
+        $null = Set-CVMObserver @params
+        $params = $null
     }
 }
 #endregion Start Observer Monitoring
@@ -2905,7 +2915,7 @@ if (-not $AzureMode.IsPresent) {
         }
         $null = Set-CVMObserver @params
         $params = $null
-    }
+    } 
 }
 #endregion Stop Observer Monitoring
 
