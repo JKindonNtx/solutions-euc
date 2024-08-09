@@ -130,7 +130,7 @@ foreach ($ip in $CVMIPs) {
         $password = ConvertTo-SecureString "$prometheussshpassword" -AsPlainText -Force
         $HostCredential = New-Object System.Management.Automation.PSCredential ($prometheussshuser, $password)
         $session = New-SSHSession -ComputerName $prometheusip -Credential $HostCredential -AcceptKey -KeepAliveInterval 5 -ErrorAction Stop
-        Set-SCPItem -ComputerName $prometheusip -Credential $HostCredential -Path $OutputFile -Destination "/etc/prometheus/" -AcceptKey
+        Set-SCPItem -ComputerName $prometheusip -Credential $HostCredential -Path $OutputFile -Destination "/etc/prometheus/" -AcceptKey $true
         Invoke-RestMethod -Uri "http://$($prometheusip):9090/-/reload" -Method POST
     }
     catch {
