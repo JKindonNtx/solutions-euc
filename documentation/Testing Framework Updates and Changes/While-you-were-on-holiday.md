@@ -7,11 +7,11 @@ TL/DR
 - We improved logging functionality so that we now have full logging to file for every test, and we have a load more verbose logging output across the data egress and ingress components.
 - Remove-TestData-API.ps1 now deletes full test sets in a few minutes, Invoke-TestUpload.ps1 also benefits from all code changes below.
 - We removed non-useful scripts and functions.
-- We changed our approach of editing the `_time` value for influx from always start at 1-1-2023-01:00:00 to use the actual (UTC) `_time` value. This allows us to correlate other metrics that we capture using the actual time stamp, like Telegraf and Prometheus.
+- We changed our approach of editing the `_time` value for influx from always start at 1-1-2023-01:00:00 to use the actual (UTC) `_time` value. This allows us to correlate other metrics that we capture using the actual time stamp, coming from Telegraf or Prometheus for example.
 - Because of the change to store the actual `_time` values in Influx, we needed to modify all queries that are used to create graphs in Grafana to use `experimental.alignTime` function of Influx.
 - We also needed to modify the Grafana-Report script to use the new queries and dashboards. This is available as `New-GrafanaReportV2.ps1`.
 - On the `Testing Status` dashboard, where we monitor components like Citrix Delivery Controllers, PVS servers, and SQL server in real time, we added panels with `Host CPU`, `Cluster CPU`, `Total Login Time`, and `Connection Time`, which are coming from the `LoginDocuments` bucket. The `experimental.alignTime` is not used here, because we want to match it to the actual time to correlate it to the other information on the dashboard.
-- This brought us to the idea to pull in more performance data from the target cluster. We created a new function called `Set-CVMObserver` that takes in an array of CVM ip addresses, creates a prometheus.yml file, uploads it to a prometheus server (1 per LE appliance), and reloads the prometheus server. The metrics are coming from the Observer appliance from the Durham Performance Engineering team.
+- This brought us to the idea to pull in more performance data from the target cluster. We created a new function called `Set-CVMObserver` that takes in an array of CVM ip addresses, creates a prometheus.yml file, uploads it to a prometheus server (1 per LE appliance), and reloads the prometheus server. The metrics definitions are coming from the Observer appliance from the Durham Performance Engineering team. More can be added later.
 - New filters and panels are added to the `Testing Status` dashboard, where you can select the appropriate Observer appliance and the cluster, and it will dynamically create the panels. 
 
 ## Optimization of data egress from Login Enterprise
@@ -524,6 +524,8 @@ The prometheus server info is read from `ConfigLoginEnterpriseGlobal.jsonc`:
 
 Then we need to get the CVM ip addresses of the target cluster. These are used to generate the `prometheus.yml` file. This file contains multiple jobs per CVM to capture performance metrics. We get the CVM ip addresses using this code:
 `$HostCVMIPs = Get-NTNXCVMIPs -Config $config`
+
+`Get-NTNXCVMIPs` is also a new function.
 
 The function `Set-CVMObserver` creates the file with content like this:
 ```
