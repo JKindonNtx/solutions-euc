@@ -23,7 +23,7 @@ global:
 scrape_configs:
 
 "@
-    }
+   }
     elseif ($Status -eq "Start") {
         $config = @"
 global:
@@ -122,24 +122,25 @@ foreach ($ip in $CVMIPs) {
 }    
 }
         
-    $config | Out-File -FilePath "$OutputFile"
+  $config | Out-File -FilePath "$OutputFile"
 
-    Write-Log -Message "Copy prometheus.yml to $prometheusip." -Level Info
-    try {
-        # Copy the prometheus.yml to the prometheus server and reload prometheus
-        $password = ConvertTo-SecureString "$prometheussshpassword" -AsPlainText -Force
-        $HostCredential = New-Object System.Management.Automation.PSCredential ($prometheussshuser, $password)
-        $session = New-SSHSession -ComputerName $prometheusip -Credential $HostCredential -AcceptKey -KeepAliveInterval 5 -ErrorAction Stop
-        Set-SCPItem -ComputerName $prometheusip -Credential $HostCredential -Path $OutputFile -Destination "/etc/prometheus/" -AcceptKey
-        Invoke-RestMethod -Uri "http://$($prometheusip):9090/-/reload" -Method POST
-    }
-    catch {
-        Write-Log -Message $_ -Level Warn
-        Break
-    }
 
-    Remove-SSHSession -Name $Session | Out-Null
-    Remove-Item -Path $OutputFile -Force
-    Write-Log -Message "Copy and reset prometheus $prometheusip finished. Status is $Status." -Level Info
+  Write-Log -Message "Copy prometheus.yml to $prometheusip." -Level Info
+  try {
+      # Copy the prometheus.yml to the prometheus server and reload prometheus
+      $password = ConvertTo-SecureString "$prometheussshpassword" -AsPlainText -Force
+      $HostCredential = New-Object System.Management.Automation.PSCredential ($prometheussshuser, $password)
+      $session = New-SSHSession -ComputerName $prometheusip -Credential $HostCredential -AcceptKey -KeepAliveInterval 5 -ErrorAction Stop
+      Set-SCPItem -ComputerName $prometheusip -Credential $HostCredential -Path $OutputFile -Destination "/etc/prometheus/" -Force
+      Invoke-RestMethod -Uri "http://$($prometheusip):9090/-/reload" -Method POST
+  }
+  catch {
+      Write-Log -Message $_ -Level Warn
+      Break
+  }
+
+  Remove-SSHSession -Name $Session | Out-Null
+  Remove-Item -Path $OutputFile -Force
+  Write-Log -Message "Copy and reset prometheus $prometheusip finished. Status is $Status." -Level Info
                    
 }
