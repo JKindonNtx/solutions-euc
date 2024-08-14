@@ -213,7 +213,7 @@ if (-not $AzureMode.IsPresent) {
     else {
         Write-Log -Message "Failed to find appropriate Posh-SSH Module. Attempting to Install" -Level Info
         try {
-            Install-Module -Name Posh-SSH -RequiredVersion 2.3.0 -Force -ErrorAction Stop
+            Install-Module -Name Posh-SSH -RequiredVersion 2.3.0 -Force -Scope CurrentUser -ErrorAction Stop
             Write-Log -Message "Successfully installed Posh-SSH Module" -Level Info
             Get-SSHTrustedHost | Remove-SSHTrustedHost
         }
@@ -301,7 +301,7 @@ Connect-LEAppliance -Url $VSI_LoginEnterprise_ApplianceURL -Token $VSI_LoginEnte
 #region Observer validation
 if (-not $AzureMode.IsPresent) {
     # This is not an Azure configuration
-    if ($Config.Test.StartObserverMonitoring -eq $true) {
+        if ($Config.Test.StartObserverMonitoring -eq $true -or $Config.Target.files_prometheus -eq $true) {
         #Test to see if the variable exists or not
         if ($null -eq $VSI_Prometheus_IP -or $null -eq $VSI_Prometheus_sshuser -or $null -eq $VSI_Prometheus_sshpassword) {
             Write-Log -Message "You must define the Prometheus IP, SSH User and SSH Password to enable Observer Monitoring in the LoginEnterpriseGlobal.jsonc file" -Level Error
@@ -338,6 +338,10 @@ if (-not $AzureMode.IsPresent) {
     # This is not an Azure configuration
     $NTNXInfra = Get-NTNXinfo -Config $config
     $HostCVMIPs = Get-NTNXCVMIPs -Config $config
+    if ($Config.Target.Files -ne "") {
+        Write-Log -Message "Getting Nutanix Files Info" -Level Info
+        $NTNXInfra = Get-NTNXFilesinfo -Config $NTNXInfra
+    }
 } else {
     $NTNXInfra = $config
 }
@@ -724,13 +728,15 @@ if ($Config.Test.StartInfrastructureMonitoring -eq $true -and $Config.Test.Serve
 #region Start Observer Monitoring
 if (-not $AzureMode.IsPresent) {
     # This is not an Azure configuration
-    if ($Config.Test.StartObserverMonitoring -eq $true) {
+   # if ($Config.Test.StartObserverMonitoring -eq $true) {
+    if ($Config.Test.StartObserverMonitoring -eq $true -or $Config.Target.files_prometheus -eq $true) {
         Write-Log -Message "Starting Observer Monitoring" -Level Info
         $params = @{
-            clustername           = $Config.TestInfra.ClusterName
+           # clustername           = $Config.TestInfra.ClusterName
+            Config                = $NTNXInfra
             CVMIPs                = $HostCVMIPs
             CVMsshUser            = "nutanix"
-            CVMsshpassword        = $Config.Target.CVMsshpassword
+            # CVMsshpassword        = $Config.Target.CVMsshpassword
             prometheusip          = $VSI_Prometheus_IP
             prometheussshuser     = $VSI_Prometheus_sshuser
             prometheussshpassword = $VSI_Prometheus_sshpassword 
@@ -738,7 +744,16 @@ if (-not $AzureMode.IsPresent) {
         }
         $null = Set-CVMObserver @params
         $params = $null
-    }  if ($Config.Test.StartObserverMonitoring -eq $false) {
+    } 
+    if ($Config.Target.files_prometheus -eq $true) {
+        $params = @{
+            Config                = $NTNXInfra
+            Status                = "Start"
+        }
+        $null = Set-FilesPromMonitor @params
+        $params = $null
+    }
+    if ($Config.Test.StartObserverMonitoring -eq $false -and $Config.Target.files_prometheus -eq $false) {
         Write-Log -Message "Make sure Observer Monitoring is stopped" -Level Info
         $params = @{
             prometheusip          = $VSI_Prometheus_IP
@@ -2905,7 +2920,7 @@ if ($Config.Test.StartInfrastructureMonitoring -eq $true -and $Config.Test.Serve
 #region Stop Observer Monitoring
 if (-not $AzureMode.IsPresent) {
     # This is not an Azure configuration
-    if ($Config.Test.StartObserverMonitoring -eq $true) {
+    if ($Config.Test.StartObserverMonitoring -eq $true -or $Config.Target.files_prometheus -eq $true) {
         Write-Log -Message "Stopping Observer Monitoring" -Level Info
         $params = @{
             prometheusip          = $VSI_Prometheus_IP
@@ -2916,6 +2931,14 @@ if (-not $AzureMode.IsPresent) {
         $null = Set-CVMObserver @params
         $params = $null
     } 
+    if ($Config.Target.files_prometheus -eq $true) {
+        $params = @{
+            Config                = $NTNXInfra
+            Status                = "Stop"
+        }
+        $null = Set-FilesPromMonitor @params
+        $params = $null
+    }
 }
 #endregion Stop Observer Monitoring
 

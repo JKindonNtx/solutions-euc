@@ -219,6 +219,11 @@ function Start-InfluxUpload {
                     "InfraCPUSocketCount=$($JSON.TestInfra.CPUSocketCount)," +
                     "InfraCPUSpeed=$($JSON.TestInfra.CPUSpeed)," +
                     "InfraMemoryGB=$($JSON.TestInfra.MemoryGB)," +
+                    "filesname=$($JSON.Target.files_name)," +
+                    "filesversion=$($JSON.Target.files_version)," +
+                    "filesvmscount=$($JSON.Target.files_vmscount)," +
+                    "filesvcpus=$($JSON.Target.files_vcpus)," +
+                    "filesmemorygb=$($JSON.Target.files_memorygb)," +
                     "BootStart=$($JSON.TestInfra.BootStart)," +                    
                     "BootTime=$($JSON.TestInfra.Boottime)," +
                     "MaxAbsoluteActiveActions=$($JSON.TestInfra.MaxAbsoluteActiveActions)," +
@@ -241,6 +246,7 @@ function Start-InfluxUpload {
             $tag = $tag.replace('=,', '=0,')
             $tag = $tag.replace('\', '-')
             $tag = $tag.replace('%', 'pct')
+            $tag = $tag.replace('autfilled', '0')
     
             # Check for Blank Tag Value
             If ($Tag -like "*=,*") {
