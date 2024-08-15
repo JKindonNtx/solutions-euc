@@ -127,6 +127,7 @@
         "Files_sshuser": "nutanix", // Specify the Nutanix Files ssh user if you want to monitor using prometheus. Leave empty if not used.
         "Files_sshpassword": "password", // Specify the Nutanix Files ssh password if you want to monitor using prometheus. Leave empty if not used.
         "files_name": "autfilled",
+        "files_uuid": "autfilled",
         "files_version": "autfilled",
         "files_vmscount": "autfilled",
         "files_vcpus": "autfilled",
