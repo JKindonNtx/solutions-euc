@@ -7,7 +7,6 @@ Function Set-FilesPromMonitor {
         [Parameter(ValuefromPipelineByPropertyName = $true,mandatory=$true)][ValidateSet("Start","Stop")]$Status
     )
     
-    
     Write-Log -Message "Enable prometheus monitoring on Files cluster $($Config.Target.files_name)." -Level Info
     try {
         # Build the command and set affinity using SSH
