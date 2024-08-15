@@ -123,7 +123,7 @@
         "Files": "ws-profile.wsperf.nutanix.com", // Specify Nutanix Files url if you want to capture files stats. Leave empty if not used.
         "Files_api": "MANDATORY_TO_DEFINE", // Specify the Nutanix Files API user, make sure to create this user.
         "Files_password": "MANDATORY_TO_DEFINE", // Specify the Nutanix Files API password
-        "files_prometheus": true, // Set to true if you want to monitor the files cluster using Prometheus. Run these commands on 1 of the FSVMs: "afs misc.ssh_on_client_network enable" and "edit-afs-gflags minerva_nvm minerva_enable_files_metrics_on_release True"
+        "files_prometheus": true, // Set to true if you want to monitor the files cluster using Prometheus. Run these commands on 1 of the FSVMs: "allssh "afs misc.ssh_on_client_network enable"" and "edit-afs-gflags minerva_nvm minerva_enable_files_metrics_on_release True"
         "Files_sshuser": "nutanix", // Specify the Nutanix Files ssh user if you want to monitor using prometheus. Leave empty if not used.
         "Files_sshpassword": "password", // Specify the Nutanix Files ssh password if you want to monitor using prometheus. Leave empty if not used.
         "files_name": "autfilled",
