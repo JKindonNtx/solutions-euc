@@ -1,4 +1,4 @@
-function Get-NTNXCVMIPs {
+function Get-NTNXHostIPs {
 
     [CmdletBinding()]
 
@@ -16,13 +16,13 @@ function Get-NTNXCVMIPs {
         
     $Hosts = $Hostdata.entities
 
-    $HostCVMips = [System.Collections.ArrayList] @()
+    $Hostips = [System.Collections.ArrayList] @()
 
     foreach ($item in $Hosts) {
-        [void]$HostCVMips.Add($item.service_vmexternal_ip)
-        Write-Log -Message "Adding CVM IP: $($item.service_vmexternal_ip) to Array" -Level Info
+        [void]$Hostips.Add("$($item.hypervisor_address)")
+        Write-Log -Message "Adding Host IP: $($item.hypervisor_address) to Array" -Level Info
     }
 
-    return $HostCVMips
+    return $Hostips
 
 }

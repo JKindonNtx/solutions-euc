@@ -111,6 +111,7 @@
         "CVM": "10.56.68.185", // (cluster)IP of the CVM
         "CVM_admin": "MANDATORY_TO_DEFINE",
         "CVM_password": "MANDATORY_TO_DEFINE",
+        "Host_root_password": "Optional", // Used to monitor using ObserverVM.
         "IPMI_admin": "MANDATORY_TO_DEFINE", // Used to get power consumption of host
         "IPMI_password": "MANDATORY_TO_DEFINE", // Used to get power consumption of host
         "CVMsshpassword":  "MANDATORY_TO_DEFINE", // Used to set affinity on VMs and start/stop curator and monitor using prometheus.
@@ -170,7 +171,7 @@
                 "ToolsGuestVersion":  "", // Autofilled during the script execution and used for reporting
                 "OptimizerVendor":  "", // Autofilled during the script execution and used for reporting
                 "OptimizationsVersion":  "", // Autofilled during the script execution and used for reporting
-                "GPUProfile":  "None", // GPU profile. T4-B1, A16-B2 for example
+                "GPUProfile":  "None", // GPU profile. T4-1B, A16-1B for example
                 "Comment": "Windows 10 Profile FSLogix - All On", // A short comment about this test. Will be added to the Login Enterprise database.
                 "EUXEnabled": true, // A true or false value to enable EUX measurements in the Login Enterprise Test
                 "SessionMetricsEnabled": false, // A true or false value to enable SessionMetrics in the Login Enterprise Test

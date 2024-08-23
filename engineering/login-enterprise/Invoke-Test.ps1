@@ -338,6 +338,7 @@ if (-not $AzureMode.IsPresent) {
     # This is not an Azure configuration
     $NTNXInfra = Get-NTNXinfo -Config $config
     $HostCVMIPs = Get-NTNXCVMIPs -Config $config
+    $HostIPs = Get-NTNXHostIPs -Config $config
     if ($Config.Target.Files -ne "") {
         Write-Log -Message "Getting Nutanix Files Info" -Level Info
         $NTNXInfra = Get-NTNXFilesinfo -Config $NTNXInfra
@@ -735,6 +736,7 @@ if (-not $AzureMode.IsPresent) {
            # clustername           = $Config.TestInfra.ClusterName
             Config                = $NTNXInfra
             CVMIPs                = $HostCVMIPs
+            HostIPs               = $HostIPs
             CVMsshUser            = "nutanix"
             # CVMsshpassword        = $Config.Target.CVMsshpassword
             prometheusip          = $VSI_Prometheus_IP
