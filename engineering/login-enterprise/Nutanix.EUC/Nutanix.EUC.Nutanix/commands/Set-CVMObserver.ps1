@@ -11,8 +11,6 @@ function Set-CVMObserver {
     )
 
     $OutputFile = "$env:LOCALAPPDATA\SolutionsEngineering\prometheus.yml"
-    write-host $CVMIPs
-    start-sleep 30
     if (Test-Path $OutputFile) { Remove-Item -Path $OutputFile -Force }
     
     if ($Status -eq "Stop") {
