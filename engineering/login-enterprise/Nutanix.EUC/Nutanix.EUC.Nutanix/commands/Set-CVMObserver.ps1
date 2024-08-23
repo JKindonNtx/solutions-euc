@@ -1,7 +1,8 @@
 function Set-CVMObserver {
     param(
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][System.Object]$Config,
-        [Parameter(Mandatory = $false)][Array]$CVMIPs,
+        [Parameter(Mandatory = $false)][System.Collections.ArrayList]$CVMIPs,
+        [Parameter(Mandatory = $false)][System.Collections.ArrayList]$HostIPs,
         [Parameter(Mandatory = $true)][String]$prometheusip,
         [Parameter(Mandatory = $true)][String]$prometheussshuser,
         [Parameter(Mandatory = $true)][String]$prometheussshpassword,
@@ -10,6 +11,8 @@ function Set-CVMObserver {
     )
 
     $OutputFile = "$env:LOCALAPPDATA\SolutionsEngineering\prometheus.yml"
+    write-host $CVMIPs
+    start-sleep 30
     if (Test-Path $OutputFile) { Remove-Item -Path $OutputFile -Force }
     
     if ($Status -eq "Stop") {
@@ -119,6 +122,50 @@ foreach ($ip in $CVMIPs) {
 
 
 "@
+}
+foreach ($ip in $HostIPs) {
+  if ($null -ne $Config.TestInfra.HostGPUs){
+  $prometheusconfig += @"
+  - job_name: Observer_$($Config.TestInfra.clustername)_AHV_${ip}_shell_nvidia_smi
+    metrics_path: /nutanix-observer/Observer_INPUT_PARSER/Observer_INPUT_PARSER.sh
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['$($prometheusip):80']
+    params:
+            Observer_user_input_action: ['Nutanix_Observer_Collect_Metric']
+            Observer_user_input_command_target_type: ['AHV']
+            Observer_user_input_target_ip_address: ['$ip']
+            Observer_user_input_target_user_id: ['root']
+            Observer_user_input_password: ['$($Config.Target.Host_root_password)']
+            Observer_user_input_command_type: ['shell']
+            Observer_user_input_command: ['nvidia-smi -q']
+            Observer_user_input_target_cluster_name: ['$($Config.TestInfra.clustername)']
+            Observer_user_input_remote_command_execution_type: ['sshpass']
+
+
+"@
+  }
+  if ($Config.Target.HypervisorType -eq "AHV") {
+  $prometheusconfig += @"
+  - job_name: Observer_$($Config.TestInfra.clustername)_AHV_${ip}_shell_cpupower_monitor
+    metrics_path: /nutanix-observer/Observer_INPUT_PARSER/Observer_INPUT_PARSER.sh
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['$($prometheusip):80']
+    params:
+            Observer_user_input_action: ['Nutanix_Observer_Collect_Metric']
+            Observer_user_input_command_target_type: ['AHV']
+            Observer_user_input_target_ip_address: ['$ip']
+            Observer_user_input_target_user_id: ['root']
+            Observer_user_input_password: ['$($Config.Target.Host_root_password)']
+            Observer_user_input_command_type: ['shell']
+            Observer_user_input_command: ['cpupower monitor']
+            Observer_user_input_target_cluster_name: ['$($Config.TestInfra.clustername)']
+            Observer_user_input_remote_command_execution_type: ['sshpass']
+
+
+"@
+  }
 } 
 }
 if ($Config.Target.files_prometheus -eq $true) {
