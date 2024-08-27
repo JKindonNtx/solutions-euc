@@ -738,7 +738,7 @@ if (-not $AzureMode.IsPresent) {
             CVMsshuser     = "nutanix"
             CVMsshpassword = $Config.Target.CVMsshpassword
         }
-        $AffinityProcessed = Set-HushloginCVM @params
+        $hushloginprocessed = Set-HushloginCVM @params
         $Params = $null
 
         Write-Log -Message "Starting Observer Monitoring" -Level Info
