@@ -731,6 +731,16 @@ if (-not $AzureMode.IsPresent) {
     # This is not an Azure configuration
    # if ($Config.Test.StartObserverMonitoring -eq $true) {
     if ($Config.Test.StartObserverMonitoring -eq $true -or $Config.Target.files_prometheus -eq $true) {
+        # Set hushlogin to get rid of first SSH text message
+        Write-Log -Message "Set hushlogin on CVMs" -Level Info
+        $params = @{
+            ClusterIP      = $Config.Target.CVM
+            CVMsshuser     = "nutanix"
+            CVMsshpassword = $Config.Target.CVMsshpassword
+        }
+        $AffinityProcessed = Set-HushloginCVM @params
+        $Params = $null
+
         Write-Log -Message "Starting Observer Monitoring" -Level Info
         $params = @{
            # clustername           = $Config.TestInfra.ClusterName

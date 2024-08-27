@@ -36,8 +36,75 @@ scrape_configs:
 "@
 
 if ($Config.Test.StartObserverMonitoring -eq $true) {
+    $prometheusconfig += @"
+  - job_name: Observer_$($Config.TestInfra.clustername)_CVM_$($CVMIPs[0])_shell_hostssh_ipmitool_dcmi_power_reading_onetime
+    metrics_path: /nutanix-observer/Observer_INPUT_PARSER/Observer_INPUT_PARSER.sh
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['$($prometheusip):80']
+    params:
+            Observer_user_input_action: ['Nutanix_Observer_Collect_Metric']
+            Observer_user_input_command_target_type: ['CVM']
+            Observer_user_input_target_ip_address: ['$($CVMIPs[0])']
+            Observer_user_input_target_user_id: ['$($CVMsshUser)']
+            Observer_user_input_password: ['$($Config.Target.CVMsshpassword)']
+            Observer_user_input_command_type: ['shell']
+            Observer_user_input_command: ['hostssh ipmitool dcmi power reading']
+            Observer_user_input_target_cluster_name: ['$($Config.TestInfra.clustername)']
+            Observer_user_input_remote_command_execution_type: ['sshpass']
+
+
+"@
 foreach ($ip in $CVMIPs) {
     $prometheusconfig += @"
+  - job_name: Observer_$($Config.TestInfra.clustername)_CVM_${ip}_shell_iostat
+    metrics_path: /nutanix-observer/Observer_INPUT_PARSER/Observer_INPUT_PARSER.sh
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['$($prometheusip):80']
+    params:
+            Observer_user_input_action: ['Nutanix_Observer_Collect_Metric']
+            Observer_user_input_command_target_type: ['CVM']
+            Observer_user_input_target_ip_address: ['$ip']
+            Observer_user_input_target_user_id: ['$($CVMsshUser)']
+            Observer_user_input_password: ['$($Config.Target.CVMsshpassword)']
+            Observer_user_input_command_type: ['shell']
+            Observer_user_input_command: ['iostat -x -m -y 3 1']
+            Observer_user_input_target_cluster_name: ['$($Config.TestInfra.clustername)']
+            Observer_user_input_remote_command_execution_type: ['sshpass']
+
+  - job_name: Observer_$($Config.TestInfra.clustername)_CVM_${ip}_shell_nstat_a
+    metrics_path: /nutanix-observer/Observer_INPUT_PARSER/Observer_INPUT_PARSER.sh
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['$($prometheusip):80']
+    params:
+            Observer_user_input_action: ['Nutanix_Observer_Collect_Metric']
+            Observer_user_input_command_target_type: ['CVM']
+            Observer_user_input_target_ip_address: ['$ip']
+            Observer_user_input_target_user_id: ['$($CVMsshUser)']
+            Observer_user_input_password: ['$($Config.Target.CVMsshpassword)']
+            Observer_user_input_command_type: ['shell']
+            Observer_user_input_command: ['nstat -a']
+            Observer_user_input_target_cluster_name: ['$($Config.TestInfra.clustername)']
+            Observer_user_input_remote_command_execution_type: ['sshpass']
+
+  - job_name: Observer_$($Config.TestInfra.clustername)_CVM_${ip}_shell_sys_class_net_statistics
+    metrics_path: /nutanix-observer/Observer_INPUT_PARSER/Observer_INPUT_PARSER.sh
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['$($prometheusip):80']
+    params:
+            Observer_user_input_action: ['Nutanix_Observer_Collect_Metric']
+            Observer_user_input_command_target_type: ['CVM']
+            Observer_user_input_target_ip_address: ['$ip']
+            Observer_user_input_target_user_id: ['$($CVMsshUser)']
+            Observer_user_input_password: ['$($Config.Target.CVMsshpassword)']
+            Observer_user_input_command_type: ['shell']
+            Observer_user_input_command: ['sys -class net_statistics']
+            Observer_user_input_target_cluster_name: ['$($Config.TestInfra.clustername)']
+            Observer_user_input_remote_command_execution_type: ['sshpass']
+
   - job_name: Observer_$($Config.TestInfra.clustername)_CVM_${ip}_links_dump_2009_stargate
     metrics_path: /nutanix-observer/Observer_INPUT_PARSER/Observer_INPUT_PARSER.sh
     scrape_interval: 30s
@@ -118,11 +185,27 @@ foreach ($ip in $CVMIPs) {
             Observer_user_input_target_cluster_name: ['$($Config.TestInfra.clustername)']
             Observer_user_input_remote_command_execution_type: ['sshpass']
 
+  - job_name: Observer_$($Config.TestInfra.clustername)_CVM_${ip}_shell_ifconfig_eth0_ifconfig_eth1
+    metrics_path: /nutanix-observer/Observer_INPUT_PARSER/Observer_INPUT_PARSER.sh
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['$($prometheusip):80']
+    params:
+            Observer_user_input_action: ['Nutanix_Observer_Collect_Metric']
+            Observer_user_input_command_target_type: ['CVM']
+            Observer_user_input_target_ip_address: ['$ip']
+            Observer_user_input_target_user_id: ['$($CVMsshUser)']
+            Observer_user_input_password: ['$($Config.Target.CVMsshpassword)']
+            Observer_user_input_command_type: ['shell']
+            Observer_user_input_command: ['ifconfig eth0;ifconfig eth1']
+            Observer_user_input_target_cluster_name: ['$($Config.TestInfra.clustername)']
+            Observer_user_input_remote_command_execution_type: ['sshpass']
+
 
 "@
 }
 foreach ($ip in $HostIPs) {
-  if ($null -ne $Config.TestInfra.HostGPUs){
+  if ($Config.TestInfra.HostGPUs -ne "None"){
   $prometheusconfig += @"
   - job_name: Observer_$($Config.TestInfra.clustername)_AHV_${ip}_shell_nvidia_smi
     metrics_path: /nutanix-observer/Observer_INPUT_PARSER/Observer_INPUT_PARSER.sh
