@@ -13,9 +13,16 @@ Function Set-HushloginCVM {
         # Build the command and set affinity using SSH
         $command = "allssh touch .hushlogin"
         $password = ConvertTo-SecureString "$CVMsshpassword" -AsPlainText -Force
-        $HostCredential = New-Object System.Management.Automation.PSCredential ("$CVMsshuser", $password)
+        $HostCredential = New-Object System.Management.Automation.PSCredential ($CVMsshuser, $password)
         $session = New-SSHSession -ComputerName $ClusterIP -Credential $HostCredential -AcceptKey -KeepAliveInterval 5 -ErrorAction Stop
-        $SSHOutput = (Invoke-SSHCommand -Index $session.SessionId -Command $command -Timeout 7200).output
+        #$SSHOutput = (Invoke-SSHCommand -Index $session.SessionId -Command $command -Timeout 7200).output
+        $sshStream = New-SSHShellStream -SessionId $session.SessionId
+        $sshStream.WriteLine($command)
+        $streamOut = $sshstream.Read()
+        while ($streamOut -notlike "*NTNX*:~$ ") {
+            Start-Sleep -s 10
+            $streamOut = $sshstream.Read()
+        }
     }
     catch {
         Write-Log -Message $_ -Level Warn
