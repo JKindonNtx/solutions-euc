@@ -12,9 +12,8 @@ This document covers the following subject areas:
 - Benefits of running Citrix Virtual Apps and Desktops with Flow Network Security
 - Security Design and configuration considerations for building a Secure Citrix Virtual Apps and Desktops solution on Nutanix
 - Network Design and configuration considerations
-- Example Policy Configuration
-- Quarantine Virtual Machines
-- Isolate Virtual Machines
+- Example Configuration
+- Creating Security Policies
 - Security Logging
 - Performance Impact of Flow Network Security
 - Conclusion
