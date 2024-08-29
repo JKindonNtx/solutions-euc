@@ -23,7 +23,7 @@ A single category can have multiple values assigned, this makes designing Citrix
 
 ### Citrix Virtual Delivery Agents
 
-- Citrix_VDA
+- Citrix VDA
   - General
   - Secure
 
@@ -50,7 +50,7 @@ _Table: Creating Security Policies: Addresses_
 | Domain Services | Citrix Relevant Domain Controllers | 10.20.30.1-4 |
 | VLAN 123 | Citrix VLAN - Infrastructure | 10.20.40.0/24 |
 | VLAN 124 | General VDA Network | 10.20.50.0/24 |
-| VLAN 125 | Secure VDA Network | 10.20.50.0/24 |
+| VLAN 125 | Secure VDA Network | 10.20.60.0/24 |
 
 ## Services
 
