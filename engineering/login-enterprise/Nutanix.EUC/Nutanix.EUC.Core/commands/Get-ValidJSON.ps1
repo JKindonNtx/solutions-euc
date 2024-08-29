@@ -303,6 +303,14 @@ The configuration file to parse and validate
             $ErrorCount ++
         }
 
+        #Target.Host_root_password
+        if ($configFileData.Test.StartObserverMonitoring -eq $true) {
+            If ($configFileData.Target.psobject.Properties.Name -notcontains "Host_root_password"){
+                Write-Log -Message "You are missing the Target.Host_root_password object in your JSON file. This is required for Observer monitoring settings" -Level Error
+                $ErrorCount ++
+            }
+        }
+
         #endregion Test Section
 
         # Validate based on error count
