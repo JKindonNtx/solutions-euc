@@ -1,4 +1,4 @@
-# Performance Impact of Flow Network Security
+# Performance Impact of Flow Network Security Next-Gen
 
 We measured the performance impact of enabling Flow Network Security with the following test runs.
 

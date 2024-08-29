@@ -2,7 +2,7 @@
 
 ## Custom Machine Categories with Nutanix Playbooks
 
-We used a custom playbook to automatically tag the MCS deployed VMs with the correct VDA category. Link at the bottom of this section.
+We used a custom playbook to automatically categorize the deployed virtual machines with the correct class of category. The link on implementing this is at the bottom of this appendix.
 
 ## Network
 
@@ -81,4 +81,4 @@ _Table: EUX Measurement Tuning Settings_
 4.  [Login Enterprise Workload Templates](https://support.loginvsi.com/hc/en-us/sections/360001765419-Workload-Templates)
 5.  [Citrix DaaS Documentation](https://docs.citrix.com/en-us/citrix-daas/overview)
 6.  [Microsoft SQL Server on Nutanix](https://portal.nutanix.com/page/documents/solutions/details?targetId=BP-2015-Microsoft-SQL-Server:BP-2015-Microsoft-SQL-Server)
-7.  [Auto Categorize New VMs](https://www.nutanix.dev/playbooks/auto-categorize-new-vms/)
+7.  [Custom Machine Categories with Nutanix Playbooks](https://www.nutanix.dev/playbooks/auto-categorize-new-vms/)

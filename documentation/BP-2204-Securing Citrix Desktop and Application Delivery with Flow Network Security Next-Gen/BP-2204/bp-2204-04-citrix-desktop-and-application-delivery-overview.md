@@ -1,4 +1,4 @@
-# Citrix Desktop and Application Delivery Solution Overview
+# Citrix Desktop and Application Delivery Overview
 
 Both Citrix Virtual Apps and Desktops and Citrix Desktop as a Service (DaaS) are desktop virtualization solutions that transform desktops and applications into secure, on-demand services available to any user, anywhere, on any device. With Citrix solutions, you can deliver individual Windows, web, and software as a service (SaaS) applications and even full virtual desktops to PCs, Macs, tablets, smartphones, laptops, and thin clients with a high-definition user experience.
 
@@ -15,7 +15,10 @@ Cloud Connector
 : The Cloud Connector runs on servers in the datacenter and serves as a communication channel between Citrix DaaS and the datacenter. It enables authentication by allowing you to use Active Directory forests and domains, supports Citrix DaaS resource publishing, and facilitates machine catalog provisioning while removing the need to manage Citrix DaaS delivery infrastructure components such as Delivery Controllers, SQL Server, Director, StoreFront, Licensing, and Citrix Gateway. Cloud Connectors are only used in a Citrix DaaS deployment.
 
 Studio
-: Citrix Studio is the management console that allows you to configure and manage your Citrix DaaS environment. It provides different wizard-based deployment or configuration scenarios to publish resources using desktops or applications.
+: Citrix Studio is the management console that allows you to configure and manage your Citrix environment. It provides different wizard-based deployment or configuration scenarios to publish resources using desktops or applications.
+
+Web Studio
+: Citrix Web Studio is the HTML 5 web management console that allows you to configure and manage your Citrix environment. It provides different wizard-based deployment or configuration scenarios to publish resources using desktops or applications.
 
 Machine Creation Services (MCS)
 : Machine Creation Services is the building mechanism of the Citrix Delivery Controller that automates and orchestrates desktop deployment using a single image. MCS communicates with the orchestration layer of your hypervisor, providing a robust and flexible method of image management.
@@ -34,6 +37,18 @@ FlexCast
 
 StoreFront
 : StoreFront is an enterprise app store that aggregates applications and desktops from Citrix Virtual Apps and Desktops sites and Citrix DaaS into a single store for users to access published resources.
+
+Director
+: Citrix Director is a HTML 5 web portal offering basic analytics for your Citrix environment including login times, session metrics, and application usage.
+
+Licensing
+: Citrix Licensing is a central web management console to issue, revoke, and manage licenses relevant to your Citrix environment..
+
+Workspace Environment Management
+: Citrix Workspace Environment Management (WEM) provides central user environment management providing the ability to apply policy, security measures, and optimizations to your users and VDAs.
+
+Session Recording
+: Citrix Session Recording provides the ability to record a users session activity to a central repository using policy or triggers.
 
 NetScaler
 : NetScaler provides application delivery and secure remote access for applications published by Citrix Virtual Apps and Desktops and Citrix DaaS. NetScaler provides both gateway capabilities for remote access, and load balancing capabilities for service resiliency.
