@@ -1,0 +1,5 @@
+# Conclusion
+
+The combined Citrix on Nutanix solution provides a single high-density platform for virtual desktop delivery. This modular, linearly scaling approach lets you grow Virtual Apps and Desktops and Citrix DaaS deployments easily. Localized and distributed caching and integrated disaster recovery enable quick deployments and simplify day-to-day operations. Robust self-healing and multistorage controllers deliver high availability in the face of failure or rolling upgrades.
+
+On Nutanix, available host CPU resources drive Citrix user density, rather than any I/O or resource bottlenecks for virtual desktops. Login Enterprise test results showed densities at 180 sessions per node for virtual workloads running the Login Enterprise knowledge worker workload. Nutanix offers a pay-as-you grow model that works like public cloud.
