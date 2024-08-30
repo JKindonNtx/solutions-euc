@@ -6,18 +6,16 @@ This best practice guide is part of the Nutanix Solutions Library. We wrote it f
 
 This document covers the following subject areas:
 
-- Nutanix Management Architecture Overview
-- Citrix Desktop and Application Delivery Overview
-- Nutanix Flow Network Security Next-Gen Overview
-- Citrix Desktop and Application Delivery with Nutanix Flow Network Security Next-Gen
-- Security Design Considerations
-- Network Design Considerations
-- Example Configuration
-- Creating Security Policies
-- Security Logging
-- Performance Impact of Flow Network Security Next-Gen
-- Conclusion
-- Appendix
+- Nutanix management architecture overview
+- Citrix desktop and application delivery overview
+- Nutanix Flow Network Security Next-Gen overview
+- Citrix desktop and application delivery with Nutanix Flow Network Security Next-Gen
+- Security design considerations
+- Network design considerations
+- An example configuration <!--JK: of what?-->
+- Creating Network Security policies
+- Network Security logging
+- The performance impact of Flow Network Security Next-Gen
 
 ## Document Version History 
 

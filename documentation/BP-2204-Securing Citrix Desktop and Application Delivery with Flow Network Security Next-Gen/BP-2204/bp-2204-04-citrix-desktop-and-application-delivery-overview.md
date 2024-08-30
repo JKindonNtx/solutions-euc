@@ -4,15 +4,18 @@ Both Citrix Virtual Apps and Desktops and Citrix Desktop as a Service (DaaS) are
 
 Both solutions provides a complete virtual desktop and application delivery system by integrating several distributed components with advanced configuration tools that simplify the creation and real-time management of the virtual desktop infrastructure (VDI).
 
+<!--JK Probably a bit of superflous workding:
+
 Both solutions deliver the same capability, with differing components and considerations: 
+-->
 
 The following are the core components of a Citrix Delivery Solution.
 
 Delivery Controller
-: The Delivery Controller authenticates users, manages the assembly of users' virtual desktop environments, and brokers connections between users and their virtual desktops. It's installed on servers in the datacenter and controls the state of the desktops, starting and stopping them based on demand and administrative configuration. In some editions, the Citrix license needed to run Citrix Virtual Apps and Desktops also includes profile management to manage user personalization settings in virtualized or physical Windows environments. In a Citrix DaaS deployment, the Delivery Controller is hosted by Citrix.
+: The Delivery Controller authenticates users, manages the assembly of users' virtual desktop environments, and brokers connections between users and their virtual desktops. It's installed on servers in the datacenter and controls the state of the desktops, starting and stopping them based on demand and administrative configuration. <!--JK: This is superfluous, but also, all versions include CPM :) In some editions, the Citrix license needed to run Citrix Virtual Apps and Desktops also includes profile management to manage user personalization settings in virtualized or physical Windows environments.--> In a Citrix DaaS deployment, the Delivery Controller is hosted by Citrix.
 
 Cloud Connector
-: The Cloud Connector runs on servers in the datacenter and serves as a communication channel between Citrix DaaS and the datacenter. It enables authentication by allowing you to use Active Directory forests and domains, supports Citrix DaaS resource publishing, and facilitates machine catalog provisioning while removing the need to manage Citrix DaaS delivery infrastructure components such as Delivery Controllers, SQL Server, Director, StoreFront, Licensing, and Citrix Gateway. Cloud Connectors are only used in a Citrix DaaS deployment.
+: The Cloud Connector runs on servers in the datacenter and serves as a communication channel between Citrix DaaS and the datacenter. It enables authentication by allowing you to use Active Directory forests and domains, supports Citrix DaaS resource publishing, and facilitates machine catalog provisioning while removing the need to manage Citrix DaaS delivery infrastructure components such as Delivery Controllers, SQL Server, Director, StoreFront, Licensing, and Citrix Gateway. Cloud Connectors are only used in a Citrix DaaS deployment. <!--JK: Probably need to update some of our other docs around this, reading through it, I am not sure how a Cloud Connector replaces StoreFront or a NetScaler. Whoops. I think we should remove this entire sentence across our docs "while removing the need to manage Citrix DaaS delivery infrastructure components such as Delivery Controllers, SQL Server, Director, StoreFront, Licensing, and Citrix Gateway."-->
 
 Studio
 : Citrix Studio is the management console that allows you to configure and manage your Citrix environment. It provides different wizard-based deployment or configuration scenarios to publish resources using desktops or applications.
