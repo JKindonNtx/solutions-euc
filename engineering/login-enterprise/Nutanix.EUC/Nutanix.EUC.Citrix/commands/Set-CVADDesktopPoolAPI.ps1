@@ -42,13 +42,14 @@ function Set-CVADDesktopPoolAPI {
     if ($CloneType -eq "PVS") {
         $CreatePool = $false
     }
-    Else {
+    else {
         $CreatePool = $true
     }
     
     if ($SessionsSupport -eq "MultiSession") {
         $ShutdownDesktopsAfterUse = $false
-    } else {
+    } 
+    else {
         $ShutdownDesktopsAfterUse = $true
     }
 

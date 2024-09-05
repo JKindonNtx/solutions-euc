@@ -27,14 +27,15 @@ function Set-VSICTXDesktopPoolNTNX {
     #Get-XDAuthentication -BearerToken $global:VSICTX_BearerToken
     if ($CloneType -eq "PVS") {
         $CreatePool = $false
-    }
-    Else {
+    } 
+    else {
         $CreatePool = $true
     }
 
     if ($SessionsSupport -eq "MultiSession") {
         $ShutdownDesktopsAfterUse = $false
-    } else {
+    } 
+    else {
         $ShutdownDesktopsAfterUse = $true
     }
     
@@ -55,9 +56,9 @@ function Set-VSICTXDesktopPoolNTNX {
                     Write-Log -Message "Catalog $DesktopPoolName is currently configured to use: $($ProvisioningScheme.MasterImageVM), requested: $ParentVM, recreating" -Level Info
                 }
             }
-        }
-        else {
-            Write-Log -Message "Catalog $DesktopPoolName does not exist, creating" -Level Info
+            else {
+                Write-Log -Message "Catalog $DesktopPoolName does not exist, creating" -Level Info
+            }
         }
     }
     #endregion Check Desktop Group Exists
