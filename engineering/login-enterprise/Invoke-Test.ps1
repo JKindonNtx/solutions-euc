@@ -2557,6 +2557,21 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         }
         #endregion Write config to OutputFolder and Download LE Metrics
 
+        #region download Prometheus data
+        if ($Config.Test.StartObserverMonitoring -eq $true -or $Config.Target.files_prometheus -eq $true) {
+            # Download Prometheus data
+            Write-Log -Message "Download Prometheus data" -Level Info
+            $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv"
+            $TestStart = $vsiresult.started
+            $params = @{
+                TestStarttime       = $TestStart
+                Prometheusip        = $VSI_Prometheus_IP
+                OutputFolder        = $OutputFolder
+            }
+            $Prometheusdataprocessed = Get-Prometheusdata @params
+            $Params = $null
+        #endregion download Prometheuss data
+
         #region Check for RDA File and if exists then move it to the output folder
         #----------------------------------------------------------------------------------------------------------------------------
         if (Test-Path -Path $RDASource) {
