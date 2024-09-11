@@ -144,6 +144,15 @@
         "Files_Cluster_CVM_password": "${Target.CVM_password}", // The Admin account password. Defaults to the same value as the workload cluster.
         "Files_Cluster_CVMsshpassword":  "${Target.CVMsshpassword}", // Used to start/stop curator on the Files Cluster. Defaults to the same value as the workload cluster.
         // -----------------------------------------------------------------------------------
+        // Launcher Cluster Monitoring Block
+        // -----------------------------------------------------------------------------------
+        "Monitor_Launcher_Cluster_Performance": false, // Enables monitoring of the cluster hosting Launchers
+        "Launcher_Cluster_CVM": "MANDATORY_TO_DEFINE", // The CVM of the Cluster hosting Nutanix Launchers
+        "Launcher_Cluster_Host": "MANDATORY_TO_DEFINE", // A host in the cluster by name
+        "Launcher_Cluster_CVM_admin": "MANDATORY_TO_DEFINE", // The Admin account.
+        "Launcher_Cluster_CVM_password": "MANDATORY_TO_DEFINE", // The Admin account password. 
+        "Launcher_Cluster_CVMsshpassword":  "MANDATORY_TO_DEFINE", // Used to start/stop curator on the Launcher Cluster. 
+        // -----------------------------------------------------------------------------------
         // Optional_NetScaler_Block - Leave "NetScaler" value Blank to ignore NetScaler testing. 
         // -----------------------------------------------------------------------------------
         "NetScaler": "MANDATORY_TO_DEFINE", // The Citrix NetScaler NSIP
