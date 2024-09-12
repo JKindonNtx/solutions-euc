@@ -2575,6 +2575,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             }
             $Prometheusdataprocessed = Get-Prometheusdata @params
             $Params = $null
+        }
         #endregion download Prometheuss data
 
         #region Check for RDA File and if exists then move it to the output folder
