@@ -2565,9 +2565,9 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             # Download Prometheus data
             Write-Log -Message "Download Prometheus data" -Level Info
             $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv"
-            $TestStart = $vsiresult.started
             $params = @{
-                TestStarttime       = $TestStart
+                TestStarttime       = $vsiresult.started
+                TestFinishtime      = $vsiresult.finished
                 Prometheusip        = $VSI_Prometheus_IP
                 OutputFolder        = $OutputFolder
                 GPU                 = $GetGPU
@@ -2575,6 +2575,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             }
             $Prometheusdataprocessed = Get-Prometheusdata @params
             $Params = $null
+        }
         #endregion download Prometheuss data
 
         #region Check for RDA File and if exists then move it to the output folder
