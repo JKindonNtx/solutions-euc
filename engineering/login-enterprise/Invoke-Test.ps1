@@ -2559,6 +2559,9 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
 
         #region download Prometheus data
         if ($Config.Test.StartObserverMonitoring -eq $true -or $Config.Target.files_prometheus -eq $true) {
+            if ($Config.TestInfra.HostGPUs -ne "None"){
+                $GetGPU = $true
+            }
             # Download Prometheus data
             Write-Log -Message "Download Prometheus data" -Level Info
             $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv"
@@ -2567,6 +2570,8 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                 TestStarttime       = $TestStart
                 Prometheusip        = $VSI_Prometheus_IP
                 OutputFolder        = $OutputFolder
+                GPU                 = $GetGPU
+                Files               = $Config.Target.files_prometheus
             }
             $Prometheusdataprocessed = Get-Prometheusdata @params
             $Params = $null
@@ -2719,7 +2724,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             $BucketName = $($Config.Test.BucketName)
             # Loop through the test run data files and process each one
             foreach ($File in $Files) {
-                if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*") -or ($File.Name -like "VM Perf Metrics*")) {
+                if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*") -or ($File.Name -like "VM Perf Metrics*") -or ($File.Name -like "Prom*")) {
                     Write-Log -Message "[DATA UPLOAD] Uploading $($File.name) to Influx" -Level Info
                     #Set Azure VM Value - If this is an Azure VM, we will be sending different tags in to Influx. If not, then it's business as usual.
                     if ($NTNXInfra.AzureGuestDetails.IsAzureVM -eq $true) { $IsAzureVM = $true } else { $IsAzureVM = $false }
