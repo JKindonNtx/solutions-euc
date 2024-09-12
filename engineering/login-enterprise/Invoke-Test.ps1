@@ -2720,16 +2720,19 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             Write-Log -Message "[DATA UPLOAD] Processing full test data uploads" -Level Info 
             # Get the test run files and start time
             $Files = Get-ChildItem "$($OutputFolder)\*.csv"
-            # $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv" ##Removed by SvenH
-            # $Started = $vsiresult.started ##Removed by SvenH
-            $BucketName = $($Config.Test.BucketName)
             # Loop through the test run data files and process each one
             foreach ($File in $Files) {
                 if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*") -or ($File.Name -like "VM Perf Metrics*") -or ($File.Name -like "Prom*")) {
                     Write-Log -Message "[DATA UPLOAD] Uploading $($File.name) to Influx" -Level Info
                     #Set Azure VM Value - If this is an Azure VM, we will be sending different tags in to Influx. If not, then it's business as usual.
                     if ($NTNXInfra.AzureGuestDetails.IsAzureVM -eq $true) { $IsAzureVM = $true } else { $IsAzureVM = $false }
+                    if ($File.Name -like "Prom*") {
+                        $BucketName = $($Config.TestInfra.PromBucketName)
+                    } Else {
+                        $BucketName = $($Config.Test.BucketName)
+                    }
                     $DataUploadStopWatch = [system.Diagnostics.Stopwatch]::StartNew()
+                    
                     if (Start-InfluxUpload -influxDbUrl $Config.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $Config.Testinfra.InfluxToken -File $File -BucketName $BucketName -IsAzureVM $IsAzureVM) {
                         $DataUploadStopWatch.Stop()
                         $ElapsedTime = [math]::Round($DataUploadStopWatch.Elapsed.TotalSeconds, 2)
@@ -2765,6 +2768,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                     # We only care about cluster raw data here
                     if (($File.Name -like "cluster raw*")) {
                         Write-Log -Message "[DATA UPLOAD] Uploading $($File.name) to Influx" -Level Info
+                        $BucketName = $($Config.Test.BucketName)
                         $DataUploadStopWatch = [system.Diagnostics.Stopwatch]::StartNew()
                         if (Start-InfluxUpload -influxDbUrl $Config.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $Config.Testinfra.InfluxToken -File $File -BucketName $BucketName) {
                             $DataUploadStopWatch.Stop()
