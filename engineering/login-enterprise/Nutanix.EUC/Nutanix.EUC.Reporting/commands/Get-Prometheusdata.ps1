@@ -4,6 +4,7 @@ function Get-Prometheusdata {
 
     Param (
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $true)][String]$TestStarttime,
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $true)][String]$TestFinishtime,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $true)][String]$Prometheusip,
         [Parameter(Mandatory = $true)][string]$OutputFolder,
         [Parameter(Mandatory = $false)][switch]$GPU,
@@ -11,7 +12,7 @@ function Get-Prometheusdata {
     )
 
     $starttime = [math]::Round((New-TimeSpan -Start (Get-Date "1970-01-01") -End ((Get-Date -Date $TestStarttime).ToUniversalTime())).TotalSeconds)
-    $endTime = [math]::Round((New-TimeSpan -Start (Get-Date "1970-01-01") -End ((Get-Date).ToUniversalTime())).TotalSeconds)
+    $endTime = [math]::Round((New-TimeSpan -Start (Get-Date "1970-01-01") -End ((Get-Date -Date $TestFinishtime).ToUniversalTime())).TotalSeconds)
     
     #region Getting Prometheus data
 
@@ -38,7 +39,7 @@ function Get-Prometheusdata {
             foreach ($result in $ClusterGPUPowerDraw.data.result) {
                 foreach ($value in $result) {
                     foreach ($subvalue in $value.values) {
-                        $timestamp = (([System.DateTimeOffset]::FromUnixTimeSeconds($($subvalue[0]))).DateTime.ToLocalTime()).ToString("s") 
+                        $timestamp = (([System.DateTimeOffset]::FromUnixTimeSeconds($($subvalue[0]))).DateTime).ToString("s") 
                         $ClusterGPUPowerDrawresults | Add-Member -MemberType NoteProperty -Name "Timestamp" -Value $timestamp -Force
                         $ClusterGPUPowerDrawresults | Add-Member -MemberType Noteproperty -Name "Cluster" -Value $($result.metric.target_id) -Force
                         $ClusterGPUPowerDrawresults | Add-Member -MemberType Noteproperty -Name "ProductName" -Value $($result.metric.ProductName) -Force
@@ -74,7 +75,7 @@ function Get-Prometheusdata {
         foreach ($result in $ClusterPowerUsage.data.result) {
             foreach ($value in $result) {
                 foreach ($subvalue in $value.values) {
-                    $timestamp = (([System.DateTimeOffset]::FromUnixTimeSeconds($($subvalue[0]))).DateTime.ToLocalTime()).ToString("s") 
+                    $timestamp = (([System.DateTimeOffset]::FromUnixTimeSeconds($($subvalue[0]))).DateTime).ToString("s") 
                     $ClusterPowerUsageresults | Add-Member -MemberType NoteProperty -Name "Timestamp" -Value $timestamp -Force
                     $ClusterPowerUsageresults | Add-Member -MemberType Noteproperty -Name "hostip" -Value $($result.metric.host_ip) -Force
                     $ClusterPowerUsageresults | Add-Member -MemberType Noteproperty -Name "Watts" -Value $($subvalue[1]) -Force
