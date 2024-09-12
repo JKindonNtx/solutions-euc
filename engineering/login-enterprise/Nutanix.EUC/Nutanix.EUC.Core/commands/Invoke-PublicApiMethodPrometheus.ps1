@@ -73,10 +73,10 @@ function Invoke-PublicApiMethodPrometheus {
             try {
                 $URL = "http://$($Prometheusip):9090/api/v1/query_range"
                 if ($null -ne $Body) {
-                    Invoke-RestMethod -Body $Body -Method $Method -Uri $URL -Headers $Header
+                    Invoke-RestMethod -Body $Body -Method $Method -Uri $URL
                 }
                 else {
-                    Invoke-RestMethod -Method $Method -Uri $URL -Headers $Header
+                    Invoke-RestMethod -Method $Method -Uri $URL
                 }
                 $done = $true
             }
