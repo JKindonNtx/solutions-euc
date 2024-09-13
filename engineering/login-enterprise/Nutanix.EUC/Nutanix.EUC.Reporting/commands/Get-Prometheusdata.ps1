@@ -31,29 +31,61 @@ function Get-Prometheusdata {
             starttime                   = $starttime
             endtime                     = $endtime 
         }
-        $ClusterGPUPowerDraw = Invoke-PublicApiMethodPrometheus @params
+        $ClusterGPU = Invoke-PublicApiMethodPrometheus @params
         $params = $null
     
-       if ($ClusterGPUPowerDraw.status -eq "success") {
-            $ClusterGPUPowerDrawresults = New-Object PSObject  
-            foreach ($result in $ClusterGPUPowerDraw.data.result) {
+       if ($ClusterGPU.status -eq "success") {
+            $ClusterGPUresults = New-Object PSObject  
+            foreach ($result in $ClusterGPU.data.result) {
                 foreach ($value in $result) {
                     foreach ($subvalue in $value.values) {
-                        $timestamp = (([System.DateTimeOffset]::FromUnixTimeSeconds($($subvalue[0]))).DateTime).ToString("s") 
-                        $ClusterGPUPowerDrawresults | Add-Member -MemberType NoteProperty -Name "Timestamp" -Value $timestamp -Force
-                        $ClusterGPUPowerDrawresults | Add-Member -MemberType Noteproperty -Name "prom_Cluster" -Value $($result.metric.target_id) -Force
-                        $ClusterGPUPowerDrawresults | Add-Member -MemberType Noteproperty -Name "prom_ProductName" -Value $($result.metric.ProductName) -Force
-                        $ClusterGPUPowerDrawresults | Add-Member -MemberType Noteproperty -Name "prom_hostip" -Value $($result.metric.target_ip) -Force
-                        $ClusterGPUPowerDrawresults | Add-Member -MemberType Noteproperty -Name "prom_GPU_UUID" -Value $($result.metric.GPU_UUID) -Force
-                        $ClusterGPUPowerDrawresults | Add-Member -MemberType Noteproperty -Name "Watts" -Value $($subvalue[1]) -Force
-                        $ClusterGPUPowerDrawresults | Export-Csv -Path $ClusterGPUPowerDrawfile -NoTypeInformation -Appen
+                        $timestamp = (get-date (([System.DateTimeOffset]::FromUnixTimeSeconds($($subvalue[0]))).DateTime).ToString("s") -Format "u")
+                        $ClusterGPUresults | Add-Member -MemberType NoteProperty -Name "Timestamp" -Value $timestamp -Force
+                        $ClusterGPUresults | Add-Member -MemberType Noteproperty -Name "prom_Cluster" -Value $($result.metric.target_id) -Force
+                        $ClusterGPUresults | Add-Member -MemberType Noteproperty -Name "prom_ProductName" -Value $($result.metric.ProductName) -Force
+                        $ClusterGPUresults | Add-Member -MemberType Noteproperty -Name "prom_hostip" -Value $($result.metric.target_ip) -Force
+                        $ClusterGPUresults | Add-Member -MemberType Noteproperty -Name "prom_GPU_UUID" -Value $($result.metric.GPU_UUID) -Force
+                        $ClusterGPUresults | Add-Member -MemberType Noteproperty -Name "Watts" -Value $($subvalue[1]) -Force
+                        $ClusterGPUresults | Export-Csv -Path $ClusterGPUPowerDrawfile -NoTypeInformation -Appen
                     }
                 }
             }
         } else {
             Write-Log -Message "Failed to retrieve GPU data from Prometheus" -Level Error
         }
+        $ClusterGPUPowerDrawfile = "$($OutputFolder)\Prom-ClusterGPU-Util.csv"
+
+        $params = @{
+            Prometheusip                = $Prometheusip 
+            PrometheusQuery             = "shell_nvidia_smi_q{target_id=~'.*',GPU_UUID=~'.*',target_type='AHV',target_ip=~'.*',metric_unit='Percent',metric='GPU Utilization'}"
+            starttime                   = $starttime
+            endtime                     = $endtime 
+        }
+        $ClusterGPU = Invoke-PublicApiMethodPrometheus @params
+        $params = $null
+    
+       if ($ClusterGPU.status -eq "success") {
+            $ClusterGPUresults = New-Object PSObject  
+            foreach ($result in $ClusterGPU.data.result) {
+                foreach ($value in $result) {
+                    foreach ($subvalue in $value.values) {
+                        $timestamp = (get-date (([System.DateTimeOffset]::FromUnixTimeSeconds($($subvalue[0]))).DateTime).ToString("s") -Format "u")
+                        $ClusterGPUresults | Add-Member -MemberType NoteProperty -Name "Timestamp" -Value $timestamp -Force
+                        $ClusterGPUresults | Add-Member -MemberType Noteproperty -Name "prom_Cluster" -Value $($result.metric.target_id) -Force
+                        $ClusterGPUresults | Add-Member -MemberType Noteproperty -Name "prom_ProductName" -Value $($result.metric.ProductName) -Force
+                        $ClusterGPUresults | Add-Member -MemberType Noteproperty -Name "prom_hostip" -Value $($result.metric.target_ip) -Force
+                        $ClusterGPUresults | Add-Member -MemberType Noteproperty -Name "prom_GPU_UUID" -Value $($result.metric.GPU_UUID) -Force
+                        $ClusterGPUresults | Add-Member -MemberType Noteproperty -Name "Percent" -Value $($subvalue[1]) -Force
+                        $ClusterGPUresults | Export-Csv -Path $ClusterGPUPowerDrawfile -NoTypeInformation -Appen
+                    }
+                }
+            }
+        } else {
+            Write-Log -Message "Failed to retrieve GPU data from Prometheus" -Level Error
+        }
+
     }
+
 
     if ($Files){
         $ClusterFilesIOPSfile = "$($OutputFolder)\Prom-ClusterFilesIOPS.csv"
@@ -72,7 +104,7 @@ function Get-Prometheusdata {
             foreach ($result in $ClusterFilesIOPS.data.result) {
                 foreach ($value in $result) {
                     foreach ($subvalue in $value.values) {
-                        $timestamp = (([System.DateTimeOffset]::FromUnixTimeSeconds($($subvalue[0]))).DateTime).ToString("s") 
+                        $timestamp = (get-date (([System.DateTimeOffset]::FromUnixTimeSeconds($($subvalue[0]))).DateTime).ToString("s") -Format "u") 
                         $ClusterFilesIOPSresults | Add-Member -MemberType NoteProperty -Name "Timestamp" -Value $timestamp -Force
                         $ClusterFilesIOPSresults | Add-Member -MemberType Noteproperty -Name "prom_op_class" -Value $($result.metric.op_class) -Force
                         $ClusterFilesIOPSresults | Add-Member -MemberType Noteproperty -Name "prom_ops" -Value $($result.metric.ops) -Force
@@ -103,7 +135,7 @@ function Get-Prometheusdata {
         foreach ($result in $ClusterPowerUsage.data.result) {
             foreach ($value in $result) {
                 foreach ($subvalue in $value.values) {
-                    $timestamp = (([System.DateTimeOffset]::FromUnixTimeSeconds($($subvalue[0]))).DateTime).ToString("s") 
+                    $timestamp = (get-date (([System.DateTimeOffset]::FromUnixTimeSeconds($($subvalue[0]))).DateTime).ToString("s") -Format "u") 
                     $ClusterPowerUsageresults | Add-Member -MemberType NoteProperty -Name "Timestamp" -Value $timestamp -Force
                     $ClusterPowerUsageresults | Add-Member -MemberType Noteproperty -Name "prom_hostip" -Value $($result.metric.host_ip) -Force
                     $ClusterPowerUsageresults | Add-Member -MemberType Noteproperty -Name "Watts" -Value $($subvalue[1]) -Force
