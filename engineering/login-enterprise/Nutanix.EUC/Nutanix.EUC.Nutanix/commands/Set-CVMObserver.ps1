@@ -275,7 +275,7 @@ if ($Config.Target.files_prometheus -eq $true) {
       $HostCredential = New-Object System.Management.Automation.PSCredential ($prometheussshuser, $password)
       $session = New-SSHSession -ComputerName $prometheusip -Credential $HostCredential -AcceptKey -KeepAliveInterval 5 -ErrorAction Stop
       Set-SCPItem -ComputerName $prometheusip -Credential $HostCredential -Path $OutputFile -Destination "/etc/prometheus/" -Force
-      Invoke-RestMethod -Uri "http://$($prometheusip):9090/-/reload" -Method POST
+      Invoke-RestMethod -Uri "http://$($prometheusip):9090/-/reload" -Method POST -ErrorAction Stop
   }
   catch {
       Write-Log -Message $_ -Level Warn
