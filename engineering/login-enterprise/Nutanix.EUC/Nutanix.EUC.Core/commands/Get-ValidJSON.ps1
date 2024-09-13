@@ -305,11 +305,6 @@ The configuration file to parse and validate
                 Write-Log -Message "You are missing the Target.Launcher_Cluster_CVM_password object in your JSON file. This is required for Launcher Cluster Monitoring" -Level Error
                 $ErrorCount ++
             }
-            #Target.Launcher_Cluster_CVMsshpassword
-            if ($ConfigFileData.Target.psobject.Properties.Name -notcontains "Launcher_Cluster_CVMsshpassword") {
-                Write-Log -Message "You are missing the Target.Launcher_Cluster_CVMsshpassword object in your JSON file. This is required for Launcher Cluster Monitoring" -Level Error
-                $ErrorCount ++
-            }
         }
         #endregion Target Section Validation - Launcher Cluster
 

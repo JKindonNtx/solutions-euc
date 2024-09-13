@@ -151,7 +151,6 @@
         "Launcher_Cluster_Host": "MANDATORY_TO_DEFINE", // A host in the cluster by name
         "Launcher_Cluster_CVM_admin": "MANDATORY_TO_DEFINE", // The Admin account.
         "Launcher_Cluster_CVM_password": "MANDATORY_TO_DEFINE", // The Admin account password. 
-        "Launcher_Cluster_CVMsshpassword":  "MANDATORY_TO_DEFINE", // Used to start/stop curator on the Launcher Cluster. 
         // -----------------------------------------------------------------------------------
         // Optional_NetScaler_Block - Leave "NetScaler" value Blank to ignore NetScaler testing. 
         // -----------------------------------------------------------------------------------

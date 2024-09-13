@@ -713,6 +713,26 @@ if (-not $AzureMode.IsPresent) {
 }
 #endregion Validate vSphere and ESXi Host Access if required
 
+#region Validate Launcher Cluster Access if required
+if ($Config.Target.Monitor_Launcher_Cluster_Performance -eq $true) {
+    Write-Log -Message "Validating Launcher Cluster Details" -Level Info
+    $params = @{
+        TargetCVM         = $Config.Target.Launcher_Cluster_CVM
+        TargetCVMAdmin    = $Config.Target.Launcher_Cluster_CVM_admin
+        TargetCVMPassword = $Config.Target.Launcher_Cluster_CVM_password
+    }
+    $LauncherClusterHosts = Get-NTNXHostDetail @params
+
+    if (-not [System.String]::IsNullOrEmpty($LauncherClusterHosts) -and $LauncherClusterHosts.Count -gt 0) {
+        Write-Log -Message "Launcher Cluster Access validated successfully. Launcher Cluster has $($LauncherClusterHosts.Count) Hosts" -Level Info
+    }
+    else {
+        Write-Log -message "Launcher Cluster Access not validated successfully. Exiting Script. Please check Launcher Cluster details in the test JSON file." -Level Warn
+        Exit 1
+    }
+}
+#endregion Validate Launcher Cluster Access if required
+
 if ($ValidateOnly.IsPresent) {
     Write-Log -Message "Script is operating in a validation only mode. Exiting script before any form of execution occurs" -Level Info
     Exit 0
@@ -2265,8 +2285,8 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             # This is not an Azure configuration
             $Params = @{
                 OutputFolder                 = $OutputFolder 
-                DurationInMinutes            = $ImageSpec_DurationInMinutes #$VSI_Target_DurationInMinutes 
-                RampupInMinutes              = $Config.Test.Target_RampupInMinutes #$VSI_Target_RampupInMinutes 
+                DurationInMinutes            = $ImageSpec_DurationInMinutes
+                RampupInMinutes              = $Config.Test.Target_RampupInMinutes
                 Hostuuid                     = $Hostuuid 
                 IPMI_ip                      = $IPMI_ip 
                 Path                         = $Scriptroot 
@@ -2690,6 +2710,8 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             $TestDetail = $NTNXInfra.TestInfra.TestName -Split '_Run'
             $Run = $TestDetail[1]
 
+            
+            #region upload boot phase Data to Influx
             # Get the boot files and start time
             if (-not $AzureMode.IsPresent) {
                 Write-Log -Message "[DATA UPLOAD] Processing Boot phase data uploads" -Level Info 
@@ -2727,7 +2749,9 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                     }
                 }
             }
+            #endregion upload boot phase Data to Influx
 
+            #region upload full test data to Influx
             Write-Log -Message "[DATA UPLOAD] Processing full test data uploads" -Level Info 
             # Get the test run files and start time
             $Files = Get-ChildItem "$($OutputFolder)\*.csv"
@@ -2755,6 +2779,8 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                     Write-Log -Message "[DATA UPLOAD] Skipped uploading file $($File.Name) to Influx" -Level Info
                 }
             }
+            #endregion upload full test data to Influx
+
             #region Upload Files Hosting Data to Influx
             if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
                 Write-Log -Message "[DATA UPLOAD] Uploading Files Cluster $($Config.Target.Files_Cluster_CVM) Metrics to Influx" -Level Info
