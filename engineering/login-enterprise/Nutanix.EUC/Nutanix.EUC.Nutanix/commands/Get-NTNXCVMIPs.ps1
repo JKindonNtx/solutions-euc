@@ -20,8 +20,9 @@ function Get-NTNXCVMIPs {
 
     foreach ($item in $Hosts) {
         [void]$HostCVMips.Add($item.service_vmexternal_ip)
-        Write-Log -Message "Adding CVM IP: $($item.service_vmexternal_ip) to Array" -Level Info
     }
+
+    Write-Log -Message "Added $(($HostCVMips | Measure-Object).Count) Host CVM IPs to Array for Observer monitoring" -Level Info
 
     return $HostCVMips
 

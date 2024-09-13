@@ -20,8 +20,9 @@ function Get-NTNXHostIPs {
 
     foreach ($item in $Hosts) {
         [void]$Hostips.Add("$($item.hypervisor_address)")
-        Write-Log -Message "Adding Host IP: $($item.hypervisor_address) to Array" -Level Info
     }
+
+    Write-Log -Message "Added $(($Hostips | Measure-Object).Count) Host IPs to Array for Observer monitoring" -Level Info
 
     return $Hostips
 
