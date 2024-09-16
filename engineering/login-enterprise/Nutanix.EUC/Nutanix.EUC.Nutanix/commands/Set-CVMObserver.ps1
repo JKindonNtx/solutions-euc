@@ -153,7 +153,7 @@ foreach ($ip in $CVMIPs) {
             Observer_user_input_target_cluster_name: ['$($Config.TestInfra.clustername)']
             Observer_user_input_remote_command_execution_type: ['sshpass']
 
-    - job_name: Observer_$($Config.TestInfra.clustername)_CVM_${ip}_links_dump_2009_vdisk_stats
+  - job_name: Observer_$($Config.TestInfra.clustername)_CVM_${ip}_links_dump_2009_vdisk_stats
     metrics_path: /nutanix-observer/Observer_INPUT_PARSER/Observer_INPUT_PARSER.sh
     scrape_interval: 30s
     static_configs:
@@ -169,7 +169,7 @@ foreach ($ip in $CVMIPs) {
             Observer_user_input_target_cluster_name: ['$($Config.TestInfra.clustername)']
             Observer_user_input_remote_command_execution_type: ['sshpass']
 
-    - job_name: Observer_$($Config.TestInfra.clustername)_CVM_${ip}_links_dump_2009_disk_io_stats
+  - job_name: Observer_$($Config.TestInfra.clustername)_CVM_${ip}_links_dump_2009_disk_io_stats
     metrics_path: /nutanix-observer/Observer_INPUT_PARSER/Observer_INPUT_PARSER.sh
     scrape_interval: 30s
     static_configs:
