@@ -2203,7 +2203,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             #This is not an Azure test
             if ($Config.psobject.Properties.Name -contains "AdvancedDiagnostics") {
                 Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Job will be started." -Level Info
-                Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Test execution will be extended due to collect_perf data collection." -Level Warning
+                Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Test execution will be extended due to collect_perf data collection." -Level Warn
                 if ($Config.AdvancedDiagnostics.EnableCollectPerf -eq $true) {
                     $params = @{
                         ClusterIP      = $Config.Target.CVM
