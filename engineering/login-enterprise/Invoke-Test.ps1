@@ -91,7 +91,7 @@ Param(
 #endregion Params
 
 ##Testing
-#$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Reference Test Configs\jk-esxi-nvd-ra-2024\Config-Citrix2402-ESXi-WS2022-NVD-Files.jsonc"
+#$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-W11-PVS-AMD-AHV-BPG-DIAG.jsonc"
 #$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-LoginEnterpriseGlobal.jsonc"
 #$Type = "CitrixVAD"
 ##Testing
@@ -2202,19 +2202,19 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         if (-not $AzureMode.IsPresent) {
             #This is not an Azure test
             if ($Config.psobject.Properties.Name -contains "AdvancedDiagnostics") {
-                Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Job will be started." -Level Info
-                Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Test execution will be extended due to collect_perf data collection." -Level Warn
                 if ($Config.AdvancedDiagnostics.EnableCollectPerf -eq $true) {
+                    Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Job will be started." -Level Info
+                    Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Test execution will be extended due to collect_perf data collection." -Level Warn
                     $params = @{
                         ClusterIP      = $Config.Target.CVM
                         CVMSSHPassword = $Config.Target.CVMsshpassword
                         Action         = "Start"
-                        SampleInterval = $Config.AdvancedDiagnostics.PerfCollectSampleInterval
+                        SampleInterval = $Config.AdvancedDiagnostics.CollectPerfSampleInterval
                     }
-                }
-                Set-NTNXCollectPerf @params
+                    Set-NTNXCollectPerf @params
                 
-                $params = $null
+                    $params = $null
+                }
             }
         }
         #endregion Advanced Diagnostics - perf_collect - Start
@@ -2501,18 +2501,18 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         if (-not $AzureMode.IsPresent) {
             #This is not an Azure test
             if ($Config.psobject.Properties.Name -contains "AdvancedDiagnostics") {
-                Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Job will be stopped." -Level Info
                 if ($Config.AdvancedDiagnostics.EnableCollectPerf -eq $true) {
+                    Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Job will be stopped." -Level Info
                     $params = @{
                         ClusterIP      = $Config.Target.CVM
                         CVMSSHPassword = $Config.Target.CVMsshpassword
                         Action         = "Stop"
-                        SampleInterval = $Config.AdvancedDiagnostics.PerfCollectSampleInterval
+                        SampleInterval = $Config.AdvancedDiagnostics.CollectPerfSampleInterval
                     }
-                }
-                Set-NTNXCollectPerf @params
+                    Set-NTNXCollectPerf @params
                 
-                $params = $null
+                    $params = $null
+                }
             }
         }
         #endregion Advanced Diagnostics - perf_collect - Stop
