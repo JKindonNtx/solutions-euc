@@ -338,6 +338,22 @@ The configuration file to parse and validate
 
         #endregion Test Section
 
+        #region Advanced Diagnostics
+        if ($ConfigFileData.psobject.Properties.Name -contains "AdvancedDiagnostics") {
+            # we have the Advanced Diagnostics Element in the Config file
+            #AdvancedDiagnostics.EnableCollectPerf
+            if ($ConfigFileData.AdvancedDiagnostics.psobject.Properties.Name -notcontains "EnableCollectPerf") {
+                Write-Log -Message "You are missing the AdvancedDiagnostics.EnableCollectPerf object in your JSON file. This is required for collect_perf monitoring" -Level Error
+                $ErrorCount ++
+            }
+            #AdvancedDiagnostics.CollectPerfSampleInterval
+            if ($ConfigFileData.AdvancedDiagnostics.psobject.Properties.Name -notcontains "CollectPerfSampleInterval") {
+                Write-Log -Message "You are missing the AdvancedDiagnostics.CollectPerfSampleInterval object in your JSON file. This is required for collect_perf monitoring" -Level Error
+                $ErrorCount ++
+            }
+        }
+        #endregion Advanced Diagnostics
+
         # Validate based on error count
         if ($ErrorCount -gt 0) {
             $JSONPass = $false

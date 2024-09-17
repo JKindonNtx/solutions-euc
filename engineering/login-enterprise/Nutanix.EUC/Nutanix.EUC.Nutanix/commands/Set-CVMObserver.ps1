@@ -153,38 +153,6 @@ foreach ($ip in $CVMIPs) {
             Observer_user_input_target_cluster_name: ['$($Config.TestInfra.clustername)']
             Observer_user_input_remote_command_execution_type: ['sshpass']
 
-  - job_name: Observer_$($Config.TestInfra.clustername)_CVM_${ip}_links_dump_2009_vdisk_stats
-    metrics_path: /nutanix-observer/Observer_INPUT_PARSER/Observer_INPUT_PARSER.sh
-    scrape_interval: 30s
-    static_configs:
-      - targets: ['$($prometheusip):80']
-    params:
-            Observer_user_input_action: ['Nutanix_Observer_Collect_Metric']
-            Observer_user_input_command_target_type: ['CVM']
-            Observer_user_input_target_ip_address: ['$ip']
-            Observer_user_input_target_user_id: ['$($CVMsshUser)']
-            Observer_user_input_password: ['$($Config.Target.CVMsshpassword)']
-            Observer_user_input_command_type: ['links_dump']
-            Observer_user_input_command: ['http:0:2009/vdisk_stats']
-            Observer_user_input_target_cluster_name: ['$($Config.TestInfra.clustername)']
-            Observer_user_input_remote_command_execution_type: ['sshpass']
-
-  - job_name: Observer_$($Config.TestInfra.clustername)_CVM_${ip}_links_dump_2009_disk_io_stats
-    metrics_path: /nutanix-observer/Observer_INPUT_PARSER/Observer_INPUT_PARSER.sh
-    scrape_interval: 30s
-    static_configs:
-      - targets: ['$($prometheusip):80']
-    params:
-            Observer_user_input_action: ['Nutanix_Observer_Collect_Metric']
-            Observer_user_input_command_target_type: ['CVM']
-            Observer_user_input_target_ip_address: ['$ip']
-            Observer_user_input_target_user_id: ['$($CVMsshUser)']
-            Observer_user_input_password: ['$($Config.Target.CVMsshpassword)']
-            Observer_user_input_command_type: ['links_dump']
-            Observer_user_input_command: ['http:0:2009/disk_io_stats']
-            Observer_user_input_target_cluster_name: ['$($Config.TestInfra.clustername)']
-            Observer_user_input_remote_command_execution_type: ['sshpass']
-
   - job_name: Observer_$($Config.TestInfra.clustername)_CVM_${ip}_shell_mpstat_A_all
     metrics_path: /nutanix-observer/Observer_INPUT_PARSER/Observer_INPUT_PARSER.sh
     scrape_interval: 30s

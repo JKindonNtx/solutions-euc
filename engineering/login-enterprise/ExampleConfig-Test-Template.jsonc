@@ -297,5 +297,9 @@
         "Disk_Encryption": "", //Filled via Image Tattoo job
         "Disk_Write_Accelerator": "", //Filled via Image Tattoo job
         "Disk_TempDisk_Size": "" //Filled via Image Tattoo job
+    },
+    "AdvancedDiagnostics": {
+        "EnableCollectPerf": false, // Collects performance data from the CVM using collect_perf
+        "CollectPerfSampleInterval": 30 // The interval in seconds for collect_perf collection
     }
 }

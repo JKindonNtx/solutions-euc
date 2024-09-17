@@ -2198,6 +2198,27 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
 
         #endregion Nutanix Curator Stop
 
+        #region Advanced Diagnostics - perf_collect - Start
+        if (-not $AzureMode.IsPresent) {
+            #This is not an Azure test
+            if ($Config.psobject.Properties.Name -contains "AdvancedDiagnostics") {
+                Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Job will be started." -Level Info
+                Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Test execution will be extended due to collect_perf data collection." -Level Warning
+                if ($Config.AdvancedDiagnostics.EnableCollectPerf -eq $true) {
+                    $params = @{
+                        ClusterIP      = $Config.Target.CVM
+                        CVMSSHPassword = $Config.Target.CVMsshpassword
+                        Action         = "Start"
+                        SampleInterval = $Config.AdvancedDiagnostics.PerfCollectSampleInterval
+                    }
+                }
+                Set-NTNXCollectPerf @params
+                
+                $params = $null
+            }
+        }
+        #endregion Advanced Diagnostics - perf_collect - Start
+
         #region Start the test
         #----------------------------------------------------------------------------------------------------------------------------
 
@@ -2475,6 +2496,26 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
 
         Wait-LETest -testId $testId -waitParams $Waitparams
         #endregion Wait for test to finish
+
+        #region Advanced Diagnostics - perf_collect - Stop
+        if (-not $AzureMode.IsPresent) {
+            #This is not an Azure test
+            if ($Config.psobject.Properties.Name -contains "AdvancedDiagnostics") {
+                Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Job will be stopped." -Level Info
+                if ($Config.AdvancedDiagnostics.EnableCollectPerf -eq $true) {
+                    $params = @{
+                        ClusterIP      = $Config.Target.CVM
+                        CVMSSHPassword = $Config.Target.CVMsshpassword
+                        Action         = "Stop"
+                        SampleInterval = $Config.AdvancedDiagnostics.PerfCollectSampleInterval
+                    }
+                }
+                Set-NTNXCollectPerf @params
+                
+                $params = $null
+            }
+        }
+        #endregion Advanced Diagnostics - perf_collect - Stop
 
         #region Cleanup monitoring job
         #----------------------------------------------------------------------------------------------------------------------------
