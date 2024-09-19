@@ -283,7 +283,7 @@ function Start-InfluxUpload {
                     # Looop through headers and process data values
                     foreach ($Header in $Headers) {
                         if (($header -ne "Timestamp")) {
-                            if (($header -like "*Id") -or ($header -like "*Name*") -or ($header -like "*timer*") -or ($header -like "*instance*") -or ($header -like "*userSessionKey*")) {
+                            if (($header -like "*Id") -or ($header -like "*Name*") -or ($header -like "*timer*") -or ($header -like "*instance*") -or ($header -like "*userSessionKey*") -or ($header -like "*tg_*")) {
                                 $Data = $($line.$($Header))
                                 $tag = $tag + ",$($Header)=$($Data)"
                             }
