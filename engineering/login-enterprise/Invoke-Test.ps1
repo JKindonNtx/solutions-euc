@@ -406,6 +406,7 @@ if ($Type -eq "CitrixVAD" -or "CitrixDaaS"){
 
 #region Mandatory JSON Value Output
 $Mandatory_Undedfined_Config_Entries = Get-Variable -Name VSI* | where-Object {$_.Value -match "MANDATORY_TO_DEFINE"}
+##//JK: Check for Mandatory Undefined Values with the new Variable names!
 
 if ($null -ne $Mandatory_Undedfined_Config_Entries) {
     Write-Log -Message "There are $(($Mandatory_Undedfined_Config_Entries | Measure-Object).Count) Undefined values that must be specified" -Level Warn
@@ -711,6 +712,26 @@ if (-not $AzureMode.IsPresent) {
     }
 }
 #endregion Validate vSphere and ESXi Host Access if required
+
+#region Validate Launcher Cluster Access if required
+if ($Config.Target.Monitor_Launcher_Cluster_Performance -eq $true) {
+    Write-Log -Message "Validating Launcher Cluster Details" -Level Info
+    $params = @{
+        TargetCVM         = $Config.Target.Launcher_Cluster_CVM
+        TargetCVMAdmin    = $Config.Target.Launcher_Cluster_CVM_admin
+        TargetCVMPassword = $Config.Target.Launcher_Cluster_CVM_password
+    }
+    $LauncherClusterHosts = Get-NTNXHostDetail @params
+
+    if (-not [System.String]::IsNullOrEmpty($LauncherClusterHosts) -and $LauncherClusterHosts.Count -gt 0) {
+        Write-Log -Message "Launcher Cluster Access validated successfully. Launcher Cluster has $($LauncherClusterHosts.Count) Hosts" -Level Info
+    }
+    else {
+        Write-Log -message "Launcher Cluster Access not validated successfully. Exiting Script. Please check Launcher Cluster details in the test JSON file." -Level Warn
+        Exit 1
+    }
+}
+#endregion Validate Launcher Cluster Access if required
 
 if ($ValidateOnly.IsPresent) {
     Write-Log -Message "Script is operating in a validation only mode. Exiting script before any form of execution occurs" -Level Info
@@ -1250,13 +1271,21 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             $IPMI_ip = Get-NTNXHostIPMI -NTNXHost $Config.Target.NTNXHost
         }
 
+        # We are going to monitor the files cluster performance metrics
         if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
             # Getting details from Nutanix Files Cluster hosting Files
             $Hostuuid_files_cluster = Get-NTNXHostUUID -NTNXHost $Config.Target.Files_Cluster_Host -TargetCVM $Config.Target.Files_Cluster_CVM -TargetCVMAdmin $VSI_Target_Files_Cluster_CVM_admin -TargetCVMPassword $VSI_Target_Files_Cluster_CVM_password
             $IPMI_ip_files_cluster = Get-NTNXHostIPMI -NTNXHost $Config.Target.Files_Cluster_Host -TargetCVM $Config.Target.Files_Cluster_CVM -TargetCVMAdmin $VSI_Target_Files_Cluster_CVM_admin -TargetCVMPassword $VSI_Target_Files_Cluster_CVM_password
-            # The above $VSI_ variables get parsed and reset at some point - they are set as variables in the config file
+            # The above $VSI_ variables get parsed and reset - they are set as variables in the config file
         }
-        
+
+        # We are going to monitor the launcher cluster performance metrics
+        if ($Config.Target.Monitor_Launcher_Cluster_Performance -eq $true) {
+            # Getting details from Nutanix Cluster hosting launchers
+            $Hostuuid_launcher_cluster = Get-NTNXHostUUID -NTNXHost $Config.Target.Launcher_Cluster_Host -TargetCVM $Config.Target.Launcher_Cluster_CVM -TargetCVMAdmin $Config.Target.Launcher_Cluster_CVM_admin -TargetCVMPassword $Config.Target.Launcher_Cluster_CVM_password
+            $IPMI_ip_launcher_cluster = Get-NTNXHostIPMI -NTNXHost $Config.Target.Launcher_Cluster_Host -TargetCVM $Config.Target.Launcher_Cluster_CVM -TargetCVMAdmin $Config.Target.Launcher_Cluster_CVM_admin -TargetCVMPassword $Config.Target.Launcher_Cluster_CVM_password
+        }
+
         #endregion Get Nutanix Info
 
         #region Configure Desktop Pool
@@ -2256,8 +2285,8 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             # This is not an Azure configuration
             $Params = @{
                 OutputFolder                 = $OutputFolder 
-                DurationInMinutes            = $ImageSpec_DurationInMinutes #$VSI_Target_DurationInMinutes 
-                RampupInMinutes              = $Config.Test.Target_RampupInMinutes #$VSI_Target_RampupInMinutes 
+                DurationInMinutes            = $ImageSpec_DurationInMinutes
+                RampupInMinutes              = $Config.Test.Target_RampupInMinutes
                 Hostuuid                     = $Hostuuid 
                 IPMI_ip                      = $IPMI_ip 
                 Path                         = $Scriptroot 
@@ -2271,14 +2300,14 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
             $Params = @{
                 OutputFolder                 = ($OutputFolder + "\" + "Files_Cluster")
-                DurationInMinutes            = $ImageSpec_DurationInMinutes #$VSI_Target_DurationInMinutes 
-                RampupInMinutes              = $Config.Test.Target_RampupInMinutes #$VSI_Target_RampupInMinutes 
+                DurationInMinutes            = $ImageSpec_DurationInMinutes
+                RampupInMinutes              = $Config.Test.Target_RampupInMinutes
                 Hostuuid                     = $Hostuuid_files_cluster 
                 IPMI_ip                      = $IPMI_ip_files_cluster 
                 Path                         = $Scriptroot 
-                TargetCVM                    = $Config.Target.Files_Cluster_CVM #$VSI_Target_Files_Cluster_CVM # override the default CVM Value
-                TargetCVMAdmin               = $Config.Target.Files_Cluster_CVM_admin #$VSI_Target_Files_Cluster_CVM_admin # override the default CVM Admin Account Value
-                TargetCVMPassword            = $Config.Target.Files_Cluster_CVM_password #$VSI_Target_Files_Cluster_CVM_password # override the default CVM Password Value
+                TargetCVM                    = $Config.Target.Files_Cluster_CVM # override the default CVM Value
+                TargetCVMAdmin               = $Config.Target.Files_Cluster_CVM_admin # override the default CVM Admin Account Value
+                TargetCVMPassword            = $Config.Target.Files_Cluster_CVM_password # override the default CVM Password Value
                 AsJob                        = $true
             }
             $monitoringJob_files = Start-VSINTNXMonitoring @params
@@ -2322,12 +2351,30 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         if ($Config.Target.Files -ne "") {
             $Params = @{
                 OutputFolder                 = $OutputFolder 
-                DurationInMinutes            = $ImageSpec_DurationInMinutes #$VSI_Target_DurationInMinutes 
-                RampupInMinutes              = $Config.Test.Target_RampupInMinutes #$VSI_Target_RampupInMinutes 
+                DurationInMinutes            = $ImageSpec_DurationInMinutes
+                RampupInMinutes              = $Config.Test.Target_RampupInMinutes
                 Path                         = $Scriptroot 
                 AsJob                        = $true
             }
             $monitoringFilesJob = Start-NTNXFilesMonitoring @Params
+            $Params = $null
+        }
+
+        #start Monitoring the Launcher Cluster
+        if ($Config.Target.Monitor_Launcher_Cluster_Performance -eq $true) {
+            $Params = @{
+                OutputFolder                 = ($OutputFolder + "\" + "Launcher_Cluster")
+                DurationInMinutes            = $ImageSpec_DurationInMinutes
+                RampupInMinutes              = $Config.Test.Target_RampupInMinutes
+                Hostuuid                     = $Hostuuid_launcher_cluster 
+                IPMI_ip                      = $IPMI_ip_launcher_cluster 
+                Path                         = $Scriptroot 
+                TargetCVM                    = $Config.Target.Launcher_Cluster_CVM
+                TargetCVMAdmin               = $Config.Target.Launcher_Cluster_CVM_admin
+                TargetCVMPassword            = $Config.Target.Launcher_Cluster_CVM_password
+                AsJob                        = $true
+            }
+            $monitoringJob_launcher_cluster = Start-VSINTNXMonitoring @params
             $Params = $null
         }
 
@@ -2444,6 +2491,10 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             $monitoringFilesJob | Wait-Job | Out-Null
             $monitoringFilesJob | Remove-Job | Out-Null
         }
+        if ($Config.Target.Monitor_Launcher_Cluster_Performance -eq $true) {
+            $monitoringJob_launcher_cluster | Wait-Job | Out-Null
+            $monitoringJob_launcher_cluster | Remove-Job | Out-Null
+        }
         if ($Config.Target.NetScaler -ne "") {
             $monitoringNSJob | Wait-Job | Out-Null
             $monitoringNSJob | Remove-Job | Out-Null
@@ -2502,6 +2553,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             Write-Log -Message "Starting Nutanix Curator Service on the Nutanix Files Cluster $($Config.Target.Files_Cluster_CVM)" -Level Info
             Set-NTNXcurator -ClusterIP $Config.Target.Files_Cluster_CVM -CVMSSHPassword $Config.Target.Files_Cluster_CVMsshpassword -Action "start"
         }
+        
         #endregion Nutanix Curator Start
 
         #region Write config to OutputFolder and Download LE Metrics
@@ -2575,7 +2627,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         #----------------------------------------------------------------------------------------------------------------------------
 
         #region Update Test Dashboard
-        if ($Config.Target.Files -ne "") { $Message = "Starting Nutanix Files Data Clean" } else { $Message = "Skipping Nutanix Files Data Clean" }
+        if ($Config.Test.Delete_Files_Data -eq $true -and $null -ne $Config.Test.Nutanix_Files_Shares) { $Message = "Starting Nutanix Files Data Clean" } else { $Message = "Skipping Nutanix Files Data Clean" }
         $params = @{
             ConfigFile     = $NTNXInfra
             TestName       = $NTNXTestname 
@@ -2658,6 +2710,8 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             $TestDetail = $NTNXInfra.TestInfra.TestName -Split '_Run'
             $Run = $TestDetail[1]
 
+            
+            #region upload boot phase Data to Influx
             # Get the boot files and start time
             if (-not $AzureMode.IsPresent) {
                 Write-Log -Message "[DATA UPLOAD] Processing Boot phase data uploads" -Level Info 
@@ -2695,7 +2749,9 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                     }
                 }
             }
+            #endregion upload boot phase Data to Influx
 
+            #region upload full test data to Influx
             Write-Log -Message "[DATA UPLOAD] Processing full test data uploads" -Level Info 
             # Get the test run files and start time
             $Files = Get-ChildItem "$($OutputFolder)\*.csv"
@@ -2723,6 +2779,8 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                     Write-Log -Message "[DATA UPLOAD] Skipped uploading file $($File.Name) to Influx" -Level Info
                 }
             }
+            #endregion upload full test data to Influx
+
             #region Upload Files Hosting Data to Influx
             if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
                 Write-Log -Message "[DATA UPLOAD] Uploading Files Cluster $($Config.Target.Files_Cluster_CVM) Metrics to Influx" -Level Info
@@ -2761,6 +2819,45 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                 }
             }
             #endregion Upload Files Hosting Data to Influx
+            
+            #region Upload Launcher Cluster Data to Influx
+            if ($Config.Target.Monitor_Launcher_Cluster_Performance -eq $true) {
+                Write-Log -Message "[DATA UPLOAD] Uploading Launcher Cluster $($Config.Target.Launcher_Cluster_CVM) Metrics to Influx" -Level Info
+
+                #alter the file names so we have uniqe influx data
+                $Original_Files = Get-ChildItem "$($OutputFolder)\Launcher_Cluster\*.csv"
+                foreach ($File in $Original_Files) {
+                    try {
+                        Rename-Item -Path $File.FullName -NewName ($File.BaseName + " LauncherHosting" + $File.Extension) -ErrorAction Stop
+                    }
+                    catch {
+                        Write-Log -Message $_ -Level Error
+                    }
+                }
+
+                $Files = Get-ChildItem "$($OutputFolder)\Launcher_Cluster\*.csv"
+
+                foreach ($File in $Files) {
+                    # We only care about cluster raw data here
+                    if (($File.Name -like "cluster raw*")) {
+                        Write-Log -Message "[DATA UPLOAD] Uploading $($File.name) to Influx" -Level Info
+                        $DataUploadStopWatch = [system.Diagnostics.Stopwatch]::StartNew()
+                        if (Start-InfluxUpload -influxDbUrl $Config.Testinfra.InfluxDBurl -ResultsPath $OutputFolder -Token $Config.Testinfra.InfluxToken -File $File -BucketName $BucketName) {
+                            $DataUploadStopWatch.Stop()
+                            $ElapsedTime = [math]::Round($DataUploadStopWatch.Elapsed.TotalSeconds, 2)
+                            Write-Log -Message "[DATA UPLOAD] Took $($ElapsedTime) seconds to finish uploading File $($File.Name) to Influx" -Level Info
+                        }
+                        else {
+                            $DataUploadStopWatch.Stop()
+                            Write-Log -Message "[DATA UPLOAD] Error uploading $($File.name) to Influx" -Level Warn
+                        }
+                    }
+                    else {
+                        Write-Log -Message "[DATA UPLOAD] Skipped uploading File $($File.Name) to Influx" -Level Info
+                    }
+                }
+            }
+            #endregion Upload Launcher Cluster Data to Influx
         }
         else {
             Write-Log -Message "[DATA UPLOAD] Skipping uploading Test Run Data to Influx" -Level Info

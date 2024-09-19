@@ -283,6 +283,31 @@ The configuration file to parse and validate
         }
         #endregion Target Section Validation - Omnissa
 
+        #region Target Section Validation - Launcher Cluster
+        if ($ConfigFileData.Target.Monitor_Launcher_Cluster_Performance -eq $true) {
+            #Target.Launcher_Cluster_CVM
+            if ($ConfigFileData.Target.psobject.Properties.Name -notcontains "Launcher_Cluster_CVM") {
+                Write-Log -Message "You are missing the Target.Launcher_Cluster_CVM object in your JSON file. This is required for Launcher Cluster Monitoring" -Level Error
+                $ErrorCount ++
+            }
+            #Target.Launcher_Cluster_Host
+            if ($ConfigFileData.Target.psobject.Properties.Name -notcontains "Launcher_Cluster_Host") {
+                Write-Log -Message "You are missing the Target.Launcher_Cluster_Host object in your JSON file. This is required for Launcher Cluster Monitoring" -Level Error
+                $ErrorCount ++
+            }
+            #Target.Launcher_Cluster_CVM_admin
+            if ($ConfigFileData.Target.psobject.Properties.Name -notcontains "Launcher_Cluster_CVM_admin") {
+                Write-Log -Message "You are missing the Target.Launcher_Cluster_CVM_admin object in your JSON file. This is required for Launcher Cluster Monitoring" -Level Error
+                $ErrorCount ++
+            }
+            #Target.Launcher_Cluster_CVM_password
+            if ($ConfigFileData.Target.psobject.Properties.Name -notcontains "Launcher_Cluster_CVM_password") {
+                Write-Log -Message "You are missing the Target.Launcher_Cluster_CVM_password object in your JSON file. This is required for Launcher Cluster Monitoring" -Level Error
+                $ErrorCount ++
+            }
+        }
+        #endregion Target Section Validation - Launcher Cluster
+
         #region Test Section
 
         #Test.BucketName
