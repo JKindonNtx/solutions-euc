@@ -91,7 +91,7 @@ Param(
 #endregion Params
 
 ##Testing
-#$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Reference Test Configs\jk-esxi-nvd-ra-2024\Config-Citrix2402-ESXi-WS2022-NVD-Files.jsonc"
+#$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-W11-PVS-AMD-AHV-BPG-DIAG.jsonc"
 #$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-LoginEnterpriseGlobal.jsonc"
 #$Type = "CitrixVAD"
 ##Testing
@@ -310,6 +310,33 @@ if (-not $AzureMode.IsPresent) {
     }
 }
 #endregion Observer validation
+
+#region Advanced Diagnostics - perf_collect - validation
+if (-not $AzureMode.IsPresent) {
+    #This is not an Azure test
+    if ($Config.psobject.Properties.Name -contains "AdvancedDiagnostics") {
+        if ($Config.AdvancedDiagnostics.EnableCollectPerf -eq $true) {
+            # Download the file using Receive-WinSCPItem. Must use the 6.3.2.0 version of the WinSCP module - nothing newer
+            $requiredVersion = [version]"6.3.2.0"
+            if ((Get-Module -ListAvailable -Name WinSCP).version -gt $requiredVersion) {
+                Write-Log -Message "WinSCP module version is newer than the required version. Downloading of data file will not be possible." -Level Warn
+            } else {
+                # Check if WinSCP module is installed
+                if (-not (Get-Module -ListAvailable -Name WinSCP | Where-Object { $_.Version -eq $requiredVersion })) {
+                    Write-Log -Message "WinSCP module not found. Installing WinSCP module." -Level Info
+                    try {
+                        Install-Module -Name WinSCP -Force -RequiredVersion $requiredVersion -ErrorAction Stop
+                        Import-Module -Name WinSCP -RequiredVersion $requiredVersion -Force -ErrorAction Stop
+                    }
+                    catch {
+                        Write-Log -Message "Failed to install correct WinSCP module. Download of collect_perf output will fail." -Level Warn
+                    }
+                }
+            }
+        }
+    }
+}
+#endregion Advanced Diagnostics - perf_collect - validation
 
 #region data download and upload validation
 
@@ -2198,6 +2225,27 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
 
         #endregion Nutanix Curator Stop
 
+        #region Advanced Diagnostics - perf_collect - Start
+        if (-not $AzureMode.IsPresent) {
+            #This is not an Azure test
+            if ($Config.psobject.Properties.Name -contains "AdvancedDiagnostics") {
+                if ($Config.AdvancedDiagnostics.EnableCollectPerf -eq $true) {
+                    Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Job will be started." -Level Warn
+                    $params = @{
+                        ClusterIP       = $Config.Target.CVM
+                        CVMSSHPassword  = $Config.Target.CVMsshpassword
+                        Action          = "Start"
+                        SampleInterval  = $Config.AdvancedDiagnostics.CollectPerfSampleInterval
+                        SampleFrequency = $Config.AdvancedDiagnostics.CollectPerfSampleFrequency
+                    }
+                    Set-NTNXCollectPerf @params
+                
+                    $params = $null
+                }
+            }
+        }
+        #endregion Advanced Diagnostics - perf_collect - Start
+
         #region Start the test
         #----------------------------------------------------------------------------------------------------------------------------
 
@@ -2475,6 +2523,27 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
 
         Wait-LETest -testId $testId -waitParams $Waitparams
         #endregion Wait for test to finish
+
+        #region Advanced Diagnostics - perf_collect - Stop
+        if (-not $AzureMode.IsPresent) {
+            #This is not an Azure test
+            if ($Config.psobject.Properties.Name -contains "AdvancedDiagnostics") {
+                if ($Config.AdvancedDiagnostics.EnableCollectPerf -eq $true) {
+                    Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Job will be stopped." -Level Info
+                    $params = @{
+                        ClusterIP             = $Config.Target.CVM
+                        CVMSSHPassword        = $Config.Target.CVMsshpassword
+                        Action                = "Stop"
+                        OutputFolder          = $OutputFolder
+                        DownloadCollectorFile = $true
+                    }
+                    Set-NTNXCollectPerf @params
+                
+                    $params = $null
+                }
+            }
+        }
+        #endregion Advanced Diagnostics - perf_collect - Stop
 
         #region Cleanup monitoring job
         #----------------------------------------------------------------------------------------------------------------------------
