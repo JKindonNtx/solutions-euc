@@ -87,26 +87,26 @@ function Set-NTNXCollectPerf {
         if ($DownloadCollectorFile -eq $true) {
             # Download the file using Receive-WinSCPItem. Must use the 6.3.2.0 version of the WinSCP module - nothing newer
             Write-Log -Message "Downloading the data file from CVM $($ClusterIP) to results folder" -Level Info
-                try {
-                    $requiredVersion = [version]"6.3.2.0"
+            try {
+                $requiredVersion = [version]"6.3.2.0"
 
-                    Import-Module -Name WinSCP -RequiredVersion $requiredVersion -Force -ErrorAction Stop
-                    $SessionOption = New-WinSCPSessionOption -HostName $ClusterIP -Credential $HostCredential -Protocol Scp -GiveUpSecurityAndAcceptAnySshHostKey
-                    $SCPSession = New-WinSCPSession -SessionOption $SessionOption -ErrorAction Stop
-                    $DownloadFile = Receive-WinSCPItem -WinSCPSession $SCPSession -path $DataFilePath -Destination $OutputFolder -ErrorAction Stop
+                Import-Module -Name WinSCP -RequiredVersion $requiredVersion -Force -ErrorAction Stop
+                $SessionOption = New-WinSCPSessionOption -HostName $ClusterIP -Credential $HostCredential -Protocol Scp -GiveUpSecurityAndAcceptAnySshHostKey
+                $SCPSession = New-WinSCPSession -SessionOption $SessionOption -ErrorAction Stop
+                $DownloadFile = Receive-WinSCPItem -WinSCPSession $SCPSession -path $DataFilePath -Destination $OutputFolder -ErrorAction Stop
 
-                    if ($DownloadFile.IsSuccess -eq $true) {
-                        Write-Log -Message "Data file successfully downloaded to: $($OutputFolder)" -Level Info
-                    } else {
-                        Write-Log -Message "Data file failed to download. Retrieve the data file from $($ClusterIP) at: $($DataFilePath)" -Level Warn
-                    }
-                    Close-WinSCPSession -WinSCPSession $SCPSession
-                
-                }
-                catch {
+                if ($DownloadFile.IsSuccess -eq $true) {
+                    Write-Log -Message "Data file successfully downloaded to: $($OutputFolder)" -Level Info
+                } else {
                     Write-Log -Message "Data file failed to download. Retrieve the data file from $($ClusterIP) at: $($DataFilePath)" -Level Warn
-                    Write-Log -Message $_ -Level Warn
                 }
+                Close-WinSCPSession -WinSCPSession $SCPSession
+            
+            }
+            catch {
+                Write-Log -Message "Data file failed to download. Retrieve the data file from $($ClusterIP) at: $($DataFilePath)" -Level Warn
+                Write-Log -Message $_ -Level Warn
+            }
         } else {
             Write-Log -Message "Collect_perf job has finished. Retrieve the data file from $($ClusterIP) at: $($DataFilePath)" -Level Info
         }
