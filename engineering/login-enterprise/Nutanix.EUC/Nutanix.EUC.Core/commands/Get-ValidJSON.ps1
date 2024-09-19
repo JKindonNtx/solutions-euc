@@ -351,6 +351,11 @@ The configuration file to parse and validate
                 Write-Log -Message "You are missing the AdvancedDiagnostics.CollectPerfSampleInterval object in your JSON file. This is required for collect_perf monitoring" -Level Error
                 $ErrorCount ++
             }
+            #AdvancedDiagnostics.CollectPerfSampleFrequency
+            if ($ConfigFileData.AdvancedDiagnostics.psobject.Properties.Name -notcontains "CollectPerfSampleFrequency") {
+                Write-Log -Message "You are missing the AdvancedDiagnostics.CollectPerfSampleFrequency object in your JSON file. This is required for collect_perf monitoring" -Level Error
+                $ErrorCount ++
+            }
         }
         #endregion Advanced Diagnostics
 

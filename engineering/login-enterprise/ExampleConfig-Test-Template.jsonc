@@ -300,6 +300,7 @@
     },
     "AdvancedDiagnostics": {
         "EnableCollectPerf": false, // Collects performance data from the CVM using collect_perf
-        "CollectPerfSampleInterval": 30 // The interval in seconds for collect_perf collection
+        "CollectPerfSampleInterval": 30, // The interval in seconds for collect_perf collection. The default --sample_seconds value is 60 seconds. collect_perf --helpshort
+        "CollectPerfSampleFrequency": 1 // seconds samples for the OS commands like top, iostat, and mpstat. The default --sample_frequency value is 5 seconds. collect_perf --helpshort
     }
 }

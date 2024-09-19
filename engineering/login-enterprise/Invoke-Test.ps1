@@ -311,6 +311,33 @@ if (-not $AzureMode.IsPresent) {
 }
 #endregion Observer validation
 
+#region Advanced Diagnostics - perf_collect - validation
+if (-not $AzureMode.IsPresent) {
+    #This is not an Azure test
+    if ($Config.psobject.Properties.Name -contains "AdvancedDiagnostics") {
+        if ($Config.AdvancedDiagnostics.EnableCollectPerf -eq $true) {
+            # Download the file using Receive-WinSCPItem. Must use the 6.3.2.0 version of the WinSCP module - nothing newer
+            $requiredVersion = [version]"6.3.2.0"
+            if ((Get-Module -ListAvailable -Name WinSCP).version -gt $requiredVersion) {
+                Write-Log -Message "WinSCP module version is newer than the required version. Downloading of data file will not be possible." -Level Warn
+            } else {
+                # Check if WinSCP module is installed
+                if (-not (Get-Module -ListAvailable -Name WinSCP | Where-Object { $_.Version -eq $requiredVersion })) {
+                    Write-Log -Message "WinSCP module not found. Installing WinSCP module." -Level Info
+                    try {
+                        Install-Module -Name WinSCP -Force -RequiredVersion $requiredVersion -ErrorAction Stop
+                        Import-Module -Name WinSCP -RequiredVersion $requiredVersion -Force -ErrorAction Stop
+                    }
+                    catch {
+                        Write-Log -Message "Failed to install correct WinSCP module. Download of collect_perf output will fail." -Level Warn
+                    }
+                }
+            }
+        }
+    }
+}
+#endregion Advanced Diagnostics - perf_collect - validation
+
 #region data download and upload validation
 
 if ($Config.Test.SkipLEMetricsDownload -eq $true -and $Config.Test.Uploadresults -eq $true) {
@@ -2203,13 +2230,13 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             #This is not an Azure test
             if ($Config.psobject.Properties.Name -contains "AdvancedDiagnostics") {
                 if ($Config.AdvancedDiagnostics.EnableCollectPerf -eq $true) {
-                    Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Job will be started." -Level Info
-                    Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Test execution will be extended due to collect_perf data collection." -Level Warn
+                    Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Job will be started." -Level Warn
                     $params = @{
-                        ClusterIP      = $Config.Target.CVM
-                        CVMSSHPassword = $Config.Target.CVMsshpassword
-                        Action         = "Start"
-                        SampleInterval = $Config.AdvancedDiagnostics.CollectPerfSampleInterval
+                        ClusterIP       = $Config.Target.CVM
+                        CVMSSHPassword  = $Config.Target.CVMsshpassword
+                        Action          = "Start"
+                        SampleInterval  = $Config.AdvancedDiagnostics.CollectPerfSampleInterval
+                        SampleFrequency = $Config.AdvancedDiagnostics.CollectPerfSampleFrequency
                     }
                     Set-NTNXCollectPerf @params
                 
@@ -2504,10 +2531,11 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                 if ($Config.AdvancedDiagnostics.EnableCollectPerf -eq $true) {
                     Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Job will be stopped." -Level Info
                     $params = @{
-                        ClusterIP      = $Config.Target.CVM
-                        CVMSSHPassword = $Config.Target.CVMsshpassword
-                        Action         = "Stop"
-                        SampleInterval = $Config.AdvancedDiagnostics.CollectPerfSampleInterval
+                        ClusterIP             = $Config.Target.CVM
+                        CVMSSHPassword        = $Config.Target.CVMsshpassword
+                        Action                = "Stop"
+                        OutputFolder          = $OutputFolder
+                        DownloadCollectorFile = $true
                     }
                     Set-NTNXCollectPerf @params
                 
