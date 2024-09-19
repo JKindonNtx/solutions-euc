@@ -72,13 +72,13 @@ function Set-NTNXCollectPerf {
             if ($JobOutput -match "all node collectors have stopped") {
                 $JobFinished = $true
                 # Extract and report the path starting with /home/nutanix
-                $DataFilePath = $JobOutput | Select-String -Pattern "/home/nutanix\S*" | Select-Object -ExpandProperty Matches | Select-Object -ExpandProperty Value
-                Write-Log -Message "Collect_perf data file is: $($DataFilePath)" -Level Info
+                $DataFilePath = $JobOutput | Select-String -Pattern "/home/nutanix\S*" | Select-Object -ExpandProperty Matches | Select-Object -ExpandProperty Value  
             }
             Write-Log -Message "Waiting 30 seconds for $($Action) job to confirm finish. Attempt $($StopAttempt)" -Level Info -Update
             Start-sleep -Seconds 30
             $StopAttempt ++
         }
+        Write-Log -Message "Collect_perf data file is: $($DataFilePath)" -Level Info
 
         $ColPerfTimer.Stop()
         $ColPerfTimerElapsedTime = [math]::Round($ColPerfTimer.Elapsed.TotalSeconds, 2)
