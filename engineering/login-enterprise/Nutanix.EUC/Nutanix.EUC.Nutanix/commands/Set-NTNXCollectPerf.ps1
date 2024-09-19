@@ -13,16 +13,6 @@ function Set-NTNXCollectPerf {
         [Parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true )][bool]$DownloadCollectorFile
     )
 
-    <#
-    $ClusterIP = "10.56.68.135"
-    $CVMSession = "nutanix/4u"
-    $Action = "stop"
-    $SampleFrequency = 20
-    $SampleFrequency = 5
-    $OutputFolder = "C:\Users\Public\Documents\"
-    $DownloadCollectorFile = $true
-    #>
-
     # Build the command and set the curator status using SSH
     if ($Action -eq "start") {
         $command = "collect_perf start --sample_seconds=$SampleInterval --sample_frequency=$SampleFrequency"
