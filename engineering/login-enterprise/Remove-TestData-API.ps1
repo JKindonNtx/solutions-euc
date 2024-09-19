@@ -120,6 +120,7 @@ if ($ConfigFile) {
 if($Bucket -eq "LoginDocuments"){
     $MainBucket = $Bucket
     $BootBucket = "BootBucket"
+    $PromBucket = "PromLoginDocuments"
 } else {
     if($Bucket -eq "LoginRegression"){
         $MainBucket = $Bucket
@@ -262,6 +263,21 @@ if(!([string]::IsNullOrEmpty($Run))){
             Remove-Influx-Test-Data -RequestUri $RequestUri -Method $Method -Payload $Payload -Headers $Headers
             #$null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($BootBucket)" -Test "$($Test)" -Run "$($Run)" -Token "$($config.InfluxToken)"
 
+            #-------------------------------------------
+            # Build the API Payload - Delete the specified run - Prom Bucket
+            #-------------------------------------------
+            $RequestUri = "$($influxDBUrl)/api/v2/delete?org=$($Org)&bucket=$($PromBucket)"
+            $PayloadContent = [PSCustomObject]@{
+                predicate = "_measurement=""$Test"" AND Run=""$Run"""
+                start = "$Start"
+                stop = "$Stop"
+            }
+            $Payload = (ConvertTo-Json $PayloadContent)
+            #-------------------------------------------
+            # Execute the deletion
+            #-------------------------------------------
+            Remove-Influx-Test-Data -RequestUri $RequestUri -Method $Method -Payload $Payload -Headers $Headers
+
             Write-Log -Message "$($Test) Run Number $($Run) Deleted" -Level Info
         }
     }
@@ -328,7 +344,24 @@ if(!([string]::IsNullOrEmpty($Run))){
             Remove-Influx-Test-Data -RequestUri $RequestUri -Method $Method -Payload $Payload -Headers $Headers
             #$null = Remove-TestData -InfluxPath "$($InfluxPath)" -HostUrl "$($config.InfluxDBurl)" -Org "$($config.InfluxOrg)" -Bucket "$($BootBucket)" -Test "$($Test)" -Token "$($config.InfluxToken)"
 
+            #-------------------------------------------
+            # Build the API Payload - Delete the whole test - Prom Bucket
+            #-------------------------------------------
+            $RequestUri = "$($influxDBUrl)/api/v2/delete?org=$($Org)&bucket=$($PromBucket)"
+            $PayloadContent = [PSCustomObject]@{
+                predicate = "_measurement=""$Test"""
+                start = "$Start"
+                stop = "$Stop"
+            }
+            $Payload = (ConvertTo-Json $PayloadContent)
+            #-------------------------------------------
+            # Execute the deletion
+            #-------------------------------------------
+            Remove-Influx-Test-Data -RequestUri $RequestUri -Method $Method -Payload $Payload -Headers $Headers
+
             Write-Log -Message "$($Test) Deleted" -Level Info
+
+            
         }
     }
 }

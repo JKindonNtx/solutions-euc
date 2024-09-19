@@ -297,6 +297,7 @@ function Start-InfluxUpload {
                     # Remove last comma from fields and replace Null values
                     $Fields = $Fields.TrimEnd(",")
                     $Fields = $Fields.Replace('null', '0')
+                    $Fields = $Fields.Replace('NaN', '0')
     
                     # Re-Format the Tag to allow for additional values added
                     $tag = $tag.replace(' ', '_')

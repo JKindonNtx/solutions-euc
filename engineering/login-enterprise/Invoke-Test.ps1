@@ -2570,6 +2570,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                 TestFinishtime      = $vsiresult.finished
                 Prometheusip        = $VSI_Prometheus_IP
                 OutputFolder        = $OutputFolder
+                MainProm            = $Config.Test.StartObserverMonitoring
                 GPU                 = $GetGPU
                 Files               = $Config.Target.files_prometheus
             }
