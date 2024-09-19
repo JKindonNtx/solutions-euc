@@ -40,7 +40,7 @@ from(bucket: "$TelegrafBucket")
 |> range(start:  $starttime, stop: $endTime)
 |> group(columns: ["_measurement", "host", "_field", "objectname", "instance"])
 |> aggregateWindow(every: 30s, fn: mean, createEmpty: false)
-|> map(fn: (r) => ({timestamp: r._time, tg_host: r.host, tg_field: r._field, tg_objectname: r.objectname, tg_instance: r.instance, "value": r._value}))
+|> map(fn: (r) => ({timestamp: r._time, tg_measurement: r._measurement, tg_host: r.host, tg_field: r._field, tg_objectname: r.objectname, tg_instance: r.instance, "value": r._value}))
 "@
 
     # Get the test details table from Influx and Split into individual lines
