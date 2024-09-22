@@ -27,20 +27,21 @@ function Invoke-PublicApiMethodPrometheus {
             try {
                 $URL = "http://$($Prometheusip):9090/api/v1/query_range"
                 if ($null -ne $Body) {
-                    Invoke-RestMethod -Body $Body -Method $Method -Uri $URL -SkipCertificateCheck
+                    Invoke-RestMethod -Body $Body -Method $Method -Uri $URL -SkipCertificateCheck -ErrorAction Stop
                 }
                 else {
-                    Invoke-RestMethod -Method $Method -Uri $URL -SkipCertificateCheck
+                    Invoke-RestMethod -Method $Method -Uri $URL -SkipCertificateCheck -ErrorAction Stop
                 }
                 $done = $true
             }
             catch {
                 $reason = $_
-                Write-Warning "API call failed, sleeping 2 seconds and trying again $($maxcount - $count) times: $_"
+                Write-Log -Message "API call failed, sleeping 2 seconds and trying again $($maxcount - $count) times: $_" -Level Warn
                 Start-Sleep -Seconds 2
             }
             if ($count -eq $maxcount) {
-                throw "API call failed after $($maxcount) times with reason: $reason"
+                Write-Log -Message "API call failed after $($maxcount) times with reason: $reason" -Level Error
+                Break
             }
         }
     }
@@ -73,20 +74,21 @@ function Invoke-PublicApiMethodPrometheus {
             try {
                 $URL = "http://$($Prometheusip):9090/api/v1/query_range"
                 if ($null -ne $Body) {
-                    Invoke-RestMethod -Body $Body -Method $Method -Uri $URL
+                    Invoke-RestMethod -Body $Body -Method $Method -Uri $URL -ErrorAction Stop
                 }
                 else {
-                    Invoke-RestMethod -Method $Method -Uri $URL
+                    Invoke-RestMethod -Method $Method -Uri $URL -ErrorAction Stop
                 }
                 $done = $true
             }
             catch {
                 $reason = $_
-                Write-Warning "API call $url failed, sleeping 2 seconds and trying again $($maxcount - $count) times: $_"
+                Write-Log -Message "API call $url failed, sleeping 2 seconds and trying again $($maxcount - $count) times: $_" -Level Warn
                 Start-Sleep -Seconds 2
             }
             if ($count -eq $maxcount) {
-                throw "API call failed after $($maxcount) times with reason: $reason"
+                Write-Log -Message "API call failed after $($maxcount) times with reason: $reason" -Level Error
+                Break
             }
         }
     }
