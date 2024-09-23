@@ -13,12 +13,23 @@ The configuration file to parse and validate
     [CmdletBinding()]
 
     Param (
-        [Parameter(Mandatory = $true)][String]$ConfigFile,
-        [Parameter(Mandatory = $true)][String]$Type
-        #$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\ExampleConfig-Test-Template.jsonc"
+        [Parameter(Mandatory = $false)][String]$ConfigFile,
+        [Parameter(Mandatory = $true)][String]$Type,
+        [Parameter(Mandatory = $false)][string]$JSONObject
     )
 
     begin{
+
+        if ([string]::IsNullOrEmpty($ConfigFile) -and $null -eq $JSONObject) {
+            Write-Log -Message "You must provide either a config file or a JSON object to validate" -Level Error
+            Break #Replace with Exit 1
+        }
+
+        if (-not [string]::IsNullOrEmpty($ConfigFile) -and $null -ne $JSONObject) {
+            Write-Log -Message "You cannot provide both a config file and a JSON object to validate" -Level Error
+            Break #Replace with Exit 1
+        }
+
         $Return = $false
 
         #Target Section Valid Settings
@@ -44,25 +55,33 @@ The configuration file to parse and validate
 
         $ErrorCount = 0
 
-        #First Grab the JSON and import it
-        try {
-            $configFileData = (Get-Content -Path $ConfigFile -ErrorAction Stop)
-        }
-        catch {
-            Write-Log -Message "Failed to import config file: $($configFile)" -Level Error
-            Write-Log -Message $_ -Level Error
-            Exit 1
-        }
+        if ( -not [string]::IsNullOrEmpty($ConfigFile) ) {
+            # we are processing a JSON file
 
-        #Now clean and convert the JSON (PowerShell 5.1 requirement)
-        $configFileData = $configFileData -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/'
+            # First Grab the JSON and import it
+            try {
+                $configFileData = (Get-Content -Path $ConfigFile -ErrorAction Stop)
+            }
+            catch {
+                Write-Log -Message "Failed to import config file: $($configFile)" -Level Error
+                Write-Log -Message $_ -Level Error
+                Exit 1
+            }
 
-        try {
-            $configFileData  = $configFileData | ConvertFrom-Json -ErrorAction Stop
-        }
-        catch {
-            Write-Log -Message $_ -Level Error
-            Exit 1
+            # Now clean and convert the JSON (PowerShell 5.1 requirement)
+            $configFileData = $configFileData -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/'
+
+            try {
+                $configFileData  = $configFileData | ConvertFrom-Json -ErrorAction Stop
+            }
+            catch {
+                Write-Log -Message $_ -Level Error
+                Exit 1
+            }
+
+        } elseif ( $null -ne $JSONObject ) {
+            # we are processing a JSON object
+            $configFileData = $JSONObject | ConvertFrom-Json -ErrorAction Stop
         }
 
         #Validate the provided settings

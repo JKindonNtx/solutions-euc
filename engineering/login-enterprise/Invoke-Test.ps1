@@ -49,8 +49,8 @@ Optional. Forces the recreation of the Horizon desktop pool.
 # Parameters
 # ============================================================================
 Param(
-    [Parameter(Mandatory = $true)]
-    [string]$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\ExampleConfig-Test-Template.jsonc",
+    [Parameter(Mandatory = $false)]
+    [string]$ConfigFile,# = "C:\DevOps\solutions-euc\engineering\login-enterprise\ExampleConfig-Test-Template.jsonc",
 
     [Parameter(Mandatory = $true)]
     [string]$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\ExampleConfig-LoginEnterpriseGlobal.jsonc",
@@ -85,7 +85,15 @@ Param(
     [switch]$ValidateOnly,
 
     [Parameter(Mandatory = $false)]
-    [switch]$AzureMode
+    [switch]$AzureMode,
+
+    ##// JK JSON Merge Function Addition Section
+    [Parameter(Mandatory = $true)][string]$TestConfig,
+    [Parameter(Mandatory = $true)][string]$ReportConfig,
+    [Parameter(Mandatory = $true)][string]$AutoFilledConfig,
+    [Parameter(Mandatory = $false)][string]$NutanixFilesConfig,
+    [Parameter(Mandatory = $false)][array]$MiscConfigs
+    ##// JK JSON Merge Function Addition Section
 
 )
 #endregion Params
@@ -133,9 +141,21 @@ catch {
 
 #region Param Output
 #----------------------------------------------------------------------------------------------------------------------------
-Write-Log -Message "Configuration File is:        $($ConfigFile)" -Level Validation
-Write-Log -Message "LE Configuration File is:     $($LEConfigFile)" -Level Validation
-Write-Log -Message "Test Type is:                 $($Type)" -Level Validation
+Write-Log -Message "Configuration File is:                $($ConfigFile)" -Level Validation
+Write-Log -Message "LE Configuration File is:             $($LEConfigFile)" -Level Validation
+Write-Log -Message "Test Type is:                         $($Type)" -Level Validation
+##// JK JSON Merge Function Addition Section
+Write-Log -Message "Test configuration File is:           $($TestConfig)" -Level Validation
+Write-Log -Message "Report configuration File is:         $($ReportConfig)" -Level Validation
+Write-Log -Message "Autofilled configuration File is:     $($AutoFilledConfig)" -Level Validation
+if (-not [string]::IsNullOrEmpty($NutanixFilesConfig)) {
+    Write-Log -Message "Nutanix Files configuration File is:  $($NutanixFilesConfig)" -Level Validation
+}
+foreach ($MiscConfig in $MiscConfigs) {
+    Write-Log -Message "Additional configuration File is:     $($MiscConfig)" -Level Validation
+}
+##// JK JSON Merge Function Addition Section
+
 #endregion Param Output
 
 #region PowerShell Versions
@@ -152,6 +172,34 @@ if ($PSVersionTable.PSVersion.Major -lt 7 -and $Type -eq "RDP") {
 }
 
 #endregion PowerShell Versions
+
+##// JK JSON Merge Function Addition Section
+$CombinedConfigsArray = @($ReportConfig, $AutoFilledConfig)
+if (-not [string]::IsNullOrEmpty($NutanixFilesConfig)) {
+    Write-Log -Message "Adding $NutanixFilesConfig to the JSON Array" -Level Info
+    $CombinedConfigsArray += $NutanixFilesConfig
+}
+
+if ($MiscConfigs) {
+    foreach ($MiscConfig in $MiscConfigs) {
+        Write-Log -Message "Adding $MiscConfig to the JSON Array" -Level Info
+        $CombinedConfigsArray += $MiscConfig
+    }
+}
+
+if (-not (Test-Path -Path $TestConfig)) {
+    Write-Log -Message "Test Specific JSON file not found: $TestConfig" -Level Error
+    Exit 1
+}
+
+foreach ($ConfigFileEntry in $CombinedConfigsArray) {
+    if (-not (Test-Path -Path $ConfigFileEntry)) {
+        Write-Log -Message "Config file $($ConfigFileEntry) does not exist. Please check the path and try again." -Level Error
+        Exit 1
+    }
+}
+
+##// JK JSON Merge Function Addition Section
 
 #region VMWare Module Import
 if ($Type -eq "Horizon") {
@@ -226,25 +274,53 @@ if (-not $AzureMode.IsPresent) {
 }
 #endregion remove existing SSH Keys
 
+##// JK JSON Merge Function Addition Section
+# Call the function to merge the JSON files
+$params = @{
+    TestSpecificJSONPath = $TestConfig
+    AdditionalJsonFilePaths = $CombinedConfigsArray
+}
+
+$CombinedJSONObject = Merge-JSONFilesForTestConfig @params
+##// JK JSON Merge Function Addition Section
+
 #region Validate JSON
 
-if (Get-ValidJSON -ConfigFile $ConfigFile -Type $Type) {
+##// JK JSON Merge Function Addition Section
+
+<#if (Get-ValidJSON -ConfigFile $ConfigFile -Type $Type) {
     Write-Log -Message "Config file $($ConfigFile) has been validated for appropriate value selection" -Level Info
 } 
 else {
     Write-Log -Message "Config File $($ConfigFile) contains invalid options. Please review logfile and configfile." -Level Warn
     Exit 1
+}  
+#>
+if ( Get-ValidJson -JSONObject $CombinedJSONObject -Type $Type ) {
+    Write-Log -Message "Config has been validated for appropriate value selection" -Level Info
+} 
+else {
+    Write-Log -Message "Config contains invalid options. Please review logfile and configfile." -Level Warn
+    Exit 1
 }
+
+##// JK JSON Merge Function Addition Section
+
 
 #endregion Validate JSON
 
 #region variable setting
 #----------------------------------------------------------------------------------------------------------------------------
-Set-VSIConfigurationVariables -ConfigurationFile $ConfigFile
+#Set-VSIConfigurationVariables -ConfigurationFile $ConfigFile
+
+##// JK JSON Merge Function Addition Section
+Set-VSIConfigurationVariables -JSONConfiguration $CombinedJSONObject
+##// JK JSON Merge Function Addition Section
 #endregion variable setting
 
 #region Config File
 #----------------------------------------------------------------------------------------------------------------------------
+<#
 Write-Log -Message "Importing config file: $($ConfigFile)" -Level Info
 try {
     $configFileData = Get-Content -Path $ConfigFile -ErrorAction Stop
@@ -264,6 +340,11 @@ catch {
     Write-Log -Message $_ -Level Error
     Exit 1
 }
+#>
+##// JK JSON Merge Function Addition Section
+$Config = $CombinedJSONObject | ConvertFrom-Json
+##// JK JSON Merge Function Addition Section
+
 #endregion Config File
 
 #region LE Appliance
@@ -432,17 +513,17 @@ if ($Type -eq "CitrixVAD" -or "CitrixDaaS"){
 #----------------------------------------------------------------------------------------------------------------------------
 
 #region Mandatory JSON Value Output
-$Mandatory_Undedfined_Config_Entries = Get-Variable -Name VSI* | where-Object {$_.Value -match "MANDATORY_TO_DEFINE"}
+$Mandatory_Undefined_Config_Entries = Get-Variable -Name VSI* | where-Object {$_.Value -match "MANDATORY_TO_DEFINE"}
 ##//JK: Check for Mandatory Undefined Values with the new Variable names!
 
-if ($null -ne $Mandatory_Undedfined_Config_Entries) {
-    Write-Log -Message "There are $(($Mandatory_Undedfined_Config_Entries | Measure-Object).Count) Undefined values that must be specified" -Level Warn
-    foreach ($Item in $Mandatory_Undedfined_Config_Entries) {
+if ($null -ne $Mandatory_Undefined_Config_Entries) {
+    Write-Log -Message "There are $(($Mandatory_Undefined_Config_Entries | Measure-Object).Count) Undefined values that must be specified" -Level Warn
+    foreach ($Item in $Mandatory_Undefined_Config_Entries) {
         Write-Log -Message "Setting: $($Item.Name) must be set. Current value: $($Item.Value)" -Level Warn
     }
 }
 
-if (($Mandatory_Undedfined_Config_Entries | Measure-Object).Count -gt 0) {
+if (($Mandatory_Undefined_Config_Entries | Measure-Object).Count -gt 0) {
     ##// Write out a prompt here post validation work - make sure all is good before going
     $answer = read-host "Test details correct for test? yes (y) or no? "
     if ($answer -ne "yes" -and $answer -ne "y") { 
