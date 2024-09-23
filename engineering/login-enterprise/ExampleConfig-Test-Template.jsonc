@@ -264,6 +264,7 @@
         "RDAPath": "\\\\ws-files.wsperf.nutanix.com\\automation\\RDA-Logging",
         "GrafanaUriDocs": "MANDATORY_TO_DEFINE",
         "GrafanaUriRegression": "MANDATORY_TO_DEFINE",
+        "PromBucketName": "MANDATORY_TO_DEFINE", // Use PromLoginDocuments
         "SlackChannel": "MANDATORY_TO_DEFINE", //Enter Slack Channel Here
         "SlackToken": "MANDATORY_TO_DEFINE" //Enter Slack Token Here
         // -----------------------------------------------------------------------------------

@@ -283,7 +283,7 @@ function Start-InfluxUpload {
                     # Looop through headers and process data values
                     foreach ($Header in $Headers) {
                         if (($header -ne "Timestamp")) {
-                            if (($header -like "*Id") -or ($header -like "*Name*") -or ($header -like "*timer*") -or ($header -like "*instance*") -or ($header -like "*userSessionKey*") -or ($header -like "*tg_*")) {
+                            if (($header -like "*Id") -or ($header -like "*Name*") -or ($header -like "*timer*") -or ($header -like "*instance*") -or ($header -like "*userSessionKey*")  -or ($header -like "*prom_*") -or ($header -like "*tg_*")) {
                                 $Data = $($line.$($Header))
                                 $tag = $tag + ",$($Header)=$($Data)"
                             }
@@ -297,6 +297,7 @@ function Start-InfluxUpload {
                     # Remove last comma from fields and replace Null values
                     $Fields = $Fields.TrimEnd(",")
                     $Fields = $Fields.Replace('null', '0')
+                    $Fields = $Fields.Replace('NaN', '0')
     
                     # Re-Format the Tag to allow for additional values added
                     $tag = $tag.replace(' ', '_')
