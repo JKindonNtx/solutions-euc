@@ -2680,8 +2680,20 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
 
         #region download Telegraf data
         if ($Config.Test.ImportTelegrafData -eq $true) {
-            # Download Telegrafd data
-            Write-Log -Message "Download Telegraf data" -Level Info
+            # Download Telegraf boot data
+            Write-Log -Message "Download Boot Telegraf data" -Level Info
+            $params = @{
+                TestStarttime       = $Boot.bootstart
+                TestFinishtime      = (get-date $Boot.bootstart).AddSeconds($boot.boottime)
+                Influxdburl         = $Config.Testinfra.InfluxDBurl
+                OutputFolder        = "$($OutputFolder)\boot"
+                Token               = $Config.Testinfra.InfluxToken
+                TelegrafBucket      = $Config.Test.TelegrafBucket
+            }
+            $Telegrafdataprocessed = Get-Telegrafdata @params
+            $Params = $null
+            # Download Telegraf test data
+            Write-Log -Message "Download Telegraf test data" -Level Info
             $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv"
             $params = @{
                 TestStarttime       = $vsiresult.started
@@ -2824,8 +2836,6 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                 Write-Log -Message "[DATA UPLOAD] Processing Boot phase data uploads" -Level Info 
                 # This is not an Azure configuration
                 $Files = Get-ChildItem "$($OutputFolder)\Boot\*.csv"
-                # $Started = $($NTNXInfra.TestInfra.Bootstart) ##Removed by SvenH
-
                 # Build the Boot Bucket Name
                 If ($($Config.Test.BucketName) -eq "LoginDocuments") {
                     $BucketName = "BootBucket"
@@ -2836,7 +2846,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
 
                 # Loop through the boot files and process each one
                 foreach ($File in $Files) {
-                    if (($File.Name -like "host raw*") -or ($File.Name -like "cluster raw*")) {
+                    if (($File.Name -like "host raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "telegraf*")) {
                         Write-Log -Message "[DATA UPLOAD] Uploading $($File.name) to Influx" -Level Info
                         # start a time object to measure upload time
                         $DataUploadStopWatch = [system.Diagnostics.Stopwatch]::StartNew()
