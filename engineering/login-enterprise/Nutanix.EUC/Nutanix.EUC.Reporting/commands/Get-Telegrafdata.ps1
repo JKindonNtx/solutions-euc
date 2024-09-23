@@ -80,7 +80,7 @@ from(bucket: "$TelegrafBucket")
 
         # Ensure the number of columns matches the header, otherwise skip
         if ($headerColumns.Length -ne $columns.Length) {
-            Write-Log -Message "Skipping row due to column mismatch." -Level Warning
+            #Write-Log -Message "Skipping row due to column mismatch." -Level Warning
             continue
         }
 
@@ -93,7 +93,8 @@ from(bucket: "$TelegrafBucket")
         }
 
         # Add the row to the output data collection
-        $outputData += $rowObject
+        #$outputData += $rowObject
+        $null = $outputData.Add($rowObject)
     }
 
     # Check if outputData contains anything
