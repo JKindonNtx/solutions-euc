@@ -8,7 +8,7 @@ Function Enable-CVADDesktopPoolAPI {
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $false)][int]$VMRegistrationTimeOutMinutes = 180,
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)][string]$DDC,
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)][string]$HypervisorType,
-        [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)]$Affinity,
+        #[Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)]$Affinity,
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)][string]$ClusterIP,
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)][string]$CVMSSHPassword,
         [Parameter(ValuefromPipelineByPropertyName = $true, mandatory = $true)][string]$VMnameprefix,
@@ -25,6 +25,7 @@ Function Enable-CVADDesktopPoolAPI {
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][string]$TargetCVMAdmin,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][string]$TargetCVMPassword,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][string]$HostCount,
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][string]$SingleHostTarget,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][string]$Run
 
     )
@@ -631,11 +632,12 @@ Function Enable-CVADDesktopPoolAPI {
             Run                        = $Run
             MaxRecordCount             = $MaxRecordCount
             EnforceHostMaintenanceMode = $EnforceHostMaintenanceMode
+            SingleHostTarget           = $SingleHostTarget
         }
         Set-NTNXHostAlignment @params
         $Params = $null
     }
-
+    <# - Redundant Code Block post single node affinity logic move to Set-NTNXHostAlignment function
     if (($HypervisorType) -eq "AHV" -And ($Affinity) -and (-not $ForceAlignVMToHost)) {
         Write-Log "Hypervisortype = $HypervisorType and Single Node Affinity is set to $Affinity"
         $params = @{
@@ -648,6 +650,7 @@ Function Enable-CVADDesktopPoolAPI {
         $AffinityProcessed = Set-AffinitySingleNode @params
         $Params = $null
     }
+    #>
 
     #endregion set affinity to hosts
 
