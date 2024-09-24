@@ -312,7 +312,6 @@ function Start-InfluxUpload {
     
                     # Build the body
                     $Body = "$measurementName,$tag $fields $FormattedDate"
-
                     #Add the record to the $batch_data_to_process arraylist
                     $null = $batch_data_to_process.Add($Body)
                 }
