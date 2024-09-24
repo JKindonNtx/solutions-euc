@@ -25,7 +25,7 @@ function Get-Telegrafdata {
 
     #region Get Data From Influx
 
-    Write-Log -Message "Gathering Test Data" -Level Info
+    Write-Log -Message "[DATA EXPORT] Gathering Test Data" -Level Info
     # Build the Influx DB Web Headers
     $WebHeaders = @{
         Authorization  = "Token $Token"
@@ -33,7 +33,7 @@ function Get-Telegrafdata {
         "Content-Type" = "application/vnd.flux"
     }
     # Remove the extra closing curly brace
-    Write-Log -Message "Build Body Payload based on Uri Variables" -Level Info
+    Write-Log -Message "[DATA EXPORT] Build Body Payload based on Uri Variables" -Level Info
 
         $Body = @"
 from(bucket: "$TelegrafBucket")
@@ -44,16 +44,16 @@ from(bucket: "$TelegrafBucket")
 "@
 
     # Get the test details table from Influx and Split into individual lines
-    try{
-        Write-Log -Message "Get Test Details from Influx API" -Level Info
+    try {
+        Write-Log -Message "[DATA EXPORT] Get Test Details from Influx API" -Level Info
         $TestDetails = Invoke-RestMethod -Method Post -Uri $influxDbUrl -Headers $WebHeaders -Body $Body -ErrorAction Stop
     } catch {
-        Write-Log -Message "Error Getting Test Details from Influx API" -Level Error
+        Write-Log -Message "[DATA EXPORT] Error Getting Test Details from Influx API" -Level Error
         break
     }
 
     $csvLines = $TestDetails -split "`n"
-    Write-Log -Message "CSV Response received. Total lines: $($csvLines.Length)" -Level Info
+    Write-Log -Message "[DATA EXPORT] CSV Response received. Total lines: $($csvLines.Length)" -Level Info
    
     # Initialize variables
     $outputData = [System.Collections.ArrayList] @()             # To store processed data
@@ -80,7 +80,7 @@ from(bucket: "$TelegrafBucket")
 
         # Ensure the number of columns matches the header, otherwise skip
         if ($headerColumns.Length -ne $columns.Length) {
-            #Write-Log -Message "Skipping row due to column mismatch." -Level Warning
+            #Write-Log -Message "Skipping row due to column mismatch." -Level Warn
             continue
         }
 
@@ -100,16 +100,16 @@ from(bucket: "$TelegrafBucket")
 
     # Check if outputData contains anything
     if ($outputData.Count -eq 0) {
-        Write-Log -Message "No data processed. OutputData is empty." -Level Warning
+        Write-Log -Message "[DATA EXPORT] No data processed. OutputData is empty." -Level Warn
     }
     else {
-        Write-Log -Message "Processed $($outputData.Count) rows." -Level Info
+        Write-Log -Message "[DATA EXPORT] Processed $($outputData.Count) rows." -Level Info
     }
 
     # Step 8: Write the cleaned data to the CSV file
     $outputData | Export-Csv -Path $OutputCsvPath -NoTypeInformation
 
-    Write-Log -Message "Data successfully written to $OutputCsvPath" -Level Info
+    Write-Log -Message "[DATA EXPORT] Data successfully written to $OutputCsvPath" -Level Info
 
     # stop the timer for gathering session metrics
     $TelegrafGatheringStopWatch.stop()
