@@ -1,10 +1,16 @@
 <##
 .SYNOPSIS
 .DESCRIPTION
-.PARAMETER ConfigFile
+.PARAMETER TestConfig
 Mandatory. The JSON file containing the test configuration
-.PARAMETER ReportConfigFile
-Mandatory.
+.PARAMETER ReportConfig
+Mandatory. The JSON file containing the report configuration
+.PARAMETER AutoFilledConfig
+Mandatory. The JSON file containing the autofilled configuration
+.PARAMETER NutanixFilesConfig
+Optional. The JSON file containing the Nutanix Files configuration
+.PARAMETER MiscConfigs
+Optional. An array of JSON files containing additional configurations
 .PARAMETER Type
 Mandatory. Specify the type of test to be run, CitrixVAD, CitrixDaaS, Horizon, RAS, RDP
 .PARAMETER LEConfigFile
@@ -49,59 +55,42 @@ Optional. Forces the recreation of the Horizon desktop pool.
 # Parameters
 # ============================================================================
 Param(
-    [Parameter(Mandatory = $false)]
-    [string]$ConfigFile,# = "C:\DevOps\solutions-euc\engineering\login-enterprise\ExampleConfig-Test-Template.jsonc",
-
-    [Parameter(Mandatory = $true)]
-    [string]$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\ExampleConfig-LoginEnterpriseGlobal.jsonc",
-
-    [Parameter(Mandatory = $true)]
-    [ValidateSet("CitrixVAD", "CitrixDaaS", "Horizon", "RAS", "RDP", "Omnissa")]
-    [string]$Type,
-
-    [Parameter(Mandatory = $false)]
-    [switch]$Force,
-
-    [Parameter(Mandatory = $false)]
-    [switch]$SkipWaitForIdleVMs,
-
-    [Parameter(Mandatory = $false)]
-    [switch]$SkipPDFExport,
-
-    [Parameter(Mandatory = $false)]
-    [switch]$SkipADUsers,
-
-    [Parameter(Mandatory = $false)]
-    [switch]$SkipLEUsers,
-
-    [Parameter(Mandatory = $false)]
-    [switch]$SkipLaunchers,
-
-    [Parameter(Mandatory = $false)]
-    [ValidateSet("LE1", "LE2", "LE3", "LE4")]
-    [String]$LEAppliance,
-    
-    [Parameter(Mandatory = $false)]
-    [switch]$ValidateOnly,
-
-    [Parameter(Mandatory = $false)]
-    [switch]$AzureMode,
-
-    ##// JK JSON Merge Function Addition Section
+    #[Parameter(Mandatory = $false)]
+    #[string]$ConfigFile,# = "C:\DevOps\solutions-euc\engineering\login-enterprise\ExampleConfig-Test-Template.jsonc",
     [Parameter(Mandatory = $true)][string]$TestConfig,
     [Parameter(Mandatory = $true)][string]$ReportConfig,
     [Parameter(Mandatory = $true)][string]$AutoFilledConfig,
     [Parameter(Mandatory = $false)][string]$NutanixFilesConfig,
-    [Parameter(Mandatory = $false)][array]$MiscConfigs
-    ##// JK JSON Merge Function Addition Section
+    [Parameter(Mandatory = $false)][array]$MiscConfigs,
+    [Parameter(Mandatory = $true)][string]$LEConfigFile,
+    [Parameter(Mandatory = $true)][ValidateSet("CitrixVAD", "CitrixDaaS", "Horizon", "RAS", "RDP", "Omnissa")][string]$Type,
+    [Parameter(Mandatory = $false)][switch]$Force,
+    [Parameter(Mandatory = $false)][switch]$SkipWaitForIdleVMs,
+    [Parameter(Mandatory = $false)][switch]$SkipPDFExport,
+    [Parameter(Mandatory = $false)][switch]$SkipADUsers,
+    [Parameter(Mandatory = $false)][switch]$SkipLEUsers,
+    [Parameter(Mandatory = $false)][switch]$SkipLaunchers,
+    [Parameter(Mandatory = $false)][ValidateSet("LE1", "LE2", "LE3", "LE4")][String]$LEAppliance,
+    [Parameter(Mandatory = $false)][switch]$ValidateOnly,
+    [Parameter(Mandatory = $false)][switch]$AzureMode
 
 )
 #endregion Params
 
 ##Testing
 #$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-W11-PVS-AMD-AHV-BPG-DIAG.jsonc"
-#$LEConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-LoginEnterpriseGlobal.jsonc"
+#$LEConfigFile = "C:\Temp\JSONMergeLogic\LoginEnterprise.jsonc"
 #$Type = "CitrixVAD"
+#$TestConfig = "C:\Temp\JSONMergeLogic\TestSpecific.jsonc"
+#$ReportConfig = "C:\Temp\JSONMergeLogic\Reporting.jsonc"
+#$AutoFilledConfig = "C:\Temp\JSONMergeLogic\AutoFilled.jsonc"
+#$NutanixFilesConfig = "C:\Temp\JSONMergeLogic\NutanixFiles.jsonc"
+#$MiscConfigs = "C:\Temp\JSONMergeLogic\random1.jsonc", "C:\Temp\JSONMergeLogic\random2.jsonc"
+
+#[System.Environment]::SetEnvironmentVariable('ReportConf', 'C:\Temp\JSONMergeLogic\Reporting.jsonc', 'Machine')
+#[System.Environment]::SetEnvironmentVariable('LEConf', 'C:\Temp\JSONMergeLogic\LoginEnterprise.jsonc', 'Machine')
+#[System.Environment]::SetEnvironmentVariable('AutoFilledConf', 'C:\Temp\JSONMergeLogic\AutoFilled.jsonc', 'Machine')
+
 ##Testing
 
 #region Variables
@@ -111,17 +100,26 @@ Param(
 
 If ([string]::IsNullOrEmpty($PSScriptRoot)) { $ScriptRoot = $PWD.Path } else { $ScriptRoot = $PSScriptRoot }
 
+# Set a global variable to track the last message output to the console in an attempt to keep console output clean with write-log function.
+$global:LastMessageEndedWithNewLine = $false
+# Set a gloval variable for the temp log file. This is used to log all output to a file via the Write-Log function. The file will be created if it does not exist and moved at the end of the test. It will be renamed if it does exist.
+$global:LogOutputTempFile = "$env:LOCALAPPDATA\SolutionsEngineering\TestLogs\Test.log"
+
+# Set the control variables to false by default, re-enable based on the JSON input and control params later
+$control_monitor_nutanix_files = $false
+$control_monitor_launcher_cluster = $false
+$control_monitor_netscaler = $false 
+$control_monitor_observer_monitoring = $false
+$control_monitor_files_cluster_performance = $false
+$control_monitor_advanced_diagnostics = $false
+
 #endregion Variables
 
 #Region Execute
 # ============================================================================
 # Execute
 # ============================================================================
-
-# Set a global variable to track the last message output to the console in an attempt to keep console output clean with write-log function.
-$global:LastMessageEndedWithNewLine = $false
-# Set a gloval variable for the temp log file. This is used to log all output to a file via the Write-Log function. The file will be created if it does not exist and moved at the end of the test. It will be renamed if it does exist.
-$global:LogOutputTempFile = "$env:LOCALAPPDATA\SolutionsEngineering\TestLogs\Test.log"
+# Rename the temp log file if it exists
 if (Test-Path $global:LogOutputTempFile) { Rename-Item -Path $global:LogOutputTempFile -NewName "$global:LogOutputTempFile.$((Get-Date).ToString('yyyyMMdd-HHmmss'))" -Force }
 
 #region Nutanix Module Import
@@ -141,10 +139,9 @@ catch {
 
 #region Param Output
 #----------------------------------------------------------------------------------------------------------------------------
-Write-Log -Message "Configuration File is:                $($ConfigFile)" -Level Validation
+#Write-Log -Message "Configuration File is:                $($ConfigFile)" -Level Validation
 Write-Log -Message "LE Configuration File is:             $($LEConfigFile)" -Level Validation
 Write-Log -Message "Test Type is:                         $($Type)" -Level Validation
-##// JK JSON Merge Function Addition Section
 Write-Log -Message "Test configuration File is:           $($TestConfig)" -Level Validation
 Write-Log -Message "Report configuration File is:         $($ReportConfig)" -Level Validation
 Write-Log -Message "Autofilled configuration File is:     $($AutoFilledConfig)" -Level Validation
@@ -154,7 +151,6 @@ if (-not [string]::IsNullOrEmpty($NutanixFilesConfig)) {
 foreach ($MiscConfig in $MiscConfigs) {
     Write-Log -Message "Additional configuration File is:     $($MiscConfig)" -Level Validation
 }
-##// JK JSON Merge Function Addition Section
 
 #endregion Param Output
 
@@ -173,7 +169,8 @@ if ($PSVersionTable.PSVersion.Major -lt 7 -and $Type -eq "RDP") {
 
 #endregion PowerShell Versions
 
-##// JK JSON Merge Function Addition Section
+#region JSON array creation
+#----------------------------------------------------------------------------------------------------------------------------
 $CombinedConfigsArray = @($ReportConfig, $AutoFilledConfig)
 if (-not [string]::IsNullOrEmpty($NutanixFilesConfig)) {
     Write-Log -Message "Adding $NutanixFilesConfig to the JSON Array" -Level Info
@@ -199,9 +196,30 @@ foreach ($ConfigFileEntry in $CombinedConfigsArray) {
     }
 }
 
-##// JK JSON Merge Function Addition Section
+# Call the function to merge the JSON files
+$params = @{
+    TestSpecificJSONPath = $TestConfig
+    AdditionalJsonFilePaths = $CombinedConfigsArray
+}
+
+$CombinedJSONObject = Merge-JSONFilesForTestConfig @params
+
+#endregion JSON array creation
+
+#region Validate JSON
+#----------------------------------------------------------------------------------------------------------------------------
+if ( Get-ValidJson -JSONObject $CombinedJSONObject -Type $Type ) {
+    Write-Log -Message "Config has been validated for appropriate value selection" -Level Info
+} 
+else {
+    Write-Log -Message "Config contains invalid options. Please review logfile and configfile." -Level Warn
+    Exit 1
+}
+
+#endregion Validate JSON
 
 #region VMWare Module Import
+#----------------------------------------------------------------------------------------------------------------------------
 if ($Type -eq "Horizon") {
     Write-Log -Message "Importing VMware Modules" -Level Info
     try {
@@ -274,81 +292,49 @@ if (-not $AzureMode.IsPresent) {
 }
 #endregion remove existing SSH Keys
 
-##// JK JSON Merge Function Addition Section
-# Call the function to merge the JSON files
-$params = @{
-    TestSpecificJSONPath = $TestConfig
-    AdditionalJsonFilePaths = $CombinedConfigsArray
-}
-
-$CombinedJSONObject = Merge-JSONFilesForTestConfig @params
-##// JK JSON Merge Function Addition Section
-
-#region Validate JSON
-
-##// JK JSON Merge Function Addition Section
-
-<#if (Get-ValidJSON -ConfigFile $ConfigFile -Type $Type) {
-    Write-Log -Message "Config file $($ConfigFile) has been validated for appropriate value selection" -Level Info
-} 
-else {
-    Write-Log -Message "Config File $($ConfigFile) contains invalid options. Please review logfile and configfile." -Level Warn
-    Exit 1
-}  
-#>
-if ( Get-ValidJson -JSONObject $CombinedJSONObject -Type $Type ) {
-    Write-Log -Message "Config has been validated for appropriate value selection" -Level Info
-} 
-else {
-    Write-Log -Message "Config contains invalid options. Please review logfile and configfile." -Level Warn
-    Exit 1
-}
-
-##// JK JSON Merge Function Addition Section
-
-
-#endregion Validate JSON
-
 #region variable setting
 #----------------------------------------------------------------------------------------------------------------------------
-#Set-VSIConfigurationVariables -ConfigurationFile $ConfigFile
-
-##// JK JSON Merge Function Addition Section
 Set-VSIConfigurationVariables -JSONConfiguration $CombinedJSONObject
-##// JK JSON Merge Function Addition Section
 #endregion variable setting
 
 #region Config File
 #----------------------------------------------------------------------------------------------------------------------------
-<#
-Write-Log -Message "Importing config file: $($ConfigFile)" -Level Info
-try {
-    $configFileData = Get-Content -Path $ConfigFile -ErrorAction Stop
-}
-catch {
-    Write-Log -Message "Failed to import config file: $($configFile)" -Level Error
-    Write-Log -Message $_ -Level Error
-    Exit 1
-}
-
-$configFileData = $configFileData -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/'
-
-try {
-    $config = $configFileData | ConvertFrom-Json -ErrorAction Stop
-}
-catch {
-    Write-Log -Message $_ -Level Error
-    Exit 1
-}
-#>
-##// JK JSON Merge Function Addition Section
 $Config = $CombinedJSONObject | ConvertFrom-Json
-##// JK JSON Merge Function Addition Section
+
+#region control variables
+#----------------------------------------------------------------------------------------------------------------------------
+if ($Config.Target.Monitor_Nutanix_Files -eq $true -and (-not [string]::IsNullOrEmpty[$Config.Target.Files])) { 
+    $control_monitor_nutanix_files = $true
+}
+if ($Config.Target.Monitor_Launcher_Cluster_Performance -eq $true -and (-not [string]::IsNullOrEmpty[$Config.Target.Launcher_Cluster_CVM])) { 
+    $control_monitor_launcher_cluster = $true 
+}
+if ($Config.Target.Monitor_Netscaler -eq $true -and (-not [string]::IsNullOrEmpty[$Config.Target.Netscaler]) -and $Config.Target.NetScaler -ne "MANDATORY_TO_DEFINE") { 
+    $control_monitor_netscaler = $true 
+}
+if ($Config.Test.StartObserverMonitoring -eq $true -or $Config.Target.files_prometheus -eq $true -and (-not $PSBoundParameters.ContainsKey('AzureMode')) ) { 
+    $control_monitor_observer_monitoring = $true 
+}
+if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true -and (-not [string]::IsNullOrEmpty[$Config.Target.Files_Cluster_CVM]) -and $Config.Target.Files_Cluster_CVM -ne "MANDATORY_TO_DEFINE" ) { 
+    $control_monitor_files_cluster_performance = $true 
+}
+if ($Config.AdvancedDiagnostics.EnableCollectPerf -eq $true -and (-not $PSBoundParameters.ContainsKey('AzureMode'))) { 
+    $control_monitor_advanced_diagnostics = $true 
+}
+
+Write-Log -Message "Monitoring Nutanix Files: $($control_monitor_nutanix_files)" -Level Validation
+Write-Log -Message "Monitoring Launcher Cluster: $($control_monitor_launcher_cluster)" -Level Validation
+Write-Log -Message "Monitoring NetScaler: $($control_monitor_netscaler)" -Level Validation
+Write-Log -Message "Monitoring with Observer: $($control_monitor_observer_monitoring)" -Level Validation
+Write-Log -Message "Monitoring Nutanix Files Cluster: $($control_monitor_files_cluster_performance)" -Level Validation
+Write-Log -Message "Monitoring with Advanced Diagnostics: $($control_monitor_advanced_diagnostics)" -Level Validation
+
+#endregion control variables
 
 #endregion Config File
 
 #region LE Appliance
-
+#----------------------------------------------------------------------------------------------------------------------------
 #Define the LE appliance detail
 if ($Config.Test.LEAppliance -eq "MANDATORY_TO_DEFINE" -and (!$LEAppliance)) {
     # Neither Option is OK due to ValidateSet on the LEAppliance Param
@@ -380,39 +366,34 @@ Connect-LEAppliance -Url $VSI_LoginEnterprise_ApplianceURL -Token $VSI_LoginEnte
 #endregion LE Appliance
 
 #region Observer validation
-if (-not $AzureMode.IsPresent) {
-    # This is not an Azure configuration
-        if ($Config.Test.StartObserverMonitoring -eq $true -or $Config.Target.files_prometheus -eq $true) {
-        #Test to see if the variable exists or not
-        if ($null -eq $VSI_Prometheus_IP -or $null -eq $VSI_Prometheus_sshuser -or $null -eq $VSI_Prometheus_sshpassword) {
-            Write-Log -Message "You must define the Prometheus IP, SSH User and SSH Password to enable Observer Monitoring in the LoginEnterpriseGlobal.jsonc file" -Level Error
-            Exit 1
-        }
+#----------------------------------------------------------------------------------------------------------------------------
+if ($control_monitor_observer_monitoring = $true) {
+    #Test to see if the required variable exists or not
+    if ($null -eq $VSI_Prometheus_IP -or $null -eq $VSI_Prometheus_sshuser -or $null -eq $VSI_Prometheus_sshpassword) {
+        Write-Log -Message "You must define the Prometheus IP, SSH User and SSH Password to enable Observer Monitoring in the LoginEnterpriseGlobal.jsonc file" -Level Error
+        Exit 1
     }
 }
+
 #endregion Observer validation
 
 #region Advanced Diagnostics - perf_collect - validation
-if (-not $AzureMode.IsPresent) {
-    #This is not an Azure test
-    if ($Config.psobject.Properties.Name -contains "AdvancedDiagnostics") {
-        if ($Config.AdvancedDiagnostics.EnableCollectPerf -eq $true) {
-            # Download the file using Receive-WinSCPItem. Must use the 6.3.2.0 version of the WinSCP module - nothing newer
-            $requiredVersion = [version]"6.3.2.0"
-            if ((Get-Module -ListAvailable -Name WinSCP).version -gt $requiredVersion) {
-                Write-Log -Message "WinSCP module version is newer than the required version. Downloading of data file will not be possible." -Level Warn
-            } else {
-                # Check if WinSCP module is installed
-                if (-not (Get-Module -ListAvailable -Name WinSCP | Where-Object { $_.Version -eq $requiredVersion })) {
-                    Write-Log -Message "WinSCP module not found. Installing WinSCP module." -Level Info
-                    try {
-                        Install-Module -Name WinSCP -Force -RequiredVersion $requiredVersion -ErrorAction Stop
-                        Import-Module -Name WinSCP -RequiredVersion $requiredVersion -Force -ErrorAction Stop
-                    }
-                    catch {
-                        Write-Log -Message "Failed to install correct WinSCP module. Download of collect_perf output will fail." -Level Warn
-                    }
-                }
+#----------------------------------------------------------------------------------------------------------------------------
+if ($control_monitor_advanced_diagnostics = $true) {
+    # Download the file using Receive-WinSCPItem. Must use the 6.3.2.0 version of the WinSCP module - nothing newer
+    $requiredVersion = [version]"6.3.2.0"
+    if ((Get-Module -ListAvailable -Name WinSCP).version -gt $requiredVersion) {
+        Write-Log -Message "WinSCP module version is newer than the required version. Downloading of data file will not be possible." -Level Warn
+    } else {
+        # Check if WinSCP module is installed
+        if (-not (Get-Module -ListAvailable -Name WinSCP | Where-Object { $_.Version -eq $requiredVersion })) {
+            Write-Log -Message "WinSCP module not found. Installing WinSCP module." -Level Info
+            try {
+                Install-Module -Name WinSCP -Force -RequiredVersion $requiredVersion -ErrorAction Stop
+                Import-Module -Name WinSCP -RequiredVersion $requiredVersion -Force -ErrorAction Stop
+            }
+            catch {
+                Write-Log -Message "Failed to install correct WinSCP module. Download of collect_perf output will fail." -Level Warn
             }
         }
     }
@@ -420,7 +401,7 @@ if (-not $AzureMode.IsPresent) {
 #endregion Advanced Diagnostics - perf_collect - validation
 
 #region data download and upload validation
-
+#----------------------------------------------------------------------------------------------------------------------------
 if ($Config.Test.SkipLEMetricsDownload -eq $true -and $Config.Test.Uploadresults -eq $true) {
     #You can't skip a download and enable an upload
     Write-Log -Message "You cannot skip LE metric download (SkipLEMetricsDownload) and enable Influx upload (Uploadresults). This is not a valid test configuration." -Level Error
@@ -447,7 +428,7 @@ if (-not $AzureMode.IsPresent) {
     $NTNXInfra = Get-NTNXinfo -Config $config
     $HostCVMIPs = Get-NTNXCVMIPs -Config $config
     $HostIPs = Get-NTNXHostIPs -Config $config
-    if ($Config.Target.Files -ne "") {
+    if ($control_monitor_nutanix_files -eq $true) { 
         Write-Log -Message "Getting Nutanix Files Info" -Level Info
         $NTNXInfra = Get-NTNXFilesinfo -Config $NTNXInfra
     }
@@ -489,7 +470,6 @@ if (($Type -eq "CitrixVAD") -or ($Type -eq "CitrixDaaS")) {
 
 #region Script behaviour from file (params)
 #----------------------------------------------------------------------------------------------------------------------------
-
 ## Allow the script to override JSON values via parameter
 if ($SkipADUsers.IsPresent) { $SkipADUsers = $true } else { $SkipADUsers = $Config.Test.SkipADUsers }
 if ($SkipLEUsers.IsPresent) { $SkipLEUsers = $true } else { $SkipLEUsers = $Config.Test.SkipLEUsers }
@@ -497,7 +477,6 @@ if ($SkipLaunchers.IsPresent) { $SkipLaunchers = $true } else { $SkipLaunchers =
 if ($SkipPDFExport.IsPresent) { $SkipPDFExport = $true } else { $SkipPDFExport = $Config.Test.SkipPDFExport }
 if ($SkipWaitForIdleVMs.IsPresent) { $SkipWaitForIdleVMs = $true } else { $SkipWaitForIdleVMs = $Config.Test.SkipWaitForIdleVMs }
 
-#$VSI_Target_RampupInMinutes = $Config.Test.Target_RampupInMinutes #Might not be needed now
 $InfluxTestDashBucket = $Config.Test.InfluxTestDashBucket # Used for neatness later on.
 
 if ($Type -eq "CitrixVAD" -or "CitrixDaaS"){
@@ -513,18 +492,17 @@ if ($Type -eq "CitrixVAD" -or "CitrixDaaS"){
 #----------------------------------------------------------------------------------------------------------------------------
 
 #region Mandatory JSON Value Output
-$Mandatory_Undefined_Config_Entries = Get-Variable -Name VSI* | where-Object {$_.Value -match "MANDATORY_TO_DEFINE"}
-##//JK: Check for Mandatory Undefined Values with the new Variable names!
+$Mandatory_Undefined_Config_Entries = Get-Variable -Name VSI*, ImageSpec_* | where-Object {$_.Value -match "MANDATORY_TO_DEFINE"}
 
 if ($null -ne $Mandatory_Undefined_Config_Entries) {
-    Write-Log -Message "There are $(($Mandatory_Undefined_Config_Entries | Measure-Object).Count) Undefined values that must be specified" -Level Warn
+    Write-Log -Message "There are $(($Mandatory_Undefined_Config_Entries | Measure-Object).Count) Undefined values" -Level Warn
     foreach ($Item in $Mandatory_Undefined_Config_Entries) {
-        Write-Log -Message "Setting: $($Item.Name) must be set. Current value: $($Item.Value)" -Level Warn
+        Write-Log -Message "Setting: $($Item.Name) current value: $($Item.Value)" -Level Warn
     }
 }
 
 if (($Mandatory_Undefined_Config_Entries | Measure-Object).Count -gt 0) {
-    ##// Write out a prompt here post validation work - make sure all is good before going
+    # Write out a prompt here post validation work - make sure all is good before going
     $answer = read-host "Test details correct for test? yes (y) or no? "
     if ($answer -ne "yes" -and $answer -ne "y") { 
         Write-Log -Message "Input not confirmed. Exit" -Level Info
@@ -553,20 +531,20 @@ if ($Type -eq "RDP") {
 
 #region Nutanix Files Pre Flight Checks
 #----------------------------------------------------------------------------------------------------------------------------
-if ($Config.Target.Files -ne "") {
+if ($control_monitor_nutanix_files -eq $true) {
     Write-Log -Message "Validating Nutanix Files Authentication" -Level Info
     
     Invoke-NutanixFilesAuthCheck
+}
 
-    if ($null -ne $Config.Test.Nutanix_Files_Shares -and $Config.Test.Delete_Files_Data -eq $true) {
-        ##TODO Need to validate this
-        Write-Log -Message "Processing Nutanix Files Data Removal Validation" -Level Info
-        Remove-NutanixFilesData -Shares $Config.Test.Nutanix_Files_Shares -Mode Validate
-    }
+if ($Config.Test.Delete_Files_Data -eq $true -and $null -ne $Config.Test.Nutanix_Files_Shares) {
+    Write-Log -Message "Processing Nutanix Files Data Removal Validation" -Level Info
+    Remove-NutanixFilesData -Shares $Config.Test.Nutanix_Files_Shares -Mode Validate
 }
 #endregion Nutanix Files Pre Flight Checks
 
 #region Citrix API Authentication Setup
+#----------------------------------------------------------------------------------------------------------------------------
 if ($Type -eq "CitrixVAD" -or "CitrixDaaS"){
     if ($Config.Target.OrchestrationMethod -eq "API") {
         if ([string]::IsNullOrEmpty[$Config.Domain.LDAPUsername] -or [string]::IsNullOrEmpty[$Config.Domain.LDAPPassword]) {
@@ -612,6 +590,7 @@ if ($Type -eq "CitrixVAD" -or "CitrixDaaS"){
 #endregion Citrix API Authentication Setup
 
 #region Citrix Site Access Pre Flight Checks
+#----------------------------------------------------------------------------------------------------------------------------
 if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
     if ($Config.Target.OrchestrationMethod -eq "Snapin") {
         Write-Log -Message "Handling Citrix Credentials and Validating Citrix On Prem Site" -Level Info
@@ -657,6 +636,7 @@ if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
 #endregion Citrix Site Access Pre Flight Checks
 
 #region Nutanix Snapshot Pre Flight Checks
+#----------------------------------------------------------------------------------------------------------------------------
 if (-not $AzureMode.IsPresent) {
     # This is not an Azure configuration
     if (($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") -and $Config.Target.CloneType -eq "MCS" -and $NTNXInfra.Testinfra.HypervisorType -eq "AHV") {
@@ -795,6 +775,7 @@ if (-not $AzureMode.IsPresent) {
 #endregion Nutanix Snapshot Pre Flight Checks
 
 #region Validate vSphere and ESXi Host Access if required
+#----------------------------------------------------------------------------------------------------------------------------
 if (-not $AzureMode.IsPresent) {
     # This is not an Azure configuration
     if ($config.Target.HypervisorType -eq "ESXi" -and ($config.vSphere.RestartHostd -eq $true -or $config.Target.ForceAlignVMToHost -eq $true )) {
@@ -822,7 +803,8 @@ if (-not $AzureMode.IsPresent) {
 #endregion Validate vSphere and ESXi Host Access if required
 
 #region Validate Launcher Cluster Access if required
-if ($Config.Target.Monitor_Launcher_Cluster_Performance -eq $true) {
+#----------------------------------------------------------------------------------------------------------------------------
+if ($control_monitor_launcher_cluster -eq $true ) {
     Write-Log -Message "Validating Launcher Cluster Details" -Level Info
     $params = @{
         TargetCVM         = $Config.Target.Launcher_Cluster_CVM
@@ -848,6 +830,7 @@ if ($ValidateOnly.IsPresent) {
 #endregion Validation
 
 #region Start Infrastructure Monitoring
+#----------------------------------------------------------------------------------------------------------------------------
 if ($Config.Test.StartInfrastructureMonitoring -eq $true -and $Config.Test.ServersToMonitor) {
     #// JK - I think we will have an issue with container based configurations here - need to fix the same as RDP DelProf Approach
     Write-Log -Message "Starting Infrastructure Monitoring" -Level Info
@@ -856,55 +839,53 @@ if ($Config.Test.StartInfrastructureMonitoring -eq $true -and $Config.Test.Serve
 #endregion Start Infrastructure Monitoring
 
 #region Start Observer Monitoring
-if (-not $AzureMode.IsPresent) {
-    # This is not an Azure configuration
-   # if ($Config.Test.StartObserverMonitoring -eq $true) {
-    if ($Config.Test.StartObserverMonitoring -eq $true -or $Config.Target.files_prometheus -eq $true) {
-        # Set hushlogin to get rid of first SSH text message
-        Write-Log -Message "Set hushlogin on CVMs" -Level Info
-        $params = @{
-            ClusterIP      = $Config.Target.CVM
-            CVMsshuser     = "nutanix"
-            CVMsshpassword = $Config.Target.CVMsshpassword
-        }
-        $hushloginprocessed = Set-HushloginCVM @params
-        $Params = $null
+#----------------------------------------------------------------------------------------------------------------------------
+if ($control_monitor_observer_monitoring = $true) {
+    # Set hushlogin to get rid of first SSH text message
+    Write-Log -Message "Set hushlogin on CVMs" -Level Info
+    $params = @{
+        ClusterIP      = $Config.Target.CVM
+        CVMsshuser     = "nutanix"
+        CVMsshpassword = $Config.Target.CVMsshpassword
+    }
+    $hushloginprocessed = Set-HushloginCVM @params
+    $Params = $null
 
-        Write-Log -Message "Starting Observer Monitoring" -Level Info
-        $params = @{
-           # clustername           = $Config.TestInfra.ClusterName
-            Config                = $NTNXInfra
-            CVMIPs                = $HostCVMIPs
-            HostIPs               = $HostIPs
-            CVMsshUser            = "nutanix"
-            # CVMsshpassword        = $Config.Target.CVMsshpassword
-            prometheusip          = $VSI_Prometheus_IP
-            prometheussshuser     = $VSI_Prometheus_sshuser
-            prometheussshpassword = $VSI_Prometheus_sshpassword 
-            Status                = "Start"
-        }
-        $null = Set-CVMObserver @params
-        $params = $null
-    } 
-    if ($Config.Target.files_prometheus -eq $true) {
-        $params = @{
-            Config                = $NTNXInfra
-            Status                = "Start"
-        }
-        $null = Set-FilesPromMonitor @params
-        $params = $null
+    Write-Log -Message "Starting Observer Monitoring" -Level Info
+    $params = @{
+        # clustername           = $Config.TestInfra.ClusterName
+        Config                = $NTNXInfra
+        CVMIPs                = $HostCVMIPs
+        HostIPs               = $HostIPs
+        CVMsshUser            = "nutanix"
+        # CVMsshpassword        = $Config.Target.CVMsshpassword
+        prometheusip          = $VSI_Prometheus_IP
+        prometheussshuser     = $VSI_Prometheus_sshuser
+        prometheussshpassword = $VSI_Prometheus_sshpassword 
+        Status                = "Start"
     }
-    if ($Config.Test.StartObserverMonitoring -eq $false -and $Config.Target.files_prometheus -eq $false) {
-        Write-Log -Message "Make sure Observer Monitoring is stopped" -Level Info
-        $params = @{
-            prometheusip          = $VSI_Prometheus_IP
-            prometheussshuser     = $VSI_Prometheus_sshuser
-            prometheussshpassword = $VSI_Prometheus_sshpassword 
-            Status                = "Stop"
-        }
-        $null = Set-CVMObserver @params
-        $params = $null
+    $null = Set-CVMObserver @params
+    $params = $null
+} 
+if ($Config.Target.files_prometheus -eq $true) {
+    $params = @{
+        Config                = $NTNXInfra
+        Status                = "Start"
     }
+    $null = Set-FilesPromMonitor @params
+    $params = $null
+}
+#if ($Config.Test.StartObserverMonitoring -eq $false -and $Config.Target.files_prometheus -eq $false) {
+if ($control_monitor_observer_monitoring = $false) {
+    Write-Log -Message "Make sure Observer Monitoring is stopped" -Level Info
+    $params = @{
+        prometheusip          = $VSI_Prometheus_IP
+        prometheussshuser     = $VSI_Prometheus_sshuser
+        prometheussshpassword = $VSI_Prometheus_sshpassword 
+        Status                = "Stop"
+    }
+    $null = Set-CVMObserver @params
+    $params = $null
 }
 #endregion Start Observer Monitoring
 
@@ -1028,7 +1009,6 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
 
     #region Citrix validation
     #----------------------------------------------------------------------------------------------------------------------------
-
     if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
         Write-Log -Message "Validating Citrix" -Level Info
 
@@ -1304,6 +1284,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
     #endregion AD Users
 
     #region Force Desktop Pool recreation
+    #----------------------------------------------------------------------------------------------------------------------------
     if ($Type -eq "Horizon") {
         if ($Force.IsPresent) {
             Write-Log -Message "Removing Horizon Desktop Pool due to force switch" -Level Info
@@ -1380,7 +1361,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         }
 
         # We are going to monitor the files cluster performance metrics
-        if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
+        if ($control_monitor_files_cluster_performance -eq $true) {
             # Getting details from Nutanix Files Cluster hosting Files
             $Hostuuid_files_cluster = Get-NTNXHostUUID -NTNXHost $Config.Target.Files_Cluster_Host -TargetCVM $Config.Target.Files_Cluster_CVM -TargetCVMAdmin $VSI_Target_Files_Cluster_CVM_admin -TargetCVMPassword $VSI_Target_Files_Cluster_CVM_password
             $IPMI_ip_files_cluster = Get-NTNXHostIPMI -NTNXHost $Config.Target.Files_Cluster_Host -TargetCVM $Config.Target.Files_Cluster_CVM -TargetCVMAdmin $VSI_Target_Files_Cluster_CVM_admin -TargetCVMPassword $VSI_Target_Files_Cluster_CVM_password
@@ -1388,7 +1369,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         }
 
         # We are going to monitor the launcher cluster performance metrics
-        if ($Config.Target.Monitor_Launcher_Cluster_Performance -eq $true) {
+        if ($control_monitor_launcher_cluster -eq $true) {
             # Getting details from Nutanix Cluster hosting launchers
             $Hostuuid_launcher_cluster = Get-NTNXHostUUID -NTNXHost $Config.Target.Launcher_Cluster_Host -TargetCVM $Config.Target.Launcher_Cluster_CVM -TargetCVMAdmin $Config.Target.Launcher_Cluster_CVM_admin -TargetCVMPassword $Config.Target.Launcher_Cluster_CVM_password
             $IPMI_ip_launcher_cluster = Get-NTNXHostIPMI -NTNXHost $Config.Target.Launcher_Cluster_Host -TargetCVM $Config.Target.Launcher_Cluster_CVM -TargetCVMAdmin $Config.Target.Launcher_Cluster_CVM_admin -TargetCVMPassword $Config.Target.Launcher_Cluster_CVM_password
@@ -2299,7 +2280,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             Set-NTNXcurator -ClusterIP $Config.Target.CVM -CVMSSHPassword $Config.Target.CVMsshpassword -Action "stop"
         }
 
-        if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
+        if ($control_monitor_files_cluster_performance -eq $true) {
             Write-Log -Message "Stopping Nutanix Curator Service on the Nutanix Files Cluster $($Config.Target.Files_Cluster_CVM)" -Level Info
             Set-NTNXcurator -ClusterIP $Config.Target.Files_Cluster_CVM -CVMSSHPassword $Config.Target.Files_Cluster_CVMsshpassword -Action "stop"
         }
@@ -2307,23 +2288,19 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         #endregion Nutanix Curator Stop
 
         #region Advanced Diagnostics - perf_collect - Start
-        if (-not $AzureMode.IsPresent) {
-            #This is not an Azure test
-            if ($Config.psobject.Properties.Name -contains "AdvancedDiagnostics") {
-                if ($Config.AdvancedDiagnostics.EnableCollectPerf -eq $true) {
-                    Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Job will be started." -Level Warn
-                    $params = @{
-                        ClusterIP       = $Config.Target.CVM
-                        CVMSSHPassword  = $Config.Target.CVMsshpassword
-                        Action          = "Start"
-                        SampleInterval  = $Config.AdvancedDiagnostics.CollectPerfSampleInterval
-                        SampleFrequency = $Config.AdvancedDiagnostics.CollectPerfSampleFrequency
-                    }
-                    Set-NTNXCollectPerf @params
-                
-                    $params = $null
-                }
+        #----------------------------------------------------------------------------------------------------------------------------
+        if ($control_monitor_advanced_diagnostics -eq $true) {
+            Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Job will be started." -Level Warn
+            $params = @{
+                ClusterIP       = $Config.Target.CVM
+                CVMSSHPassword  = $Config.Target.CVMsshpassword
+                Action          = "Start"
+                SampleInterval  = $Config.AdvancedDiagnostics.CollectPerfSampleInterval
+                SampleFrequency = $Config.AdvancedDiagnostics.CollectPerfSampleFrequency
             }
+            Set-NTNXCollectPerf @params
+        
+            $params = $null
         }
         #endregion Advanced Diagnostics - perf_collect - Start
 
@@ -2426,7 +2403,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         }
 
         #start Monitoring the Files Cluster Hosting Files
-        if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
+        if ($control_monitor_files_cluster_performance -eq $true) {
             $Params = @{
                 OutputFolder                 = ($OutputFolder + "\" + "Files_Cluster")
                 DurationInMinutes            = $ImageSpec_DurationInMinutes
@@ -2444,7 +2421,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         }
 
         #region Update Test Dashboard
-        if ($Config.Target.Files -ne "") { $Message = "Starting Nutanix Files Monitor Run $($i)" } else { $Message = "Skipping Nutanix Files Monitoring" }
+        if ($control_monitor_nutanix_files -eq $true) { $Message = "Starting Nutanix Files Monitor Run $($i)" } else { $Message = "Skipping Nutanix Files Monitoring" }
         Write-Log -Message "$($Message)" -Level Info
         $params = @{
             ConfigFile     = $NTNXInfra
@@ -2477,7 +2454,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        if ($Config.Target.Files -ne "") {
+        if ($control_monitor_nutanix_files -eq $true) {
             $Params = @{
                 OutputFolder                 = $OutputFolder 
                 DurationInMinutes            = $ImageSpec_DurationInMinutes
@@ -2490,7 +2467,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         }
 
         #start Monitoring the Launcher Cluster
-        if ($Config.Target.Monitor_Launcher_Cluster_Performance -eq $true) {
+        if ($control_monitor_launcher_cluster -eq $true) {
             $Params = @{
                 OutputFolder                 = ($OutputFolder + "\" + "Launcher_Cluster")
                 DurationInMinutes            = $ImageSpec_DurationInMinutes
@@ -2508,7 +2485,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         }
 
         #region Update Test Dashboard
-        if ($Config.Target.NetScaler -ne "") { $Message = "Starting Citrix NetScaler Monitor Run $($i)" } else { $Message = "Skipping Citrix NetScaler Monitoring" }
+        if ($control_monitor_netscaler -eq $true) { $Message = "Starting Citrix NetScaler Monitor Run $($i)" } else { $Message = "Skipping Citrix NetScaler Monitoring" }
         Write-Log -Message "$($Message)" -Level Info
         $params = @{
             ConfigFile     = $NTNXInfra
@@ -2541,7 +2518,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        if ($VSI_Target_NetScaler -ne "") {
+        if ($control_monitor_netscaler -eq $true) {
             $Params = @{
                 OutputFolder      = $OutputFolder 
                 DurationInMinutes = $ImageSpec_DurationInMinutes #$VSI_Target_DurationInMinutes 
@@ -2606,23 +2583,19 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         #endregion Wait for test to finish
 
         #region Advanced Diagnostics - perf_collect - Stop
-        if (-not $AzureMode.IsPresent) {
-            #This is not an Azure test
-            if ($Config.psobject.Properties.Name -contains "AdvancedDiagnostics") {
-                if ($Config.AdvancedDiagnostics.EnableCollectPerf -eq $true) {
-                    Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Job will be stopped." -Level Info
-                    $params = @{
-                        ClusterIP             = $Config.Target.CVM
-                        CVMSSHPassword        = $Config.Target.CVMsshpassword
-                        Action                = "Stop"
-                        OutputFolder          = $OutputFolder
-                        DownloadCollectorFile = $true
-                    }
-                    Set-NTNXCollectPerf @params
-                
-                    $params = $null
-                }
+        #----------------------------------------------------------------------------------------------------------------------------
+        if ($control_monitor_advanced_diagnostics -eq $true) {
+            Write-Log -Message "Advanced diagnostic performance logging is enabled (collect_perf). Job will be stopped." -Level Info
+            $params = @{
+                ClusterIP             = $Config.Target.CVM
+                CVMSSHPassword        = $Config.Target.CVMsshpassword
+                Action                = "Stop"
+                OutputFolder          = $OutputFolder
+                DownloadCollectorFile = $true
             }
+            Set-NTNXCollectPerf @params
+        
+            $params = $null
         }
         #endregion Advanced Diagnostics - perf_collect - Stop
 
@@ -2633,19 +2606,19 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             $monitoringJob | Wait-Job | Out-Null
             $monitoringJob | Remove-Job | Out-Null
         }
-        if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
+        if ($control_monitor_files_cluster_performance -eq $true) {
             $monitoringJob_files | Wait-Job | Out-Null
             $monitoringJob_files | Remove-Job | Out-Null
         }
-        if ($Config.Target.Files -ne "") {
+        if ($control_monitor_nutanix_files -eq $true) {
             $monitoringFilesJob | Wait-Job | Out-Null
             $monitoringFilesJob | Remove-Job | Out-Null
         }
-        if ($Config.Target.Monitor_Launcher_Cluster_Performance -eq $true) {
+        if ($control_monitor_launcher_cluster -eq $true) {
             $monitoringJob_launcher_cluster | Wait-Job | Out-Null
             $monitoringJob_launcher_cluster | Remove-Job | Out-Null
         }
-        if ($Config.Target.NetScaler -ne "") {
+        if ($control_monitor_netscaler -eq $true) {
             $monitoringNSJob | Wait-Job | Out-Null
             $monitoringNSJob | Remove-Job | Out-Null
         }
@@ -2699,7 +2672,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             Set-NTNXcurator -ClusterIP $Config.Target.CVM -CVMSSHPassword $Config.Target.CVMsshpassword -Action "start"
         }
 
-        if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
+        if ($control_monitor_files_cluster_performance -eq $true) {
             Write-Log -Message "Starting Nutanix Curator Service on the Nutanix Files Cluster $($Config.Target.Files_Cluster_CVM)" -Level Info
             Set-NTNXcurator -ClusterIP $Config.Target.Files_Cluster_CVM -CVMSSHPassword $Config.Target.Files_Cluster_CVMsshpassword -Action "start"
         }
@@ -2760,7 +2733,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         #endregion Write config to OutputFolder and Download LE Metrics
 
         #region download Prometheus data
-        if ($Config.Test.StartObserverMonitoring -eq $true -or $Config.Target.files_prometheus -eq $true) {
+        if ($control_monitor_observer_monitoring = $true) {
             if ($Config.TestInfra.HostGPUs -ne "None"){
                 $GetGPU = $true
             }
@@ -2831,13 +2804,11 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         $CurrentTotalPhase++
         #endregion Update Test Dashboard
 
-        if ($VSI_Target_Files -ne "") {
-            if ($null -ne $Config.Test.Nutanix_Files_Shares -and $Config.Test.Delete_Files_Data -eq $true) { #Need to update the above messaging to reflect these detetion rules
-                Write-Log -Message "Processing Nutanix Files Data Removal" -Level Info
-                # TODO: Need to Validate this configuation
-                Remove-NutanixFilesData -Shares $Config.Test.Nutanix_Files_Shares -Mode Execute
-            }
+        if ($Config.Test.Delete_Files_Data -eq $true -and $null -ne $Config.Test.Nutanix_Files_Shares) {
+            Write-Log -Message "Processing Nutanix Files Data Removal" -Level Info
+            Remove-NutanixFilesData -Shares $Config.Test.Nutanix_Files_Shares -Mode Execute
         }
+
         #endregion Cleanup Nutanix Files Data
 
         #region Upload Data to Influx
@@ -2957,7 +2928,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             #endregion upload full test data to Influx
 
             #region Upload Files Hosting Data to Influx
-            if ($Config.Target.Monitor_Files_Cluster_Performance -eq $true) {
+            if ($control_monitor_files_cluster_performance -eq $true) {
                 Write-Log -Message "[DATA UPLOAD] Uploading Files Cluster $($Config.Target.Files_Cluster_CVM) Metrics to Influx" -Level Info
             
                 #alter the file names so we have uniqe influx data
@@ -2997,7 +2968,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             #endregion Upload Files Hosting Data to Influx
             
             #region Upload Launcher Cluster Data to Influx
-            if ($Config.Target.Monitor_Launcher_Cluster_Performance -eq $true) {
+            if ($control_monitor_launcher_cluster -eq $true) {
                 Write-Log -Message "[DATA UPLOAD] Uploading Launcher Cluster $($Config.Target.Launcher_Cluster_CVM) Metrics to Influx" -Level Info
 
                 #alter the file names so we have uniqe influx data
@@ -3041,6 +3012,8 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
 
         #endregion Upload Data to Influx
 
+        #region Analyze LE Metrics
+        #----------------------------------------------------------------------------------------------------------------------------
         if ($Config.Test.SkipLEMetricsDownload -eq $true){ 
             Write-Log -Message "Skipped download of LE Metrics so no analysis occuring" -Level Info
         } 
@@ -3048,6 +3021,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             $Testresult = import-csv "$OutputFolder\VSI-results.csv"
             $Appsuccessrate = $Testresult."Apps success" / $Testresult."Apps total" * 100
         }
+        #endregion Analyze LE Metrics
 
         #region Slack update
         #----------------------------------------------------------------------------------------------------------------------------
@@ -3135,6 +3109,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
     #endregion Iterate through runs
 
     #region Clear Affinity from VMs
+    #----------------------------------------------------------------------------------------------------------------------------
     if (-not $AzureMode.IsPresent) { 
         if ($NTNXInfra.Target.HypervisorType -eq "AHV") {
             $params = @{
@@ -3195,6 +3170,14 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
 }
 #endregion Execute Test
 
+#region Cleanup Nutanix Files Data
+#----------------------------------------------------------------------------------------------------------------------------
+if ($Config.Test.Delete_Files_Data -eq $true -and $null -ne $Config.Test.Nutanix_Files_Shares) {
+    Write-Log -Message "Processing Nutanix Files Data Removal" -Level Info
+    Remove-NutanixFilesData -Shares $Config.Test.Nutanix_Files_Shares -Mode Execute
+}
+#endregion Cleanup Nutanix Files Data
+
 #region Stop Infrastructure Monitoring
 if ($Config.Test.StartInfrastructureMonitoring -eq $true -and $Config.Test.ServersToMonitor) {
     Write-Log -Message "Stopping Infrastructure Monitoring" -Level Info
@@ -3203,31 +3186,31 @@ if ($Config.Test.StartInfrastructureMonitoring -eq $true -and $Config.Test.Serve
 #endregion Stop Infrastructure Monitoring
 
 #region Stop Observer Monitoring
-if (-not $AzureMode.IsPresent) {
-    # This is not an Azure configuration
-    if ($Config.Test.StartObserverMonitoring -eq $true -or $Config.Target.files_prometheus -eq $true) {
-        Write-Log -Message "Stopping Observer Monitoring" -Level Info
-        $params = @{
-            prometheusip          = $VSI_Prometheus_IP
-            prometheussshuser     = $VSI_Prometheus_sshuser
-            prometheussshpassword = $VSI_Prometheus_sshpassword 
-            Status                = "Stop"
-        }
-        $null = Set-CVMObserver @params
-        $params = $null
-    } 
-    if ($Config.Target.files_prometheus -eq $true) {
-        $params = @{
-            Config                = $NTNXInfra
-            Status                = "Stop"
-        }
-        $null = Set-FilesPromMonitor @params
-        $params = $null
+#----------------------------------------------------------------------------------------------------------------------------
+if ($control_monitor_observer_monitoring = $true) {
+    Write-Log -Message "Stopping Observer Monitoring" -Level Info
+    $params = @{
+        prometheusip          = $VSI_Prometheus_IP
+        prometheussshuser     = $VSI_Prometheus_sshuser
+        prometheussshpassword = $VSI_Prometheus_sshpassword 
+        Status                = "Stop"
     }
+    $null = Set-CVMObserver @params
+    $params = $null
+} 
+if ($Config.Target.files_prometheus -eq $true) {
+    $params = @{
+        Config                = $NTNXInfra
+        Status                = "Stop"
+    }
+    $null = Set-FilesPromMonitor @params
+    $params = $null
 }
+
 #endregion Stop Observer Monitoring
 
 #region shutdown citrix machines after final run
+#----------------------------------------------------------------------------------------------------------------------------
 if (-not $AzureMode.IsPresent) { 
     if ($Type -eq "CitrixVAD" -or $Type -eq "CitrixDaaS") {
         if ($Config.Target.OrchestrationMethod -eq "SnapIn") {
@@ -3250,6 +3233,7 @@ if (-not $AzureMode.IsPresent) {
 #endregion shutdown citrix machines after final run
 
 #region Update Test Dashboard
+#----------------------------------------------------------------------------------------------------------------------------
 $params = @{
     ConfigFile     = $NTNXInfra
     TestName       = $NTNXTestname 
@@ -3270,6 +3254,7 @@ $params = $null
 Write-Log -Message "Script Finished" -Level Info
 
 #region logfile cleanup
+#----------------------------------------------------------------------------------------------------------------------------
 # Move the Temp Log file to the final location
 try {
     $FinalLogPath = "$ScriptRoot\results\$($NTNXTestname)_Run1"

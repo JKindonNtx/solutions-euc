@@ -124,7 +124,9 @@ Writes an Info Output to the console
             }
         }
         'Validation' {
-            Write-Host "$([char]0x1b)[96mVALIDATION: $Message"
+            #Write-Host "$([char]0x1b)[96mVALIDATION: $Message"
+            $Date = Get-Date
+            Write-Host "$([char]0x1b)[96m[$([char]0x1b)[97m$($Date)$([char]0x1b)[96m]$([char]0x1b)[96m VALIDATION: $Message"
             $global:LastMessageEndedWithNewLine = $true
             if ($global:LogOutputTempFile) {
                 "VALIDATION: $Message" | Out-File -FilePath $LogPath -Append

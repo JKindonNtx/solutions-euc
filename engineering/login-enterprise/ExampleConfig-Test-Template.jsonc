@@ -154,6 +154,7 @@
         // -----------------------------------------------------------------------------------
         // Optional_NetScaler_Block - Leave "NetScaler" value Blank to ignore NetScaler testing. 
         // -----------------------------------------------------------------------------------
+        "Monitor_NetScaler": false, // Enables monitoring of NetScaler
         "NetScaler": "MANDATORY_TO_DEFINE", // The Citrix NetScaler NSIP
         "NetScaler_Password": "MANDATORY_TO_DEFINE", // The NSROOT password for the Citrix NetScaler
         // -----------------------------------------------------------------------------------
