@@ -367,7 +367,7 @@ Connect-LEAppliance -Url $VSI_LoginEnterprise_ApplianceURL -Token $VSI_LoginEnte
 
 #region Observer validation
 #----------------------------------------------------------------------------------------------------------------------------
-if ($control_monitor_observer_monitoring = $true) {
+if ($control_monitor_observer_monitoring -eq $true) {
     #Test to see if the required variable exists or not
     if ($null -eq $VSI_Prometheus_IP -or $null -eq $VSI_Prometheus_sshuser -or $null -eq $VSI_Prometheus_sshpassword) {
         Write-Log -Message "You must define the Prometheus IP, SSH User and SSH Password to enable Observer Monitoring in the LoginEnterpriseGlobal.jsonc file" -Level Error
@@ -379,7 +379,7 @@ if ($control_monitor_observer_monitoring = $true) {
 
 #region Advanced Diagnostics - perf_collect - validation
 #----------------------------------------------------------------------------------------------------------------------------
-if ($control_monitor_advanced_diagnostics = $true) {
+if ($control_monitor_advanced_diagnostics -eq $true) {
     # Download the file using Receive-WinSCPItem. Must use the 6.3.2.0 version of the WinSCP module - nothing newer
     $requiredVersion = [version]"6.3.2.0"
     if ((Get-Module -ListAvailable -Name WinSCP).version -gt $requiredVersion) {
@@ -840,7 +840,7 @@ if ($Config.Test.StartInfrastructureMonitoring -eq $true -and $Config.Test.Serve
 
 #region Start Observer Monitoring
 #----------------------------------------------------------------------------------------------------------------------------
-if ($control_monitor_observer_monitoring = $true) {
+if ($control_monitor_observer_monitoring -eq $true) {
     # Set hushlogin to get rid of first SSH text message
     Write-Log -Message "Set hushlogin on CVMs" -Level Info
     $params = @{
@@ -876,7 +876,7 @@ if ($Config.Target.files_prometheus -eq $true) {
     $params = $null
 }
 #if ($Config.Test.StartObserverMonitoring -eq $false -and $Config.Target.files_prometheus -eq $false) {
-if ($control_monitor_observer_monitoring = $false) {
+if ($control_monitor_observer_monitoring -eq $false) {
     Write-Log -Message "Make sure Observer Monitoring is stopped" -Level Info
     $params = @{
         prometheusip          = $VSI_Prometheus_IP
@@ -2733,7 +2733,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         #endregion Write config to OutputFolder and Download LE Metrics
 
         #region download Prometheus data
-        if ($control_monitor_observer_monitoring = $true) {
+        if ($control_monitor_observer_monitoring -eq $true) {
             if ($Config.TestInfra.HostGPUs -ne "None"){
                 $GetGPU = $true
             }
@@ -3187,7 +3187,7 @@ if ($Config.Test.StartInfrastructureMonitoring -eq $true -and $Config.Test.Serve
 
 #region Stop Observer Monitoring
 #----------------------------------------------------------------------------------------------------------------------------
-if ($control_monitor_observer_monitoring = $true) {
+if ($control_monitor_observer_monitoring -eq $true) {
     Write-Log -Message "Stopping Observer Monitoring" -Level Info
     $params = @{
         prometheusip          = $VSI_Prometheus_IP
