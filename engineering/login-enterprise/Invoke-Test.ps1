@@ -1671,25 +1671,26 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             if ($config.Target.OrchestrationMethod -eq "Snapin") {
                 #Legacy Snapin Approach
                 $params = @{
-                    DesktopPoolName            = $Config.Target.DesktopPoolName #$VSI_Target_DesktopPoolName
-                    NumberofVMs                = $ImageSpec_NumberOfVMS #$VSI_Target_NumberOfVMS
-                    PowerOnVMs                 = $ImageSpec_PowerOnVMs #$VSI_Target_PowerOnVMs
-                    DDC                        = $Config.Target.DDC #$VSI_Target_DDC
+                    DesktopPoolName            = $Config.Target.DesktopPoolName
+                    NumberofVMs                = $ImageSpec_NumberOfVMS
+                    PowerOnVMs                 = $ImageSpec_PowerOnVMs
+                    DDC                        = $Config.Target.DDC
                     HypervisorType             = $NTNXInfra.Testinfra.HypervisorType
-                    Affinity                   = $NTNXInfra.Testinfra.SetAffinity
-                    ClusterIP                  = $Config.Target.CVM #$NTNXInfra.Target.CVM
-                    CVMSSHPassword             = $Config.Target.CVMsshpassword #$NTNXInfra.Target.CVMsshpassword
-                    VMnameprefix               = $Config.Target.NamingPattern #$NTNXInfra.Target.NamingPattern
-                    CloneType                  = $Config.Target.CloneType #$VSI_Target_CloneType
+                    #Affinity                   = $NTNXInfra.Testinfra.SetAffinity
+                    ClusterIP                  = $Config.Target.CVM
+                    CVMSSHPassword             = $Config.Target.CVMsshpassword
+                    VMnameprefix               = $Config.Target.NamingPattern
+                    CloneType                  = $Config.Target.CloneType
                     Hosts                      = $NTNXInfra.Testinfra.Hostip
                     Type                       = $Type
-                    ForceAlignVMToHost         = $Config.Target.ForceAlignVMToHost #$NTNXInfra.Target.ForceAlignVMToHost
-                    EnforceHostMaintenanceMode = $Config.Target.EnforceHostMaintenanceMode #$NTNXInfra.Target.EnforceHostMaintenanceMode
-                    TargetCVMAdmin             = $Config.Target.CVM_admin #$VSI_Target_CVM_admin
-                    TargetCVMPassword          = $Config.Target.CVM_password #$VSI_Target_CVM_password
+                    ForceAlignVMToHost         = $Config.Target.ForceAlignVMToHost
+                    EnforceHostMaintenanceMode = $Config.Target.EnforceHostMaintenanceMode
+                    TargetCVMAdmin             = $Config.Target.CVM_admin
+                    TargetCVMPassword          = $Config.Target.CVM_password
                     Run                        = $i 
-                    MaxRecordCount             = $Config.Target.MaxRecordCount #$VSI_Target_MaxRecordCount
-                    HostCount                  = $Config.Target.NodeCount #$VSI_Target_NodeCount
+                    MaxRecordCount             = $Config.Target.MaxRecordCount
+                    HostCount                  = $Config.Target.NodeCount
+                    SingleHostTarget           = $Config.Target.NTNXHost
                 }
 
                 if ($NTNXInfra.Target.HypervisorType -eq "AHV") {
@@ -1713,27 +1714,28 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             elseif ($config.Target.OrchestrationMethod -eq "API") {
                 #API Approach
                 $params = @{
-                    DesktopPoolName            = $Config.Target.DesktopPoolName #$VSI_Target_DesktopPoolName
-                    NumberofVMs                = $ImageSpec_NumberOfVMS #$VSI_Target_NumberOfVMS
-                    PowerOnVMs                 = $ImageSpec_PowerOnVMs #$VSI_Target_PowerOnVMs
-                    DDC                        = $Config.Target.DDC #$VSI_Target_DDC
+                    DesktopPoolName            = $Config.Target.DesktopPoolName
+                    NumberofVMs                = $ImageSpec_NumberOfVMS
+                    PowerOnVMs                 = $ImageSpec_PowerOnVMs
+                    DDC                        = $Config.Target.DDC
                     HypervisorType             = $NTNXInfra.Testinfra.HypervisorType
-                    Affinity                   = $NTNXInfra.Testinfra.SetAffinity
+                    #Affinity                   = $NTNXInfra.Testinfra.SetAffinity
                     ClusterIP                  = $Config.Target.CVM
                     CVMSSHPassword             = $Config.Target.CVMsshpassword
                     VMnameprefix               = $Config.Target.NamingPattern
-                    DomainName                 = $Config.Target.DomainName #$VSI_Target_DomainName
-                    OU                         = $Config.Target.ADContainer #$VSI_Target_ADContainer
-                    CloneType                  = $Config.Target.CloneType #$VSI_Target_CloneType
+                    DomainName                 = $Config.Target.DomainName
+                    OU                         = $Config.Target.ADContainer
+                    CloneType                  = $Config.Target.CloneType
                     Hosts                      = $NTNXInfra.Testinfra.Hostip
                     Type                       = $Type
                     ForceAlignVMToHost         = $Config.Target.ForceAlignVMToHost
                     EnforceHostMaintenanceMode = $Config.Target.EnforceHostMaintenanceMode
-                    TargetCVMAdmin             = $Config.Target.CVM_admin #$VSI_Target_CVM_admin
-                    TargetCVMPassword          = $Config.Target.CVM_password #$VSI_Target_CVM_password
+                    TargetCVMAdmin             = $Config.Target.CVM_admin
+                    TargetCVMPassword          = $Config.Target.CVM_password
                     Run                        = $i
-                    MaxRecordCount             = $Config.Target.MaxRecordCount #$VSI_Target_MaxRecordCount
-                    HostCount                  = $Config.Target.NodeCount #$VSI_Target_NodeCount
+                    MaxRecordCount             = $Config.Target.MaxRecordCount
+                    HostCount                  = $Config.Target.NodeCount
+                    SingleHostTarget           = $Config.Target.NTNXHost
                     EncodedAdminCredential     = $EncodedAdminCredential
                     DomainAdminCredential      = $DomainAdminCredential
                 }
@@ -1772,7 +1774,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                 TargetCVM           = $config.Target.CVM
                 TargetCVMAdmin      = $VSI_Target_CVM_admin
                 TargetCVMPassword   = $VSI_Target_CVM_password
-                Affinity            = $config.Testinfra.SetAffinity
+                #Affinity            = $config.Testinfra.SetAffinity
                 HypervisorType      = $VSI_Target_HypervisorType
                 ForceAlignVMToHost  = $config.Target.ForceAlignVMToHost
                 VMnameprefix        = $config.Target.NamingPattern
@@ -1784,6 +1786,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                 VMwareUser          = $config.vSphere.User
                 VMwarePassword      = $config.vSphere.Password
                 NodeCount           = $config.Target.NodeCount
+                SingleHostTarget    = $Config.Target.NTNXHost
             }
             $Boot = Enable-OmnissaPool @params
         }
