@@ -825,6 +825,9 @@ if ($control_monitor_launcher_cluster -eq $true ) {
 
 if ($ValidateOnly.IsPresent) {
     Write-Log -Message "Script is operating in a validation only mode. Exiting script before any form of execution occurs" -Level Info
+    Write-Log -Message "Cleaning up Variables" -Level Info
+    Get-Variable VSI* | Remove-Variable -Scope Global -Force
+    Get-Variable ImageSpec* | Remove-Variable -Scope Global -Force
     Exit 0
 }
 #endregion Validation
@@ -3138,17 +3141,16 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
     }
     #endregion Clear Affinity from VMs
 
-    #region Analyze Run results
+    #region Analyze Run results and Slack update
     #----------------------------------------------------------------------------------------------------------------------------
-    $null = Get-VSIResults -TestName $NTNXTestname -Path $ScriptRoot
-    #endregion Analyze Run results
-
-    #region Slack update
-    #----------------------------------------------------------------------------------------------------------------------------
-    Update-VSISlackresults -TestName $NTNXTestname -Path $ScriptRoot
-    $OutputFolder = "$($ScriptRoot)\testresults\$($NTNXTestname)"
-
     if ($Config.Test.SkipLEMetricsDownload -ne $true){ 
+        # Analyze Run results
+        $null = Get-VSIResults -TestName $NTNXTestname -Path $ScriptRoot
+        
+        # Update Slack with the results
+        Update-VSISlackresults -TestName $NTNXTestname -Path $ScriptRoot
+        $OutputFolder = "$($ScriptRoot)\testresults\$($NTNXTestname)"
+
         $FileName = Get-VSIGraphs -TestConfig $NTNXInfra -OutputFolder $OutputFolder -TestName $NTNXTestname -TestResult $Testresult
     
         if (Test-Path -path $Filename) {
@@ -3166,7 +3168,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             Write-Log -Message "Image Failed to download and won't be uploaded to Slack. Check Logs for detail." -Level Warn
         }
     }
-    #endregion Slack update
+    #endregion Analyze Run results and Slack update
 }
 #endregion Execute Test
 
@@ -3273,6 +3275,11 @@ catch {
 }
 # Remove the temp file variable
 Remove-Variable -Name LogOutputTempFile -Scope global -ErrorAction SilentlyContinue
+
 #endregion logfile cleanup
+
+# Remove all other script variables
+Get-Variable VSI* | Remove-Variable -Scope Global -Force
+Get-Variable ImageSpec* | Remove-Variable -Scope Global -Force
 
 Exit 0
