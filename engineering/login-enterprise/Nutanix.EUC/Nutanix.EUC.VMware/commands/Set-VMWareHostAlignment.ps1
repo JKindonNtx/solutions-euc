@@ -309,7 +309,9 @@ function Set-VMWareHostAlignment {
             # Single Node Affinity Logic with a specific host defined
             if ($HostCount -eq 1 -and $SingleHostTarget -ne $VmwareHosts[0].name) {
                 # We have a JSON defined host count of 1, and the defined host is not the first host in the discovered list - it's not a match to what's in the config file.
-                $VMWareHost = $VmwareHosts | Where-Object { $_.name -eq $SingleHostTarget }
+                Write-Log -Message "Single Node Test. The first host in the cluster list is $($VmwareHosts[0].name) but the defined host for monitoring is $($SingleHostTarget)" -Level Info
+                Write-Log -Message "Overriding VM affinity assignment to $($SingleHostTarget)" -Level Info
+                $VMWareHost = ($VmwareHosts | Where-Object { $_.name -eq $SingleHostTarget }).name
 
                 if ([System.String]::IsNullOrEmpty($VMWareHost)) {
                     Write-Log -Message "The defined host in the config file is not found in the discovered list. Skipping alignment" -Level Warn

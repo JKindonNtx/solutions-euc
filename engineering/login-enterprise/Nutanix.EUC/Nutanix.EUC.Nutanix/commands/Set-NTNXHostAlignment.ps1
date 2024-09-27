@@ -292,7 +292,9 @@ function Set-NTNXHostAlignment {
             # Single Node Affinity Logic with a specific host defined
             if ($HostCount -eq 1 -and $SingleHostTarget -ne $NtnxHosts[0].name) {
                 # We have a JSON defined host count of 1, and the defined host is not the first host in the discovered list - it's not a match to what's in the config file.
-                $NtnxHost = $NtnxHosts | Where-Object { $_.name -eq $SingleHostTarget }
+                Write-Log -Message "Single Node Test. The first host in the cluster list is $($NtnxHosts[0].name) but the defined host for monitoring is $($SingleHostTarget)" -Level Info
+                Write-Log -Message "Overriding VM affinity assignment to $($SingleHostTarget)" -Level Info
+                $NtnxHost = ($NtnxHosts | Where-Object { $_.name -eq $SingleHostTarget }).hypervisor_address_value.ipv4
                 $HostMachineList = $MachineList_Host_1
 
                 if ([System.String]::IsNullOrEmpty($NtnxHost)) {
