@@ -77,16 +77,6 @@ Param(
 )
 #endregion Params
 
-##Testing
-#$ConfigFile = "C:\DevOps\solutions-euc\engineering\login-enterprise\Config-W11-PVS-AMD-AHV-BPG-DIAG.jsonc"
-#$LEConfigFile = "C:\Temp\JSONMergeLogic\LoginEnterprise.jsonc"
-#$Type = "CitrixVAD"
-#$TestConfig = "C:\Temp\JSONMergeLogic\TestSpecific.jsonc"
-#$ReportConfig = "C:\Temp\JSONMergeLogic\Reporting.jsonc"
-#$AutoFilledConfig = "C:\Temp\JSONMergeLogic\AutoFilled.jsonc"
-#$NutanixFilesConfig = "C:\Temp\JSONMergeLogic\NutanixFiles.jsonc"
-#$MiscConfigs = "C:\Temp\JSONMergeLogic\random1.jsonc", "C:\Temp\JSONMergeLogic\random2.jsonc"
-
 #[System.Environment]::SetEnvironmentVariable('ReportConf', 'C:\Temp\JSONMergeLogic\Reporting.jsonc', 'Machine')
 #[System.Environment]::SetEnvironmentVariable('LEConf', 'C:\Temp\JSONMergeLogic\LoginEnterprise.jsonc', 'Machine')
 #[System.Environment]::SetEnvironmentVariable('AutoFilledConf', 'C:\Temp\JSONMergeLogic\AutoFilled.jsonc', 'Machine')
@@ -492,6 +482,7 @@ if ($Type -eq "CitrixVAD" -or "CitrixDaaS"){
 #----------------------------------------------------------------------------------------------------------------------------
 
 #region Mandatory JSON Value Output
+<#
 $Mandatory_Undefined_Config_Entries = Get-Variable -Name VSI*, ImageSpec_* | where-Object {$_.Value -match "MANDATORY_TO_DEFINE"}
 
 if ($null -ne $Mandatory_Undefined_Config_Entries) {
@@ -512,6 +503,7 @@ if (($Mandatory_Undefined_Config_Entries | Measure-Object).Count -gt 0) {
         Write-Log -Message "Input confirmed" -Level Info
     }
 }
+#>
 
 if ($Type -eq "RDP") {
     if ([string]::IsNullOrEmpty[$Config.Target.RDP_Hosts]) {
@@ -826,8 +818,8 @@ if ($control_monitor_launcher_cluster -eq $true ) {
 if ($ValidateOnly.IsPresent) {
     Write-Log -Message "Script is operating in a validation only mode. Exiting script before any form of execution occurs" -Level Info
     Write-Log -Message "Cleaning up Variables" -Level Info
-    Get-Variable VSI* | Remove-Variable -Scope Global -Force
-    Get-Variable ImageSpec* | Remove-Variable -Scope Global -Force
+    Get-Variable VSI* -Scope Global | Remove-Variable -Scope Global -Force
+    Get-Variable ImageSpec* -Scope Global | Remove-Variable -Scope Global -Force
     Exit 0
 }
 #endregion Validation
