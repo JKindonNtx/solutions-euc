@@ -1,0 +1,16 @@
+{
+    "TestInfra": {
+        // -----------------------------------------------------------------------------------
+        // Mandatory_Slack_Influx_Grafana_and_RDA_Block
+        // -----------------------------------------------------------------------------------
+        "Slack":  "", // Enter the Slack hook for reporting purposes.
+        "InfluxDBurl": "http://ws-idb1.wsperf.nutanix.com:8086/api/v2/write?org=Nutanix&precision=s",
+        "InfluxToken": "",
+        "RDAPath": "\\\\ws-files.wsperf.nutanix.com\\automation\\RDA-Logging",
+        "GrafanaUriDocs": "http://10.57.64.101:3000/render/d-solo/dd0936b3-f212-481b-bce0-f7503bf0e87b/login-documents-v4?orgId=1",
+        "GrafanaUriRegression": "http://10.57.64.101:3000/render/d-solo/w6-cY9E4z/login-regression-v3?orgId=1",
+        "SlackChannel": "MANDATORY_TO_DEFINE",
+        "SlackToken": ""
+        // -----------------------------------------------------------------------------------
+    }
+}

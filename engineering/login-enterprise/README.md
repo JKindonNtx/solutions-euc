@@ -45,30 +45,59 @@ We have a central update file that can be [referenced for major changes and addi
 
 To execute a test, there are four key pieces of information required by the script. These are input as Mandatory parameters:
 
--  `ConfigFile.jsonc` contains general information about the test, including what sort of test is being run. This file is unique to each test. This file contains what you are testing (Citrix, Horizon, Parallels etc) along with where the tests are being run, and what specific components are needed. This file contains sensitive information, so will exists on your local machine only. An example exists in the root repository as `ExampleConfig-Test-Template.jsonc`. The example contains all configuration options for all tests with placeholder values. You should copy this file and input relevant information for your test requirements.
+-  `TestConfig.jsonc` contains general information about the test, including what sort of test is being run. This file is unique to each test. This file contains what you are testing (Citrix, Horizon, Parallels etc) along with where the tests are being run, and what specific components are needed. This file contains sensitive information, so will exist on your local machine only. An example exists in the repository as `z_example_base_configs\ExampleConfig-TestSpecfic.jsonc`. The example contains all configuration options for all tests with placeholder values. You should copy this file and input relevant information for your test requirements.
 -  `LEConfigFile.jsonc` contains information about the Login Enterprise Appliances and configuration. It is a global json file required for all tests. the `Invoke-Test.ps1` script will import this configuration file, and based on the specified Appliance in either `ConfigFile.jsonc` or the Script parameter `LEAppliance`, will consume and set the appropriate Login Enterprise details. This file contains sensitive information, so will exists on your local machine only. An example exists in the root repository as `ExampleConfig-LoginEnterpriseGlobal.jsonc`
+-  `ReportConfig.jsonc` contains information specific to the reporting and slack side of things. The idea of this file is it is static and the same for all tests. An example exists in the repository as `z_example_base_configs\ExampleConfig-Reporting.jsonc`
+-  `AutoFilledConfig.jsonc` contains information specific to the components that are "autofilled" or more accurately, learned throughout the test. The idea of this file is it is static and the same for all tests. An example exists in the repository as `z_example_base_configs\ExampleConfig-AutoFilled.jsonc`
+-  `NutanixFilesConfig.jsonc` contains information specific to Nutanix Files monitoring. An example exists in the repository as `z_example_base_configs\ExampleConfig-NutanixFiles.jsonc`
+-  `MiscConfigs` is an array of json files that you can define as required.
 -  `Type` defines the sort of test we are running. This could be `CitrixVAD`, `CitrixDaaS`, `Horizon`, `Parallels`. The script logic executes based on the provided value.
+
+You may find it more efficient to define your static configuration files as system environment variables, and use those variables as the parameter inputs, for example:
+
+`[System.Environment]::SetEnvironmentVariable('ReportConf', 'c:\example\Reporting.jsonc', 'Machine')`
+`[System.Environment]::SetEnvironmentVariable('LEConf', 'c:\example\LoginEnterprise.jsonc', 'Machine')`
+`[System.Environment]::SetEnvironmentVariable('AutoFilledConf', 'c:\example\AutoFilled.jsonc', 'Machine')`
+
 
 ### Invoke-Test.Ps1 Mandatory Parameters
 
--  `ConfigFile`. Mandatory **`String`**. Defines the path to the test configuration file.
+-  `TestConfig`. Mandatory **`String`**. Defines the path to the test configuration file.
+-  `ReportConfig`. Mandatory **`String`**. Defines the path to the report configuration file.
+-  `AutoFilledConfig`. Mandatory **`String`**. Defines the path to the auto filled configuration file.
 -  `LEConfigFile`. Mandatory **`String`**. Defines the path for the Global Login Enterprise Configuration File.
 -  `ReportConfigFile`. Mandatory **`String`**. Defines the default report configuration file.
 -  `Type`. Mandatory **`String`**. Defines the type of test. `"CitrixVAD", "CitrixDaaS", "Horizon", "RAS", "RDP"`
 
 ### Invoke-Test.ps1 Optional Parameters
 
-The below parameters should be set in the `ConfigFile` as a preferential configuration point, however can be set via script Parameter which will **Override** whatever is set in the `ConfigFile`.
+The below parameters should be set in the `TestConfig` as a preferential configuration point, however can be set via script Parameter which will **Override** whatever is set in the `TestConfig`.
 
 -  `SkipADUsers`. Optional. **`Switch`**. Retains the existing AD User Accounts and does not recreate the accounts.
 -  `SkipLEUsers`. Optional. **`Switch`**. Retains the existing Login Enterprise Accounts and does not recreate the accounts.
--  `SkipLaunchers`. Optional. **`Switch`**. TBD. Can be set in `LEConfigFile.jsonc`.
--  `SkipWaitForIdleVMs`. Optional. **`Switch`**. Do not wait for test VMs to become Idle. Can be set in `LEConfigFile.jsonc`.
--  `SkipPDFExport`. Optional. **`Switch`**. TBD. Can be set in `LEConfigFile.jsonc`.
--  `Force`. Optional. **`Switch`**. Forces a recreation of the desktop pool. Can be set in `LEConfigFile.jsonc`.
--  `LEAppliance`. Optional. **`String`**. The Login Enterprise Appliance to use. `LE1`,`LE2`,`LE3`,`LE4`. Can be set in `LEConfigFile.jsonc`.
+-  `SkipLaunchers`. Optional. **`Switch`**. TBD. Can be set in `TestConfig.jsonc`.
+-  `SkipWaitForIdleVMs`. Optional. **`Switch`**. Do not wait for test VMs to become Idle. Can be set in `TestConfig.jsonc`.
+-  `SkipPDFExport`. Optional. **`Switch`**. TBD. Can be set in `TestConfig.jsonc`.
+-  `Force`. Optional. **`Switch`**. Forces a recreation of the desktop pool. Can be set in `TestConfig.jsonc`.
+-  `LEAppliance`. Optional. **`String`**. The Login Enterprise Appliance to use. `LE1`,`LE2`,`LE3`,`LE4`. Can be set in `TestConfig.jsonc`.
 -  `ValidateOnly`. Optional. **`Switch`**. Will process only the inputs and pre-execution tasks. Will not process any testing. Use for making sure things look good.
--   `AzureMode`. Optional. **`Switch`**. Will function with an understanding that the script is in Azure and not Nutanix. Nutanix components are excluded. Different data is gathered for influx.
+-  `AzureMode`. Optional. **`Switch`**. Will function with an understanding that the script is in Azure and not Nutanix. Nutanix components are excluded. Different data is gathered for influx.
+-  `NutanixFilesConfig`. Optional. **`String`**. Contains information specific to Nutanix Files monitoring.
+-  `MiscConfigs`. Optional. **`array`**. A collection of JSON files containing additional configurations that you can feed as required.
+
+Some examples of the script being executed are as below
+
+Executing using environment variables to store static configuration files, including Nutanix Files and random other JSON additions:
+
+`Invoke-Test.ps1 -Type "CitrixVAD" -TestConfig "c:\example\test.json" -LEConfigFile $Env:LEConf -ReportConfigFile $Env:ReportConf -AutoFilledConfig $env:AutoFilledConf -NutanixFilesConfig "c:\example\files.json" -MiscConfigs "c:\temp\json1","c:\temp\json2"`
+
+Executing using full paths to JSON files, including Nutanix Files and random other JSON additions:
+
+`Invoke-Test.ps1 -Type "CitrixVAD" -TestConfig "c:\example\test.json" -LEConfigFile "c:\example\LoginEnterprise.json" -ReportConfigFile "c:\example\Reporting.json" -AutoFilledConfig "c:\example\AutoFilled.json" -NutanixFilesConfig "c:\example\files.json" -MiscConfigs "c:\temp\json1","c:\temp\json2"`
+
+Executing using full paths to JSON files:
+
+`Invoke-Test.ps1 -Type "CitrixVAD" -TestConfig "c:\example\test.json" -LEConfigFile "c:\example\LoginEnterprise.json" -ReportConfigFile "c:\example\Reporting.json" -AutoFilledConfig "c:\example\AutoFilled.json"`
 
 ### Step 1: Getting Started: Planning
 
@@ -85,8 +114,10 @@ You will need some advanced planning for test execution. Some things to consider
 
 To get started with the script structure, you need to action the following:
 
-1. Copy the `ExampleConfig-Test-Template.jsonc` and rename it to something appropriate. For example: `LoginEnterpriseGlobalConfig.jsonc`. Alter the file with the appropriate values, including URLS, Tokens etc. This file is now unique to you, and can be used across all tests using Login Enterprise. This will be used by the `LEConfigFile.jsonc` parameter.
-2. Copy the `ExampleConfig-Test-Template.jsonc` and rename it something appropriate. For example: `LE-Citrix-FSLogix.jsonc`. Alter the file with the appropriate values and remove what is not required. For example, remove the Horizon components from a Citrix VAD test You will need to add usernames, passwords, cluster details, slack information etc. This file is now unique to your test. You can have as many as required. This will be used by the `ConfigFile.jsonc` parameter.
+1. Copy the `z_example_base_configs\ExampleConfig-TestSpecfic.jsonc` and rename it to something appropriate. Alter the file with the appropriate values and remove what is not required. You will need a file per test. This file is now unique to you. This will be used by the `TestConfig` parameter.
+2. Copy the `z_example_base_configs\ExampleConfig-Reporting.jsonc` and rename it to something appropriate. Alter the file with the appropriate values. Alter the file with the appropriate values. This file is now unique to you, and can be used across all tests. This will be used by the `ReportConfigFile` parameter.
+3. Copy the `z_example_base_configs\ExampleConfig-Autofilled.jsonc` and rename it to something appropriate. Alter the file with the appropriate values. Alter the file with the appropriate values. This file is now unique to you, and can be used across all tests. This will be used by the `AutoFilledConfig` parameter.
+4. Copy the `z_example_base_configs\ExampleConfig-LoginEnterpriseGlobal.jsonc` and rename it to something appropriate. Alter the file with the appropriate values. This file is now unique to you, and can be used across all tests using Login Enterprise. This will be used by the `LEConfigFile` parameter.
 
 ### Infrastructure Monitoring with Telegraf
 
@@ -113,7 +144,7 @@ The following logic applies to Azure VM Metric gathering and reporting:
 To add metrics, the following touch points apply:
 
 1.  Build the logic into the tattoo script to create the reg value: for example, `Azure_VM_Bios_Name`
-2.  Define the Item Name in the `config.json` file under the `AzureGuestDetails` Block. For example, `"VM_Bios_Name": "", //Filled via Image Tattoo job`. This is JSON format, so be careful.
+2.  Define the Item Name in the appropriate `config.json` file under the `AzureGuestDetails` Block. For example, `"VM_Bios_Name": "", //Filled via Image Tattoo job`. This is JSON format, so be careful.
 3.  Add the value into the `Invoke-Test.ps1` script. For example, `$NTNX.Infra.AzureGuestDetails.VM_Bios_Name = $Tattoo.Azure_VM_Bios_Name`
 4.  Add the tag into the `Start-InfluxUpload.ps1` Function Eg: `"InfraBIOS=$($JSON.AzureGuestDetails.VM_Bios_Name)," +`
 
@@ -127,25 +158,26 @@ Azure specific testing data is sent to a different Influx Bucket and new Grafana
 
 # Invoke-TestUpload.ps1
 
-# Remove-Test.ps1
+# Remove-TestData-API.ps1
 
 The script removes test data from an InfluxDB. There are 4 main components required to drive the script.
 
-The `Remove-Test.ps1` requires a `ConfigFile.jsonc` file. This file contains the authentication detail for InfluxDB. You will also need to know the test `ID` (for example `a4df64_8n_A6.5.2.7_AHV_1000V_1000U_KW`), the `run` number if you only want to delete a single run, and the Influx Bucket, `Documents`, `Regression`, `Test` etc.
+The `Remove-TestData-API.ps1` requires a `ConfigFile.jsonc` file. This file contains the authentication detail for InfluxDB. You will also need to know the test `ID` (for example `a4df64_8n_A6.5.2.7_AHV_1000V_1000U_KW`), the `run` number if you only want to delete a single run, and the Influx Bucket, `LoginDocuments`, `LoginRegression`, `Test`, `AzurePerfData` etc.
 
-### Remove-Test.Ps1 Mandatory Parameters
+### Remove-TestData-API.ps1 Mandatory Parameters
 
 -  `ConfigFile`. Mandatory **`String`**. Defines the path to the removal configuration file.
 -  `Bucket`. Mandatory **`String`**. Defines the Influx bucket hosting the data.
 -  `Test`. Mandatory **`String`**. Defines the test ID you wish to delete.
 
-### Remove-Test.Ps1 Optional Parameters
+### Remove-TestData-API.ps1 Optional Parameters
 
 -  `Run`. Optional **`String`**. Defines the run ID to delete if you only want to delete a single run. If not set, all runs will be deleted associated with the defined `Test`.
+-  `LogonMetricsOnly`. Optional. **`Switch`**. Will only remove LogonMetrics from the Influx DB for the specified test.
 
 ### Example. Delete all runs of a problematic Test with ID a4df64_8n_A6.5.2.7_AHV_1000V_1000U_KW
 
-`.\Remove-Test.ps1 -ConfigFile .\Test-Removal.jsonc -Bucket LoginDocuments -Test a4df64_8n_A6.5.2.7_AHV_1000V_1000U_KW`
+`.\Remove-TestData-API.ps1 -ConfigFile .\Test-Removal.jsonc -Bucket LoginDocuments -Test a4df64_8n_A6.5.2.7_AHV_1000V_1000U_KW`
 
 ## Archiving Test Data
 

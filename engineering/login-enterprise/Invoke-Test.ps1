@@ -77,12 +77,6 @@ Param(
 )
 #endregion Params
 
-#[System.Environment]::SetEnvironmentVariable('ReportConf', 'C:\Temp\JSONMergeLogic\Reporting.jsonc', 'Machine')
-#[System.Environment]::SetEnvironmentVariable('LEConf', 'C:\Temp\JSONMergeLogic\LoginEnterprise.jsonc', 'Machine')
-#[System.Environment]::SetEnvironmentVariable('AutoFilledConf', 'C:\Temp\JSONMergeLogic\AutoFilled.jsonc', 'Machine')
-
-##Testing
-
 #region Variables
 # ============================================================================
 # Variables

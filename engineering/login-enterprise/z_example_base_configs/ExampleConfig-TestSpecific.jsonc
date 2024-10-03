@@ -1,0 +1,203 @@
+{
+    "Domain": {
+        "NetBios": "WSPERF", // Alternatively use LDAP://DC=example,DC=loginvsi,DC=com when current machine/user is part of the domain
+        "LDAPPath": "", // leave empty if current machine/user is part of the domain and has rights to create resources in AD
+        "LDAPUsername": "", // remember it's json, so \ needs to be escaped
+        "LDAPPassword": "" // leave empty if current machine/user is part of the domain and has rights to create resources in AD
+    },
+    "CitrixDaaS": {
+        // -----------------------------------------------------------------------------------
+        // Optional_Test_Block_Citrix_DaaS - Can be DELETED if not setting up a Citrix DaaS Config
+        // -----------------------------------------------------------------------------------
+        //"Region": "US", //Region of the DaaS Tenant. Nutanix is US
+        //"CustomerID": "customer-id-value", // Customer ID
+        //"ClientID": "secure-client-id", //Secure Client ID. Make sure this has not expired
+        //"ClientSecret": "secure-client-secret" // Secure Client Secret
+    },
+    "vSphere": {
+        // -----------------------------------------------------------------------------------
+        // ESXi Host Block Details - used for hostd restart and Alignment Groups
+        // -----------------------------------------------------------------------------------
+        //"RestartHostd": true, // If set to true, the hostd service will be reset on each run prior to test. This is to fix metrics
+        //"VCenter": "MANDATORY_TO_DEFINE", // vCenter for testing vcenter.domain.com
+        //"User": "MANDATORY_TO_DEFINE", // vCenter user user@vsphere.local
+        //"Password": "MANDATORY_TO_DEFINE", // vCenter password
+        //"ClusterName": "MANDATORY_TO_DEFINE", // vCenter cluster for alignment etc
+        //"DataCenter": "MANDATORY_TO_DEFINE", // vCenter datacenter for alignment etc EUC-Solutions
+        //"SshUsername": "MANDATORY_TO_DEFINE", // esxi ssh user for hostd restart, typically root
+        //"SshPassword": "MANDATORY_TO_DEFINE" // esxi ssh password for hostd restart
+    },
+    "Target": {
+        // -----------------------------------------------------------------------------------
+        // Mandatory_Test_Block_Global - Relevant for ALL Tests
+        // -----------------------------------------------------------------------------------
+        "HypervisorType": "AHV", // This is mandatory so we can validate things early. ESXi or AHV
+        "DeliveryType":  "Citrix", // Citrix or VMware or Microsoft or Omnissa
+        "DesktopBrokerVersion":  "7.2402", // Broker version. Example: Citrix = "7.2203_2", Horizon = "8.8-2212.1", RAS = "19.2", RDP=RDP
+        "CloneType": "PVS", // Citrix: MCS or PVS. Omnissa: Manual. RAS: Full Clone or Linked Clone. RDP: Full Used for reporting database.
+        "SessionCfg": "ICA", // Citrix: ICA or Omnissa: PCoIP or Blast or RAS: RDP. RDP: RDP. Used for reporting database
+        "SessionsSupport": "SingleSession", // SingleSession or MultiSession
+        "Workload": "Knowledge Worker", // Knowledge Worker or Task Worker
+        "MinutesToWaitAfterIdleVMs": 10, //The time to await after Worker VMs are registered. Settle down period.
+        "NamingPattern": "W11-PV-BPG-####", // Naming pattern of VMs. Also used to set affinity. Not used for RDP testing in Azure
+        "ADContainer": "OU=LTSR 2402,OU=Target,OU=Computers,OU=LoginEnterprise,DC=wsperf,DC=nutanix,DC=com", // Not used for RDP testing in Azure
+        "DomainName": "wsperf.nutanix.com", // This used for multiple functions
+        "DesktopPoolName": "W11-AMD-PVS-BPG-2402", // Poolname is used to create the desktop pool with Citrix or assign it with Omnissa. For RAS use the resource ID #1 etc. Not used for RDP testing in Azure
+        // -----------------------------------------------------------------------------------
+        // Optional_Test_Block_Citrix
+        // -----------------------------------------------------------------------------------
+        "OrchestrationMethod": "Snapin", //How you want to to drive the Citrix Environment. API or Snapin (PowerShell)
+        "DDC": "WS-CDC3.wsperf.nutanix.com", // Citrix Delivery controller. TestType: Citrix
+        "ZoneName": "Primary", // Zonename in Citrix. TestType: Citrix
+        "HypervisorConnection": "DRMHX665KB-A-AHV-JK", // Hypervisor connection as known in the Citrix Host connection. AHV-RPTEST83-LAN for example
+        "HostingConnectionRootName": "DRMHX665KB-A-JK", // This is the root of the Hosting Connection Name: Eg. Shared-vCenter. This is not the sub resource. This is critical for API operations and is mandatory to define.
+        //"vSphereDataCenter": "EUC Solutions", // This is the vSphere Datacenter name. Eg. EUC Solutions. This is This is critical for API operations and is mandatory to define for ESXi tests
+        //"vSphereCluster": "DRMNX9KB-A", // This is the vSphere Cluster name. Eg. DRMNX9KB-A. This is This is critical for API operations and is mandatory to define for ESXi tests
+        "FunctionalLevel": "L7_34", // L5, L7, L7_6, L7_7, L7_8, L7_9, L7_20, L7_25, L7_34 (2402)
+        "SkipImagePrep": true, //Optionally skip imageprep false of MCS if you image is already generalized.
+        "StorefrontURL": "https://storefront2402.wsperf.nutanix.com/Citrix/Store",
+        "MaxRecordCount": 5000, //The max number of machines to retrieve in a CVAD or DaaS Get-BrokerMachine Call
+        // -----------------------------------------------------------------------------------
+        // Optional_Test_Block_RDP - Can be DELETED if not setting up an RDP Config
+        // -----------------------------------------------------------------------------------
+        //"RDP_Hosts": [ // Use Hostname, not FQDN
+        //    "W22-1VM-0001",
+        //    "W22-1VM-0002"
+        //],
+        //"RDP_DelProf": false, //Enable reset of le account profiles between runs
+        // -----------------------------------------------------------------------------------
+        // Optional_Test_Block_Horizon 
+        // -----------------------------------------------------------------------------------
+        //"ConnectionServer": "connection.domain.com",
+        //"ConnectionServerUser": "username@domain.com",
+        //"ConnectionServerUserPassword": "MANDATORY_TO_DEFINE",
+        //"vCenterServer": "vcenter.domain.com",
+        //"vCenterUsername": "MANDATORY_TO_DEFINE", //remember it's json so \ needs to be escaped
+        //"vCenterPassword": "MANDATORY_TO_DEFINE", //
+        //"VMFolder": "/EXAMPLE/vm/VMware Horizon", //Get these values from the details page of an existing pool
+        //"Cluster": "/EXAMPLE/host/ExampleCluster", //
+        //"ResourcePool": "${Target.Cluster}/Resources", //
+        //"ReplicaDatastore": "${Target.Cluster}/ExampleDatastore", //
+        //"InstantCloneDatastores": [
+        //    "${Target.ReplicaDatastore}"
+        //],
+        //"RefreshOsDiskAfterLogoff": "ALWAYS", // ALWAYS or NEVER
+        //"UserAssignment": "DEDICATED", // DEDICATED or FLOATING
+        //"UseViewStorageAccelerator": false, //
+        //"enableGRIDvGPUs": false, //
+        //"Entitlements": "${Domain.NetBios}\\Domain Users", //
+        //"ProvisioningMode": "AllMachinesUpFront", // AllMachinesUpFront or OnDemand
+        //"VMPoolIncrement": 0, // How many VM's are provisioned at a time, 0 = Horizon controls the provisioning amount according to it's settings, only valid when using allmachinesupfront provisioning
+        //"NumberOfSpareVMs": 1, // When ProvisioningMode is OnDemand, this controls the Spare (Powered On) Machines
+        // -----------------------------------------------------------------------------------
+        // Optional_Test_Block_Omnissa
+        // -----------------------------------------------------------------------------------
+        //"OmnissaConnectionServer": "https://connection server", // The Horizon Connection Server
+        //"OmnissaApiUserName": "Username with rights to add Desktop Pools", // Username for API Access to Horizon
+        //"OmnissaApiPassword": "Password", // Password for API User
+        //"OmnissaApiDomain": "Windows Domain Name", // Domain name for the user
+        //"OmnissaProvisioningMode": "Manual", // Currently only supports Manual
+        // -----------------------------------------------------------------------------------
+        // Optional_Test_Block_RAS - Can be DELETED if not setting up a RAS Config
+        // -----------------------------------------------------------------------------------
+        //"RASURL": "ras.wsperf.nutanix.com",
+        //"FirstVMInPool": "machine.wsperf.nutanix.com", //First DNS name of the server in the pool you are testing
+        // -----------------------------------------------------------------------------------
+        // Mandatory_Nutanix_Block
+        // -----------------------------------------------------------------------------------
+        "HypervisorNetwork": "VLAN164", // Hypervisor network as known on the cluster and in the Citrix Host connection
+        "NTNXHost": "DRMHX665KB-1", // The Hostname where you want to test on. DRMAMDKB-1 for example 
+        "NodeCount":  3, // Number of nodes you want to test on, usually 1 or 4
+        "CVM": "10.56.68.135", // (cluster)IP of the CVM
+        "CVM_admin": "MANDATORY_TO_DEFINE",
+        "CVM_password": "MANDATORY_TO_DEFINE",
+        "IPMI_admin": "MANDATORY_TO_DEFINE", // Used to get power consumption of host
+        "IPMI_password": "MANDATORY_TO_DEFINE", // Used to get power consumption of host
+        "CVMsshpassword":  "MANDATORY_TO_DEFINE", // Used to set affinity on VMs and start/stop curator
+        "Host_root_password": "MANDATORY_TO_DEFINE", // Used to monitor using ObserverVM.
+        "CVM_storage": "EUC-DRMHX665KB-A", // Storage container where VMs are deployed
+        "ForceAlignVMToHost" : true, // If set to true, all vms will be evenly pinned to hosts using affinity for AHV.
+        "EnforceHostMaintenanceMode" : false, // If set to true, combined with the ForceAlignVMToHost setting, hosts that are not a part of the test run will be put in maintenance mode
+        // -----------------------------------------------------------------------------------
+        // Launcher Cluster Monitoring Block
+        // -----------------------------------------------------------------------------------
+        "Monitor_Launcher_Cluster_Performance": false, // Enables monitoring of the cluster hosting Launchers
+        "Launcher_Cluster_CVM": "10.56.68.200", // The CVM of the Cluster hosting Nutanix Launchers
+        "Launcher_Cluster_Host": "DRMNX8GKB-5", // A host in the cluster by name
+        "Launcher_Cluster_CVM_admin": "jameskindon", // The Admin account.
+        "Launcher_Cluster_CVM_password": "MANDATORY_TO_DEFINE", // The Admin account password.
+        // -----------------------------------------------------------------------------------
+        // Optional_NetScaler_Block - Leave "NetScaler" value Blank to ignore NetScaler testing. 
+        // -----------------------------------------------------------------------------------
+        //"Monitor_NetScaler": false, // Enables monitoring of NetScaler
+        //"NetScaler": "MANDATORY_TO_DEFINE", // The Citrix NetScaler NSIP
+        //"NetScaler_Password": "MANDATORY_TO_DEFINE", // The NSROOT password for the Citrix NetScaler
+        // -----------------------------------------------------------------------------------
+        "ImagesToTest": [ // You can override any variable from the target section within the imagestotest array
+            {
+                "ParentVM": "not_applicable_pvs", //AHV use: snapshotname.template. ESXi use: "vm-name.vm\\snapshotname.snapshot\\snapshotname2.snapshot"
+                "NumCPUs": 1,
+                "NumCores": 3,
+                "MemoryGB": 6,
+                "SecureBoot": true,
+                "vTPM": true,
+                "CredentialGuard": false,
+                "DurationInMinutes": 10, // Steady state time
+                "AutocalcVMs": false, // Will automatically calculate the number of VMs and sessions based on hardware
+                "Max": false, // Used with AutocalcVMs. If set to true, more sessions will be used to get a VSImax. If set to false, CPU 80% is the target
+                "NumberOfSessions": 90, // This is ignored when Autocalc is set to true
+                "NumberOfVMs": 90, // This is ignored when Autocalc is set to true
+                "PowerOnVMs": 90, // Amount of VMs to poweron initially, set to same value as amount of VM's by default. This is ignored when Autocalc is set to true
+                "TargetOS":  "", // Autofilled during the script execution and used for reporting
+                "TargetOSVersion":  "", // Autofilled during the script execution and used for reporting
+                "DesktopBrokerAgentVersion":  "", // Autofilled during the script execution and used for reporting
+                "OfficeVersion":  "", // Autofilled during the script execution and used for reporting
+                "ToolsGuestVersion":  "", // Autofilled during the script execution and used for reporting
+                "OptimizerVendor":  "", // Autofilled during the script execution and used for reporting
+                "OptimizationsVersion":  "", // Autofilled during the script execution and used for reporting
+                "GPUProfile":  "None", // GPU profile. T4-B1, A16-B2 for example
+                "Comment": "w11_amd_pvs_3n_A6.5.5.1_AHV_90V_90U_KW_2402_base_jsonsplit", // A short comment about this test. Will be added to the Login Enterprise database.
+                "EUXEnabled": true, // A true or false value to enable EUX measurements in the Login Enterprise Test
+                "SessionMetricsEnabled": false, // A true or false value to enable SessionMetrics in the Login Enterprise Test
+                "SessionMetricAmount": 10, // How many sessions to collect session metrics
+                "SessionMetricGroupName": "Nutanix"
+            }
+        ],
+        "ImageIterations": 1 // How many runs per Image?
+    },
+    "Test": {
+        "Name": "LE1-PVS-BPG", // Test name in Login Enterprise.
+        "Uploadresults":  false, // Upload results to the Nutanix database. Cannot be set to true if SkipLEMetricsDownload is set to true
+        "SkipLEMetricsDownload": true, //Skip the download of LE metrics. Cannot be configured as true with Uploadresults also set to true.
+        "BucketName": "LoginDocuments", // Specify the Bucket Name in Influx to upload to. Can be either 'LoginRegression' or 'LoginDocuments'
+        "DocumentName": "BPG-2024", // If using LoginDocuments please enter a Document Name starting ENG-, BLOG-, BP-, TN-, RA-.
+        "SkipADUsers": false, // Do not recreate the AD User Accounts for LE. Relevant if thinking about using the same profiles for different test iterations rather than new (think about SID matching in FSLogix)
+        "SkipLEUsers": false, // Do not recreate the LE Accounts
+        "SkipWaitForIdleVMs": false, // Skip the Settle down period specified in Target.MinutesToWaitAfterIdleVMs
+        "LEAppliance": "LE1", // The Login Enterprise Appliance to be used. Will switch valued found in the LoginEnterpriseGlobal.json
+        "SkipPDFExport": true, //
+        "SkipLaunchers": false, //
+        "RebootLaunchers": true, // Reboot LE Launchers between runs. Will impact Citrix Connection time for first launch.
+        "Target_RampupInMinutes": 15, //The test ramp up time. How long it takes to get to Steady State
+        "InfluxTestDashBucket": "Tests", //The Influx Bucket for test status reporting
+        "StartObserverMonitoring": false, //Used to enable target cluster monitoring using Observer/prometheus.
+        "StartInfrastructureMonitoring": false, //Used to ask the script to start/stop the telegraf monitoring for servers list in ServersToMonitor. True False value. Used for special monitoring use cases like Session Recording etc.
+        "ServersToMonitor": [ // A list of servers to check telegraf monitoring. If specified, script will start and stop the telegraf service on the remote servers. Assumes a configuration exists.
+            "Server1","Server2","Server3"
+        ]
+    },
+    "TestInfra": {
+        "Datacenter":  "Durham", // Datacenter of this Login Enterprise installation
+        "SSDCount":  6, // How many SSDs in the node? Manual input for now.
+        "CVMpresent":  true, // Is a CVM present on the node. In case a test is performed on non-nutanix
+        "CVMDisabled":  false // Is the CVM disabled? Default is false
+    },
+    "AzureGuestDetails": {
+        "IsAzureVM": false //triggers data for Azure VMs
+    },
+    "AdvancedDiagnostics": {
+        "EnableCollectPerf": false, // Collects performance data from the CVM using collect_perf
+        "CollectPerfSampleInterval": 30, // The interval in seconds for collect_perf collection. The default --sample_seconds value is 60 seconds. collect_perf --helpshort
+        "CollectPerfSampleFrequency": 1 // seconds samples for the OS commands like top, iostat, and mpstat. The default --sample_frequency value is 5 seconds. collect_perf --helpshort
+    }
+}
