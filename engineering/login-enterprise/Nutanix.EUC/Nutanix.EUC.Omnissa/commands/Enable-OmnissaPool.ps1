@@ -12,9 +12,9 @@ function Enable-OmnissaPool {
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$TargetCVM,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$TargetCVMAdmin,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$TargetCVMPassword,
-        $Affinity,
+        #$Affinity,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$HypervisorType,
-        $ForceAlignVMToHost,
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][bool]$ForceAlignVMToHost,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$VMnameprefix,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$hosts,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$Run,
@@ -23,7 +23,8 @@ function Enable-OmnissaPool {
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$VmwareVCenter,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$VMwareUser,
         [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$VMwarePassword,
-        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$NodeCount
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$NodeCount,
+        [Parameter(ValuefromPipelineByPropertyName = $true, Mandatory = $false)][String]$SingleHostTarget
     )
 
     $Boot = "" | Select-Object -Property bootstart,boottime
@@ -93,6 +94,7 @@ function Enable-OmnissaPool {
             Run                        = $Run
             EnforceHostMaintenanceMode = $EnforceHostMaintenanceMode
             OmnissaMachineList         = $PoolMachines
+            SingleHostTarget           = $SingleHostTarget
         }
         Set-NTNXHostAlignment @params
         $Params = $null
@@ -110,12 +112,14 @@ function Enable-OmnissaPool {
             DataCenter           = $DC.Name
             Run                  = $Run
             OmnissaMachineList   = $PoolMachines
+            SingleHostTarget     = $SingleHostTarget
         }
         
         Set-VMWareHostAlignment @params
         $params = $null
     }
 
+    <# - Redundant Code Block post single node affinity logic move to Set-NTNXHostAlignment function
     $ForceRunNumberForAffinity = 1
     if (($HypervisorType) -eq "AHV" -And ($Affinity) -and (-not $ForceAlignVMToHost)) {
         Write-Log "Hypervisortype = $HypervisorType and Single Node Affinity is set to $Affinity"
@@ -131,6 +135,7 @@ function Enable-OmnissaPool {
     } else {
         #placeholder for ESXi Affinity
     }
+    #>
 
     $Boot.bootstart = get-date -format o
     Start-Sleep -Seconds 10

@@ -1,26 +1,27 @@
 Function Enable-VSICTXDesktopPool {
     Param(
-        $DesktopPoolName,
+        [Parameter(Mandatory = $false)][string]$DesktopPoolName,
         $NumberOfVMs,
-        $ADUserName,
-        $ADPassword,
+        [Parameter(Mandatory = $false)][string]$ADUserName,
+        [Parameter(Mandatory = $false)][string]$ADPassword,
         $PowerOnVMs,
         $VMRegistrationTimeOutMinutes = 180,
-        $DDC,
-        $HypervisorType,
-        $Affinity,
-        $ClusterIP,
-        $CVMSSHPassword,
-        $VMnameprefix,
-        $CloneType,
+        [Parameter(Mandatory = $false)][string]$DDC,
+        [Parameter(Mandatory = $false)][string]$HypervisorType,
+        #$Affinity,
+        [Parameter(Mandatory = $false)][string]$ClusterIP,
+        [Parameter(Mandatory = $false)][string]$CVMSSHPassword,
+        [Parameter(Mandatory = $false)][string]$VMnameprefix,
+        [Parameter(Mandatory = $false)][string]$CloneType,
         $Hosts,
-        $Type,
+        [Parameter(Mandatory = $false)][string]$Type,
         [Parameter(Mandatory = $false)][int]$MaxRecordCount,
         [Parameter(Mandatory = $false)][bool]$ForceAlignVMToHost,
         [Parameter(Mandatory = $false)][bool]$EnforceHostMaintenanceMode,
         [Parameter(Mandatory = $false)][string]$TargetCVMAdmin,
         [Parameter(Mandatory = $false)][string]$TargetCVMPassword,
         [Parameter(Mandatory = $false)][string]$HostCount,
+        [Parameter(Mandatory = $false)][string]$SingleHostTarget,
         [Parameter(Mandatory = $false)][string]$Run,
         [Parameter(Mandatory = $false)][string]$VCenter, # for vCenter
         [Parameter(Mandatory = $false)][string]$User, #for vCenter Access
@@ -151,6 +152,7 @@ Function Enable-VSICTXDesktopPool {
             Run                        = $Run
             MaxRecordCount             = $MaxRecordCount
             EnforceHostMaintenanceMode = $EnforceHostMaintenanceMode
+            SingleHostTarget           = $SingleHostTarget
         }
         Set-NTNXHostAlignment @params
         $Params = $null
@@ -169,12 +171,13 @@ Function Enable-VSICTXDesktopPool {
             DesktopGroupName = $DesktopPoolName
             Run              = $Run
             MaxRecordCount   = $MaxRecordCount
+            SingleHostTarget = $SingleHostTarget
         }
         
         Set-VMWareHostAlignment @params
         $params = $null
     }
-
+    <# - Redundant Code Block post single node affinity logic move to Set-NTNXHostAlignment function
     if (($HypervisorType) -eq "AHV" -And ($Affinity) -and (-not $ForceAlignVMToHost)) {
         Write-Log "Hypervisortype = $HypervisorType and Single Node Affinity is set to $Affinity"
         $params = @{
@@ -187,6 +190,7 @@ Function Enable-VSICTXDesktopPool {
         $AffinityProcessed = Set-AffinitySingleNode @params
         $Params = $null
     }
+    #>
     # End set affinity to hosts
 
     $Boot.bootstart = get-date -format o

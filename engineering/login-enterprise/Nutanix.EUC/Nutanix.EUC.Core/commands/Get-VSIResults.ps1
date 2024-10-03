@@ -39,7 +39,7 @@ function Get-VSIResults {
 
     if ($TestDirMeasure.Count -lt 1) { ##Dave_Please_Review
         Write-Log -Message "There are no test results to analyze" -Level Warn
-        Exit 1
+        Break
     }
 
     Write-Log -Message "Found $($TestDirMeasure.Count) tests to analyze." -Level Info

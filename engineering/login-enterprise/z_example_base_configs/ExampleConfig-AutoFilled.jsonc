@@ -1,0 +1,82 @@
+{
+    "Target": {
+        // -----------------------------------------------------------------------------------
+        // Nutanix_Files_Block
+        // -----------------------------------------------------------------------------------
+        "files_name": "autfilled",
+        "files_uuid": "autfilled",
+        "files_version": "autfilled",
+        "files_vmscount": "autfilled",
+        "files_vcpus": "autfilled",
+        "files_memorygb": "autfilled",
+        "files_ips": [ "autofilled" ]
+        // -----------------------------------------------------------------------------------
+    },
+    "TestInfra": {
+        "VMCPUCount":  null, // Autofilled during the script execution and used for reporting
+        "SingleNodeTest":  null, // Autofilled during the script execution and used for reporting
+        "SetAffinity":  null, // Autofilled to true if testing on single node
+        "TestName":  null, // Autofilled during the script execution and used for reporting
+        "ClusterName":  null, // Autofilled during the script execution and used for reporting
+        "HardwareType":  null, // Autofilled during the script execution and used for reporting
+        "ipmiAddress":  null, // Autofilled during the script execution and used for reporting
+        "Hostip":  null, // Autofilled during the script execution and used for reporting
+        "HostCVMip": null, // Autofilled during the script execution and used for reporting
+        "NodeSerial":  null, // Autofilled during the script execution and used for reporting
+        "BlockSerial":  null, // Autofilled during the script execution and used for reporting
+        "FullVersion":  null, // Autofilled during the script execution and used for reporting
+        "HostGPUs":  [
+                        null
+                     ], // Autofilled during the script execution and used for reporting
+        "GPUDriver":  null, // Autofilled during the script execution and used for reporting
+        "CPUBrand":  null, // Autofilled during the script execution and used for reporting
+        "CPUType":  null, // Autofilled during the script execution and used for reporting
+        "AOSVersion":  null, // Autofilled during the script execution and used for reporting
+        "HypervisorBrand": null, // Autofilled during the script execution and used for reporting
+        "HypervisorType": null, // Autofilled during the script execution and used for reporting
+        "HypervisorVersion":  null, // Autofilled during the script execution and used for reporting
+        "BIOS":  null, // Autofilled during the script execution and used for reporting
+        "TotalNodes":  null, // Autofilled during the script execution and used for reporting
+        "CPUCores":  null, // Autofilled during the script execution and used for reporting
+        "CPUThreadCount":  null, // Autofilled during the script execution and used for reporting
+        "CPUSocketCount":  null, // Autofilled during the script execution and used for reporting
+        "CPUSpeed":  null, // Autofilled during the script execution and used for reporting
+        "MemoryGB":  null, // Autofilled during the script execution and used for reporting
+        "MaxAbsoluteActiveActions": null, // Autofilled during the script execution and used for reporting
+        "MaxAbsoluteNewActionsPerMinute": null, // Autofilled during the script execution and used for reporting
+        "MaxPercentageActiveActions": null, // Autofilled during the script execution and used for reporting
+        "BootStart":   null, // Autofilled during the script execution and used for reporting
+        "Boottime":   null // Autofilled during the script execution and used for reporting
+    },
+    "AzureGuestDetails": {
+        "VM_Name": "", //Filled via Image Tattoo job
+        "VM_Location": "", //Filled via Image Tattoo job
+        "VM_Offer": "", //Filled via Image Tattoo job
+        "VM_secureBoot": "", //Filled via Image Tattoo job
+        "VM_vTPM": "", //Filled via Image Tattoo job
+        "VM_Size": "", //Filled via Image Tattoo job
+        "VM_Credential_Guard": "", //Filled via Image Tattoo job
+        "VM_Bios_Name": "", //Filled via Image Tattoo job
+        "VM_CPU_Name": "", //Filled via Image Tattoo job
+        "VM_CPU_Manufacturer": "", //Filled via Image Tattoo job
+        "VM_CPU_ClockSpeed": "", //Filled via Image Tattoo job
+        "VM_CPU_Caption": "", //Filled via Image Tattoo job
+        "VM_CPU_Cores": "", //Filled via Image Tattoo job
+        "VM_CPU_LogicalProcs": "", //Filled via Image Tattoo job
+        "VM_CPU_ThreadCount": "", //Filled via Image Tattoo job
+        "VM_Memory_Size": "", //Filled via Image Tattoo job
+        "VM_AcceleratedNetworking": "", //Filled via Image Tattoo job
+        "VM_pageFile": "", //Filled via Image Tattoo job
+        "OS_Type": "", //Filled via Image Tattoo job
+        "OS_Offer": "", //Filled via Image Tattoo job
+        "OS_Deployed_Version": "", //Filled via Image Tattoo job
+        "OS_Deployed_Sku": "", //Filled via Image Tattoo job
+        "OS_Running_Version": "", //Filled via Image Tattoo job
+        "Disk_Type": "", //Filled via Image Tattoo job
+        "Disk_Size": "", //Filled via Image Tattoo job
+        "Disk_Caching": "", //Filled via Image Tattoo job
+        "Disk_Encryption": "", //Filled via Image Tattoo job
+        "Disk_Write_Accelerator": "", //Filled via Image Tattoo job
+        "Disk_TempDisk_Size": "" //Filled via Image Tattoo job
+    }
+}

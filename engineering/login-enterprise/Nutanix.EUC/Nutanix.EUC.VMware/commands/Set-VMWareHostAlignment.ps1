@@ -14,7 +14,8 @@ function Set-VMWareHostAlignment {
         [Parameter(Mandatory = $false)][string]$DesktopGroupName,
         [Parameter(Mandatory = $true)][string]$Run,
         [Parameter(Mandatory = $false)][int32]$MaxRecordCount,
-        [Parameter(Mandatory = $false)]$OmnissaMachineList
+        [Parameter(Mandatory = $false)]$OmnissaMachineList,
+        [Parameter(Mandatory = $false)][string]$SingleHostTarget
     )
 
     if ($Run -eq 1) {
@@ -303,17 +304,20 @@ function Set-VMWareHostAlignment {
             #endregion Sort out the number of hosts we are going to be dealing with for reporting output
 
             #region Process the alignment
-
-            #region Validate Host Groups
             Write-Log -Message "Validating DRS Host Groups" -Level Info
 
-            # Our hosts start at item 0 in the array
+            # Single Node Affinity Logic with a specific host defined
+            if ($HostCount -eq 1 -and $SingleHostTarget -ne $VmwareHosts[0].name) {
+                # We have a JSON defined host count of 1, and the defined host is not the first host in the discovered list - it's not a match to what's in the config file.
+                Write-Log -Message "Single Node Test. The first host in the cluster list is $($VmwareHosts[0].name) but the defined host for monitoring is $($SingleHostTarget)" -Level Info
+                Write-Log -Message "Overriding VM affinity assignment to $($SingleHostTarget)" -Level Info
+                $VMWareHost = ($VmwareHosts | Where-Object { $_.name -eq $SingleHostTarget }).name
 
-            #----------------------------------------------------------
-            # Process Host 1
-            #----------------------------------------------------------
-            if (-not [string]::IsNullOrEmpty($MachineList_Host_1)) {
-                $VMWareHost = $VmwareHosts[0].name
+                if ([System.String]::IsNullOrEmpty($VMWareHost)) {
+                    Write-Log -Message "The defined host in the config file is not found in the discovered list. Skipping alignment" -Level Warn
+                    Break
+                }
+
                 $HostIP = (Get-VMHostNetworkAdapter -VMHost $VMWareHost | Where-Object {$_.Name -eq "vmk0"}).IP
                 $HostGroupName = "HostGroup_$($HostIP)"
                 $HostMachineList = $MachineList_Host_1
@@ -326,135 +330,156 @@ function Set-VMWareHostAlignment {
 
                 # Validate VM Group to Host Rule
                 Set-VMwareClusterDRSHostRule -Cluster $Cluster.Name -VMGroupName $VMGroupName -HostGroupName $HostGroupName
+
+            } else {
+                # Multi Host Alignment Logic
+
+                # Our hosts start at item 0 in the array
+                #----------------------------------------------------------
+                # Process Host 1
+                #----------------------------------------------------------
+                if (-not [string]::IsNullOrEmpty($MachineList_Host_1)) {
+                    $VMWareHost = $VmwareHosts[0].name
+                    $HostIP = (Get-VMHostNetworkAdapter -VMHost $VMWareHost | Where-Object {$_.Name -eq "vmk0"}).IP
+                    $HostGroupName = "HostGroup_$($HostIP)"
+                    $HostMachineList = $MachineList_Host_1
+                    $VMGroupName = "VMGroup_$($HostIP)"
+
+                    Set-VMWareClusterHostGroup -Cluster $Cluster.Name -HostGroupName $HostGroupName -VMHost $VMWareHost
+
+                    # Validate VM Group
+                    Set-VMWareClusterVMGroup -Cluster $Cluster.Name -VMGroupName $VMGroupName -VMList $HostMachineList
+
+                    # Validate VM Group to Host Rule
+                    Set-VMwareClusterDRSHostRule -Cluster $Cluster.Name -VMGroupName $VMGroupName -HostGroupName $HostGroupName
+                }
+                #----------------------------------------------------------
+                # Process Host 2
+                #----------------------------------------------------------
+                if (-not [string]::IsNullOrEmpty($MachineList_Host_2)) {
+                    $VMWareHost = $VmwareHosts[1].name
+                    $HostIP = (Get-VMHostNetworkAdapter -VMHost $VMWareHost | Where-Object {$_.Name -eq "vmk0"}).IP
+                    $HostGroupName = "HostGroup_$($HostIP)"
+                    $HostMachineList = $MachineList_Host_2
+                    $VMGroupName = "VMGroup_$($HostIP)"
+
+                    Set-VMWareClusterHostGroup -Cluster $Cluster.Name -HostGroupName $HostGroupName -VMHost $VMWareHost
+
+                    # Validate VM Group
+                    Set-VMWareClusterVMGroup -Cluster $Cluster.Name -VMGroupName $VMGroupName -VMList $HostMachineList
+
+                    # Validate VM Group to Host Rule
+                    Set-VMwareClusterDRSHostRule -Cluster $Cluster.Name -VMGroupName $VMGroupName -HostGroupName $HostGroupName
+                }
+                #----------------------------------------------------------
+                # Process Host 3
+                #----------------------------------------------------------
+                if (-not [string]::IsNullOrEmpty($MachineList_Host_3)) {
+                    $VMWareHost = $VmwareHosts[2].name
+                    $HostIP = (Get-VMHostNetworkAdapter -VMHost $VMWareHost | Where-Object {$_.Name -eq "vmk0"}).IP
+                    $HostGroupName = "HostGroup_$($HostIP)"
+                    $HostMachineList = $MachineList_Host_3
+                    $VMGroupName = "VMGroup_$($HostIP)"
+
+                    Set-VMWareClusterHostGroup -Cluster $Cluster.Name -HostGroupName $HostGroupName -VMHost $VMWareHost
+
+                    # Validate VM Group
+                    Set-VMWareClusterVMGroup -Cluster $Cluster.Name -VMGroupName $VMGroupName -VMList $HostMachineList
+
+                    # Validate VM Group to Host Rule
+                    Set-VMwareClusterDRSHostRule -Cluster $Cluster.Name -VMGroupName $VMGroupName -HostGroupName $HostGroupName
+                }
+                #----------------------------------------------------------
+                # Process Host 4
+                #----------------------------------------------------------
+                if (-not [string]::IsNullOrEmpty($MachineList_Host_4)) {
+                    $VMWareHost = $VmwareHosts[3].name
+                    $HostIP = (Get-VMHostNetworkAdapter -VMHost $VMWareHost | Where-Object {$_.Name -eq "vmk0"}).IP
+                    $HostGroupName = "HostGroup_$($HostIP)"
+                    $HostMachineList = $MachineList_Host_4
+                    $VMGroupName = "VMGroup_$($HostIP)"
+
+                    Set-VMWareClusterHostGroup -Cluster $Cluster.Name -HostGroupName $HostGroupName -VMHost $VMWareHost
+
+                    # Validate VM Group
+                    Set-VMWareClusterVMGroup -Cluster $Cluster.Name -VMGroupName $VMGroupName -VMList $HostMachineList
+
+                    # Validate VM Group to Host Rule
+                    Set-VMwareClusterDRSHostRule -Cluster $Cluster.Name -VMGroupName $VMGroupName -HostGroupName $HostGroupName
+                }
+                #----------------------------------------------------------
+                # Process Host 5
+                #----------------------------------------------------------
+                if (-not [string]::IsNullOrEmpty($MachineList_Host_5)) {
+                    $VMWareHost = $VmwareHosts[4].name
+                    $HostIP = (Get-VMHostNetworkAdapter -VMHost $VMWareHost | Where-Object {$_.Name -eq "vmk0"}).IP
+                    $HostGroupName = "HostGroup_$($HostIP)"
+                    $HostMachineList = $MachineList_Host_5
+                    $VMGroupName = "VMGroup_$($HostIP)"
+
+                    Set-VMWareClusterHostGroup -Cluster $Cluster.Name -HostGroupName $HostGroupName -VMHost $VMWareHost
+
+                    # Validate VM Group
+                    Set-VMWareClusterVMGroup -Cluster $Cluster.Name -VMGroupName $VMGroupName -VMList $HostMachineList
+
+                    # Validate VM Group to Host Rule
+                    Set-VMwareClusterDRSHostRule -Cluster $Cluster.Name -VMGroupName $VMGroupName -HostGroupName $HostGroupName
+                }
+                #----------------------------------------------------------
+                # Process Host 6
+                #----------------------------------------------------------
+                if (-not [string]::IsNullOrEmpty($MachineList_Host_6)) {
+                    $VMWareHost = $VmwareHosts[5].name
+                    $HostIP = (Get-VMHostNetworkAdapter -VMHost $VMWareHost | Where-Object {$_.Name -eq "vmk0"}).IP
+                    $HostGroupName = "HostGroup_$($HostIP)"
+                    $HostMachineList = $MachineList_Host_6
+                    $VMGroupName = "VMGroup_$($HostIP)"
+
+                    Set-VMWareClusterHostGroup -Cluster $Cluster.Name -HostGroupName $HostGroupName -VMHost $VMWareHost
+
+                    # Validate VM Group
+                    Set-VMWareClusterVMGroup -Cluster $Cluster.Name -VMGroupName $VMGroupName -VMList $HostMachineList
+
+                    # Validate VM Group to Host Rule
+                    Set-VMwareClusterDRSHostRule -Cluster $Cluster.Name -VMGroupName $VMGroupName -HostGroupName $HostGroupName
+                }
+                #----------------------------------------------------------
+                # Process Host 7
+                #----------------------------------------------------------
+                if (-not [string]::IsNullOrEmpty($MachineList_Host_7)) {
+                    $VMWareHost = $VmwareHosts[6].name
+                    $HostIP = (Get-VMHostNetworkAdapter -VMHost $VMWareHost | Where-Object {$_.Name -eq "vmk0"}).IP
+                    $HostGroupName = "HostGroup_$($HostIP)"
+                    $HostMachineList = $MachineList_Host_7
+                    $VMGroupName = "VMGroup_$($HostIP)"
+
+                    Set-VMWareClusterHostGroup -Cluster $Cluster.Name -HostGroupName $HostGroupName -VMHost $VMWareHost
+
+                    # Validate VM Group
+                    Set-VMWareClusterVMGroup -Cluster $Cluster.Name -VMGroupName $VMGroupName -VMList $HostMachineList
+
+                    # Validate VM Group to Host Rule
+                    Set-VMwareClusterDRSHostRule -Cluster $Cluster.Name -VMGroupName $VMGroupName -HostGroupName $HostGroupName
+                }
+                #----------------------------------------------------------
+                # Process Host 8
+                #----------------------------------------------------------
+                if (-not [string]::IsNullOrEmpty($MachineList_Host_8)) {
+                    $VMWareHost = $VmwareHosts[7].name
+                    $HostIP = (Get-VMHostNetworkAdapter -VMHost $VMWareHost | Where-Object {$_.Name -eq "vmk0"}).IP
+                    $HostGroupName = "HostGroup_$($HostIP)"
+                    $HostMachineList = $MachineList_Host_8
+                    $VMGroupName = "VMGroup_$($HostIP)"
+
+                    Set-VMWareClusterHostGroup -Cluster $Cluster.Name -HostGroupName $HostGroupName -VMHost $VMWareHost
+
+                    # Validate VM Group
+                    Set-VMWareClusterVMGroup -Cluster $Cluster.Name -VMGroupName $VMGroupName -VMList $HostMachineList
+
+                    # Validate VM Group to Host Rule
+                    Set-VMwareClusterDRSHostRule -Cluster $Cluster.Name -VMGroupName $VMGroupName -HostGroupName $HostGroupName
+                }
             }
-            #----------------------------------------------------------
-            # Process Host 2
-            #----------------------------------------------------------
-            if (-not [string]::IsNullOrEmpty($MachineList_Host_2)) {
-                $VMWareHost = $VmwareHosts[1].name
-                $HostIP = (Get-VMHostNetworkAdapter -VMHost $VMWareHost | Where-Object {$_.Name -eq "vmk0"}).IP
-                $HostGroupName = "HostGroup_$($HostIP)"
-                $HostMachineList = $MachineList_Host_2
-                $VMGroupName = "VMGroup_$($HostIP)"
-
-                Set-VMWareClusterHostGroup -Cluster $Cluster.Name -HostGroupName $HostGroupName -VMHost $VMWareHost
-
-                # Validate VM Group
-                Set-VMWareClusterVMGroup -Cluster $Cluster.Name -VMGroupName $VMGroupName -VMList $HostMachineList
-
-                # Validate VM Group to Host Rule
-                Set-VMwareClusterDRSHostRule -Cluster $Cluster.Name -VMGroupName $VMGroupName -HostGroupName $HostGroupName
-            }
-            #----------------------------------------------------------
-            # Process Host 3
-            #----------------------------------------------------------
-            if (-not [string]::IsNullOrEmpty($MachineList_Host_3)) {
-                $VMWareHost = $VmwareHosts[2].name
-                $HostIP = (Get-VMHostNetworkAdapter -VMHost $VMWareHost | Where-Object {$_.Name -eq "vmk0"}).IP
-                $HostGroupName = "HostGroup_$($HostIP)"
-                $HostMachineList = $MachineList_Host_3
-                $VMGroupName = "VMGroup_$($HostIP)"
-
-                Set-VMWareClusterHostGroup -Cluster $Cluster.Name -HostGroupName $HostGroupName -VMHost $VMWareHost
-
-                # Validate VM Group
-                Set-VMWareClusterVMGroup -Cluster $Cluster.Name -VMGroupName $VMGroupName -VMList $HostMachineList
-
-                # Validate VM Group to Host Rule
-                Set-VMwareClusterDRSHostRule -Cluster $Cluster.Name -VMGroupName $VMGroupName -HostGroupName $HostGroupName
-            }
-            #----------------------------------------------------------
-            # Process Host 4
-            #----------------------------------------------------------
-            if (-not [string]::IsNullOrEmpty($MachineList_Host_4)) {
-                $VMWareHost = $VmwareHosts[3].name
-                $HostIP = (Get-VMHostNetworkAdapter -VMHost $VMWareHost | Where-Object {$_.Name -eq "vmk0"}).IP
-                $HostGroupName = "HostGroup_$($HostIP)"
-                $HostMachineList = $MachineList_Host_4
-                $VMGroupName = "VMGroup_$($HostIP)"
-
-                Set-VMWareClusterHostGroup -Cluster $Cluster.Name -HostGroupName $HostGroupName -VMHost $VMWareHost
-
-                # Validate VM Group
-                Set-VMWareClusterVMGroup -Cluster $Cluster.Name -VMGroupName $VMGroupName -VMList $HostMachineList
-
-                # Validate VM Group to Host Rule
-                Set-VMwareClusterDRSHostRule -Cluster $Cluster.Name -VMGroupName $VMGroupName -HostGroupName $HostGroupName
-            }
-            #----------------------------------------------------------
-            # Process Host 5
-            #----------------------------------------------------------
-            if (-not [string]::IsNullOrEmpty($MachineList_Host_5)) {
-                $VMWareHost = $VmwareHosts[4].name
-                $HostIP = (Get-VMHostNetworkAdapter -VMHost $VMWareHost | Where-Object {$_.Name -eq "vmk0"}).IP
-                $HostGroupName = "HostGroup_$($HostIP)"
-                $HostMachineList = $MachineList_Host_5
-                $VMGroupName = "VMGroup_$($HostIP)"
-
-                Set-VMWareClusterHostGroup -Cluster $Cluster.Name -HostGroupName $HostGroupName -VMHost $VMWareHost
-
-                # Validate VM Group
-                Set-VMWareClusterVMGroup -Cluster $Cluster.Name -VMGroupName $VMGroupName -VMList $HostMachineList
-
-                # Validate VM Group to Host Rule
-                Set-VMwareClusterDRSHostRule -Cluster $Cluster.Name -VMGroupName $VMGroupName -HostGroupName $HostGroupName
-            }
-            #----------------------------------------------------------
-            # Process Host 6
-            #----------------------------------------------------------
-            if (-not [string]::IsNullOrEmpty($MachineList_Host_6)) {
-                $VMWareHost = $VmwareHosts[5].name
-                $HostIP = (Get-VMHostNetworkAdapter -VMHost $VMWareHost | Where-Object {$_.Name -eq "vmk0"}).IP
-                $HostGroupName = "HostGroup_$($HostIP)"
-                $HostMachineList = $MachineList_Host_6
-                $VMGroupName = "VMGroup_$($HostIP)"
-
-                Set-VMWareClusterHostGroup -Cluster $Cluster.Name -HostGroupName $HostGroupName -VMHost $VMWareHost
-
-                # Validate VM Group
-                Set-VMWareClusterVMGroup -Cluster $Cluster.Name -VMGroupName $VMGroupName -VMList $HostMachineList
-
-                # Validate VM Group to Host Rule
-                Set-VMwareClusterDRSHostRule -Cluster $Cluster.Name -VMGroupName $VMGroupName -HostGroupName $HostGroupName
-            }
-            #----------------------------------------------------------
-            # Process Host 7
-            #----------------------------------------------------------
-            if (-not [string]::IsNullOrEmpty($MachineList_Host_7)) {
-                $VMWareHost = $VmwareHosts[6].name
-                $HostIP = (Get-VMHostNetworkAdapter -VMHost $VMWareHost | Where-Object {$_.Name -eq "vmk0"}).IP
-                $HostGroupName = "HostGroup_$($HostIP)"
-                $HostMachineList = $MachineList_Host_7
-                $VMGroupName = "VMGroup_$($HostIP)"
-
-                Set-VMWareClusterHostGroup -Cluster $Cluster.Name -HostGroupName $HostGroupName -VMHost $VMWareHost
-
-                # Validate VM Group
-                Set-VMWareClusterVMGroup -Cluster $Cluster.Name -VMGroupName $VMGroupName -VMList $HostMachineList
-
-                # Validate VM Group to Host Rule
-                Set-VMwareClusterDRSHostRule -Cluster $Cluster.Name -VMGroupName $VMGroupName -HostGroupName $HostGroupName
-            }
-            #----------------------------------------------------------
-            # Process Host 8
-            #----------------------------------------------------------
-            if (-not [string]::IsNullOrEmpty($MachineList_Host_8)) {
-                $VMWareHost = $VmwareHosts[7].name
-                $HostIP = (Get-VMHostNetworkAdapter -VMHost $VMWareHost | Where-Object {$_.Name -eq "vmk0"}).IP
-                $HostGroupName = "HostGroup_$($HostIP)"
-                $HostMachineList = $MachineList_Host_8
-                $VMGroupName = "VMGroup_$($HostIP)"
-
-                Set-VMWareClusterHostGroup -Cluster $Cluster.Name -HostGroupName $HostGroupName -VMHost $VMWareHost
-
-                # Validate VM Group
-                Set-VMWareClusterVMGroup -Cluster $Cluster.Name -VMGroupName $VMGroupName -VMList $HostMachineList
-
-                # Validate VM Group to Host Rule
-                Set-VMwareClusterDRSHostRule -Cluster $Cluster.Name -VMGroupName $VMGroupName -HostGroupName $HostGroupName
-            }
-            #endregion Validate Host Groups
-
             #endregion Process the alignment
         }
 

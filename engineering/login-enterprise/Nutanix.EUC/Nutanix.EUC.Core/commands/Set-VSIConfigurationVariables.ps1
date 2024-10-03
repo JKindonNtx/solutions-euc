@@ -1,17 +1,24 @@
 function Set-VSIConfigurationVariables {
     param(
         $ConfigurationFile,
-        $ImageConfiguration
+        $ImageConfiguration,
+        ##// JK JSON Merge Function Addition Section
+        $JSONConfiguration
+        ##// JK JSON Merge Function Addition Section
     )
     
-    if ($null -ne $ConfigurationFile) {
+    #if ($null -ne $ConfigurationFile) {
+    if ($null -ne $ConfigurationFile -or $null -ne $JSONConfiguration) {
         
         Write-Log "Parsing config file $ConfigurationFile" -level Info
-        $configFile = Get-Content -Path $ConfigurationFile
-        $configFile = $configFile -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/'
+        #$configFile = Get-Content -Path $ConfigurationFile
+        #$configFile = $configFile -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/'
 
-        $config = $configFile | ConvertFrom-Json
-        
+        #$config = $configFile | ConvertFrom-Json
+        ##// JK JSON Merge Function Addition Section
+        $config = $JSONConfiguration | ConvertFrom-Json
+        ##// JK JSON Merge Function Addition Section
+
         Get-Variable -Name VSI_* -ErrorAction SilentlyContinue | Remove-Variable -ErrorAction SilentlyContinue
         
         # Process config from configflie

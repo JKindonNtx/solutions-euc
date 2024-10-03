@@ -14,7 +14,8 @@ function Set-NTNXHostAlignment {
         [Parameter(Mandatory = $true)][string]$Run,
         [Parameter(Mandatory = $false)][int32]$MaxRecordCount,
         [Parameter(Mandatory = $true)][bool]$EnforceHostMaintenanceMode,
-        [Parameter(Mandatory = $false)]$OmnissaMachineList
+        [Parameter(Mandatory = $false)]$OmnissaMachineList,
+        [Parameter(Mandatory = $false)][string]$SingleHostTarget
     )
 
     if ($Run -eq 1) {
@@ -288,26 +289,18 @@ function Set-NTNXHostAlignment {
                 Write-Log -Message "Maintenance Mode processing for hosts is enabled." -Level Info
             }
 
-            # Our hosts start at item 0 in the array
-            #----------------------------------------------------------
-            # Process Host 1
-            #----------------------------------------------------------
-            if (-not [string]::IsNullOrEmpty($MachineList_Host_1)) {
-                $NtnxHost = $NtnxHosts[0].hypervisor_address_value.ipv4
+            # Single Node Affinity Logic with a specific host defined
+            if ($HostCount -eq 1 -and $SingleHostTarget -ne $NtnxHosts[0].name) {
+                # We have a JSON defined host count of 1, and the defined host is not the first host in the discovered list - it's not a match to what's in the config file.
+                Write-Log -Message "Single Node Test. The first host in the cluster list is $($NtnxHosts[0].name) but the defined host for monitoring is $($SingleHostTarget)" -Level Info
+                Write-Log -Message "Overriding VM affinity assignment to $($SingleHostTarget)" -Level Info
+                $NtnxHost = ($NtnxHosts | Where-Object { $_.name -eq $SingleHostTarget }).hypervisor_address_value.ipv4
                 $HostMachineList = $MachineList_Host_1
 
-                if ($EnforceHostMaintenanceMode -eq $true) {
-                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                if ([System.String]::IsNullOrEmpty($NtnxHost)) {
+                    Write-Log -Message "The defined host in the config file is not found in the discovered list. Skipping alignment" -Level Warn
+                    Break
                 }
-
-                Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
-            }
-            #----------------------------------------------------------
-            # Process Host 2
-            #----------------------------------------------------------
-            if (-not [string]::IsNullOrEmpty($MachineList_Host_2)) {
-                $NtnxHost = $NtnxHosts[1].hypervisor_address_value.ipv4
-                $HostMachineList = $MachineList_Host_2
 
                 if ($EnforceHostMaintenanceMode -eq $true) {
                     Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
@@ -315,143 +308,173 @@ function Set-NTNXHostAlignment {
 
                 Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
             } else {
-                if ($NtnxHostsCount -gt 1) {
+                # Multi Host Alignment Logic
+
+                # Our hosts start at item 0 in the array
+                #----------------------------------------------------------
+                # Process Host 1
+                #----------------------------------------------------------
+                if (-not [string]::IsNullOrEmpty($MachineList_Host_1)) {
+                    $NtnxHost = $NtnxHosts[0].hypervisor_address_value.ipv4
+                    $HostMachineList = $MachineList_Host_1
+
+                    if ($EnforceHostMaintenanceMode -eq $true) {
+                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                    }
+
+                    Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
+                }
+                #----------------------------------------------------------
+                # Process Host 2
+                #----------------------------------------------------------
+                if (-not [string]::IsNullOrEmpty($MachineList_Host_2)) {
                     $NtnxHost = $NtnxHosts[1].hypervisor_address_value.ipv4
+                    $HostMachineList = $MachineList_Host_2
+
+                    if ($EnforceHostMaintenanceMode -eq $true) {
+                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                    }
+
+                    Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
+                } else {
+                    if ($NtnxHostsCount -gt 1) {
+                        $NtnxHost = $NtnxHosts[1].hypervisor_address_value.ipv4
+                        
+                        if ($EnforceHostMaintenanceMode -eq $true) {
+                            Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
+                        }
+                    }
+                }
+                #----------------------------------------------------------
+                # Process Host 3
+                #----------------------------------------------------------
+                if (-not [string]::IsNullOrEmpty($MachineList_Host_3)) {
+                    $NtnxHost = $NtnxHosts[2].hypervisor_address_value.ipv4
+                    $HostMachineList = $MachineList_Host_3
+
+                    if ($EnforceHostMaintenanceMode -eq $true) {
+                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                    }
+
+                    Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
+                } else {
+                    if ($NtnxHostsCount -gt 2) {
+                        $NtnxHost = $NtnxHosts[2].hypervisor_address_value.ipv4
+
+                        if ($EnforceHostMaintenanceMode -eq $true) {
+                            Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
+                        }
+                    }
+                }
+                #----------------------------------------------------------
+                # Process Host 4
+                #----------------------------------------------------------
+                if (-not [string]::IsNullOrEmpty($MachineList_Host_4)) {
+                    $NtnxHost = $NtnxHosts[3].hypervisor_address_value.ipv4
+                    $HostMachineList = $MachineList_Host_4
+
+                    if ($EnforceHostMaintenanceMode -eq $true) {
+                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                    }
+
+                    Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
+                } else {
+                    if ($NtnxHostsCount -gt 3) {
+                        $NtnxHost = $NtnxHosts[3].hypervisor_address_value.ipv4
+
+                        if ($EnforceHostMaintenanceMode -eq $true) {
+                            Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
+                        }
+                    }
+                }
+                #----------------------------------------------------------
+                # Process Host 5
+                #----------------------------------------------------------
+                if (-not [string]::IsNullOrEmpty($MachineList_Host_5)) {
+                    $NtnxHost = $NtnxHosts[4].hypervisor_address_value.ipv4
+                    $HostMachineList = $MachineList_Host_5
+
+                    if ($EnforceHostMaintenanceMode -eq $true) {
+                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                    }
+
+                    Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
+                } else {
+                    if ($NtnxHostsCount -gt 4) {
+                        $NtnxHost = $NtnxHosts[4].hypervisor_address_value.ipv4
+
+                        if ($EnforceHostMaintenanceMode -eq $true) {
+                            Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
+                        }
+                    }
+                }
+                #----------------------------------------------------------
+                # Process Host 6
+                #----------------------------------------------------------
+                if (-not [string]::IsNullOrEmpty($MachineList_Host_6)) {
+                    $NtnxHost = $NtnxHosts[5].hypervisor_address_value.ipv4
+                    $HostMachineList = $MachineList_Host_6
+
+                    if ($EnforceHostMaintenanceMode -eq $true) {
+                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                    }
+
+                    Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
+                } else {
+                    if ($NtnxHostsCount -gt 5) {
+                        $NtnxHost = $NtnxHosts[5].hypervisor_address_value.ipv4
+
+                        if ($EnforceHostMaintenanceMode -eq $true) {
+                            Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
+                        }
+                    }
+                }
+                #----------------------------------------------------------
+                # Process Host 6
+                #----------------------------------------------------------
+                if (-not [string]::IsNullOrEmpty($MachineList_Host_7)) {
+                    $NtnxHost = $NtnxHosts[6].hypervisor_address_value.ipv4
+                    $HostMachineList = $MachineList_Host_7
+
+                    if ($EnforceHostMaintenanceMode -eq $true) {
+                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                    }
+
+                    Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
+                } else {
+                    if ($NtnxHostsCount -gt 6) {
+                        $NtnxHost = $NtnxHosts[6].hypervisor_address_value.ipv4
+
+                        if ($EnforceHostMaintenanceMode -eq $true) {
+                            Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
+                        }
+                    }
+                }
+                #----------------------------------------------------------
+                # Process Host 8
+                #----------------------------------------------------------
+                if (-not [string]::IsNullOrEmpty($MachineList_Host_8)) {
+                    $NtnxHost = $NtnxHosts[7].hypervisor_address_value.ipv4
+                    $HostMachineList = $MachineList_Host_8
                     
                     if ($EnforceHostMaintenanceMode -eq $true) {
-                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
+                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
+                    }
+
+                    Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
+                } else {
+                    if ($NtnxHostsCount -gt 7) {
+                        $NtnxHost = $NtnxHosts[7].hypervisor_address_value.ipv4
+
+                        if ($EnforceHostMaintenanceMode -eq $true) {
+                            Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
+                        }
                     }
                 }
-            }
-            #----------------------------------------------------------
-            # Process Host 3
-            #----------------------------------------------------------
-            if (-not [string]::IsNullOrEmpty($MachineList_Host_3)) {
-                $NtnxHost = $NtnxHosts[2].hypervisor_address_value.ipv4
-                $HostMachineList = $MachineList_Host_3
 
-                if ($EnforceHostMaintenanceMode -eq $true) {
-                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
-                }
-
-                Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
-            } else {
-                if ($NtnxHostsCount -gt 2) {
-                    $NtnxHost = $NtnxHosts[2].hypervisor_address_value.ipv4
-
-                    if ($EnforceHostMaintenanceMode -eq $true) {
-                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
-                    }
-                }
-            }
-            #----------------------------------------------------------
-            # Process Host 4
-            #----------------------------------------------------------
-            if (-not [string]::IsNullOrEmpty($MachineList_Host_4)) {
-                $NtnxHost = $NtnxHosts[3].hypervisor_address_value.ipv4
-                $HostMachineList = $MachineList_Host_4
-
-                if ($EnforceHostMaintenanceMode -eq $true) {
-                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
-                }
-
-                Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
-            } else {
-                if ($NtnxHostsCount -gt 3) {
-                    $NtnxHost = $NtnxHosts[3].hypervisor_address_value.ipv4
-
-                    if ($EnforceHostMaintenanceMode -eq $true) {
-                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
-                    }
-                }
-            }
-            #----------------------------------------------------------
-            # Process Host 5
-            #----------------------------------------------------------
-            if (-not [string]::IsNullOrEmpty($MachineList_Host_5)) {
-                $NtnxHost = $NtnxHosts[4].hypervisor_address_value.ipv4
-                $HostMachineList = $MachineList_Host_5
-
-                if ($EnforceHostMaintenanceMode -eq $true) {
-                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
-                }
-
-                Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
-            } else {
-                if ($NtnxHostsCount -gt 4) {
-                    $NtnxHost = $NtnxHosts[4].hypervisor_address_value.ipv4
-
-                    if ($EnforceHostMaintenanceMode -eq $true) {
-                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
-                    }
-                }
-            }
-            #----------------------------------------------------------
-            # Process Host 6
-            #----------------------------------------------------------
-            if (-not [string]::IsNullOrEmpty($MachineList_Host_6)) {
-                $NtnxHost = $NtnxHosts[5].hypervisor_address_value.ipv4
-                $HostMachineList = $MachineList_Host_6
-
-                if ($EnforceHostMaintenanceMode -eq $true) {
-                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
-                }
-
-                Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
-            } else {
-                if ($NtnxHostsCount -gt 5) {
-                    $NtnxHost = $NtnxHosts[5].hypervisor_address_value.ipv4
-
-                    if ($EnforceHostMaintenanceMode -eq $true) {
-                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
-                    }
-                }
-            }
-            #----------------------------------------------------------
-            # Process Host 6
-            #----------------------------------------------------------
-            if (-not [string]::IsNullOrEmpty($MachineList_Host_7)) {
-                $NtnxHost = $NtnxHosts[6].hypervisor_address_value.ipv4
-                $HostMachineList = $MachineList_Host_7
-
-                if ($EnforceHostMaintenanceMode -eq $true) {
-                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
-                }
-
-                Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
-            } else {
-                if ($NtnxHostsCount -gt 6) {
-                    $NtnxHost = $NtnxHosts[6].hypervisor_address_value.ipv4
-
-                    if ($EnforceHostMaintenanceMode -eq $true) {
-                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
-                    }
-                }
-            }
-            #----------------------------------------------------------
-            # Process Host 8
-            #----------------------------------------------------------
-            if (-not [string]::IsNullOrEmpty($MachineList_Host_8)) {
-                $NtnxHost = $NtnxHosts[7].hypervisor_address_value.ipv4
-                $HostMachineList = $MachineList_Host_8
-                
-                if ($EnforceHostMaintenanceMode -eq $true) {
-                    Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Disabled -Session $session
-                }
-
-                Set-VMToHostAlignment -Node $NtnxHost -HostMachineList $HostMachineList -Session $session
-            } else {
-                if ($NtnxHostsCount -gt 7) {
-                    $NtnxHost = $NtnxHosts[7].hypervisor_address_value.ipv4
-
-                    if ($EnforceHostMaintenanceMode -eq $true) {
-                        Set-HostMaintenanceMode -Node $NtnxHost -HostCount $HostCount -State Enabled -Session $session
-                    }
-                }
+                Remove-SSHSession -Name $Session | Out-Null
             }
             #endregion Process the alignment
-
-            Remove-SSHSession -Name $Session | Out-Null
         }
 
     } else {
