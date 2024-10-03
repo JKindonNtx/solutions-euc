@@ -2707,7 +2707,6 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             $Params = $null
         }
         #endregion download Telegraf data
-        #Sventest
         #region download Prometheus data
         if ($Config.Test.StartObserverMonitoring -eq $true -or $Config.Target.files_prometheus -eq $true) {
             if ($Config.TestInfra.HostGPUs -ne "None"){
@@ -2728,7 +2727,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             $Prometheusdataprocessed = Get-Prometheusdata @params
             $Params = $null
         }
-        #endregion download Prometheuss data
+        #endregion download Prometheus data
         #region Check for RDA File and if exists then move it to the output folder
         #----------------------------------------------------------------------------------------------------------------------------
         if (Test-Path -Path $RDASource) {
