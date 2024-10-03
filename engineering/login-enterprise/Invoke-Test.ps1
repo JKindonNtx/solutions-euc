@@ -3268,7 +3268,7 @@ Remove-Variable -Name LogOutputTempFile -Scope global -ErrorAction SilentlyConti
 #endregion logfile cleanup
 
 # Remove all other script variables
-Get-Variable VSI* | Remove-Variable -Scope Global -Force
-Get-Variable ImageSpec* | Remove-Variable -Scope Global -Force
+Get-Variable VSI* -Scope Global | Remove-Variable -Scope Global -Force
+Get-Variable ImageSpec* -Scope Global | Remove-Variable -Scope Global -Force
 
 Exit 0
