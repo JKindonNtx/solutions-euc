@@ -2707,6 +2707,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             $Params = $null
         }
         #endregion download Telegraf data
+        #Sventest
         #region download Prometheus data
         if ($Config.Test.StartObserverMonitoring -eq $true -or $Config.Target.files_prometheus -eq $true) {
             if ($Config.TestInfra.HostGPUs -ne "None"){
