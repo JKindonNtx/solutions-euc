@@ -283,7 +283,7 @@ function Start-InfluxUpload {
                     # Looop through headers and process data values
                     foreach ($Header in $Headers) {
                         if (($header -ne "Timestamp")) {
-                            if (($header -like "*Id") -or ($header -like "*Name*") -or ($header -like "*timer*") -or ($header -like "*instance*") -or ($header -like "*userSessionKey*")  -or ($header -like "*prom_*")) {
+                            if (($header -like "*Id") -or ($header -like "*Name*") -or ($header -like "*timer*") -or ($header -like "*instance*") -or ($header -like "*userSessionKey*")  -or ($header -like "*prom_*") -or ($header -like "*tg_*")) {
                                 $Data = $($line.$($Header))
                                 $tag = $tag + ",$($Header)=$($Data)"
                             }
@@ -312,7 +312,6 @@ function Start-InfluxUpload {
     
                     # Build the body
                     $Body = "$measurementName,$tag $fields $FormattedDate"
-
                     #Add the record to the $batch_data_to_process arraylist
                     $null = $batch_data_to_process.Add($Body)
                 }

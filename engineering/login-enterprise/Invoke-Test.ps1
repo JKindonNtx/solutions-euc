@@ -2724,6 +2724,35 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
         }
         #endregion Write config to OutputFolder and Download LE Metrics
 
+        #region download Telegraf data
+        if ($Config.Test.ImportTelegrafData -eq $true) {
+            # Download Telegraf boot data
+            Write-Log -Message "Download Boot Telegraf data" -Level Info
+            $params = @{
+                TestStarttime       = $Boot.bootstart
+                TestFinishtime      = (get-date $Boot.bootstart).AddSeconds($boot.boottime)
+                Influxdburl         = $Config.Testinfra.InfluxDBurl
+                OutputFolder        = "$($OutputFolder)\boot"
+                Token               = $Config.Testinfra.InfluxToken
+                TelegrafBucket      = $Config.Test.TelegrafBucket
+            }
+            $Telegrafdataprocessed = Get-Telegrafdata @params
+            $Params = $null
+            # Download Telegraf test data
+            Write-Log -Message "Download Telegraf test data" -Level Info
+            $vsiresult = Import-CSV "$($OutputFolder)\VSI-results.csv"
+            $params = @{
+                TestStarttime       = $vsiresult.started
+                TestFinishtime      = $vsiresult.finished
+                Influxdburl         = $Config.Testinfra.InfluxDBurl
+                OutputFolder        = $OutputFolder
+                Token               = $Config.Testinfra.InfluxToken
+                TelegrafBucket      = $Config.Test.TelegrafBucket
+            }
+            $Telegrafdataprocessed = Get-Telegrafdata @params
+            $Params = $null
+        }
+        #endregion download Telegraf data
         #region download Prometheus data
         if ($control_monitor_observer_monitoring -eq $true) {
             if ($Config.TestInfra.HostGPUs -ne "None"){
@@ -2744,8 +2773,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             $Prometheusdataprocessed = Get-Prometheusdata @params
             $Params = $null
         }
-        #endregion download Prometheuss data
-
+        #endregion download Prometheus data
         #region Check for RDA File and if exists then move it to the output folder
         #----------------------------------------------------------------------------------------------------------------------------
         if (Test-Path -Path $RDASource) {
@@ -2852,8 +2880,6 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                 Write-Log -Message "[DATA UPLOAD] Processing Boot phase data uploads" -Level Info 
                 # This is not an Azure configuration
                 $Files = Get-ChildItem "$($OutputFolder)\Boot\*.csv"
-                # $Started = $($NTNXInfra.TestInfra.Bootstart) ##Removed by SvenH
-
                 # Build the Boot Bucket Name
                 If ($($Config.Test.BucketName) -eq "LoginDocuments") {
                     $BucketName = "BootBucket"
@@ -2864,7 +2890,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
 
                 # Loop through the boot files and process each one
                 foreach ($File in $Files) {
-                    if (($File.Name -like "host raw*") -or ($File.Name -like "cluster raw*")) {
+                    if (($File.Name -like "host raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "telegraf*")) {
                         Write-Log -Message "[DATA UPLOAD] Uploading $($File.name) to Influx" -Level Info
                         # start a time object to measure upload time
                         $DataUploadStopWatch = [system.Diagnostics.Stopwatch]::StartNew()
@@ -2892,7 +2918,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
             $Files = Get-ChildItem "$($OutputFolder)\*.csv"
             # Loop through the test run data files and process each one
             foreach ($File in $Files) {
-                if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*") -or ($File.Name -like "VM Perf Metrics*") -or ($File.Name -like "Prom*")) {
+                if (($File.Name -like "Raw Timer Results*") -or ($File.Name -like "Raw Login Times*") -or ($File.Name -like "NetScaler Raw*") -or ($File.Name -like "host raw*") -or ($File.Name -like "files raw*") -or ($File.Name -like "cluster raw*") -or ($File.Name -like "raw appmeasurements*") -or ($File.Name -like "EUX-Score*") -or ($File.Name -like "EUX-timer-score*") -or ($File.Name -like "RDA*") -or ($File.Name -like "VM Perf Metrics*") -or ($File.Name -like "Telegraf*") -or ($File.Name -like "Prom*")) {
                     Write-Log -Message "[DATA UPLOAD] Uploading $($File.name) to Influx" -Level Info
                     #Set Azure VM Value - If this is an Azure VM, we will be sending different tags in to Influx. If not, then it's business as usual.
                     if ($NTNXInfra.AzureGuestDetails.IsAzureVM -eq $true) { $IsAzureVM = $true } else { $IsAzureVM = $false }
