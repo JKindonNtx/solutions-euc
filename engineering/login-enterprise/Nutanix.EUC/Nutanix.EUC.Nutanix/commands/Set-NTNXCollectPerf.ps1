@@ -9,13 +9,18 @@ function Set-NTNXCollectPerf {
         [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true )][ValidateSet("start", "stop")][string]$Action,
         [Parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true )][int]$SampleInterval = 60,
         [Parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true )][int]$SampleFrequency = 5,
+        [Parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true )][string]$AdvancedArgs,
         [Parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true )][string]$OutputFolder,
         [Parameter(Mandatory = $false, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true )][bool]$DownloadCollectorFile
     )
 
     # Build the command and set the curator status using SSH
     if ($Action -eq "start") {
-        $command = "collect_perf start --sample_seconds=$SampleInterval --sample_frequency=$SampleFrequency"
+        if ($AdvancedArgs) {
+            $command = "collect_perf --sample_seconds=$SampleInterval --sample_frequency=$SampleFrequency $AdvancedArgs start"
+        } else {
+            $command = "collect_perf --sample_seconds=$SampleInterval --sample_frequency=$SampleFrequency start"
+        }
     } elseif ($Action -eq "stop") {
         $command = "collect_perf stop"
     }

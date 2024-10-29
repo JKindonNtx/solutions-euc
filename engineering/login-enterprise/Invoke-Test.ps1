@@ -2289,6 +2289,7 @@ ForEach ($ImageToTest in $Config.Target.ImagesToTest) {
                 Action          = "Start"
                 SampleInterval  = $Config.AdvancedDiagnostics.CollectPerfSampleInterval
                 SampleFrequency = $Config.AdvancedDiagnostics.CollectPerfSampleFrequency
+                AdvancedArgs    = $Config.AdvancedDiagnostics.CollectPerfAdvancedArgs
             }
             Set-NTNXCollectPerf @params
         
